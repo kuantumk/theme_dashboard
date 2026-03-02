@@ -19,6 +19,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 IBKR_FLEX_TOKEN = os.getenv("IBKR_FLEX_TOKEN", "")
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
 # ─── YAML Config ────────────────────────────────────────────────
 CONFIG_FILE = PROJECT_ROOT / "config" / "workflow_config.yaml"

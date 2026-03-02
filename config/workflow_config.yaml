@@ -33,7 +33,7 @@ market_breadth:
 # Theme analysis
 themes:
   metadata_file: "data/ticker_themes.json"
-  google_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=2036042729"
+  google_sheet_gid: "2036042729"
   min_stocks_per_theme: 3
   hot_theme_rs_threshold: 70.0
   high_momentum_threshold: 80.0
@@ -44,8 +44,8 @@ themes:
 
 # Dashboard data sources (Google Sheets)
 dashboard:
-  etf_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=1565194920"
-  industry_etf_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148"
+  etf_sheet_gid: "1565194920"
+  industry_etf_sheet_gid: "549753148"
 
 # Report settings
 report:

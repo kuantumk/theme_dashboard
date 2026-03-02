@@ -7,9 +7,10 @@ import pandas as pd
 from typing import Dict, List
 from collections import Counter
 
-from config.settings import CONFIG, TICKER_THEMES_FILE
+from config.settings import CONFIG, TICKER_THEMES_FILE, GOOGLE_SHEET_ID
 
-GOOGLE_SHEET_URL = CONFIG["themes"]["google_sheet_url"]
+gid = CONFIG["themes"]["google_sheet_gid"]
+GOOGLE_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=csv&gid={gid}"
 OUTPUT_FILE = TICKER_THEMES_FILE
 
 

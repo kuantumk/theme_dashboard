@@ -15,14 +15,17 @@ from datetime import datetime
 
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
-    DOCS_DATA_DIR, FUNDAMENTALS_DB
+    DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID
 )
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
 # Google Sheets
-ETF_SHEET_URL = CONFIG["dashboard"]["etf_sheet_url"]
-INDUSTRY_ETF_SHEET_URL = CONFIG["dashboard"]["industry_etf_sheet_url"]
+etf_gid = CONFIG["dashboard"]["etf_sheet_gid"]
+ind_gid = CONFIG["dashboard"]["industry_etf_sheet_gid"]
+
+ETF_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=csv&gid={etf_gid}"
+INDUSTRY_ETF_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=csv&gid={ind_gid}"
 
 # Yahoo Finance tickers for macro data
 MACRO_TICKERS = {

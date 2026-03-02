@@ -71,6 +71,7 @@ jobs:
         if: steps.dst-guard.outputs.should_run == 'true'
         env:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          PYTHONPATH: .
         run: |
           python src/reporting/export_dashboard_data.py
 

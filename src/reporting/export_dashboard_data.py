@@ -1,0 +1,679 @@
+"""
+Export dashboard data from the daily stock screening output.
+
+Reads the latest daily report and market breadth data, then exports
+JSON files for the web dashboard in docs/data/.
+"""
+
+import json
+import re
+import csv
+import io
+import urllib.request
+from pathlib import Path
+from datetime import datetime
+
+from config.settings import (
+    CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
+    DOCS_DATA_DIR, FUNDAMENTALS_DB
+)
+
+OUTPUT_DIR = DOCS_DATA_DIR
+
+# Google Sheets
+ETF_SHEET_URL = CONFIG["dashboard"]["etf_sheet_url"]
+INDUSTRY_ETF_SHEET_URL = CONFIG["dashboard"]["industry_etf_sheet_url"]
+
+# Yahoo Finance tickers for macro data
+MACRO_TICKERS = {
+    'indices': [
+        {'yahoo': 'ES=F', 'label': 'ES', 'name': 'S&P 500 Futures', 'tv': 'OANDA:SPX500USD'},
+        {'yahoo': 'NQ=F', 'label': 'NQ', 'name': 'Nasdaq 100 Futures', 'tv': 'OANDA:NAS100USD'},
+        {'yahoo': 'RTY=F', 'label': 'RTY', 'name': 'Russell 2000 Futures', 'tv': 'OANDA:US2000USD'},
+        {'yahoo': 'YM=F', 'label': 'YM', 'name': 'Dow Jones Futures', 'tv': 'OANDA:US30USD'},
+        {'yahoo': '^VIX', 'label': 'VIX', 'name': 'Volatility Index', 'tv': 'VIX'},
+    ],
+    'crypto': [
+        {'yahoo': 'BTC-USD', 'label': 'BTC', 'name': 'Bitcoin', 'tv': 'BINANCE:BTCUSDT'},
+        {'yahoo': 'ETH-USD', 'label': 'ETH', 'name': 'Ethereum', 'tv': 'BINANCE:ETHUSDT'},
+        {'yahoo': 'SOL-USD', 'label': 'SOL', 'name': 'Solana', 'tv': 'BINANCE:SOLUSDT'},
+        {'yahoo': 'XRP-USD', 'label': 'XRP', 'name': 'XRP', 'tv': 'BINANCE:XRPUSDT'},
+        {'yahoo': 'BNB-USD', 'label': 'BNB', 'name': 'BNB Chain', 'tv': 'BINANCE:BNBUSDT'},
+    ],
+    'precious_metals': [
+        {'yahoo': 'GC=F', 'label': 'Gold', 'name': 'Gold', 'tv': 'OANDA:XAUUSD'},
+        {'yahoo': 'SI=F', 'label': 'Silver', 'name': 'Silver', 'tv': 'OANDA:XAGUSD'},
+        {'yahoo': 'PL=F', 'label': 'Platinum', 'name': 'Platinum', 'tv': 'OANDA:XPTUSD'},
+    ],
+    'base_metals': [
+        {'yahoo': 'HG=F', 'label': 'Copper', 'name': 'Copper', 'tv': 'CAPITALCOM:COPPER'},
+        {'yahoo': 'ALI=F', 'label': 'Aluminum', 'name': 'Aluminum', 'tv': 'COMEX:ALI1!'},
+    ],
+    'energy': [
+        {'yahoo': 'CL=F', 'label': 'WTI Crude', 'name': 'WTI Crude Oil', 'tv': 'OANDA:WTICOUSD'},
+        {'yahoo': 'NG=F', 'label': 'Natural Gas', 'name': 'Natural Gas', 'tv': 'OANDA:NATGASUSD'},
+    ],
+    'yields': [
+        {'yahoo': '^IRX', 'label': '2Y', 'name': '2Y Treasury', 'tv': 'TVC:US02Y'},
+        {'yahoo': '^TNX', 'label': '10Y', 'name': '10Y Treasury', 'tv': 'TVC:US10Y'},
+        {'yahoo': '^TYX', 'label': '30Y', 'name': '30Y Treasury', 'tv': 'TVC:US30Y'},
+    ],
+    'dollar': [
+        {'yahoo': 'DX-Y.NYB', 'label': 'DXY', 'name': 'Dollar Index', 'tv': 'CAPITALCOM:DXY'},
+    ],
+}
+
+
+def find_latest_report():
+    """Find the most recent daily report file."""
+    reports = sorted(REPORTS_DIR.glob("daily_report_*.md"), reverse=True)
+    if not reports:
+        print("No daily reports found.")
+        return None
+    return reports[0]
+
+
+def parse_report(filepath):
+    """Parse the daily report markdown into structured data."""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    result = {
+        'report_date': None,
+        'ncfd': None,
+        'mmfi': None,
+        'themes': [],
+    }
+
+    date_match = re.search(r'daily_report_(\d{4}-\d{2}-\d{2})', filepath.name)
+    if date_match:
+        result['report_date'] = date_match.group(1)
+
+    ncfd_match = re.search(r'NCFD.*?:\s*([\d.]+)%', content)
+    mmfi_match = re.search(r'MMFI.*?:\s*([\d.]+)%', content)
+    mmtw_match = re.search(r'MMTW.*?:\s*([\d.]+)%', content)
+    mmth_match = re.search(r'MMTH.*?:\s*([\d.]+)%', content)
+    if ncfd_match:
+        result['ncfd'] = float(ncfd_match.group(1))
+    if mmfi_match:
+        result['mmfi'] = float(mmfi_match.group(1))
+    if mmtw_match:
+        result['mmtw'] = float(mmtw_match.group(1))
+    if mmth_match:
+        result['mmth'] = float(mmth_match.group(1))
+
+    # Parse themes
+    lines = content.split('\n')
+    theme_section_lines = []
+    in_themes = False
+
+    for line in lines:
+        if '## 🌍 Market Themes' in line or '## Market Themes' in line:
+            in_themes = True
+            continue
+        if in_themes and (
+            '## 📈 Trading Performance' in line or
+            '## Trading Performance' in line or
+            '## Executive Summary' in line or
+            (line.startswith('---') and len(line.strip()) <= 5)
+        ):
+            if '## 📊 Market Context' not in line:
+                break
+            continue
+        if in_themes:
+            theme_section_lines.append(line)
+
+    theme_text = '\n'.join(theme_section_lines)
+
+    theme_pattern = re.compile(
+        r'###\s+(\d+)\.\s+(.+?)(?:\s+[🔥⚡💫🌟])?\s*\n'
+        r'\*\*Theme Score\*\*:\s*([\d.]+)\s*\|\s*\*\*Avg RS\*\*:\s*([\d.]+)%',
+        re.MULTILINE
+    )
+
+    for match in theme_pattern.finditer(theme_text):
+        rank = int(match.group(1))
+        name = match.group(2).strip()
+        score = float(match.group(3))
+        avg_rs = float(match.group(4))
+
+        start = match.end()
+        next_theme = theme_pattern.search(theme_text, start)
+        end = next_theme.start() if next_theme else len(theme_text)
+        section = theme_text[start:end]
+
+        tickers = parse_ticker_table(section)
+
+        result['themes'].append({
+            'rank': rank,
+            'name': name,
+            'score': score,
+            'avg_rs': avg_rs,
+            'tickers': tickers
+        })
+
+    return result
+
+
+def parse_ticker_table(section):
+    """Parse a markdown table of tickers from a theme section."""
+    tickers = []
+    lines = section.strip().split('\n')
+    in_table = False
+    headers = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('**Tickers:**'):
+            continue
+        if '|' in line:
+            cells = [c.strip() for c in line.split('|')]
+            cells = [c for c in cells if c]
+            if not in_table:
+                if 'Ticker' in cells[0] or 'ticker' in cells[0].lower():
+                    headers = cells
+                    in_table = True
+                continue
+            if all(c.replace('-', '').replace(':', '') == '' for c in cells):
+                continue
+            if len(cells) >= 7 and headers:
+                ticker_data = {
+                    'ticker': cells[0].strip(),
+                    'rs': safe_float(cells[1]),
+                    'price': safe_float(cells[2]),
+                    'float': cells[4].strip() if len(cells) > 4 else None,
+                    'eps': cells[5].strip() if len(cells) > 5 else None,
+                    'sales': cells[6].strip() if len(cells) > 6 else None,
+                    'inst': cells[7].strip() if len(cells) > 7 else None,
+                    'short': safe_float(cells[8]) if len(cells) > 8 else None,
+                }
+                tickers.append(ticker_data)
+    return tickers
+
+
+def safe_float(val):
+    if val is None:
+        return None
+    val = str(val).strip().replace(',', '')
+    if val in ('N/A', '—', '-', ''):
+        return None
+    try:
+        return float(val)
+    except ValueError:
+        return None
+
+
+def fetch_yahoo_macro_data():
+    """Fetch macro data from Yahoo Finance using yfinance."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("  Warning: yfinance not installed. Run: pip install yfinance")
+        return None
+
+    all_tickers = []
+    for group in MACRO_TICKERS.values():
+        for item in group:
+            all_tickers.append(item['yahoo'])
+
+    print(f"  Fetching {len(all_tickers)} tickers from Yahoo Finance...")
+
+    try:
+        data_map = {}
+
+        for ticker_info in [item for group in MACRO_TICKERS.values() for item in group]:
+            sym = ticker_info['yahoo']
+            try:
+                t = yf.Ticker(sym)
+                hist = t.history(period='1y')
+                if hist.empty:
+                    data_map[sym] = None
+                    continue
+
+                current = float(hist['Close'].iloc[-1])
+                prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else current
+
+                # 1D%
+                d1_pct = ((current - prev_close) / prev_close) * 100
+
+                # 1W% (5 trading days)
+                w1_close = float(hist['Close'].iloc[-6]) if len(hist) >= 6 else current
+                w1_pct = ((current - w1_close) / w1_close) * 100
+
+                # 52W High%
+                high_52w = float(hist['High'].max())
+                hi_pct = ((current - high_52w) / high_52w) * 100
+
+                # YTD%
+                ytd_start = hist[hist.index.year == hist.index[-1].year]
+                if not ytd_start.empty:
+                    ytd_open = float(ytd_start['Close'].iloc[0])
+                    ytd_pct = ((current - ytd_open) / ytd_open) * 100
+                else:
+                    ytd_pct = 0
+
+                data_map[sym] = {
+                    'price': round(current, 2),
+                    'd1': round(d1_pct, 2),
+                    'w1': round(w1_pct, 2),
+                    'hi52w': round(hi_pct, 2),
+                    'ytd': round(ytd_pct, 2),
+                }
+            except Exception as e:
+                print(f"    Warning: Failed to fetch {sym}: {e}")
+                data_map[sym] = None
+
+        # Build structured output
+        result = {}
+        for group_key, group_items in MACRO_TICKERS.items():
+            result[group_key] = []
+            for item in group_items:
+                entry = {
+                    'label': item['label'],
+                    'name': item['name'],
+                    'tv': item['tv'],
+                }
+                ydata = data_map.get(item['yahoo'])
+                if ydata:
+                    entry.update(ydata)
+                else:
+                    entry['price'] = None
+                result[group_key].append(entry)
+
+        result['timestamp'] = datetime.now().isoformat()
+        return result
+
+    except Exception as e:
+        print(f"  Error fetching Yahoo data: {e}")
+        return None
+
+
+def update_breadth_history():
+    """Update market breadth history with the latest reading."""
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    current = {}
+    if BREADTH_FILE.exists():
+        with open(BREADTH_FILE, 'r') as f:
+            current = json.load(f)
+
+    history = {
+        'ncfd': {'current': 0, 'history': []},
+        'mmfi': {'current': 0, 'history': []},
+        'mmtw': {'current': 0, 'history': []},
+        'mmth': {'current': 0, 'history': []},
+    }
+    if BREADTH_HISTORY_FILE.exists():
+        with open(BREADTH_HISTORY_FILE, 'r') as f:
+            history = json.load(f)
+
+    # Update each breadth indicator from the daily breadth file
+    for key in ['ncfd', 'mmfi', 'mmtw', 'mmth']:
+        if key in current:
+            val = current[key]
+            hist = history.get(key, {}).get('history', [])
+            if not hist or hist[-1] != val:
+                hist.append(val)
+            history[key] = {'current': val, 'history': hist[-5:]}
+
+    # Fetch NCFD/MMFI/MMTW/MMTH from barchart.com (Playwright required)
+    barchart_data = fetch_barchart_breadth()
+    if barchart_data:
+        for key in ['ncfd', 'mmfi', 'mmtw', 'mmth']:
+            if key in barchart_data and barchart_data[key] is not None:
+                val = barchart_data[key]
+                hist = history.get(key, {}).get('history', [])
+                if not hist or hist[-1] != val:
+                    hist.append(val)
+                history[key] = {'current': val, 'history': hist[-5:]}
+
+    # CNN Fear & Greed
+    fng = fetch_cnn_fear_greed()
+    if fng is not None:
+        history['fear_greed'] = fng
+
+    # NAAIM Exposure
+    naaim = fetch_naaim_exposure()
+    if naaim is not None:
+        history['naaim'] = naaim
+
+    history['timestamp'] = current.get('timestamp', datetime.now().isoformat())
+
+    with open(BREADTH_HISTORY_FILE, 'w') as f:
+        json.dump(history, f, indent=2)
+
+    ncfd_val = history.get('ncfd', {}).get('current', 'N/A')
+    mmfi_val = history.get('mmfi', {}).get('current', 'N/A')
+    mmtw_val = history.get('mmtw', {}).get('current', 'N/A')
+    mmth_val = history.get('mmth', {}).get('current', 'N/A')
+    print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}")
+    return history
+
+
+def fetch_barchart_breadth():
+    """Fetch NCFD, MMFI, MMTW and MMTH from barchart.com using Playwright (JS-rendered pages)."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  Warning: Playwright not installed. Run: pip install playwright && playwright install chromium")
+        return None
+
+    result = {}
+    symbols = {
+        'ncfd': 'https://www.barchart.com/stocks/quotes/$NCFD/overview',
+        'mmfi': 'https://www.barchart.com/stocks/quotes/$MMFI/overview',
+        'mmtw': 'https://www.barchart.com/stocks/quotes/$MMTW/overview',
+        'mmth': 'https://www.barchart.com/stocks/quotes/$MMTH/overview',
+    }
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.set_extra_http_headers({
+                'User-Agent': CONFIG["market_breadth"]["user_agent"]
+            })
+
+            for key, url in symbols.items():
+                try:
+                    page.goto(url, timeout=60000, wait_until='domcontentloaded')
+                    page.wait_for_selector('span.last-change', timeout=20000)
+                    import time
+                    time.sleep(3)
+
+                    price_text = page.evaluate('''() => {
+                        const el = document.querySelector('span.last-change[data-ng-class*="lastPrice"]');
+                        if (el && el.textContent.trim()) return el.textContent.trim();
+                        const first = document.querySelector('span.last-change');
+                        if (first && first.textContent.trim()) return first.textContent.trim();
+                        return null;
+                    }''')
+
+                    if price_text:
+                        val = float(price_text.replace('%', '').replace(',', '').strip())
+                        result[key] = round(val, 2)
+                        print(f"    {key.upper()} = {val}%")
+                    else:
+                        print(f"    Warning: Could not extract {key.upper()} price from barchart")
+                except Exception as e:
+                    print(f"    Warning: Failed to scrape {key.upper()}: {e}")
+
+            browser.close()
+    except Exception as e:
+        print(f"  Error with Playwright scraping: {e}")
+        return None
+
+    return result if result else None
+
+
+def fetch_cnn_fear_greed():
+    """Fetch CNN Fear & Greed Index using Playwright to bypass bot blocking."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  Warning: Playwright not installed. Cannot fetch CNN Fear & Greed.")
+        return None
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            url = 'https://production.dataviz.cnn.io/index/fearandgreed/graphdata'
+            response = page.goto(url, timeout=30000)
+            if response and response.ok:
+                data = response.json()
+                score = data.get('fear_and_greed', {}).get('score', None)
+                rating = data.get('fear_and_greed', {}).get('rating', None)
+                if score is not None:
+                    browser.close()
+                    return {'score': round(float(score), 1), 'rating': rating}
+            browser.close()
+    except Exception as e:
+        print(f"  Warning: Could not fetch CNN Fear & Greed via Playwright: {e}")
+    return None
+
+
+def fetch_naaim_exposure():
+    """Fetch NAAIM Exposure Index from their website."""
+    try:
+        url = 'https://www.naaim.org/programs/naaim-exposure-index/'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode('utf-8')
+
+        matches = re.findall(r'\[new Date\(\d{4},\s*\d+,\s*\d+\),\s*([-\d.]+)\s*\]', html)
+        if matches:
+            naaim_values = [float(m) for m in matches if float(m) < 1000]
+            if naaim_values:
+                return {'value': naaim_values[-1]}
+    except Exception as e:
+        print(f"  Warning: Could not fetch NAAIM: {e}")
+    return None
+
+
+def fetch_sheet_csv(url):
+    """Fetch CSV data from Google Sheets."""
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read().decode('utf-8')
+    except Exception as e:
+        print(f"  Warning: Could not fetch sheet: {e}")
+        return None
+
+
+def fetch_etf_data():
+    """Fetch leverage ETF data from Google Sheets."""
+    text = fetch_sheet_csv(ETF_SHEET_URL)
+    if not text:
+        return None
+
+    reader = csv.DictReader(io.StringIO(text))
+    etf_list = []
+    seen = set()
+    for row in reader:
+        ticker = row.get('Ticker', '').strip()
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        etf_list.append({
+            'ticker': ticker,
+            'name': row.get('Name', '').strip(),
+            'rs': row.get('Relative Strength', '').strip(),
+            'rs_sts': safe_float(row.get('RS_STS%', '').replace('%', '')),
+            'intraday': safe_float(row.get('Intraday %', '').replace('%', '')),
+            'daily': safe_float(row.get('Daily %', '').replace('%', '')),
+            'monthly': safe_float(row.get('Monthly %', '').replace('%', '')),
+        })
+    return etf_list
+
+
+def fetch_industry_etf_data():
+    """Fetch industry ETF data from Google Sheets — only the 'Industry' section."""
+    text = fetch_sheet_csv(INDUSTRY_ETF_SHEET_URL)
+    if not text:
+        return None
+
+    lines = text.strip().split('\n')
+    etf_list = []
+    seen = set()
+    current_section = ''
+    in_industry_section = False
+
+    for line in lines:
+        row = list(csv.reader(io.StringIO(line)))[0]
+        if len(row) < 7:
+            continue
+
+        col0 = row[0].strip()
+        col2 = row[2].strip()
+
+        if col0 == '1 Month RS':
+            current_section = col2
+            in_industry_section = current_section == 'Industry'
+            continue
+
+        if not in_industry_section:
+            continue
+
+        if col0 == 'Reference Index' or col2 == '':
+            continue
+
+        ticker = col2
+        if not ticker or ticker in seen:
+            continue
+
+        clean_ticker = ticker.split(':')[-1] if ':' in ticker else ticker
+
+        seen.add(ticker)
+        rs_sts = safe_float(row[1].replace('%', '')) if row[1] else None
+        name = row[3].strip() if len(row) > 3 else ''
+        intraday = safe_float(row[4].replace('%', '')) if len(row) > 4 and row[4] else None
+        daily = safe_float(row[5].replace('%', '')) if len(row) > 5 and row[5] else None
+        monthly = safe_float(row[6].replace('%', '')) if len(row) > 6 and row[6] else None
+        lev_long = row[7].strip() if len(row) > 7 else ''
+        lev_short = row[8].strip() if len(row) > 8 else ''
+
+        etf_list.append({
+            'ticker': clean_ticker,
+            'display_ticker': ticker,
+            'name': name,
+            'rs_sts': rs_sts,
+            'intraday': intraday,
+            'daily': daily,
+            'monthly': monthly,
+            'lev_long': lev_long,
+            'lev_short': lev_short,
+        })
+
+    return etf_list
+
+
+def enrich_themes_from_db(theme_data):
+    """Enrich theme ticker data with fresh inst% and short% from the fundamentals DB."""
+    import sqlite3
+    if not FUNDAMENTALS_DB.exists():
+        print("   No fundamentals DB found, skipping enrichment")
+        return
+
+    all_tickers = set()
+    for theme in theme_data.get('themes', []):
+        for t in theme.get('tickers', []):
+            if t.get('ticker'):
+                all_tickers.add(t['ticker'])
+
+    if not all_tickers:
+        return
+
+    conn = sqlite3.connect(FUNDAMENTALS_DB)
+    cursor = conn.cursor()
+    placeholders = ','.join(['?'] * len(all_tickers))
+    cursor.execute(f'''
+        SELECT ticker, inst_transactions, short_interest
+        FROM fundamentals
+        WHERE ticker IN ({placeholders})
+    ''', list(all_tickers))
+
+    db_data = {}
+    for row in cursor.fetchall():
+        db_data[row[0]] = {
+            'inst_trans': row[1],
+            'short_interest': row[2],
+        }
+    conn.close()
+
+    enriched_count = 0
+    for theme in theme_data.get('themes', []):
+        for t in theme.get('tickers', []):
+            ticker = t.get('ticker')
+            if ticker and ticker in db_data:
+                db = db_data[ticker]
+                if db['inst_trans'] is not None:
+                    val = db['inst_trans']
+                    t['inst'] = f"+{val:.1f}" if val > 0 else f"{val:.1f}"
+                    enriched_count += 1
+                if db['short_interest'] is not None:
+                    t['short'] = round(db['short_interest'], 1)
+
+    print(f"   Enriched {enriched_count} tickers with finviz inst%/short% from DB")
+
+
+def export_all():
+    """Main export function."""
+    print("=" * 60)
+    print("EXPORTING DASHBOARD DATA")
+    print("=" * 60)
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1. Parse latest report
+    report_file = find_latest_report()
+    theme_data = None
+    if report_file:
+        print(f"\n1. Parsing report: {report_file.name}")
+        theme_data = parse_report(report_file)
+
+        # Enrich theme tickers with fresh finviz data from fundamentals DB
+        enrich_themes_from_db(theme_data)
+
+        theme_output = OUTPUT_DIR / "themes.json"
+        with open(theme_output, 'w', encoding='utf-8') as f:
+            json.dump(theme_data, f, indent=2)
+        print(f"   → {theme_output} ({len(theme_data['themes'])} themes)")
+    else:
+        print("\n1. No report found, skipping themes export")
+
+    # 2. Update market breadth history
+    print("\n2. Updating market breadth history")
+    update_breadth_history()
+
+    # 3. Fetch leverage ETF data
+    print("\n3. Fetching leverage ETF data")
+    etf_data = fetch_etf_data()
+    if etf_data:
+        etf_output = OUTPUT_DIR / "etf_data.json"
+        with open(etf_output, 'w', encoding='utf-8') as f:
+            json.dump(etf_data, f, indent=2)
+        print(f"   → {etf_output} ({len(etf_data)} ETFs)")
+
+    # 4. Fetch Industry ETF data
+    print("\n4. Fetching industry ETF data")
+    industry_data = fetch_industry_etf_data()
+    if industry_data:
+        ind_output = OUTPUT_DIR / "industry_etf.json"
+        with open(ind_output, 'w', encoding='utf-8') as f:
+            json.dump(industry_data, f, indent=2)
+        print(f"   → {ind_output} ({len(industry_data)} industry ETFs)")
+
+    # 5. Fetch Yahoo Finance macro data
+    print("\n5. Fetching Yahoo Finance macro data")
+    macro_data = fetch_yahoo_macro_data()
+    if macro_data:
+        macro_output = OUTPUT_DIR / "macro_data.json"
+        with open(macro_output, 'w', encoding='utf-8') as f:
+            json.dump(macro_data, f, indent=2)
+        print(f"   → {macro_output}")
+    else:
+        print("   → Macro data fetch failed, charts will show TradingView data only")
+
+    # 6. Report meta
+    print("\n6. Writing report meta")
+    meta = {
+        'export_timestamp': datetime.now().isoformat(),
+        'report_date': theme_data.get('report_date') if theme_data else None,
+        'theme_count': len(theme_data.get('themes', [])) if theme_data else 0,
+        'etf_count': len(etf_data) if etf_data else 0,
+        'industry_etf_count': len(industry_data) if industry_data else 0,
+    }
+    with open(OUTPUT_DIR / "report_meta.json", 'w') as f:
+        json.dump(meta, f, indent=2)
+
+    print(f"\n{'=' * 60}")
+    print("EXPORT COMPLETE")
+    print(f"{'=' * 60}")
+
+
+if __name__ == '__main__':
+    export_all()

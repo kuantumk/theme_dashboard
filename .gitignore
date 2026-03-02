@@ -1,0 +1,66 @@
+# =============================================
+# SECURITY — Never commit secrets
+# =============================================
+.env
+
+# =============================================
+# Python
+# =============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# =============================================
+# Data files (large binaries, generated data)
+# =============================================
+*.pkl
+*.db
+data/price_daily.pkl
+data/price_daily_ta.pkl
+data/fundamentals.db
+data/market_breadth_latest.json
+
+# Keep tracked data files
+!data/ticker_themes.json
+!data/tickers_from_nasdaq.txt
+
+# =============================================
+# Generated output (recreated by workflow)
+# =============================================
+screening_output/
+reports/*.md
+!reports/.gitkeep
+logs/*.log
+!logs/.gitkeep
+
+# =============================================
+# Environment
+# =============================================
+.venv/
+venv/
+ENV/
+
+# =============================================
+# IDE
+# =============================================
+.vscode/
+.idea/
+*.swp
+*~
+
+# =============================================
+# OS
+# =============================================
+.DS_Store
+Thumbs.db
+
+# =============================================
+# Jupyter
+# =============================================
+.ipynb_checkpoints/
+*.ipynb

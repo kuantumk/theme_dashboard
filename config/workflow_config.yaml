@@ -1,0 +1,67 @@
+# Stock Themes Workflow Configuration
+
+# Data fetching
+price_data:
+  lookback_days: 500
+
+fundamental_data:
+  cache_days: 7
+  rate_limit_seconds: 2
+  max_retries: 3
+  database_path: "data/fundamentals.db"
+
+# RS calculation
+rs_score:
+  lookback_days: 27
+  benchmark_ticker: SPY
+
+# LLM settings (Gemini 3 Flash Preview)
+llm:
+  provider: gemini
+  model: gemini-3-flash-preview
+  api_key_env: GOOGLE_API_KEY
+  max_tokens: 8192
+  temperature: 0.3
+  thinking_level: 1
+
+# Market breadth
+market_breadth:
+  ncfd_url: "https://www.barchart.com/stocks/quotes/$NCFD/overview"
+  mmfi_url: "https://www.barchart.com/stocks/quotes/$MMFI/overview"
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# Theme analysis
+themes:
+  metadata_file: "data/ticker_themes.json"
+  google_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=2036042729"
+  min_stocks_per_theme: 3
+  hot_theme_rs_threshold: 70.0
+  high_momentum_threshold: 80.0
+  strength_weights:
+    rs_avg: 0.5
+    momentum: 0.3
+    breadth: 0.2
+
+# Dashboard data sources (Google Sheets)
+dashboard:
+  etf_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=1565194920"
+  industry_etf_sheet_url: "https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148"
+
+# Report settings
+report:
+  output_dir: "reports"
+  include_charts: false
+  email_report: false
+
+# Screeners to run
+screeners:
+  - topdog
+  - gamma
+  - htf
+  - darvas
+
+# Logging
+logging:
+  level: INFO
+  dir: "logs"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

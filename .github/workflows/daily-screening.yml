@@ -63,11 +63,14 @@ jobs:
         if: steps.dst-guard.outputs.should_run == 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: |
           python run_daily_workflow.py
 
       - name: Export dashboard data
         if: steps.dst-guard.outputs.should_run == 'true'
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: |
           python src/reporting/export_dashboard_data.py
 

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Monitor</title>
+  <meta name="description"
+    content="Real-time market dashboard with macro overview, stock themes, industry ETFs, and leveraged ETF tracking.">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-wrap">
+
+    <!-- ══ HEADER ════════════════════════════════════════ -->
+    <div class="hdr">
+      <div class="hdr-l">
+        <div class="logo">Market Monitor</div>
+        <div class="hdr-meta">
+          <div id="hdr-date">—</div>
+          <strong id="hdr-time">—</strong>
+        </div>
+        <div class="market-status" id="market-status">
+          <span class="dot" id="market-dot"></span>
+          <span id="market-status-text">CHECKING...</span>
+        </div>
+      </div>
+      <div class="hdr-r">
+        <div class="economic-events">
+          <button class="events-button">📅 MACRO EVENTS</button>
+          <div class="events-content" id="events-content">
+            <div class="events-loading">Loading events...</div>
+          </div>
+        </div>
+        <span id="dataRefresh" class="refresh-label">Last refresh: —</span>
+      </div>
+    </div>
+
+    <!-- ══ TAB BAR ═══════════════════════════════════════ -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="macro" id="tab-macro">▸ Macro Overview</button>
+      <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
+      <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
+      <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
+    </div>
+
+    <!-- ══ TAB 1: MACRO OVERVIEW ═════════════════════════ -->
+    <div class="tab-content active" id="content-macro">
+      <div class="left-panel" id="macro-left">
+
+        <!-- US Index Futures -->
+        <div class="card">
+          <div class="card-lbl">▸ US Index Futures & VIX</div>
+          <table>
+            <thead>
+              <tr>
+                <th class="l">Contract</th>
+                <th>Price</th>
+                <th>1D%</th>
+                <th>1W%</th>
+                <th>52WHi%</th>
+                <th>YTD%</th>
+              </tr>
+            </thead>
+            <tbody id="t-futures">
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:SPX500USD" data-nm="S&P 500"><span
+                      class="tn">ES</span><span class="ts">S&P 500</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:NAS100USD" data-nm="Nasdaq 100"><span
+                      class="tn">NQ</span><span class="ts">Nasdaq 100</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:US2000USD" data-nm="Russell 2000"><span
+                      class="tn">RTY</span><span class="ts">Russell 2000</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:US30USD" data-nm="Dow Jones"><span
+                      class="tn">YM</span><span class="ts">Dow Jones</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="VIX" data-nm="VIX Volatility Index"><span
+                      class="tn">VIX</span><span class="ts">Volatility Index</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Top 5 Crypto -->
+        <div class="card">
+          <div class="card-lbl">▸ Top 5 Cryptocurrencies</div>
+          <table>
+            <thead>
+              <tr>
+                <th class="l">Asset</th>
+                <th>Price</th>
+                <th>1D%</th>
+                <th>1W%</th>
+                <th>52WHi%</th>
+                <th>YTD%</th>
+              </tr>
+            </thead>
+            <tbody id="t-crypto">
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="BINANCE:BTCUSDT" data-nm="Bitcoin"><span
+                      class="tn">BTC</span><span class="ts">Bitcoin</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="BINANCE:ETHUSDT" data-nm="Ethereum"><span
+                      class="tn">ETH</span><span class="ts">Ethereum</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="BINANCE:SOLUSDT" data-nm="Solana"><span
+                      class="tn">SOL</span><span class="ts">Solana</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="BINANCE:XRPUSDT" data-nm="XRP"><span
+                      class="tn">XRP</span><span class="ts">XRP</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="BINANCE:BNBUSDT" data-nm="BNB"><span
+                      class="tn">BNB</span><span class="ts">BNB Chain</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Precious & Base Metals -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-lbl">▸ Precious Metals</div>
+            <table>
+              <thead>
+                <tr>
+                  <th class="l">Metal</th>
+                  <th>Price</th>
+                  <th>1D%</th>
+                  <th>1W%</th>
+                  <th>52WHi%</th>
+                  <th>YTD%</th>
+                </tr>
+              </thead>
+              <tbody id="t-precious">
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="OANDA:XAUUSD" data-nm="Gold"><span
+                        class="tn">Gold</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="OANDA:XAGUSD" data-nm="Silver"><span
+                        class="tn">Silver</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="OANDA:XPTUSD" data-nm="Platinum"><span
+                        class="tn">Platinum</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-lbl">▸ Base Metals</div>
+            <table>
+              <thead>
+                <tr>
+                  <th class="l">Metal</th>
+                  <th>Price</th>
+                  <th>1D%</th>
+                  <th>1W%</th>
+                  <th>52WHi%</th>
+                  <th>YTD%</th>
+                </tr>
+              </thead>
+              <tbody id="t-base">
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="CAPITALCOM:COPPER" data-nm="Copper"><span
+                        class="tn">Copper</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="COMEX:ALI1!" data-nm="Aluminum ETN"><span
+                        class="tn">Aluminum</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Energy Commodities (Brent removed) -->
+        <div class="card">
+          <div class="card-lbl">▸ Energy Commodities</div>
+          <table>
+            <thead>
+              <tr>
+                <th class="l">Commodity</th>
+                <th>Price</th>
+                <th>1D%</th>
+                <th>1W%</th>
+                <th>52WHi%</th>
+                <th>YTD%</th>
+              </tr>
+            </thead>
+            <tbody id="t-energy">
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:WTICOUSD" data-nm="WTI Crude Oil"><span
+                      class="tn">WTI Crude</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+              <tr>
+                <td class="l"><span class="tn-link" data-sym="OANDA:NATGASUSD" data-nm="Natural Gas"><span
+                      class="tn">Natural Gas</span></span></td>
+                <td colspan="5" class="loading">loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- US Treasury Yields & Dollar -->
+        <div class="g2">
+          <div class="card">
+            <div class="card-lbl">▸ US Treasury Yields</div>
+            <table>
+              <thead>
+                <tr>
+                  <th class="l">Tenor</th>
+                  <th>Yield</th>
+                  <th>1D%</th>
+                  <th>1W%</th>
+                  <th>52WHi%</th>
+                  <th>YTD%</th>
+                </tr>
+              </thead>
+              <tbody id="t-yields">
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="TVC:US02Y" data-nm="2Y Treasury"><span
+                        class="tn">2Y</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="TVC:US10Y" data-nm="10Y Treasury"><span
+                        class="tn">10Y</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="TVC:US30Y" data-nm="30Y Treasury"><span
+                        class="tn">30Y</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-lbl">▸ US Dollar</div>
+            <table>
+              <thead>
+                <tr>
+                  <th class="l">Instrument</th>
+                  <th>Price</th>
+                  <th>1D%</th>
+                  <th>1W%</th>
+                  <th>52WHi%</th>
+                  <th>YTD%</th>
+                </tr>
+              </thead>
+              <tbody id="t-dollar">
+                <tr>
+                  <td class="l"><span class="tn-link" data-sym="CAPITALCOM:DXY" data-nm="Dollar Index"><span
+                        class="tn">DXY</span><span class="ts">Dollar Index</span></span></td>
+                  <td colspan="5" class="loading">loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Market Breadth & Sentiment (expanded) -->
+        <div class="card">
+          <div class="card-lbl">▸ Market Breadth & Sentiment</div>
+          <div class="breadth-grid" id="breadth-container">
+            <div class="breadth-item">
+              <div class="breadth-label">CNN Fear & Greed</div>
+              <div class="breadth-value" id="fg-value">—</div>
+              <div class="breadth-sub" id="fg-rating"></div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">NAAIM Exposure</div>
+              <div class="breadth-value" id="naaim-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">NCFD</div>
+              <div class="breadth-value" id="ncfd-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMTW</div>
+              <div class="breadth-value" id="mmtw-value">—</div>
+              <div class="breadth-history" id="mmtw-history"></div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMFI</div>
+              <div class="breadth-value" id="mmfi-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMTH</div>
+              <div class="breadth-value" id="mmth-value">—</div>
+              <div class="breadth-history" id="mmth-history"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="resize-handle" data-panel="macro"></div>
+      <div class="right-panel" id="macro-right">
+        <div class="chart-header" id="macro-chart-header" style="display:none">
+          <span class="chart-symbol" id="macro-chart-sym"></span>
+          <span class="chart-name" id="macro-chart-name"></span>
+          <a class="chart-alert-btn" id="macro-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="macro-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📊</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 2: THEMES ═════════════════════════════════ -->
+    <div class="tab-content" id="content-themes">
+      <div class="left-panel" id="themes-left">
+        <div id="themes-container">
+          <div class="loading">Loading theme data...</div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="themes"></div>
+      <div class="right-panel" id="themes-right">
+        <div class="chart-header" id="themes-chart-header" style="display:none">
+          <span class="chart-symbol" id="themes-chart-sym"></span>
+          <span class="chart-name" id="themes-chart-name"></span>
+          <a class="chart-alert-btn" id="themes-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="themes-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 3: INDUSTRY ETFs ═════════════════════════ -->
+    <div class="tab-content" id="content-industry">
+      <div class="left-panel" id="industry-left">
+        <div class="card">
+          <div class="card-lbl">▸ Industry ETFs <span class="badge">sorted by RS_STS%</span></div>
+          <table id="industry-table">
+            <thead>
+              <tr>
+                <th class="l">Ticker</th>
+                <th class="l">Name</th>
+                <th class="sortable sorted-desc" data-sort="rs_sts" data-tab="industry">RS_STS%</th>
+                <th class="sortable" data-sort="intraday" data-tab="industry">Intra%</th>
+                <th class="sortable" data-sort="daily" data-tab="industry">Daily%</th>
+                <th class="sortable" data-sort="monthly" data-tab="industry">Monthly%</th>
+              </tr>
+            </thead>
+            <tbody id="industry-body">
+              <tr>
+                <td colspan="7" class="loading">Loading industry ETF data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="industry"></div>
+      <div class="right-panel" id="industry-right">
+        <div class="chart-header" id="industry-chart-header" style="display:none">
+          <span class="chart-symbol" id="industry-chart-sym"></span>
+          <span class="chart-name" id="industry-chart-name"></span>
+          <a class="chart-alert-btn" id="industry-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="industry-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">🏭</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 4: LEVERAGE ETFs ══════════════════════════ -->
+    <div class="tab-content" id="content-etf">
+      <div class="left-panel" id="etf-left">
+        <div class="card">
+          <div class="card-lbl">▸ Leveraged ETFs <span class="badge">sorted by RS_STS%</span></div>
+          <table id="etf-table">
+            <thead>
+              <tr>
+                <th class="l">Ticker</th>
+                <th class="l">Name</th>
+                <th class="sortable sorted-desc" data-sort="rs_sts" data-tab="etf">RS_STS%</th>
+                <th class="sortable" data-sort="intraday" data-tab="etf">Intra%</th>
+                <th class="sortable" data-sort="daily" data-tab="etf">Daily%</th>
+                <th class="sortable" data-sort="monthly" data-tab="etf">Monthly%</th>
+              </tr>
+            </thead>
+            <tbody id="etf-body">
+              <tr>
+                <td colspan="6" class="loading">Loading ETF data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="etf"></div>
+      <div class="right-panel" id="etf-right">
+        <div class="chart-header" id="etf-chart-header" style="display:none">
+          <span class="chart-symbol" id="etf-chart-sym"></span>
+          <span class="chart-name" id="etf-chart-name"></span>
+          <a class="chart-alert-btn" id="etf-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="etf-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📉</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

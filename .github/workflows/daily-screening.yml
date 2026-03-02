@@ -1,0 +1,131 @@
+name: Daily Stock Screening and Dashboard Deployment
+
+on:
+  schedule:
+    # Dual-cron for DST-aware 1:15 PM Pacific (Mon-Fri)
+    # 8:15 PM UTC = 1:15 PM PDT (Mar-Nov)
+    - cron: '15 20 * * 1-5'
+    # 9:15 PM UTC = 1:15 PM PST (Nov-Mar)
+    - cron: '15 21 * * 1-5'
+  workflow_dispatch:  # Allow manual triggering (always runs)
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "daily-screening"
+  cancel-in-progress: false
+
+jobs:
+  run-screening:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # DST guard: skip if current Pacific hour is not 13 (1 PM)
+      # Manual triggers (workflow_dispatch) always pass through
+      - name: DST guard - verify Pacific time
+        id: dst-guard
+        run: |
+          PACIFIC_HOUR=$(TZ='America/Los_Angeles' date +%H)
+          echo "Current Pacific hour: $PACIFIC_HOUR"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual trigger — skipping DST guard"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          elif [[ "$PACIFIC_HOUR" == "13" ]]; then
+            echo "Correct Pacific hour (1 PM) — proceeding"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "Wrong Pacific hour ($PACIFIC_HOUR) — skipping this run"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.dst-guard.outputs.should_run == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        if: steps.dst-guard.outputs.should_run == 'true'
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Run daily workflow
+        if: steps.dst-guard.outputs.should_run == 'true'
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          python run_daily_workflow.py
+
+      - name: Export dashboard data
+        if: steps.dst-guard.outputs.should_run == 'true'
+        run: |
+          python src/reporting/export_dashboard_data.py
+
+      - name: Commit and push results
+        if: steps.dst-guard.outputs.should_run == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add reports/ data/ logs/ docs/data/ screening_output/     
+          git diff --staged --quiet || git commit -m "Daily report $(date +'%Y-%m-%d')"      
+          git push || echo "No changes to push"
+
+      - name: Upload report as artifact
+        if: always() && steps.dst-guard.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report-${{ github.run_number }}
+          path: reports/
+          retention-days: 30
+
+      - name: Upload screening outputs as artifact
+        if: always() && steps.dst-guard.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screening-outputs-${{ github.run_number }}
+          path: screening_output/consolidated/*.txt
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure() && steps.dst-guard.outputs.should_run == 'true'
+        run: |
+          echo "::error::Daily workflow failed! Check logs for details."
+
+  # Deploy dashboard to GitHub Pages after successful screening
+  deploy-pages:
+    needs: run-screening
+    if: always() && needs.run-screening.result == 'success'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Pull latest commit (which includes the data just pushed)
+          ref: main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -443,8 +443,8 @@
           }
         });
 
-        // By default open ES1!
-        openChart('macro', 'CME_MINI:ES1!', 'S&P 500 Futures');
+        // By default open OANDA:SPX500USD
+        openChart('macro', 'OANDA:SPX500USD', 'S&P 500 Futures');
       })
       .catch(err => console.error('Error loading macro data:', err));
   }

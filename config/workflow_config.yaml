@@ -30,7 +30,6 @@ market_breadth:
   mmfi_url: "https://www.barchart.com/stocks/quotes/$MMFI/overview"
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
-# Theme analysis
 themes:
   metadata_file: "data/ticker_themes.json"
   google_sheet_gid: "2036042729"
@@ -38,9 +37,14 @@ themes:
   hot_theme_rs_threshold: 70.0
   high_momentum_threshold: 80.0
   strength_weights:
-    rs_avg: 0.5
-    momentum: 0.3
-    breadth: 0.2
+    bull_market: # MMFI > 50%
+      rs_avg: 0.2
+      momentum: 0.6
+      breadth: 0.2
+    bear_market: # MMFI <= 50%
+      rs_avg: 0.6
+      momentum: 0.1
+      breadth: 0.3
 
 # Dashboard data sources (Google Sheets)
 dashboard:

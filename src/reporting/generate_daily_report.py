@@ -416,15 +416,15 @@ if __name__ == '__main__':
         master_df = pd.read_csv(latest_master)
         date_str = Path(latest_master).stem.replace('master_', '')
 
-        # Analyze themes
-        theme_df = analyze_theme_strength(master_df)
-
         # Mock market breadth
         market_breadth = {
             'ncfd': 65.2,
             'mmfi': 58.7,
             'timestamp': datetime.now().isoformat()
         }
+
+        # Analyze themes
+        theme_df = analyze_theme_strength(master_df, market_breadth)
 
         # Generate report
         report = generate_daily_report(

@@ -45,7 +45,7 @@ def group_tickers_by_theme(ticker_themes: Dict[str, List[str]]) -> Dict[str, Lis
     return dict(theme_tickers)
 
 
-def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFrame) -> Dict:
+def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFrame, active_weights: Dict[str, float]) -> Dict:
     """Calculate aggregate metrics for a single theme."""
     theme_df = master_df[master_df['ticker'].isin(tickers)]
 
@@ -63,9 +63,9 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
     breadth_penalty = 1.0 if breadth >= 3 else (0.5 if breadth == 2 else 0.3)
 
     strength_score = (
-        WEIGHTS["rs_avg"] * median_rs +
-        WEIGHTS["momentum"] * high_momentum_pct +
-        WEIGHTS["breadth"] * np.log1p(breadth) * 10
+        active_weights["rs_avg"] * median_rs +
+        active_weights["momentum"] * high_momentum_pct +
+        active_weights["breadth"] * np.log1p(breadth) * 10
     ) * breadth_penalty
 
     top_stocks = theme_df.nlargest(3, 'rs_sts_pct')[['ticker', 'rs_sts_pct']].to_dict('records')
@@ -83,8 +83,8 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
     }
 
 
-def analyze_theme_strength(master_df: pd.DataFrame) -> pd.DataFrame:
-    """Analyze all themes and return ranked DataFrame."""
+def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None) -> pd.DataFrame:
+    """Analyze all themes and return ranked DataFrame using regime-based weights."""
     ticker_themes = load_ticker_themes()
 
     if not ticker_themes:
@@ -94,11 +94,24 @@ def analyze_theme_strength(master_df: pd.DataFrame) -> pd.DataFrame:
     theme_tickers = group_tickers_by_theme(ticker_themes)
 
     print(f"Analyzing {len(theme_tickers)} themes...")
+    
+    # Determine the market regime based on MMFI
+    # Default to bull market weights if market breadth is unavailable
+    mmfi_value = 51.0 
+    if market_breadth and 'mmfi' in market_breadth and market_breadth['mmfi'] is not None:
+         mmfi_value = market_breadth['mmfi']
+         
+    if mmfi_value > 50.0:
+        print(f"Regime: Bull Market (MMFI: {mmfi_value:.1f}%)")
+        active_weights = WEIGHTS.get("bull_market", {"rs_avg": 0.5, "momentum": 0.3, "breadth": 0.2})
+    else:
+        print(f"Regime: Bear/Choppy Market (MMFI: {mmfi_value:.1f}%)")
+        active_weights = WEIGHTS.get("bear_market", {"rs_avg": 0.5, "momentum": 0.3, "breadth": 0.2})
 
     theme_metrics = []
 
     for theme, tickers in theme_tickers.items():
-        metrics = calculate_theme_metrics(theme, tickers, master_df)
+        metrics = calculate_theme_metrics(theme, tickers, master_df, active_weights)
         if metrics:
             theme_metrics.append(metrics)
 

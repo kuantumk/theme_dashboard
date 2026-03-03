@@ -50,12 +50,13 @@ Your goal is to identify "Group Moves" and "Theme Momentum" from a raw list of t
 
 <task>
 I will provide a list of stock tickers that are currently showing momentum.
-Organize them into tightly defined "Themes."
+Organize them into tightly defined "Level 3 Narrative Themes."
 
 Rules for Grouping:
-1. Specificity > Generality: Do not group stocks just by sector (e.g., "Tech"). Group them by the *specific narrative* driving the momentum (e.g., "AI Liquid Cooling," "Quantum Computing Breakouts," "Nuclear Deregulation").
-2. Catalyst Correlation: If stocks are moving due to a shared event (e.g., a specific government bill, a commodity price spike, or a competitor's earnings), group them together.
-3. Singletons: If a stock is moving on its own idiosyncratic news (earnings, buyout, drug trial), place it in a category called "Individual Episodic Pivots / Singletons."
+1. Specificity > Generality: We already have Level 1 (Sector) and Level 2 (Industry Group) data. DO NOT group stocks just by broad sector (e.g., "Tech" or "Healthcare"). Instead, group them by the *specific narrative* driving their momentum (e.g., "AI Liquid Cooling", "Nuclear Deregulation", "GLP-1 Weight Loss").
+2. Cross-Sector Allowed: A true Level 3 Theme often transcends traditional sectors. For example, "AI - Optics" might include stocks from 'Electronic Technology' and 'Producer Manufacturing'. Group based on the real-world Catalyst. 
+3. Catalyst Correlation: If stocks are moving due to a shared event (e.g., a specific government bill, a commodity price spike, or a competitor's earnings), group them together.
+4. Singletons: If a stock is moving on its own idiosyncratic news (earnings, buyout, drug trial) without broader group sympathy, place it in a category called "Individual Episodic Pivots / Singletons."
 </task>
 
 <existing_themes>

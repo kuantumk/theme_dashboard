@@ -54,14 +54,34 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
 
     rs_values = theme_df['rs_sts_pct'].values
 
+    # Base RS metrics
     avg_rs = np.mean(rs_values)
     median_rs = np.median(rs_values)
     high_momentum_count = np.sum(rs_values > MOMENTUM_THRESHOLD)
     high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
     breadth = len(tickers)
 
+    # 1. Extension Metric (Avg distance from 25SMA)
+    # Using 25SMA as the proxy for short-term extension
+    dist_25sma = np.nan
+    if 'close' in theme_df.columns and 'sma25' in theme_df.columns:
+        # Avoid division by zero
+        theme_df_valid = theme_df[theme_df['sma25'] > 0]
+        if not theme_df_valid.empty:
+            pct_from_25sma = ((theme_df_valid['close'] - theme_df_valid['sma25']) / theme_df_valid['sma25']) * 100
+            dist_25sma = np.nanmean(pct_from_25sma)
+            
+    # 2. Theme Breakout Breadth (% of stocks above 50SMA)
+    pct_above_50sma = np.nan
+    if 'close' in theme_df.columns and 'sma50' in theme_df.columns:
+        theme_df_valid = theme_df[~theme_df['sma50'].isna()]
+        if len(theme_df_valid) > 0:
+            above_50sma_count = np.sum(theme_df_valid['close'] > theme_df_valid['sma50'])
+            pct_above_50sma = (above_50sma_count / len(theme_df_valid)) * 100
+
     breadth_penalty = 1.0 if breadth >= 3 else (0.5 if breadth == 2 else 0.3)
 
+    # Strength Score - Keep it simple but weight momentum
     strength_score = (
         active_weights["rs_avg"] * median_rs +
         active_weights["momentum"] * high_momentum_pct +
@@ -77,7 +97,10 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
         'high_momentum_count': high_momentum_count,
         'high_momentum_pct': high_momentum_pct,
         'breadth': breadth,
+        'pct_above_50sma': pct_above_50sma,
+        'avg_dist_25sma': dist_25sma,
         'strength_score': strength_score,
+        'market_relative_score': avg_rs,  # Already relative, so we use avg_rs directly
         'top_stocks': top_stocks,
         'tickers': tickers
     }
@@ -120,7 +143,12 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None)
     if theme_df.empty:
         return theme_df
 
-    theme_df = theme_df.sort_values('strength_score', ascending=False)
+    # Sort logic: if Bear Market, true absolute strength (market_relative_score) is paramount
+    if mmfi_value <= 50.0:
+        theme_df = theme_df.sort_values('market_relative_score', ascending=False)
+    else:
+        theme_df = theme_df.sort_values('strength_score', ascending=False)
+        
     theme_df['is_hot'] = theme_df['avg_rs_sts'] > HOT_THRESHOLD
 
     return theme_df
@@ -148,6 +176,8 @@ if __name__ == '__main__':
         print(f"Hot themes (RS > {HOT_THRESHOLD}%): {theme_df['is_hot'].sum()}\n")
 
         print("Top 10 Themes by Strength:")
-        print(theme_df[['theme', 'avg_rs_sts', 'high_momentum_pct', 'breadth', 'strength_score']].head(10).to_string())
+        # Format the new columns if they exist
+        pd.options.display.float_format = '{:.2f}'.format
+        print(theme_df[['theme', 'avg_rs_sts', 'high_momentum_pct', 'pct_above_50sma', 'avg_dist_25sma', 'strength_score']].head(10).to_string())
     else:
         print("No master tables found. Run create_master_table.py first.")

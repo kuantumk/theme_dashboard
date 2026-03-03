@@ -467,8 +467,9 @@
         // NAAIM
         if (data.naaim && data.naaim.value != null) {
           const el = document.getElementById('naaim-value');
-          el.textContent = data.naaim.value.toFixed(2) + '%';
-          el.className = 'breadth-value ' + (data.naaim.value >= 60 ? 'up' : data.naaim.value >= 40 ? 'neu' : 'dn');
+          const val = data.naaim.value;
+          el.textContent = val.toFixed(2) + '%';
+          el.className = 'breadth-value ' + (val < 40 ? 'up' : val > 95 ? 'dn' : 'neu');
         }
 
         // Render each breadth indicator with history as numbers
@@ -480,12 +481,21 @@
 
           if (valEl && val != null) {
             valEl.textContent = val.toFixed(1) + '%';
-            valEl.className = 'breadth-value ' + (val >= 50 ? 'up' : val >= 30 ? 'neu' : 'dn');
+            let colorClass = 'neu';
+            if (key === 'ncfd') {
+              if (val < 20) colorClass = 'up';
+              else if (val > 85) colorClass = 'dn';
+            } else if (key === 'mmfi') {
+              if (val < 15.5) colorClass = 'up';
+            } else if (key === 'mmth' || key === 'mmtw') {
+              if (val < 20) colorClass = 'up';
+            }
+            valEl.className = 'breadth-value ' + colorClass;
           }
           if (histEl) {
             // Only render history if there's more than 1 item, to avoid redundancy
             if (hist.length > 1) {
-              renderBreadthHistory(histEl, hist);
+              renderBreadthHistory(key, histEl, hist);
             } else {
               histEl.innerHTML = ''; // Hide history if redundant
             }
@@ -495,14 +505,22 @@
       .catch(err => console.error('Error loading breadth:', err));
   }
 
-  function renderBreadthHistory(el, history) {
+  function renderBreadthHistory(key, el, history) {
     el.innerHTML = '';
     const last5 = history.slice(-5);
     last5.forEach((val, i) => {
       const span = document.createElement('span');
       span.className = 'breadth-hist-num';
       span.textContent = val.toFixed(1);
-      const color = val >= 50 ? 'var(--green)' : val >= 30 ? 'var(--amber)' : 'var(--red)';
+      let color = 'var(--text3)';
+      if (key === 'ncfd') {
+        if (val < 20) color = 'var(--green)';
+        else if (val > 85) color = 'var(--red)';
+      } else if (key === 'mmfi') {
+        if (val < 15.5) color = 'var(--green)';
+      } else if (key === 'mmth' || key === 'mmtw') {
+        if (val < 20) color = 'var(--green)';
+      }
       span.style.color = color;
       span.title = 'Session ' + (i + 1) + ': ' + val.toFixed(1) + '%';
       el.appendChild(span);

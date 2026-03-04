@@ -100,7 +100,7 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
         'pct_above_50sma': pct_above_50sma,
         'avg_dist_25sma': dist_25sma,
         'strength_score': strength_score,
-        'market_relative_score': avg_rs,  # Already relative, so we use avg_rs directly
+        'market_relative_score': avg_rs * breadth_penalty,  # Apply breadth penalty so singletons don't dominate
         'top_stocks': top_stocks,
         'tickers': tickers
     }

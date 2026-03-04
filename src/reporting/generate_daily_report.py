@@ -251,13 +251,18 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_stocks_df['inst_trans'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('inst_trans'))
         theme_stocks_df['short_interest'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('short_interest'))
 
-        # Sort by RS
-        theme_stocks_df = theme_stocks_df.sort_values('rs_sts_pct', ascending=False)
+        # Sort by RS%, then ADR% as tiebreaker — show only top tickers
+        MAX_TICKERS_PER_THEME = 10
+        theme_stocks_df = theme_stocks_df.sort_values(
+            ['rs_sts_pct', 'adr_pct'], ascending=[False, False]
+        )
+        total_in_theme = len(theme_stocks_df)
+        theme_stocks_display = theme_stocks_df.head(MAX_TICKERS_PER_THEME)
 
         section += "| Ticker |  RS% |   Price | Vol(M) | Float(M) | EPS% | Sales% | Inst% | Short% |\n"
         section += "|:-------|-----:|--------:|-------:|---------:|-----:|-------:|------:|-------:|\n"
 
-        for _, stock in theme_stocks_df.iterrows():
+        for _, stock in theme_stocks_display.iterrows():
             t = stock['ticker']
             displayed_tickers.add(t)
 

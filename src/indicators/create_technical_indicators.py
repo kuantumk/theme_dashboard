@@ -47,6 +47,7 @@ def calculate_technical_indicators():
             daily['sma30'] = daily['close'].rolling(window=30, min_periods=1).mean()
             daily['sma50'] = daily['close'].rolling(window=50, min_periods=1).mean()
             daily['sma100'] = daily['close'].rolling(window=100, min_periods=1).mean()
+            daily['sma200'] = daily['close'].rolling(window=200, min_periods=1).mean()
 
             # MIN/MAX lookbacks
             for lookback in min_max_lookback:

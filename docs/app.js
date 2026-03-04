@@ -177,7 +177,7 @@
     symEl.textContent = sym;
     nameEl.textContent = name;
 
-    alertEl.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym);
+    alertEl.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym) + '&interval=D';
 
     const containerId = 'tv_container_' + tabId;
     areaEl.innerHTML = `<div id="${containerId}" style="width:100%;height:100%"></div>`;

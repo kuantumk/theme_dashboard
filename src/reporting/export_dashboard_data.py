@@ -50,7 +50,7 @@ MACRO_TICKERS = {
     ],
     'base_metals': [
         {'yahoo': 'HG=F', 'label': 'Copper', 'name': 'Copper', 'tv': 'CAPITALCOM:COPPER'},
-        {'yahoo': 'ALI=F', 'label': 'Aluminum', 'name': 'Aluminum', 'tv': 'COMEX:ALI1!'},
+        {'yahoo': 'ALI=F', 'label': 'Aluminum', 'name': 'Aluminum', 'tv': 'CAPITALCOM:ALUMINUM'},
     ],
     'energy': [
         {'yahoo': 'CL=F', 'label': 'WTI Crude', 'name': 'WTI Crude Oil', 'tv': 'OANDA:WTICOUSD'},

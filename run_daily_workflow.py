@@ -225,7 +225,7 @@ def run_daily_workflow():
         logger.info(f"{'='*80}")
 
         master_df = pd.read_csv(latest_master)
-        theme_df = analyze_theme_strength(master_df, market_breadth)
+        theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
         logger.info(f"✓ Analyzed {len(theme_df)} themes\n")
 

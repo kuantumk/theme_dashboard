@@ -45,12 +45,25 @@ def group_tickers_by_theme(ticker_themes: Dict[str, List[str]]) -> Dict[str, Lis
     return dict(theme_tickers)
 
 
-def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFrame, active_weights: Dict[str, float]) -> Dict:
+def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFrame, active_weights: Dict[str, float], screened_tickers: set = None) -> Dict:
+    """
+    Calculate aggregate metrics for a single theme.
+
+    If screened_tickers is provided, scoring is based ONLY on the tickers that
+    passed screening that day. Non-screened tickers are still tracked for breadth
+    context but don't drag down the score.
+    """
     """Calculate aggregate metrics for a single theme."""
-    theme_df = master_df[master_df['ticker'].isin(tickers)]
+    # Score only using the screened subset so un-screened weak members don't
+    # pull down themes that have strong screened tickers (e.g. Drones with RCAT/UMAC).
+    scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else tickers
+    theme_df = master_df[master_df['ticker'].isin(scoring_tickers)]
 
     if len(theme_df) == 0:
         return None
+
+    # Total breadth is the full roster in ticker_themes.json (for informational purposes)
+    total_breadth = len(tickers)
 
     rs_values = theme_df['rs_sts_pct'].values
 
@@ -59,7 +72,8 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
     median_rs = np.median(rs_values)
     high_momentum_count = np.sum(rs_values > MOMENTUM_THRESHOLD)
     high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
-    breadth = len(tickers)
+    # Active breadth = number of screened tickers that scored in this theme
+    breadth = len(theme_df)
 
     # 1. Extension Metric (Avg distance from 25SMA)
     # Using 25SMA as the proxy for short-term extension
@@ -106,7 +120,7 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
     }
 
 
-def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None) -> pd.DataFrame:
+def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None, screened_tickers: set = None) -> pd.DataFrame:
     """Analyze all themes and return ranked DataFrame using regime-based weights."""
     ticker_themes = load_ticker_themes()
 
@@ -134,7 +148,7 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None)
     theme_metrics = []
 
     for theme, tickers in theme_tickers.items():
-        metrics = calculate_theme_metrics(theme, tickers, master_df, active_weights)
+        metrics = calculate_theme_metrics(theme, tickers, master_df, active_weights, screened_tickers)
         if metrics:
             theme_metrics.append(metrics)
 

@@ -43,6 +43,7 @@
       <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
+      <button class="tab-btn" data-tab="ep" id="tab-ep">⚡ EP Scanner</button>
     </div>
 
     <!-- ══ TAB 1: MACRO OVERVIEW ═════════════════════════ -->
@@ -443,6 +444,50 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ══ TAB 5: EP SCANNER ══════════════════════════════ -->
+  <div class="tab-content" id="content-ep">
+    <div class="left-panel" id="ep-left">
+      <div class="card">
+        <div class="card-lbl">⚡ Earnings Pivot Scanner &nbsp;<span class="badge">AMC · After-Hours</span>
+          <span class="ep-refresh-info" id="ep-refresh-info">—</span>
+        </div>
+        <table id="ep-table">
+          <thead>
+            <tr>
+              <th class="l">Ticker</th>
+              <th class="sortable sorted-asc" data-sort="float" data-tab="ep">Float(M)</th>
+              <th class="sortable" data-sort="short" data-tab="ep">Short%</th>
+              <th class="sortable" data-sort="dist_52w_high" data-tab="ep">52W Hi%</th>
+              <th class="sortable" data-sort="atr_multiple" data-tab="ep">ATR×</th>
+              <th class="sortable" data-sort="ah_price" data-tab="ep">AH Price</th>
+            </tr>
+          </thead>
+          <tbody id="ep-body">
+            <tr>
+              <td colspan="6" class="loading">Loading EP scan data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="resize-handle" data-panel="ep"></div>
+    <div class="right-panel" id="ep-right">
+      <div class="chart-header" id="ep-chart-header" style="display:none">
+        <span class="chart-symbol" id="ep-chart-sym"></span>
+        <span class="chart-name" id="ep-chart-name"></span>
+        <a class="chart-alert-btn" id="ep-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+      </div>
+      <div class="chart-area" id="ep-chart-area">
+        <div class="chart-placeholder">
+          <div class="placeholder-icon">⚡</div>
+          <div>Click any ticker to open chart</div>
+          <div class="placeholder-sub">Daily timeframe · MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

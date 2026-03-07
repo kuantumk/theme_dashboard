@@ -17,15 +17,17 @@
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, industry: null, etf: null };
+  let activeCharts = { macro: null, themes: null, industry: null, etf: null, ep: null };
 
   // Sort state per table
   let sortState = {
     etf: { column: 'rs_sts', dir: 'desc' },
-    industry: { column: 'rs_sts', dir: 'desc' }
+    industry: { column: 'rs_sts', dir: 'desc' },
+    ep: { column: 'float', dir: 'asc' },
   };
   let etfData = [];
   let industryData = [];
+  let epData = [];
 
   // ── INIT ──────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
@@ -42,7 +44,10 @@
     loadIndustryETFData();
     loadETFData();
     loadMacroEvents();
+    loadEPScannerData();
     initTableSort();
+    // Auto-refresh EP data every 10 minutes
+    setInterval(loadEPScannerData, 10 * 60 * 1000);
   });
 
   // ── CLOCK ─────────────────────────────────────────────
@@ -155,6 +160,7 @@
       else if (tabContent.id === 'content-themes') tabId = 'themes';
       else if (tabContent.id === 'content-industry') tabId = 'industry';
       else if (tabContent.id === 'content-etf') tabId = 'etf';
+      else if (tabContent.id === 'content-ep') tabId = 'ep';
       else return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
@@ -230,7 +236,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, industry: -1, etf: -1 };
+  let navIndices = { macro: -1, themes: -1, industry: -1, etf: -1, ep: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -797,7 +803,7 @@
     tbody.innerHTML = html;
   }
 
-  // ── TABLE SORT (generic for both ETF and Industry) ────
+  // ── TABLE SORT (generic for ETF, Industry, and EP) ────
   function initTableSort() {
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
@@ -819,9 +825,111 @@
         th.classList.add(state.dir === 'desc' ? 'sorted-desc' : 'sorted-asc');
 
         if (tab === 'industry') sortAndRenderIndustry();
+        else if (tab === 'ep') sortAndRenderEP();
         else sortAndRenderETF();
       });
     });
+  }
+
+  // ── EP SCANNER DATA ──────────────────────────────────────
+  const EP_SCAN_URL = 'data/ep_scan.json';
+
+  function loadEPScannerData() {
+    fetch(EP_SCAN_URL + '?_=' + Date.now())  // bust cache
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        epData = data.tickers || [];
+        sortAndRenderEP();
+
+        // Update refresh badge
+        const infoEl = document.getElementById('ep-refresh-info');
+        if (infoEl && data.timestamp) {
+          const dt = new Date(data.timestamp);
+          infoEl.textContent = 'Updated: ' + dt.toLocaleDateString() + ' ' +
+            dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+      })
+      .catch(() => {
+        document.getElementById('ep-body').innerHTML =
+          '<tr><td colspan="6" class="no-data">EP scan data not available.</td></tr>';
+        const infoEl = document.getElementById('ep-refresh-info');
+        if (infoEl) infoEl.textContent = 'No data';
+      });
+  }
+
+  function sortAndRenderEP() {
+    const s = sortState.ep;
+    epData.sort((a, b) => {
+      const av = a[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
+      const bv = b[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
+      return s.dir === 'desc' ? bv - av : av - bv;
+    });
+    renderEPTable();
+  }
+
+  function renderEPTable() {
+    const tbody = document.getElementById('ep-body');
+    if (!epData.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="no-data">No EP scan results for today.</td></tr>';
+      return;
+    }
+
+    let html = '';
+    epData.forEach(row => {
+      const floatClass = (row.float != null && row.float < 150) ? 'ep-float-green' : 'neu';
+      const shortClass = epShortClass(row.short);
+      const dist52wClass = epDist52wClass(row.dist_52w_high);
+      const atrClass = epAtrClass(row.atr_multiple);
+
+      const floatStr = row.float != null ? row.float.toFixed(1) + 'M' : '—';
+      const shortStr = row.short != null ? row.short.toFixed(1) + '%' : '—';
+      const dist52wStr = row.dist_52w_high != null
+        ? (row.dist_52w_high > 0 ? '+' : '') + row.dist_52w_high.toFixed(1) + '%'
+        : '—';
+      const atrStr = row.atr_multiple != null ? row.atr_multiple.toFixed(1) + '×' : '—';
+      const ahStr = row.ah_price != null ? '$' + row.ah_price.toFixed(2) : '—';
+
+      html += `
+        <tr>
+          <td class="l">
+            <span class="tn-link" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP Scan')}">${escHtml(row.ticker)}</span>
+          </td>
+          <td class="${floatClass}">${floatStr}</td>
+          <td class="${shortClass}">${shortStr}</td>
+          <td class="${dist52wClass}">${dist52wStr}</td>
+          <td class="${atrClass}">${atrStr}</td>
+          <td class="neu">${ahStr}</td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }
+
+  // EP color helpers
+  function epShortClass(val) {
+    if (val == null) return 'neu';
+    if (val > 20) return 'up';
+    if (val > 10) return 'short-blue';
+    return 'neu';
+  }
+
+  function epDist52wClass(val) {
+    // val is % distance: (ah_price - 52w_high) / 52w_high * 100
+    // green if better than -10% (i.e., val > -10)
+    if (val == null) return 'neu';
+    return val > -10 ? 'up' : 'neu';
+  }
+
+  function epAtrClass(val) {
+    // ATR multiple: green <5, blue <7, normal <9, red >=10
+    if (val == null) return 'neu';
+    if (val < 5) return 'up';
+    if (val < 7) return 'short-blue';
+    if (val < 9) return 'neu';
+    return 'dn';
   }
 
   // ── STATUS UPDATE ─────────────────────────────────────

@@ -890,7 +890,10 @@
         ? (row.dist_52w_high > 0 ? '+' : '') + row.dist_52w_high.toFixed(1) + '%'
         : '—';
       const atrStr = row.atr_multiple != null ? row.atr_multiple.toFixed(1) + '×' : '—';
-      const ahStr = row.ah_price != null ? '$' + row.ah_price.toFixed(2) : '—';
+      const ahChgStr = row.ah_chg_pct != null
+        ? (row.ah_chg_pct > 0 ? '+' : '') + row.ah_chg_pct.toFixed(2) + '%'
+        : '—';
+      const ahChgClass = pctClass(row.ah_chg_pct);
 
       html += `
         <tr>
@@ -901,7 +904,7 @@
           <td class="${shortClass}">${shortStr}</td>
           <td class="${dist52wClass}">${dist52wStr}</td>
           <td class="${atrClass}">${atrStr}</td>
-          <td class="neu">${ahStr}</td>
+          <td class="${ahChgClass}">${ahChgStr}</td>
         </tr>
       `;
     });

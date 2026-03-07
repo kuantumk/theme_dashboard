@@ -164,6 +164,7 @@ def calculate_technicals(ticker: str, ah_price: float) -> dict | None:
             'atr_multiple': round(atr_multiple, 2),
             'sma50': round(sma50, 2),
             'atr': round(atr, 2),
+            'close': round(last_close, 2),
         }
 
     except Exception as e:
@@ -215,18 +216,21 @@ def run_ep_scan() -> list:
             print(f"    Skip {ticker}: technicals failed")
             continue
 
+        close_price = technicals['close']
+        ah_chg_pct = (ah_price - close_price) / close_price * 100 if close_price else None
+
         results.append({
             'ticker': ticker,
             'float': fundamentals['float'],
             'short': fundamentals['short'],
-            'ah_price': round(ah_price, 2),
+            'ah_chg_pct': round(ah_chg_pct, 2) if ah_chg_pct is not None else None,
             'dist_52w_high': technicals['dist_52w_high'],
             'atr_multiple': technicals['atr_multiple'],
             'sma50': technicals['sma50'],
             'atr': technicals['atr'],
         })
         print(f"    OK: float={fundamentals['float']}M, short={fundamentals['short']}%, "
-              f"AH={ah_price:.2f}, dist52w={technicals['dist_52w_high']:.1f}%, "
+              f"AH={ah_price:.2f} ({ah_chg_pct:+.1f}%), dist52w={technicals['dist_52w_high']:.1f}%, "
               f"ATR×={technicals['atr_multiple']:.1f}")
 
     # Sort by float ASC (default dashboard sort)

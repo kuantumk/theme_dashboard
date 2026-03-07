@@ -65,6 +65,12 @@ def calculate_technical_indicators():
             # ADR%
             daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=1).mean() - 1
 
+            # Inside Day: current bar's range is within previous bar's range
+            daily['inside_day'] = (daily['high'] < daily['high'].shift(1)) & (daily['low'] > daily['low'].shift(1))
+
+            # Tight Day: close is very near open (abs distance < 20% of ADR% in dollar terms)
+            daily['tight_day'] = (daily['close'] - daily['open']).abs() < 0.2 * daily['adr_pct'] * daily['close']
+
             # Performance metrics
             for month, dt in zip(months, dts):
                 daily[f'perf_{month}mo'] = daily['close'] / daily['close'].shift(periods=dt) - 1

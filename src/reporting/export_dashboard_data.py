@@ -15,8 +15,9 @@ from datetime import datetime
 
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
-    DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID
+    DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE
 )
+import src.stock_utils as su
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
@@ -603,6 +604,37 @@ def enrich_themes_from_db(theme_data):
     print(f"   Enriched {enriched_count} tickers with finviz inst%/short% from DB")
 
 
+def load_day_pattern_flags():
+    """Load inside_day and tight_day flags from the latest price data."""
+    try:
+        daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
+    except Exception as e:
+        print(f"   Warning: Could not load price data for day patterns: {e}")
+        return {}
+
+    flags = {}
+    for ticker, df in daily_price.items():
+        if ticker.startswith('^') or df.empty:
+            continue
+        last = df.iloc[-1]
+        inside = bool(last.get('inside_day', False))
+        tight = bool(last.get('tight_day', False))
+        if inside or tight:
+            flags[ticker] = True
+    return flags
+
+
+def enrich_with_day_pattern(data_list, flags, ticker_key='ticker'):
+    """Add day_pattern flag to a list of ticker dicts."""
+    count = 0
+    for item in data_list:
+        tk = item.get(ticker_key, '')
+        if tk in flags:
+            item['day_pattern'] = True
+            count += 1
+    return count
+
+
 def export_all():
     """Main export function."""
     print("=" * 60)
@@ -610,6 +642,7 @@ def export_all():
     print("=" * 60)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    day_flags = None  # Lazy-loaded day pattern flags
 
     # 1. Parse latest report
     report_file = find_latest_report()
@@ -620,6 +653,13 @@ def export_all():
 
         # Enrich theme tickers with fresh finviz data from fundamentals DB
         enrich_themes_from_db(theme_data)
+
+        # Enrich theme tickers with inside_day / tight_day flags
+        day_flags = load_day_pattern_flags()
+        theme_pattern_count = 0
+        for theme in theme_data.get('themes', []):
+            theme_pattern_count += enrich_with_day_pattern(theme.get('tickers', []), day_flags)
+        print(f"   Enriched {theme_pattern_count} theme tickers with day pattern flags")
 
         theme_output = OUTPUT_DIR / "themes.json"
         with open(theme_output, 'w', encoding='utf-8') as f:
@@ -636,6 +676,10 @@ def export_all():
     print("\n3. Fetching leverage ETF data")
     etf_data = fetch_etf_data()
     if etf_data:
+        if day_flags is None:
+            day_flags = load_day_pattern_flags()
+        etf_pattern_count = enrich_with_day_pattern(etf_data, day_flags)
+        print(f"   Enriched {etf_pattern_count} leverage ETFs with day pattern flags")
         etf_output = OUTPUT_DIR / "etf_data.json"
         with open(etf_output, 'w', encoding='utf-8') as f:
             json.dump(etf_data, f, indent=2)
@@ -645,6 +689,10 @@ def export_all():
     print("\n4. Fetching industry ETF data")
     industry_data = fetch_industry_etf_data()
     if industry_data:
+        if day_flags is None:
+            day_flags = load_day_pattern_flags()
+        ind_pattern_count = enrich_with_day_pattern(industry_data, day_flags)
+        print(f"   Enriched {ind_pattern_count} industry ETFs with day pattern flags")
         ind_output = OUTPUT_DIR / "industry_etf.json"
         with open(ind_output, 'w', encoding='utf-8') as f:
             json.dump(industry_data, f, indent=2)

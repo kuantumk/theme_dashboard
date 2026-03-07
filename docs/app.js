@@ -587,7 +587,7 @@
         html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -695,7 +695,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>
@@ -790,7 +790,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>

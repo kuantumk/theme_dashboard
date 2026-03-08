@@ -650,11 +650,11 @@ def fetch_etf_day_patterns(tickers):
         print("   Warning: yfinance not installed, skipping ETF day patterns")
         return {}
 
-    # Download 30 days to have enough for 20-day ADR% rolling window
+    # Download 2 months to securely have enough for 20-day ADR% rolling window (1mo can have <20 trading days depending on holidays)
     unique_tickers = list(set(tickers))
     print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
     try:
-        data = yf.download(unique_tickers, period='1mo', progress=False, group_by='ticker')
+        data = yf.download(unique_tickers, period='2mo', progress=False, group_by='ticker')
     except Exception as e:
         print(f"   Warning: yfinance download failed: {e}")
         return {}

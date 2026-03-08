@@ -645,6 +645,7 @@ def fetch_etf_day_patterns(tickers):
         return {}
     try:
         import yfinance as yf
+        import pandas as pd
     except ImportError:
         print("   Warning: yfinance not installed, skipping ETF day patterns")
         return {}
@@ -670,7 +671,7 @@ def fetch_etf_day_patterns(tickers):
                 continue
 
             # ADR% (20-day rolling avg of high/low ratio - 1)
-            adr_pct = (df['High'] / df['Low']).rolling(window=20, min_periods=1).mean() - 1
+            adr_pct = (pd.to_numeric(df['High']) / pd.to_numeric(df['Low'])).rolling(window=20, min_periods=1).mean() - 1
 
             last = df.iloc[-1]
             prev = df.iloc[-2]
@@ -683,7 +684,8 @@ def fetch_etf_day_patterns(tickers):
 
             if inside or tight:
                 flags[ticker] = True
-        except Exception:
+        except Exception as e:
+            print(f"     Error processing {ticker}: {e}")
             continue
 
     print(f"   Found {len(flags)} ETFs with inside_day or tight_day")

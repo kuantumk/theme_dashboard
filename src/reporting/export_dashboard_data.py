@@ -635,6 +635,61 @@ def enrich_with_day_pattern(data_list, flags, ticker_key='ticker'):
     return count
 
 
+def fetch_etf_day_patterns(tickers):
+    """Download recent OHLC from yfinance for ETF tickers and compute day patterns.
+
+    This is a standalone fetch that does NOT pollute the main price data pipeline.
+    Returns a dict of {ticker: True} for tickers with inside_day or tight_day.
+    """
+    if not tickers:
+        return {}
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("   Warning: yfinance not installed, skipping ETF day patterns")
+        return {}
+
+    # Download 30 days to have enough for 20-day ADR% rolling window
+    unique_tickers = list(set(tickers))
+    print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
+    try:
+        data = yf.download(unique_tickers, period='1mo', progress=False, group_by='ticker')
+    except Exception as e:
+        print(f"   Warning: yfinance download failed: {e}")
+        return {}
+
+    flags = {}
+    for ticker in unique_tickers:
+        try:
+            if len(unique_tickers) == 1:
+                df = data
+            else:
+                df = data[ticker]
+            df = df.dropna(subset=['Close'])
+            if len(df) < 2:
+                continue
+
+            # ADR% (20-day rolling avg of high/low ratio - 1)
+            adr_pct = (df['High'] / df['Low']).rolling(window=20, min_periods=1).mean() - 1
+
+            last = df.iloc[-1]
+            prev = df.iloc[-2]
+
+            # Inside Day
+            inside = float(last['High']) < float(prev['High']) and float(last['Low']) > float(prev['Low'])
+
+            # Tight Day
+            tight = abs(float(last['Close']) - float(last['Open'])) < 0.2 * float(adr_pct.iloc[-1]) * float(last['Close'])
+
+            if inside or tight:
+                flags[ticker] = True
+        except Exception:
+            continue
+
+    print(f"   Found {len(flags)} ETFs with inside_day or tight_day")
+    return flags
+
+
 def export_all():
     """Main export function."""
     print("=" * 60)
@@ -676,10 +731,6 @@ def export_all():
     print("\n3. Fetching leverage ETF data")
     etf_data = fetch_etf_data()
     if etf_data:
-        if day_flags is None:
-            day_flags = load_day_pattern_flags()
-        etf_pattern_count = enrich_with_day_pattern(etf_data, day_flags)
-        print(f"   Enriched {etf_pattern_count} leverage ETFs with day pattern flags")
         etf_output = OUTPUT_DIR / "etf_data.json"
         with open(etf_output, 'w', encoding='utf-8') as f:
             json.dump(etf_data, f, indent=2)
@@ -689,13 +740,31 @@ def export_all():
     print("\n4. Fetching industry ETF data")
     industry_data = fetch_industry_etf_data()
     if industry_data:
-        if day_flags is None:
-            day_flags = load_day_pattern_flags()
-        ind_pattern_count = enrich_with_day_pattern(industry_data, day_flags)
-        print(f"   Enriched {ind_pattern_count} industry ETFs with day pattern flags")
         ind_output = OUTPUT_DIR / "industry_etf.json"
         with open(ind_output, 'w', encoding='utf-8') as f:
             json.dump(industry_data, f, indent=2)
+        print(f"   → {ind_output} ({len(industry_data)} industry ETFs)")
+
+    # 4b. Enrich ETFs with inside_day / tight_day via standalone yfinance fetch
+    all_etf_tickers = []
+    if etf_data:
+        all_etf_tickers += [e['ticker'] for e in etf_data]
+    if industry_data:
+        all_etf_tickers += [e['ticker'] for e in industry_data]
+    if all_etf_tickers:
+        print("\n   Computing day patterns for ETFs...")
+        etf_day_flags = fetch_etf_day_patterns(all_etf_tickers)
+        if etf_day_flags:
+            if etf_data:
+                etf_pc = enrich_with_day_pattern(etf_data, etf_day_flags)
+                print(f"   Enriched {etf_pc} leverage ETFs with day pattern flags")
+                with open(OUTPUT_DIR / "etf_data.json", 'w', encoding='utf-8') as f:
+                    json.dump(etf_data, f, indent=2)
+            if industry_data:
+                ind_pc = enrich_with_day_pattern(industry_data, etf_day_flags)
+                print(f"   Enriched {ind_pc} industry ETFs with day pattern flags")
+                with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
+                    json.dump(industry_data, f, indent=2)
         print(f"   → {ind_output} ({len(industry_data)} industry ETFs)")
 
     # 5. Fetch Yahoo Finance macro data

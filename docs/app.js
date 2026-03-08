@@ -710,17 +710,20 @@
 
   // ── LEVERAGE ETF DATA ─────────────────────────────────
   function loadETFData() {
-    fetchCSV(ETF_SHEET_URL)
-      .then(rows => {
-        etfData = parseETFRows(rows);
+    fetch(ETF_FALLBACK_URL)
+      .then(r => {
+        if (!r.ok) throw new Error('Not found');
+        return r.json();
+      })
+      .then(data => {
+        etfData = data;
         sortAndRenderETF();
       })
-      .catch(err => {
-        console.warn('CSV fetch failed, trying local fallback:', err);
-        fetch(ETF_FALLBACK_URL)
-          .then(r => r.json())
-          .then(data => {
-            etfData = data;
+      .catch(() => {
+        console.warn('JSON fetch failed, trying CSV fallback');
+        fetchCSV(ETF_SHEET_URL)
+          .then(rows => {
+            etfData = parseETFRows(rows);
             sortAndRenderETF();
           })
           .catch(() => {

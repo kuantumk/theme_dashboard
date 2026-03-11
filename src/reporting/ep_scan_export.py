@@ -26,7 +26,7 @@ except ImportError:
     print("Warning: finvizfinance not installed. Install with: pip install finvizfinance")
 
 # Output path
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 DOCS_DATA_DIR = PROJECT_ROOT / "docs" / "data"
 
 EASTERN = pytz.timezone('US/Eastern')
@@ -69,9 +69,20 @@ def get_fundamentals(ticker: str) -> dict | None:
         short_str = f.get('Short Float', 'N/A')
         short_pct = float(short_str.replace('%', '')) if '%' in str(short_str) else None
 
+        # Average Volume
+        vol_str = f.get('Avg Volume', 'N/A')
+        avg_vol = None
+        if 'K' in str(vol_str):
+            avg_vol = float(vol_str.replace('K', '')) * 1000
+        elif 'M' in str(vol_str):
+            avg_vol = float(vol_str.replace('M', '')) * 1000000
+        elif 'B' in str(vol_str):
+            avg_vol = float(vol_str.replace('B', '')) * 1000000000
+
         return {
             'float': stock_float,
             'short': short_pct,
+            'avg_volume': avg_vol,
         }
     except Exception as e:
         print(f"  Warning [{ticker}]: finviz fundamentals failed: {e}")
@@ -201,6 +212,11 @@ def run_ep_scan() -> list:
         if fundamentals['float'] is None or fundamentals['short'] is None:
             print(f"    Skip {ticker}: missing float/short data")
             continue
+        
+        avg_vol = fundamentals.get('avg_volume')
+        if avg_vol is not None and avg_vol < 300000:
+            print(f"    Skip {ticker}: volume too low ({avg_vol:,.0f} < 300k)")
+            continue
 
         # 2. Get after-hours price
         ah_price = get_after_hours_price(ticker)
@@ -229,7 +245,8 @@ def run_ep_scan() -> list:
             'sma50': technicals['sma50'],
             'atr': technicals['atr'],
         })
-        print(f"    OK: float={fundamentals['float']}M, short={fundamentals['short']}%, "
+        vol_fmt = f"{fundamentals['avg_volume']/1000000:.2f}M" if fundamentals.get('avg_volume') else "N/A"
+        print(f"    OK: float={fundamentals['float']}M, short={fundamentals['short']}%, vol={vol_fmt}, "
               f"AH={ah_price:.2f} ({ah_chg_pct:+.1f}%), dist52w={technicals['dist_52w_high']:.1f}%, "
               f"ATR×={technicals['atr_multiple']:.1f}")
 

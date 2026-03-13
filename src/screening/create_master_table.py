@@ -70,7 +70,7 @@ def create_master_table(offset_days, daily_price, date_list):
 
     # RS_STS%
     print("Calculating RS_STS%...")
-    rs_sts = calculate_rs_sts_for_tickers(daily_price, lookback_days=20)
+    rs_sts = calculate_rs_sts_for_tickers(daily_price)
     df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(0)
 
     # Re-arrange columns

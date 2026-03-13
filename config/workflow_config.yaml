@@ -36,15 +36,14 @@ themes:
   min_stocks_per_theme: 3
   hot_theme_rs_threshold: 70.0
   high_momentum_threshold: 80.0
+  min_scored_breadth: 2
   strength_weights:
     bull_market: # MMFI > 50%
-      rs_avg: 0.2
-      momentum: 0.6
-      breadth: 0.2
+      strength: 0.50
+      confirmation: 0.50
     bear_market: # MMFI <= 50%
-      rs_avg: 0.6
-      momentum: 0.1
-      breadth: 0.3
+      strength: 0.70
+      confirmation: 0.30
 
 # Dashboard data sources (Google Sheets)
 dashboard:

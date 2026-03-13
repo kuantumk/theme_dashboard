@@ -1,11 +1,13 @@
 """
 Analyze theme strength based on RS_STS% scores.
 
-Calculates aggregate metrics for each theme:
-- Average/median RS_STS%
-- High momentum percentage (>80%)
-- Theme breadth (number of stocks)
-- Composite strength score
+Scores themes along three dimensions for momentum trading:
+- Strength: RS quality and leader concentration (RS >= 90)
+- Confirmation: structural uptrend health, proximity to highs, active breadth
+- Actionability: extension penalty and volume expansion bonus
+
+Designed to surface themes suitable for Qullamaggie / Marios Stamatoudis
+style breakout trading: strong RS, broad participation, tight near highs.
 """
 
 import json
@@ -22,6 +24,7 @@ THEMES_FILE = TICKER_THEMES_FILE
 HOT_THRESHOLD = CONFIG["themes"]["hot_theme_rs_threshold"]
 MOMENTUM_THRESHOLD = CONFIG["themes"]["high_momentum_threshold"]
 WEIGHTS = CONFIG["themes"]["strength_weights"]
+MIN_BREADTH = CONFIG["themes"].get("min_scored_breadth", 2)
 
 
 def load_ticker_themes() -> Dict[str, List[str]]:
@@ -49,58 +52,103 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
     """
     Calculate aggregate metrics for a single theme.
 
+    Scores along three axes:
+    - Strength (0-100): median RS blended with leader concentration (RS >= 90)
+    - Confirmation (0-100): structural health, near-highs proximity, active breadth
+    - Actionability (0.65-1.15 multiplier): extension penalty + volume bonus
+
     If screened_tickers is provided, scoring is based ONLY on the tickers that
-    passed screening that day. Non-screened tickers are still tracked for breadth
-    context but don't drag down the score.
+    passed screening that day.
     """
-    """Calculate aggregate metrics for a single theme."""
-    # Score only using the screened subset so un-screened weak members don't
-    # pull down themes that have strong screened tickers (e.g. Drones with RCAT/UMAC).
     scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else tickers
     theme_df = master_df[master_df['ticker'].isin(scoring_tickers)]
 
     if len(theme_df) == 0:
         return None
 
-    # Total breadth is the full roster in ticker_themes.json (for informational purposes)
     total_breadth = len(tickers)
+    breadth = len(theme_df)
+
+    # Skip singletons — can't confirm a theme move with one stock
+    if breadth < MIN_BREADTH:
+        return None
 
     rs_values = theme_df['rs_sts_pct'].values
 
-    # Base RS metrics
+    # Base RS metrics (kept for reporting compatibility)
     avg_rs = np.mean(rs_values)
     median_rs = np.median(rs_values)
-    high_momentum_count = np.sum(rs_values > MOMENTUM_THRESHOLD)
+    high_momentum_count = int(np.sum(rs_values > MOMENTUM_THRESHOLD))
     high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
-    # Active breadth = number of screened tickers that scored in this theme
-    breadth = len(theme_df)
 
-    # 1. Extension Metric (Avg distance from 25SMA)
-    # Using 25SMA as the proxy for short-term extension
+    # ── STRENGTH (0-100) ─────────────────────────────────────────────
+    # Median RS captures the center; leader_pct captures concentration
+    # at the top. RS >= 90 is the threshold for true leaders among
+    # screened stocks (which already passed high bars).
+    leader_count = int(np.sum(rs_values >= 90))
+    leader_pct = (leader_count / len(rs_values)) * 100
+    strength = 0.5 * median_rs + 0.5 * leader_pct
+
+    # ── CONFIRMATION (0-100) ─────────────────────────────────────────
+    # B1: Structural health — % above 50SMA (Weinstein Stage 2 proxy)
+    pct_above_50sma = 0.0
+    if 'close' in theme_df.columns and 'sma50' in theme_df.columns:
+        valid = theme_df[~theme_df['sma50'].isna()]
+        if len(valid) > 0:
+            pct_above_50sma = (np.sum(valid['close'] > valid['sma50']) / len(valid)) * 100
+
+    # B2: Near highs — % within 15% of 252-day high (breakout proximity)
+    pct_near_highs = 0.0
+    if 'close' in theme_df.columns and 'max252' in theme_df.columns:
+        valid = theme_df[~theme_df['max252'].isna()]
+        if len(valid) > 0:
+            pct_near_highs = (np.sum(valid['close'] >= 0.85 * valid['max252']) / len(valid)) * 100
+
+    # B3: Breadth — linear scale, 5+ screened stocks = full credit
+    breadth_score = min(breadth / 5.0, 1.0) * 100
+
+    confirmation = 0.35 * pct_above_50sma + 0.35 * pct_near_highs + 0.30 * breadth_score
+
+    # ── ACTIONABILITY (multiplier 0.65-1.15) ─────────────────────────
+    # Extension penalty — use median (not mean) to resist outliers
     dist_25sma = np.nan
     if 'close' in theme_df.columns and 'sma25' in theme_df.columns:
-        # Avoid division by zero
-        theme_df_valid = theme_df[theme_df['sma25'] > 0]
-        if not theme_df_valid.empty:
-            pct_from_25sma = ((theme_df_valid['close'] - theme_df_valid['sma25']) / theme_df_valid['sma25']) * 100
-            dist_25sma = np.nanmean(pct_from_25sma)
-            
-    # 2. Theme Breakout Breadth (% of stocks above 50SMA)
-    pct_above_50sma = np.nan
-    if 'close' in theme_df.columns and 'sma50' in theme_df.columns:
-        theme_df_valid = theme_df[~theme_df['sma50'].isna()]
-        if len(theme_df_valid) > 0:
-            above_50sma_count = np.sum(theme_df_valid['close'] > theme_df_valid['sma50'])
-            pct_above_50sma = (above_50sma_count / len(theme_df_valid)) * 100
+        valid = theme_df[theme_df['sma25'] > 0]
+        if not valid.empty:
+            pct_from_25sma = ((valid['close'] - valid['sma25']) / valid['sma25']) * 100
+            dist_25sma = np.nanmedian(pct_from_25sma)
 
-    breadth_penalty = 1.0 if breadth >= 3 else (0.5 if breadth == 2 else 0.3)
+    extension_factor = 1.0
+    if not np.isnan(dist_25sma):
+        if dist_25sma > 25:
+            extension_factor = 0.65
+        elif dist_25sma > 15:
+            extension_factor = 0.80
+        elif dist_25sma > 10:
+            extension_factor = 0.92
 
-    # Strength Score - Keep it simple but weight momentum
+    # Volume expansion bonus — institutional accumulation signal
+    vol_factor = 1.0
+    if 'vol_sma40' in theme_df.columns and 'vol_sma252' in theme_df.columns:
+        valid = theme_df[(theme_df['vol_sma252'] > 0) & (~theme_df['vol_sma252'].isna())]
+        if not valid.empty:
+            avg_vol_ratio = np.nanmean(valid['vol_sma40'] / valid['vol_sma252'])
+            if avg_vol_ratio > 1.75:
+                vol_factor = 1.15
+            elif avg_vol_ratio > 1.5:
+                vol_factor = 1.08
+
+    actionability = extension_factor * vol_factor
+
+    # ── BREADTH PENALTY ──────────────────────────────────────────────
+    # Hard floor for very small themes (breadth < 3 = unconfirmed)
+    breadth_penalty = 1.0 if breadth >= 3 else 0.5
+
+    # ── FINAL SCORE ──────────────────────────────────────────────────
     strength_score = (
-        active_weights["rs_avg"] * median_rs +
-        active_weights["momentum"] * high_momentum_pct +
-        active_weights["breadth"] * np.log1p(breadth) * 10
-    ) * breadth_penalty
+        active_weights["strength"] * strength +
+        active_weights["confirmation"] * confirmation
+    ) * actionability * breadth_penalty
 
     top_stocks = theme_df.nlargest(3, 'rs_sts_pct')[['ticker', 'rs_sts_pct']].to_dict('records')
 
@@ -110,11 +158,19 @@ def calculate_theme_metrics(theme: str, tickers: List[str], master_df: pd.DataFr
         'median_rs_sts': median_rs,
         'high_momentum_count': high_momentum_count,
         'high_momentum_pct': high_momentum_pct,
+        'leader_count': leader_count,
+        'leader_pct': leader_pct,
         'breadth': breadth,
+        'total_breadth': total_breadth,
         'pct_above_50sma': pct_above_50sma,
+        'pct_near_highs': pct_near_highs,
         'avg_dist_25sma': dist_25sma,
+        'strength': strength,
+        'confirmation': confirmation,
+        'extension_factor': extension_factor,
+        'vol_factor': vol_factor,
+        'actionability': actionability,
         'strength_score': strength_score,
-        'market_relative_score': avg_rs * breadth_penalty,  # Apply breadth penalty so singletons don't dominate
         'top_stocks': top_stocks,
         'tickers': tickers
     }
@@ -131,19 +187,22 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None,
     theme_tickers = group_tickers_by_theme(ticker_themes)
 
     print(f"Analyzing {len(theme_tickers)} themes...")
-    
-    # Determine the market regime based on MMFI
-    # Default to bull market weights if market breadth is unavailable
-    mmfi_value = 51.0 
+
+    # Determine market regime from MMFI
+    mmfi_value = None
     if market_breadth and 'mmfi' in market_breadth and market_breadth['mmfi'] is not None:
-         mmfi_value = market_breadth['mmfi']
-         
+        mmfi_value = market_breadth['mmfi']
+
+    if mmfi_value is None:
+        print("Warning: MMFI data unavailable - defaulting to neutral (50.0). Check market breadth scraper.")
+        mmfi_value = 50.0
+
     if mmfi_value > 50.0:
         print(f"Regime: Bull Market (MMFI: {mmfi_value:.1f}%)")
-        active_weights = WEIGHTS.get("bull_market", {"rs_avg": 0.5, "momentum": 0.3, "breadth": 0.2})
+        active_weights = WEIGHTS.get("bull_market", {"strength": 0.5, "confirmation": 0.5})
     else:
         print(f"Regime: Bear/Choppy Market (MMFI: {mmfi_value:.1f}%)")
-        active_weights = WEIGHTS.get("bear_market", {"rs_avg": 0.5, "momentum": 0.3, "breadth": 0.2})
+        active_weights = WEIGHTS.get("bear_market", {"strength": 0.7, "confirmation": 0.3})
 
     theme_metrics = []
 
@@ -157,12 +216,10 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None,
     if theme_df.empty:
         return theme_df
 
-    # Sort logic: if Bear Market, true absolute strength (market_relative_score) is paramount
-    if mmfi_value <= 50.0:
-        theme_df = theme_df.sort_values('market_relative_score', ascending=False)
-    else:
-        theme_df = theme_df.sort_values('strength_score', ascending=False)
-        
+    # Always sort by strength_score — bear weights already emphasize
+    # pure RS strength (0.7) over confirmation (0.3)
+    theme_df = theme_df.sort_values('strength_score', ascending=False)
+
     theme_df['is_hot'] = theme_df['avg_rs_sts'] > HOT_THRESHOLD
 
     return theme_df
@@ -189,9 +246,11 @@ if __name__ == '__main__':
         print(f"Total themes: {len(theme_df)}")
         print(f"Hot themes (RS > {HOT_THRESHOLD}%): {theme_df['is_hot'].sum()}\n")
 
-        print("Top 10 Themes by Strength:")
-        # Format the new columns if they exist
-        pd.options.display.float_format = '{:.2f}'.format
-        print(theme_df[['theme', 'avg_rs_sts', 'high_momentum_pct', 'pct_above_50sma', 'avg_dist_25sma', 'strength_score']].head(10).to_string())
+        print("Top 15 Themes by Strength Score:")
+        pd.options.display.float_format = '{:.1f}'.format
+        cols = ['theme', 'median_rs_sts', 'leader_pct', 'pct_above_50sma',
+                'pct_near_highs', 'avg_dist_25sma', 'breadth', 'actionability',
+                'strength_score']
+        print(theme_df[cols].head(15).to_string())
     else:
         print("No master tables found. Run create_master_table.py first.")

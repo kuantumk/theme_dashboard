@@ -7,7 +7,7 @@ on:
     - cron: '30 20 * * 1-5'
     # 9:30 PM UTC = 1:30 PM PST (Nov-Mar)
     - cron: '30 21 * * 1-5'
-  workflow_dispatch:  # Allow manual triggering (always runs)
+  workflow_dispatch: # Allow manual triggering (always runs)
 
 permissions:
   contents: write
@@ -26,34 +26,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # DST guard: skip if current Pacific hour is not 13 (1 PM)
-      # Manual triggers (workflow_dispatch) always pass through
-      - name: DST guard - verify Pacific time
-        id: dst-guard
+      # Keep both UTC crons, then allow only the one that matches the current
+      # Pacific offset. This is more reliable than checking the runner clock
+      # because scheduled workflows can start late.
+      - name: Schedule guard - verify Pacific DST mapping
+        id: schedule-guard
+        env:
+          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_EVENT_SCHEDULE: ${{ github.event.schedule }}
         run: |
-          PACIFIC_HOUR=$(TZ='America/Los_Angeles' date +%H)
-          PACIFIC_MIN=$(TZ='America/Los_Angeles' date +%M)
-          echo "Current Pacific time: $PACIFIC_HOUR:$PACIFIC_MIN"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "Manual trigger — skipping DST guard"
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          elif [[ "$PACIFIC_HOUR" == "13" ]]; then
-            echo "Correct Pacific hour (1 PM) — proceeding"
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          else
-            echo "Wrong Pacific hour ($PACIFIC_HOUR) — skipping this run"
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          fi
+          python3 -m src.ci.daily_screening_schedule_guard
 
       - name: Set up Python
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install Python dependencies
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -61,7 +53,7 @@ jobs:
           playwright install --with-deps chromium
 
       - name: Run daily workflow
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
@@ -69,7 +61,7 @@ jobs:
           python run_daily_workflow.py
 
       - name: Export dashboard data
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           PYTHONPATH: .
@@ -77,14 +69,14 @@ jobs:
           python src/reporting/export_dashboard_data.py
 
       - name: Run EP Scanner export (AMC earnings after-hours)
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           PYTHONPATH: .
         run: |
-          python src/reporting/ep_scan_export.py || echo "EP scan failed or no qualifying tickers — continuing"
+          python src/reporting/ep_scan_export.py || echo "EP scan failed or no qualifying tickers - continuing"
 
       - name: Commit and push results
-        if: steps.dst-guard.outputs.should_run == 'true'
+        if: steps.schedule-guard.outputs.should_run == 'true'
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
@@ -94,7 +86,7 @@ jobs:
           git push || echo "No changes to push"
 
       - name: Upload report as artifact
-        if: always() && steps.dst-guard.outputs.should_run == 'true'
+        if: always() && steps.schedule-guard.outputs.should_run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: daily-report-${{ github.run_number }}
@@ -102,7 +94,7 @@ jobs:
           retention-days: 30
 
       - name: Upload screening outputs as artifact
-        if: always() && steps.dst-guard.outputs.should_run == 'true'
+        if: always() && steps.schedule-guard.outputs.should_run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: screening-outputs-${{ github.run_number }}
@@ -110,7 +102,7 @@ jobs:
           retention-days: 30
 
       - name: Notify on failure
-        if: failure() && steps.dst-guard.outputs.should_run == 'true'
+        if: failure() && steps.schedule-guard.outputs.should_run == 'true'
         run: |
           echo "::error::Daily workflow failed! Check logs for details."
 

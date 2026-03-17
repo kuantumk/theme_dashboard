@@ -15,6 +15,7 @@
   const ETF_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=1565194920';
   const ETF_FALLBACK_URL = 'data/etf_data.json';
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
+  const PAGE_LOAD_CACHE_KEY = Date.now();
 
   // Active chart per tab
   let activeCharts = { macro: null, themes: null, industry: null, etf: null, ep: null };
@@ -28,6 +29,11 @@
   let etfData = [];
   let industryData = [];
   let epData = [];
+
+  function withCacheBust(url) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_=${PAGE_LOAD_CACHE_KEY}`;
+  }
 
   // ── INIT ──────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
@@ -314,7 +320,7 @@
 
   // ── MACRO EVENTS ───────────────────────────────────────
   function loadMacroEvents() {
-    fetch(EVENTS_URL)
+    fetch(withCacheBust(EVENTS_URL))
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
@@ -390,7 +396,7 @@
 
   // ── LOAD META (last refresh) ──────────────────────────
   function loadMeta() {
-    fetch(META_URL)
+    fetch(withCacheBust(META_URL))
       .then(r => r.json())
       .then(data => {
         if (data.export_timestamp) {
@@ -404,7 +410,7 @@
 
   // ── MACRO DATA (Yahoo Finance) ────────────────────────
   function loadMacroData() {
-    fetch(MACRO_DATA_URL)
+    fetch(withCacheBust(MACRO_DATA_URL))
       .then(r => r.json())
       .then(data => {
         // Combine all items
@@ -457,7 +463,7 @@
 
   // ── MARKET BREADTH DATA ───────────────────────────────
   function loadBreadthData() {
-    fetch(BREADTH_DATA_URL)
+    fetch(withCacheBust(BREADTH_DATA_URL))
       .then(r => r.json())
       .then(data => {
         // CNN Fear & Greed
@@ -535,7 +541,7 @@
 
   // ── THEME DATA ────────────────────────────────────────
   function loadThemeData() {
-    fetch(THEME_DATA_URL)
+    fetch(withCacheBust(THEME_DATA_URL))
       .then(r => r.json())
       .then(data => {
         renderThemes(data);
@@ -614,7 +620,7 @@
 
   // ── INDUSTRY ETF DATA ─────────────────────────────────
   function loadIndustryETFData() {
-    fetch(INDUSTRY_ETF_URL)
+    fetch(withCacheBust(INDUSTRY_ETF_URL))
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
@@ -710,7 +716,7 @@
 
   // ── LEVERAGE ETF DATA ─────────────────────────────────
   function loadETFData() {
-    fetch(ETF_FALLBACK_URL)
+    fetch(withCacheBust(ETF_FALLBACK_URL))
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
@@ -838,7 +844,7 @@
   const EP_SCAN_URL = 'data/ep_scan.json';
 
   function loadEPScannerData() {
-    fetch(EP_SCAN_URL + '?_=' + Date.now())  // bust cache
+    fetch(withCacheBust(EP_SCAN_URL))
       .then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();

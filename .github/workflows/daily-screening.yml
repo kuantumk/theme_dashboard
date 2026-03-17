@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       # Keep both UTC crons, then allow only the one that matches the current
       # Pacific offset. This is more reliable than checking the runner clock
@@ -77,13 +79,19 @@ jobs:
 
       - name: Commit and push results
         if: steps.schedule-guard.outputs.should_run == 'true'
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add reports/ data/ logs/ docs/data/
           git add -f screening_output/
-          git diff --staged --quiet || git commit -m "Daily report $(date +'%Y-%m-%d')"
-          git push || echo "No changes to push"
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Daily report $(date +'%Y-%m-%d')"
+            git push origin HEAD:${BRANCH_NAME}
+          fi
 
       - name: Upload report as artifact
         if: always() && steps.schedule-guard.outputs.should_run == 'true'

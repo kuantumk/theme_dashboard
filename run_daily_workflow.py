@@ -9,9 +9,10 @@ Runs the complete stock screening pipeline:
 5. Run all screeners
 6. Consolidate results
 7. Fetch fundamentals for screened tickers
-8. Tag new tickers with Gemini
+8. Classify new/unclassified screened tickers
 9. Analyze theme strength
-10. Generate daily report
+10. Validate dashboard-visible ticker tags
+11. Generate daily report
 """
 
 import os
@@ -28,9 +29,17 @@ from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR
 import src.stock_utils as su
 from src.data_collection.scrape_market_breadth import get_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
-from src.themes.tag_new_tickers import tag_new_tickers, load_existing_themes
+from src.themes.tag_new_tickers import (
+    load_existing_themes,
+    sync_screened_ticker_themes,
+    validate_dashboard_ticker_themes,
+)
 from src.themes.analyze_theme_strength import analyze_theme_strength
-from src.reporting.generate_daily_report import generate_daily_report, save_report
+from src.reporting.generate_daily_report import (
+    generate_daily_report,
+    save_report,
+    select_dashboard_theme_tickers,
+)
 
 # Setup logging
 logging.basicConfig(
@@ -204,20 +213,25 @@ def run_daily_workflow():
             logger.warning(f"Fundamental data fetch failed: {e}")
             logger.warning("Continuing workflow without fundamentals...")
 
-        # Step 8: Tag new tickers with Gemini
+        # Step 8: Classify new/unclassified screened tickers
         logger.info(f"{'='*80}")
-        logger.info(f"STEP: Tag new tickers with Gemini 3 Flash")
+        logger.info(f"STEP: Classify new/unclassified screened tickers")
         logger.info(f"{'='*80}")
 
+        classification_result = None
         try:
-            ticker_themes = tag_new_tickers(all_tickers)
-            new_ticker_count = len(all_tickers - set(ticker_themes.keys()))
-            logger.info(f"✓ Theme tagging complete\n")
+            classification_result = sync_screened_ticker_themes(all_tickers)
+            ticker_themes = classification_result.ticker_themes
+            logger.info(
+                "Theme classification complete "
+                f"({len(classification_result.classified_tickers)} classified, "
+                f"{len(classification_result.new_tickers)} new, "
+                f"{len(classification_result.unresolved_tickers)} unresolved)\n"
+            )
         except Exception as e:
-            logger.error(f"Theme tagging FAILED: {e}")
+            logger.error(f"Theme classification FAILED: {e}")
             logger.warning("Continuing workflow with existing themes only...")
             ticker_themes = load_existing_themes()
-            new_ticker_count = 0
 
         # Step 9: Analyze theme strength
         logger.info(f"{'='*80}")
@@ -229,12 +243,37 @@ def run_daily_workflow():
 
         logger.info(f"✓ Analyzed {len(theme_df)} themes\n")
 
-        # Step 10: Generate daily report
+        # Step 10: Validate dashboard-visible ticker themes
+        logger.info(f"{'='*80}")
+        logger.info(f"STEP: Validate dashboard-visible ticker themes")
+        logger.info(f"{'='*80}")
+
+        dashboard_tickers = select_dashboard_theme_tickers(theme_df, master_df, all_tickers)
+        validation_result = None
+        if dashboard_tickers:
+            try:
+                validation_result = validate_dashboard_ticker_themes(dashboard_tickers)
+                ticker_themes = validation_result.ticker_themes
+                logger.info(
+                    "Theme validation complete "
+                    f"({len(validation_result.confirmed_keeps)} keeps, "
+                    f"{len(validation_result.pending_mismatches)} pending, "
+                    f"{len(validation_result.applied_retags)} applied, "
+                    f"{len(validation_result.unresolved_tickers)} unresolved)\n"
+                )
+                if validation_result.applied_retags or validation_result.google_sheet_updates:
+                    theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
+                    logger.info("Re-ran theme strength after confirmed dashboard retags\n")
+            except Exception as e:
+                logger.error(f"Theme validation FAILED: {e}")
+                logger.warning("Continuing workflow with current upstream themes...")
+
+        # Step 11: Generate daily report
         logger.info(f"{'='*80}")
         logger.info(f"STEP: Generate daily report")
         logger.info(f"{'='*80}")
 
-        new_tickers_list = list(all_tickers - set(ticker_themes.keys())) if all_tickers else []
+        new_tickers_list = classification_result.new_tickers if classification_result else []
 
         report = generate_daily_report(
             date_str=date_str,
@@ -259,6 +298,12 @@ def run_daily_workflow():
         logger.info(f"Total tickers: {len(master_df)}")
         logger.info(f"Hot themes: {theme_df['is_hot'].sum() if 'is_hot' in theme_df.columns else 0}")
         logger.info(f"New tickers tagged: {len(new_tickers_list)}")
+        if classification_result:
+            logger.info(f"Classification audit: {classification_result.audit_report_path}")
+        if validation_result:
+            logger.info(f"Confirmed retags applied: {len(validation_result.applied_retags)}")
+            logger.info(f"Pending tag mismatches: {len(validation_result.pending_mismatches)}")
+            logger.info(f"Validation audit: {validation_result.audit_report_path}")
         logger.info(f"{'#'*80}\n")
 
         return True

@@ -2,16 +2,15 @@
 Import existing theme groups from Google Sheet and create initial ticker_themes.json.
 """
 
-import json
 import pandas as pd
 from typing import Dict, List
 from collections import Counter
 
-from config.settings import CONFIG, TICKER_THEMES_FILE, GOOGLE_SHEET_ID
+from config.settings import CONFIG, GOOGLE_SHEET_ID
+from src.themes.theme_registry import save_ticker_themes
 
 gid = CONFIG["themes"]["google_sheet_gid"]
 GOOGLE_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=csv&gid={gid}"
-OUTPUT_FILE = TICKER_THEMES_FILE
 
 
 def parse_theme_from_description(description: str, theme_company: str) -> List[str]:
@@ -107,17 +106,6 @@ def import_google_sheet_themes() -> Dict[str, List[str]]:
 
     return ticker_themes
 
-
-def save_ticker_themes(ticker_themes: Dict[str, List[str]]):
-    """Save ticker themes to JSON file."""
-    OUTPUT_FILE.parent.mkdir(exist_ok=True)
-
-    with OUTPUT_FILE.open('w') as f:
-        json.dump(ticker_themes, f, indent=2, sort_keys=True)
-
-    print(f"\nSaved ticker themes to {OUTPUT_FILE}")
-
-
 if __name__ == '__main__':
     ticker_themes = import_google_sheet_themes()
 
@@ -127,7 +115,7 @@ if __name__ == '__main__':
 
     save_ticker_themes(ticker_themes)
 
-    print(f"\nOK Theme import complete!")
+    print("\nOK Theme import complete!")
     print(f"  Total tickers: {len(ticker_themes)}")
 
     theme_counts = Counter()

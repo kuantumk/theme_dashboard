@@ -10,7 +10,6 @@ Designed to surface themes suitable for Qullamaggie / Marios Stamatoudis
 style breakout trading: strong RS, broad participation, tight near highs.
 """
 
-import json
 import numpy as np
 import pandas as pd
 from typing import Dict, List
@@ -18,23 +17,12 @@ from collections import defaultdict
 from glob import glob
 
 import src.stock_utils as su
-from config.settings import CONFIG, TICKER_THEMES_FILE, SCREENING_OUTPUT_DIR
-
-THEMES_FILE = TICKER_THEMES_FILE
+from config.settings import CONFIG, SCREENING_OUTPUT_DIR
+from src.themes.theme_registry import load_ticker_themes
 HOT_THRESHOLD = CONFIG["themes"]["hot_theme_rs_threshold"]
 MOMENTUM_THRESHOLD = CONFIG["themes"]["high_momentum_threshold"]
 WEIGHTS = CONFIG["themes"]["strength_weights"]
 MIN_BREADTH = CONFIG["themes"].get("min_scored_breadth", 2)
-
-
-def load_ticker_themes() -> Dict[str, List[str]]:
-    """Load ticker themes from JSON."""
-    if not THEMES_FILE.exists():
-        print(f"Warning: {THEMES_FILE} not found")
-        return {}
-
-    with THEMES_FILE.open() as f:
-        return json.load(f)
 
 
 def group_tickers_by_theme(ticker_themes: Dict[str, List[str]]) -> Dict[str, List[str]]:

@@ -46,11 +46,65 @@ themes:
   hot_theme_rs_threshold: 70.0
   high_momentum_threshold: 80.0
   min_scored_breadth: 2
+
+  # Scoring formula (Iteration 9d — backtested & validated)
+  scoring:
+    max_scoring_tickers: 10
+    leader_rs_threshold: 80
+    near_highs_column: "max60"
+    strength_components:
+      median_rs: 0.40
+      leader_pct: 0.35
+      participation: 0.25
+    extension_sigmoid:
+      midpoint: 15
+      steepness: 5
+    volume_thresholds:
+      high: 1.5
+      medium: 1.2
+      high_factor: 1.15
+      medium_factor: 1.08
+    breadth_penalty_two: 0.75
+    rs_acceleration:
+      lookback: 5
+      coeff: 0.015
+      min: 0.85
+      max: 1.35
+    breadth_momentum:
+      lookback: 5
+      coeff: 0.05
+      min: 0.90
+      max: 1.25
+    enrichment:
+      coeff: 0.08
+      max: 1.35
+    short_interest:
+      max_breadth: 6
+      min_si: 0.07
+      coeff: 2.5
+      max_bonus: 0.45
+    history_file: "data/theme_score_history.json"
+    theme_groups_file: "config/theme_groups.yaml"
+
+  # 4-tier regime from master table pct_above_50sma
+  regime:
+    source: "master_table"
+    thresholds:
+      strong_bull: 60
+      bull: 40
+      choppy: 25
+    weights:
+      strong_bull: {strength: 0.50, confirmation: 0.50}
+      bull: {strength: 0.50, confirmation: 0.50}
+      choppy: {strength: 0.70, confirmation: 0.30}
+      bear: {strength: 0.80, confirmation: 0.20}
+
+  # Legacy weights (kept for reference, superseded by regime.weights)
   strength_weights:
-    bull_market: # MMFI > 50%
+    bull_market:
       strength: 0.50
       confirmation: 0.50
-    bear_market: # MMFI <= 50%
+    bear_market:
       strength: 0.70
       confirmation: 0.30
 

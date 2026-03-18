@@ -18,6 +18,7 @@ from config.settings import (
     DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE
 )
 import src.stock_utils as su
+from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
@@ -780,8 +781,19 @@ def export_all():
     else:
         print("   → Macro data fetch failed, charts will show TradingView data only")
 
-    # 6. Report meta
-    print("\n6. Writing report meta")
+    # 6. Fetch upcoming macro events from Investing.com
+    print("\n6. Fetching upcoming macro events")
+    try:
+        macro_events = fetch_macro_events()
+        if macro_events:
+            write_events_json(macro_events, OUTPUT_DIR / "events.json")
+        else:
+            print("   → Macro events fetch returned no data, keeping existing events.json")
+    except Exception as e:
+        print(f"   → Macro events fetch failed: {e} — keeping existing events.json")
+
+    # 7. Report meta
+    print("\n7. Writing report meta")
     meta = {
         'export_timestamp': datetime.now().isoformat(),
         'report_date': theme_data.get('report_date') if theme_data else None,

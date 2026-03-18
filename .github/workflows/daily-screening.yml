@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+          fetch-depth: 0
 
       # Keep both UTC crons, then allow only the one that matches the current
       # Pacific offset. This is more reliable than checking the runner clock
@@ -90,7 +91,33 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Daily report $(date +'%Y-%m-%d')"
-            git push origin HEAD:${BRANCH_NAME}
+
+            # Rebase onto the latest remote tip in case main advanced while
+            # the long-running data generation steps were in flight.
+            max_attempts=3
+            attempt=1
+            while [ "${attempt}" -le "${max_attempts}" ]; do
+              git fetch origin "${BRANCH_NAME}"
+
+              if ! git rebase "origin/${BRANCH_NAME}"; then
+                git rebase --abort || true
+                echo "::error::Failed to rebase generated changes onto origin/${BRANCH_NAME}."
+                exit 1
+              fi
+
+              if git push origin HEAD:${BRANCH_NAME}; then
+                break
+              fi
+
+              if [ "${attempt}" -eq "${max_attempts}" ]; then
+                echo "::error::Push kept racing with new remote commits after ${max_attempts} attempts."
+                exit 1
+              fi
+
+              echo "Push rejected by a new upstream commit, retrying (${attempt}/${max_attempts})..."
+              attempt=$((attempt + 1))
+              sleep 5
+            done
           fi
 
       - name: Upload report as artifact

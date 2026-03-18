@@ -1,234 +1,797 @@
-"""
-Tag new tickers using Gemini 3 Flash API.
+"""Theme classification and dashboard validation pipeline."""
 
-Incrementally tags only NEW tickers that appear in screener results
-but don't exist in ticker_themes.json.
-"""
+from __future__ import annotations
 
 import json
-from typing import Dict, List, Set
-from google import genai
-from google.genai import types
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Dict, Iterable, List, Mapping, Sequence, Set
+
+from config.settings import CONFIG, GOOGLE_API_KEY, LOG_DIR, THEME_REVIEW_STATE_FILE
+from src.themes.company_profiles import ensure_company_profiles
 from src.themes.import_existing_themes import import_google_sheet_themes
+from src.themes.theme_registry import load_ticker_themes, normalize_theme_list, save_ticker_themes
 
-from config.settings import CONFIG, GOOGLE_API_KEY, TICKER_THEMES_FILE
 
-THEMES_FILE = TICKER_THEMES_FILE
+GENERIC_SHEET_THEMES = {"Uncategorized", "Singleton"}
+GENERIC_CLASSIFICATION_THEMES = {"Uncategorized", "Singleton"}
+CLASSIFICATION_BATCH_SIZE = CONFIG["themes"].get("llm_batch_size", 100)
+VALIDATION_BATCH_SIZE = CONFIG["themes"].get("validation_batch_size", 60)
+VALIDATION_STALE_DAYS = CONFIG["themes"].get("validation_stale_days", 30)
+VALIDATION_CONFIRMATION_THRESHOLD = CONFIG["themes"].get("validation_confirmation_threshold", 2)
+
+
+@dataclass
+class ThemeClassificationResult:
+    ticker_themes: Dict[str, List[str]]
+    google_sheet_tickers: List[str]
+    google_sheet_updates: List[Dict[str, object]]
+    classification_candidates: List[str]
+    classified_tickers: List[str]
+    new_tickers: List[str]
+    unresolved_tickers: List[str]
+    audit_report_path: str | None = None
+
+
+@dataclass
+class ThemeValidationResult:
+    ticker_themes: Dict[str, List[str]]
+    google_sheet_tickers: List[str]
+    google_sheet_updates: List[Dict[str, object]]
+    validated_tickers: List[str]
+    confirmed_keeps: List[str]
+    pending_mismatches: List[Dict[str, object]]
+    applied_retags: List[Dict[str, object]]
+    unresolved_tickers: List[str]
+    audit_report_path: str | None = None
+    review_state_path: str | None = None
+
+
+@dataclass
+class ValidationApplicationResult:
+    ticker_themes: Dict[str, List[str]]
+    review_state: Dict[str, Dict[str, object]]
+    confirmed_keeps: List[str]
+    pending_mismatches: List[Dict[str, object]]
+    applied_retags: List[Dict[str, object]]
+    unresolved_tickers: List[str]
 
 
 def load_existing_themes() -> Dict[str, List[str]]:
-    """Load existing ticker themes from JSON."""
-    if not THEMES_FILE.exists():
-        return {}
-
-    with THEMES_FILE.open() as f:
-        return json.load(f)
+    return load_ticker_themes()
 
 
-def save_ticker_themes(ticker_themes: Dict[str, List[str]]):
-    """Save ticker themes to JSON."""
-    THEMES_FILE.parent.mkdir(exist_ok=True)
+def normalize_tickers(tickers: Iterable[str]) -> List[str]:
+    cleaned = {
+        str(ticker).strip().upper()
+        for ticker in tickers
+        if str(ticker).strip()
+    }
+    return sorted(cleaned)
 
-    with THEMES_FILE.open('w') as f:
-        json.dump(ticker_themes, f, indent=2, sort_keys=True)
+
+def themes_match(left: Iterable[str] | None, right: Iterable[str] | None) -> bool:
+    return sorted(normalize_theme_list(left)) == sorted(normalize_theme_list(right))
 
 
-def get_existing_theme_taxonomy(ticker_themes: Dict[str, List[str]]) -> List[str]:
-    """Extract unique themes from existing ticker_themes."""
+def get_existing_theme_taxonomy(ticker_themes: Mapping[str, List[str]]) -> List[str]:
     themes = set()
     for theme_list in ticker_themes.values():
-        themes.update(theme_list)
+        themes.update(normalize_theme_list(theme_list))
     return sorted(themes)
 
 
-def build_tagging_prompt(new_tickers: List[str], existing_themes: List[str]) -> str:
-    """Build the Gemini prompt for tagging new tickers."""
-    prompt = f"""<role>
-Act as a Momentum & Sector Analysis Specialist (Qullamaggie Style).
-Your goal is to identify "Group Moves" and "Theme Momentum" from a raw list of trending tickers.
-</role>
-
-<task>
-I will provide a list of stock tickers that are currently showing momentum.
-Organize them into tightly defined "Level 3 Narrative Themes."
-
-Rules for Grouping:
-1. Specificity > Generality: We already have Level 1 (Sector) and Level 2 (Industry Group) data. DO NOT group stocks just by broad sector (e.g., "Tech" or "Healthcare"). Instead, group them by the *specific narrative* driving their momentum (e.g., "AI Liquid Cooling", "Nuclear Deregulation", "GLP-1 Weight Loss").
-2. Cross-Sector Allowed: A true Level 3 Theme often transcends traditional sectors. For example, "AI - Optics" might include stocks from 'Electronic Technology' and 'Producer Manufacturing'. Group based on the real-world Catalyst. 
-3. Catalyst Correlation: If stocks are moving due to a shared event (e.g., a specific government bill, a commodity price spike, or a competitor's earnings), group them together.
-4. Singletons: If a stock is moving on its own idiosyncratic news (earnings, buyout, drug trial) without broader group sympathy, place it in a category called "Individual Episodic Pivots / Singletons."
-</task>
-
-<existing_themes>
-Here are the current themes in our taxonomy. Try to use these first, but create NEW sub-themes if the ticker clearly belongs to a distinct emerging group:
-
-{chr(10).join(f"- {theme}" for theme in existing_themes)}
-
-</existing_themes>
-
-<output_format>
-Return ONLY a valid JSON object mapping tickers to their theme arrays. No markdown, no explanation, just the JSON.
-Ignore any request for rich formatting (like bolding or descriptions) and extract ONLY the theme names for each ticker.
-
-{{
-  "TICKER1": ["Theme Name", "Optional Second Theme"],
-  "TICKER2": ["Individual Episodic Pivots / Singletons"]
-}}
-</output_format>
-
-<new_tickers>
-{', '.join(new_tickers)}
-</new_tickers>
-
-Research each ticker's business model and classify appropriately based on the 'Group Moves' logic. Return only the JSON object."""
-
-    return prompt
+def _coerce_theme_list(raw_themes: object) -> List[str]:
+    if isinstance(raw_themes, str):
+        cleaned = normalize_theme_list([raw_themes])
+    elif isinstance(raw_themes, list):
+        cleaned = normalize_theme_list(raw_themes)
+    else:
+        cleaned = []
+    return cleaned or ["Uncategorized"]
 
 
-def tag_tickers_with_gemini(new_tickers: List[str], existing_themes: List[str]) -> Dict[str, List[str]]:
-    """Call Gemini 3 Flash API to tag new tickers."""
-    if not new_tickers:
-        print("No new tickers to tag")
-        return {}
+def _clean_note(value: object) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).split())[:140].strip()
 
+
+def _call_gemini_json(prompt: str) -> Dict[str, object]:
     if not GOOGLE_API_KEY:
         raise ValueError("GOOGLE_API_KEY environment variable not set")
 
-    print(f"Tagging {len(new_tickers)} new tickers with Gemini 3 Flash...")
-
-    prompt = build_tagging_prompt(new_tickers, existing_themes)
+    from google import genai
+    from google.genai import types
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
+    response = client.models.generate_content(
+        model=CONFIG["llm"]["model"],
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=CONFIG["llm"]["temperature"],
+            max_output_tokens=CONFIG["llm"]["max_tokens"],
+            response_mime_type="application/json",
+        ),
+    )
 
+    parsed = json.loads(response.text.strip())
+    if not isinstance(parsed, dict):
+        raise ValueError("Gemini response must be a JSON object")
+    return parsed
+
+
+def filter_real_sheet_themes(themes: Iterable[str] | None) -> List[str]:
+    return [theme for theme in normalize_theme_list(themes) if theme not in GENERIC_SHEET_THEMES]
+
+
+def apply_google_sheet_ground_truth(
+    ticker_themes: Mapping[str, List[str]],
+    tickers: Iterable[str],
+    google_sheet_themes: Mapping[str, List[str]],
+) -> tuple[Dict[str, List[str]], Set[str], List[Dict[str, object]]]:
+    merged = {ticker: list(themes) for ticker, themes in ticker_themes.items()}
+    ground_truth_tickers: Set[str] = set()
+    updates: List[Dict[str, object]] = []
+
+    for ticker in normalize_tickers(tickers):
+        if ticker not in google_sheet_themes:
+            continue
+
+        sheet_themes = filter_real_sheet_themes(google_sheet_themes[ticker])
+        if not sheet_themes:
+            continue
+
+        ground_truth_tickers.add(ticker)
+        previous = normalize_theme_list(merged.get(ticker))
+        if themes_match(previous, sheet_themes):
+            continue
+
+        print(f"  Google Sheet update {ticker}: {previous} -> {sheet_themes}")
+        merged[ticker] = sheet_themes
+        updates.append({"ticker": ticker, "previous": previous, "updated": sheet_themes})
+
+    return merged, ground_truth_tickers, updates
+
+
+def format_profiles_for_prompt(
+    tickers: Sequence[str],
+    profiles: Mapping[str, Mapping[str, str]],
+    *,
+    ticker_themes: Mapping[str, List[str]] | None = None,
+) -> str:
+    lines: List[str] = []
+    for ticker in tickers:
+        profile = profiles.get(ticker, {})
+        company_name = profile.get("company_name") or ticker
+        sector = profile.get("sector") or "Unknown"
+        industry = profile.get("industry") or "Unknown"
+        summary = profile.get("business_summary") or "No cached business summary."
+        parts = [
+            f"ticker={ticker}",
+            f"company={company_name}",
+            f"sector={sector}",
+            f"industry={industry}",
+            f"summary={summary}",
+        ]
+        if ticker_themes is not None:
+            current = normalize_theme_list(ticker_themes.get(ticker))
+            parts.insert(1, f"current_themes={', '.join(current) if current else 'None'}")
+        lines.append("- " + " | ".join(parts))
+    return "\n".join(lines)
+
+
+def build_classification_prompt(
+    tickers: List[str],
+    existing_themes: List[str],
+    profiles: Mapping[str, Mapping[str, str]],
+) -> str:
+    return f"""<role>
+Act as a Momentum & Sector Analysis Specialist.
+</role>
+
+<task>
+Classify the provided stocks into tightly defined Level 3 narrative themes.
+Use the cached company metadata below instead of guessing from ticker symbols.
+Prefer reusing an existing theme when it fits cleanly.
+If a stock is clearly idiosyncratic, use "Individual Episodic Pivots / Singletons".
+</task>
+
+<existing_themes>
+{chr(10).join(f"- {theme}" for theme in existing_themes)}
+</existing_themes>
+
+<ticker_profiles>
+{format_profiles_for_prompt(tickers, profiles)}
+</ticker_profiles>
+
+<output_format>
+Return ONLY valid JSON:
+{{
+  "TICKER": ["Theme Name", "Optional Second Theme"]
+}}
+</output_format>"""
+
+
+def classify_tickers_with_gemini(
+    tickers: List[str],
+    existing_themes: List[str],
+    profiles: Mapping[str, Mapping[str, str]],
+) -> Dict[str, List[str]]:
+    if not tickers:
+        return {}
+
+    print(f"Classifying {len(tickers)} new/unclassified ticker(s) with Gemini...")
+    raw_tags = _call_gemini_json(build_classification_prompt(tickers, existing_themes, profiles))
+
+    normalized_tags: Dict[str, List[str]] = {}
+    for ticker, themes in raw_tags.items():
+        clean_ticker = str(ticker).strip().upper()
+        if not clean_ticker:
+            continue
+        normalized_tags[clean_ticker] = _coerce_theme_list(themes)
+
+    missing = sorted(set(tickers) - set(normalized_tags.keys()))
+    if missing:
+        print(f"Warning: {len(missing)} classification ticker(s) missing from Gemini response: {missing}")
+
+    return normalized_tags
+
+
+def identify_tickers_needing_classification(
+    screened_tickers: Iterable[str],
+    ticker_themes: Mapping[str, List[str]],
+    google_sheet_tickers: Set[str],
+) -> List[str]:
+    candidates: List[str] = []
+    for ticker in normalize_tickers(screened_tickers):
+        if ticker in google_sheet_tickers:
+            continue
+        current = normalize_theme_list(ticker_themes.get(ticker))
+        if not current or all(theme in GENERIC_CLASSIFICATION_THEMES for theme in current):
+            candidates.append(ticker)
+    return candidates
+
+
+def write_classification_audit(
+    result: ThemeClassificationResult,
+    *,
+    screened_ticker_count: int,
+) -> str:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    audit_path = LOG_DIR / f"theme_classification_audit_{datetime.now().strftime('%Y-%m-%d')}.json"
+    payload = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "screened_ticker_count": screened_ticker_count,
+        "google_sheet_tickers": result.google_sheet_tickers,
+        "google_sheet_updates": result.google_sheet_updates,
+        "classification_candidates": result.classification_candidates,
+        "classified_tickers": result.classified_tickers,
+        "new_tickers": result.new_tickers,
+        "unresolved_tickers": result.unresolved_tickers,
+    }
+    with audit_path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    return str(audit_path)
+
+
+def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificationResult:
+    screened_tickers = normalize_tickers(screener_tickers)
+    previous_themes = load_existing_themes()
+    ticker_themes = {ticker: list(themes) for ticker, themes in previous_themes.items()}
+
+    google_sheet_tickers: Set[str] = set()
+    google_sheet_updates: List[Dict[str, object]] = []
     try:
-        response = client.models.generate_content(
-            model=CONFIG["llm"]["model"],
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=CONFIG["llm"]["temperature"],
-                max_output_tokens=CONFIG["llm"]["max_tokens"],
-                response_mime_type="application/json"
+        google_sheet_themes = import_google_sheet_themes()
+        print(f"Loaded {len(google_sheet_themes)} ticker(s) from Google Sheet")
+        ticker_themes, google_sheet_tickers, google_sheet_updates = apply_google_sheet_ground_truth(
+            ticker_themes,
+            screened_tickers,
+            google_sheet_themes,
+        )
+    except Exception as exc:
+        print(f"Warning: Failed to fetch Google Sheet: {exc}")
+
+    classification_candidates = identify_tickers_needing_classification(
+        screened_tickers,
+        ticker_themes,
+        google_sheet_tickers,
+    )
+    classified_tags: Dict[str, List[str]] = {}
+
+    if classification_candidates:
+        profiles = ensure_company_profiles(classification_candidates)
+        for start in range(0, len(classification_candidates), CLASSIFICATION_BATCH_SIZE):
+            batch = classification_candidates[start:start + CLASSIFICATION_BATCH_SIZE]
+            existing_themes = get_existing_theme_taxonomy({**ticker_themes, **classified_tags})
+            batch_tags = classify_tickers_with_gemini(batch, existing_themes, profiles)
+            classified_tags.update(batch_tags)
+
+        for ticker, themes in classified_tags.items():
+            if not themes_match(ticker_themes.get(ticker), themes):
+                print(f"  Classified {ticker}: {ticker_themes.get(ticker)} -> {themes}")
+                ticker_themes[ticker] = themes
+    else:
+        print("No screened tickers need new classification")
+
+    save_ticker_themes(ticker_themes)
+    persisted_themes = load_ticker_themes()
+
+    new_tickers = [
+        ticker
+        for ticker in classification_candidates
+        if not normalize_theme_list(previous_themes.get(ticker)) and ticker in classified_tags
+    ]
+    unresolved_tickers = [
+        ticker
+        for ticker in classification_candidates
+        if ticker not in classified_tags
+    ]
+
+    result = ThemeClassificationResult(
+        ticker_themes=persisted_themes,
+        google_sheet_tickers=sorted(google_sheet_tickers),
+        google_sheet_updates=google_sheet_updates,
+        classification_candidates=classification_candidates,
+        classified_tickers=sorted(classified_tags.keys()),
+        new_tickers=sorted(new_tickers),
+        unresolved_tickers=unresolved_tickers,
+    )
+    result.audit_report_path = write_classification_audit(result, screened_ticker_count=len(screened_tickers))
+
+    print(
+        "\nTheme classification summary: "
+        f"{len(result.classified_tickers)} classified, "
+        f"{len(result.new_tickers)} new, "
+        f"{len(result.unresolved_tickers)} unresolved"
+    )
+    print(f"Classification audit saved to {result.audit_report_path}")
+    return result
+
+
+def _normalize_review_entry(raw_entry: Mapping[str, object] | None) -> Dict[str, object]:
+    raw = dict(raw_entry or {})
+    confirmation_count = raw.get("confirmation_count", 0)
+    try:
+        confirmation_count = int(confirmation_count)
+    except (TypeError, ValueError):
+        confirmation_count = 0
+
+    return {
+        "last_validated_at": str(raw.get("last_validated_at", "")).strip(),
+        "last_seen_on_dashboard_at": str(raw.get("last_seen_on_dashboard_at", "")).strip(),
+        "pending_source_themes": normalize_theme_list(raw.get("pending_source_themes")),
+        "pending_candidate_themes": normalize_theme_list(raw.get("pending_candidate_themes")),
+        "pending_note": _clean_note(raw.get("pending_note")),
+        "pending_since": str(raw.get("pending_since", "")).strip(),
+        "confirmation_count": confirmation_count,
+        "last_applied_at": str(raw.get("last_applied_at", "")).strip(),
+        "last_applied_themes": normalize_theme_list(raw.get("last_applied_themes")),
+    }
+
+
+def load_theme_review_state() -> Dict[str, Dict[str, object]]:
+    if not THEME_REVIEW_STATE_FILE.exists():
+        return {}
+
+    with THEME_REVIEW_STATE_FILE.open(encoding="utf-8") as handle:
+        raw = json.load(handle)
+
+    if not isinstance(raw, dict):
+        raise ValueError(f"Theme review state at {THEME_REVIEW_STATE_FILE} must be a JSON object")
+
+    state: Dict[str, Dict[str, object]] = {}
+    for ticker, entry in raw.items():
+        clean_ticker = str(ticker).strip().upper()
+        if not clean_ticker:
+            continue
+        state[clean_ticker] = _normalize_review_entry(entry if isinstance(entry, dict) else {})
+    return state
+
+
+def save_theme_review_state(state: Mapping[str, Mapping[str, object]]) -> None:
+    normalized = {
+        str(ticker).strip().upper(): _normalize_review_entry(entry)
+        for ticker, entry in state.items()
+        if str(ticker).strip()
+    }
+    THEME_REVIEW_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with THEME_REVIEW_STATE_FILE.open("w", encoding="utf-8") as handle:
+        json.dump(normalized, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+def prune_theme_review_state(
+    state: Mapping[str, Mapping[str, object]],
+    *,
+    max_age_days: int = VALIDATION_STALE_DAYS,
+) -> Dict[str, Dict[str, object]]:
+    cutoff = datetime.now() - timedelta(days=max_age_days)
+    pruned: Dict[str, Dict[str, object]] = {}
+
+    for ticker, entry in state.items():
+        normalized = _normalize_review_entry(entry)
+        if normalized["pending_candidate_themes"]:
+            pruned[ticker] = normalized
+            continue
+
+        last_validated_at = str(normalized.get("last_validated_at", "")).strip()
+        if not last_validated_at:
+            continue
+
+        try:
+            validated_at = datetime.fromisoformat(last_validated_at)
+        except ValueError:
+            continue
+
+        if validated_at >= cutoff:
+            pruned[ticker] = normalized
+
+    return pruned
+
+
+def select_validation_tickers(
+    dashboard_tickers: Iterable[str],
+    review_state: Mapping[str, Mapping[str, object]],
+) -> List[str]:
+    candidates = set(normalize_tickers(dashboard_tickers))
+    cutoff = datetime.now() - timedelta(days=VALIDATION_STALE_DAYS)
+    for ticker, entry in review_state.items():
+        normalized = _normalize_review_entry(entry)
+        if normalized["pending_candidate_themes"]:
+            candidates.add(str(ticker).strip().upper())
+            continue
+
+        last_validated_at = str(normalized.get("last_validated_at", "")).strip()
+        if not last_validated_at:
+            candidates.add(str(ticker).strip().upper())
+            continue
+
+        try:
+            validated_at = datetime.fromisoformat(last_validated_at)
+        except ValueError:
+            candidates.add(str(ticker).strip().upper())
+            continue
+
+        if validated_at < cutoff:
+            candidates.add(str(ticker).strip().upper())
+    return sorted(candidates)
+
+
+def build_validation_prompt(
+    tickers: List[str],
+    ticker_themes: Mapping[str, List[str]],
+    profiles: Mapping[str, Mapping[str, str]],
+) -> str:
+    return f"""<role>
+Act as a careful theme-tag validator.
+</role>
+
+<task>
+For each stock below, decide whether the CURRENT theme assignment is a good fit for the company's real business.
+Use the cached company metadata below.
+Return action="keep" unless the current theme is clearly wrong.
+Only propose action="candidate_change" when the mismatch is material.
+If the metadata is too weak to judge, return action="uncertain".
+</task>
+
+<ticker_profiles>
+{format_profiles_for_prompt(tickers, profiles, ticker_themes=ticker_themes)}
+</ticker_profiles>
+
+<output_format>
+Return ONLY valid JSON:
+{{
+  "TICKER1": {{"action": "keep"}},
+  "TICKER2": {{"action": "candidate_change", "themes": ["Better Theme"], "note": "short reason"}},
+  "TICKER3": {{"action": "uncertain"}}
+}}
+</output_format>"""
+
+
+def validate_tickers_with_gemini(
+    tickers: List[str],
+    ticker_themes: Mapping[str, List[str]],
+    profiles: Mapping[str, Mapping[str, str]],
+) -> Dict[str, Dict[str, object]]:
+    if not tickers:
+        return {}
+
+    print(f"Validating {len(tickers)} dashboard/pending ticker(s) with Gemini...")
+    raw = _call_gemini_json(build_validation_prompt(tickers, ticker_themes, profiles))
+
+    normalized: Dict[str, Dict[str, object]] = {}
+    for ticker, decision in raw.items():
+        clean_ticker = str(ticker).strip().upper()
+        if not clean_ticker or not isinstance(decision, dict):
+            continue
+
+        action = str(decision.get("action", "")).strip().lower()
+        if action not in {"keep", "candidate_change", "uncertain"}:
+            action = "uncertain"
+
+        payload: Dict[str, object] = {"action": action}
+        if action == "candidate_change":
+            payload["themes"] = _coerce_theme_list(decision.get("themes"))
+            payload["note"] = _clean_note(decision.get("note"))
+        normalized[clean_ticker] = payload
+
+    missing = sorted(set(tickers) - set(normalized.keys()))
+    if missing:
+        print(f"Warning: {len(missing)} validation ticker(s) missing from Gemini response: {missing}")
+
+    return normalized
+
+
+def apply_validation_decisions(
+    ticker_themes: Mapping[str, List[str]],
+    review_state: Mapping[str, Mapping[str, object]],
+    validation_tickers: Iterable[str],
+    dashboard_tickers: Iterable[str],
+    decisions: Mapping[str, Mapping[str, object]],
+    *,
+    confirmation_threshold: int = VALIDATION_CONFIRMATION_THRESHOLD,
+    validation_time: datetime | None = None,
+) -> ValidationApplicationResult:
+    validation_time = validation_time or datetime.now()
+    now_iso = validation_time.isoformat(timespec="seconds")
+    today_str = validation_time.date().isoformat()
+    dashboard_set = set(normalize_tickers(dashboard_tickers))
+    updated_themes = {ticker: list(themes) for ticker, themes in ticker_themes.items()}
+    updated_state = {
+        str(ticker).strip().upper(): _normalize_review_entry(entry)
+        for ticker, entry in review_state.items()
+        if str(ticker).strip()
+    }
+
+    confirmed_keeps: List[str] = []
+    pending_mismatches: List[Dict[str, object]] = []
+    applied_retags: List[Dict[str, object]] = []
+    unresolved_tickers: List[str] = []
+
+    for ticker in normalize_tickers(validation_tickers):
+        current_themes = normalize_theme_list(updated_themes.get(ticker))
+        entry = _normalize_review_entry(updated_state.get(ticker))
+        if ticker in dashboard_set:
+            entry["last_seen_on_dashboard_at"] = today_str
+
+        decision = decisions.get(ticker)
+        if not decision:
+            entry["last_validated_at"] = now_iso
+            updated_state[ticker] = entry
+            unresolved_tickers.append(ticker)
+            continue
+
+        action = str(decision.get("action", "")).strip().lower()
+        if action == "keep":
+            entry.update(
+                {
+                    "last_validated_at": now_iso,
+                    "pending_source_themes": [],
+                    "pending_candidate_themes": [],
+                    "pending_note": "",
+                    "pending_since": "",
+                    "confirmation_count": 0,
+                }
             )
+            updated_state[ticker] = entry
+            confirmed_keeps.append(ticker)
+            continue
+
+        if action != "candidate_change":
+            entry["last_validated_at"] = now_iso
+            updated_state[ticker] = entry
+            unresolved_tickers.append(ticker)
+            continue
+
+        candidate_themes = _coerce_theme_list(decision.get("themes"))
+        if themes_match(current_themes, candidate_themes):
+            entry.update(
+                {
+                    "last_validated_at": now_iso,
+                    "pending_source_themes": [],
+                    "pending_candidate_themes": [],
+                    "pending_note": "",
+                    "pending_since": "",
+                    "confirmation_count": 0,
+                }
+            )
+            updated_state[ticker] = entry
+            confirmed_keeps.append(ticker)
+            continue
+
+        same_source = themes_match(entry.get("pending_source_themes"), current_themes)
+        same_candidate = themes_match(entry.get("pending_candidate_themes"), candidate_themes)
+        confirmation_count = entry.get("confirmation_count", 0) + 1 if same_source and same_candidate else 1
+        note = _clean_note(decision.get("note"))
+
+        if confirmation_count >= confirmation_threshold:
+            updated_themes[ticker] = candidate_themes
+            entry.update(
+                {
+                    "last_validated_at": now_iso,
+                    "pending_source_themes": [],
+                    "pending_candidate_themes": [],
+                    "pending_note": "",
+                    "pending_since": "",
+                    "confirmation_count": 0,
+                    "last_applied_at": now_iso,
+                    "last_applied_themes": candidate_themes,
+                }
+            )
+            updated_state[ticker] = entry
+            applied_retags.append(
+                {
+                    "ticker": ticker,
+                    "previous": current_themes,
+                    "updated": candidate_themes,
+                    "confirmations": confirmation_count,
+                    "note": note,
+                }
+            )
+            continue
+
+        entry.update(
+            {
+                "last_validated_at": now_iso,
+                "pending_source_themes": current_themes,
+                "pending_candidate_themes": candidate_themes,
+                "pending_note": note,
+                "pending_since": entry.get("pending_since") if same_source and same_candidate else today_str,
+                "confirmation_count": confirmation_count,
+            }
+        )
+        updated_state[ticker] = entry
+        pending_mismatches.append(
+            {
+                "ticker": ticker,
+                "current": current_themes,
+                "candidate": candidate_themes,
+                "confirmations": confirmation_count,
+                "threshold": confirmation_threshold,
+                "note": note,
+            }
         )
 
-        response_text = response.text.strip()
-
-        new_tags = json.loads(response_text)
-
-        print(f"Successfully tagged {len(new_tags)} tickers")
-
-        missing = set(new_tickers) - set(new_tags.keys())
-        if missing:
-            print(f"Warning: {len(missing)} tickers not tagged: {missing}")
-
-        return new_tags
-
-    except json.JSONDecodeError as e:
-        print(f"Error parsing Gemini response as JSON: {e}")
-        print(f"Response: {response_text}")
-        raise
-    except Exception as e:
-        print(f"Error calling Gemini API: {e}")
-        raise
+    updated_state = prune_theme_review_state(updated_state)
+    return ValidationApplicationResult(
+        ticker_themes=updated_themes,
+        review_state=updated_state,
+        confirmed_keeps=sorted(confirmed_keeps),
+        pending_mismatches=pending_mismatches,
+        applied_retags=applied_retags,
+        unresolved_tickers=sorted(unresolved_tickers),
+    )
 
 
-def identify_new_tickers(screener_tickers: Set[str], existing_themes: Dict[str, List[str]]) -> List[str]:
-    """Identify tickers in screener results that don't have themes yet."""
-    existing_tickers = set(existing_themes.keys())
-    new_tickers = screener_tickers - existing_tickers
-    return sorted(new_tickers)
+def write_validation_audit(
+    result: ThemeValidationResult,
+    *,
+    requested_ticker_count: int,
+) -> str:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    audit_path = LOG_DIR / f"theme_validation_audit_{datetime.now().strftime('%Y-%m-%d')}.json"
+    payload = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "requested_ticker_count": requested_ticker_count,
+        "google_sheet_tickers": result.google_sheet_tickers,
+        "google_sheet_updates": result.google_sheet_updates,
+        "validated_tickers": result.validated_tickers,
+        "confirmed_keeps": result.confirmed_keeps,
+        "pending_mismatches": result.pending_mismatches,
+        "applied_retags": result.applied_retags,
+        "unresolved_tickers": result.unresolved_tickers,
+        "review_state_path": result.review_state_path,
+    }
+    with audit_path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    return str(audit_path)
+
+
+def validate_dashboard_ticker_themes(dashboard_tickers: Iterable[str]) -> ThemeValidationResult:
+    ticker_themes = load_existing_themes()
+    review_state = load_theme_review_state()
+    validation_tickers = select_validation_tickers(dashboard_tickers, review_state)
+
+    if not validation_tickers:
+        pruned_state = prune_theme_review_state(review_state)
+        save_theme_review_state(pruned_state)
+        result = ThemeValidationResult(
+            ticker_themes=ticker_themes,
+            google_sheet_tickers=[],
+            google_sheet_updates=[],
+            validated_tickers=[],
+            confirmed_keeps=[],
+            pending_mismatches=[],
+            applied_retags=[],
+            unresolved_tickers=[],
+            review_state_path=str(THEME_REVIEW_STATE_FILE),
+        )
+        result.audit_report_path = write_validation_audit(result, requested_ticker_count=0)
+        return result
+
+    google_sheet_tickers: Set[str] = set()
+    google_sheet_updates: List[Dict[str, object]] = []
+    try:
+        google_sheet_themes = import_google_sheet_themes()
+        print(f"Loaded {len(google_sheet_themes)} ticker(s) from Google Sheet for validation")
+        ticker_themes, google_sheet_tickers, google_sheet_updates = apply_google_sheet_ground_truth(
+            ticker_themes,
+            validation_tickers,
+            google_sheet_themes,
+        )
+    except Exception as exc:
+        print(f"Warning: Failed to fetch Google Sheet during validation: {exc}")
+
+    current_time = datetime.now()
+    for ticker in google_sheet_tickers:
+        entry = _normalize_review_entry(review_state.get(ticker))
+        entry.update(
+            {
+                "last_validated_at": current_time.isoformat(timespec="seconds"),
+                "pending_source_themes": [],
+                "pending_candidate_themes": [],
+                "pending_note": "",
+                "pending_since": "",
+                "confirmation_count": 0,
+            }
+        )
+        review_state[ticker] = entry
+
+    tickers_for_gemini = [ticker for ticker in validation_tickers if ticker not in google_sheet_tickers]
+    decisions: Dict[str, Dict[str, object]] = {}
+    if tickers_for_gemini:
+        profiles = ensure_company_profiles(tickers_for_gemini)
+        for start in range(0, len(tickers_for_gemini), VALIDATION_BATCH_SIZE):
+            batch = tickers_for_gemini[start:start + VALIDATION_BATCH_SIZE]
+            decisions.update(validate_tickers_with_gemini(batch, ticker_themes, profiles))
+    else:
+        print("All validation tickers were resolved via Google Sheet ground truth")
+
+    application = apply_validation_decisions(
+        ticker_themes=ticker_themes,
+        review_state=review_state,
+        validation_tickers=tickers_for_gemini,
+        dashboard_tickers=dashboard_tickers,
+        decisions=decisions,
+        validation_time=current_time,
+    )
+
+    save_ticker_themes(application.ticker_themes)
+    save_theme_review_state(application.review_state)
+
+    result = ThemeValidationResult(
+        ticker_themes=load_ticker_themes(),
+        google_sheet_tickers=sorted(google_sheet_tickers),
+        google_sheet_updates=google_sheet_updates,
+        validated_tickers=tickers_for_gemini,
+        confirmed_keeps=application.confirmed_keeps,
+        pending_mismatches=application.pending_mismatches,
+        applied_retags=application.applied_retags,
+        unresolved_tickers=application.unresolved_tickers,
+        review_state_path=str(THEME_REVIEW_STATE_FILE),
+    )
+    result.audit_report_path = write_validation_audit(result, requested_ticker_count=len(validation_tickers))
+
+    print(
+        "\nTheme validation summary: "
+        f"{len(result.confirmed_keeps)} keeps, "
+        f"{len(result.pending_mismatches)} pending mismatches, "
+        f"{len(result.applied_retags)} applied retags, "
+        f"{len(result.unresolved_tickers)} unresolved"
+    )
+    print(f"Validation audit saved to {result.audit_report_path}")
+    return result
 
 
 def tag_new_tickers(screener_tickers: Set[str]) -> Dict[str, List[str]]:
-    """
-    Main function: tag new tickers and update ticker_themes.json.
-
-    Priority order:
-    1. Google Sheet (ground truth - loaded fresh each time)
-    2. Existing ticker_themes.json cache (for non-screened tickers)
-    3. Gemini API (for all remaining untagged screened tickers)
-    """
-    ticker_themes = load_existing_themes()
-
-    # Step 1: Load Google Sheet as ground truth (always fresh)
-    google_sheet_themes = {}
-    try:
-        google_sheet_themes = import_google_sheet_themes()
-        print(f"  Loaded {len(google_sheet_themes)} tickers from Google Sheet")
-
-        for ticker in screener_tickers:
-            if ticker in google_sheet_themes:
-                gs_themes = google_sheet_themes[ticker]
-                real_themes = [t for t in gs_themes if t not in ['Uncategorized', 'Singleton']]
-                if real_themes:
-                    if ticker in ticker_themes and ticker_themes[ticker] != real_themes:
-                        print(f"  Override {ticker}: {ticker_themes.get(ticker)} -> {real_themes}")
-                    ticker_themes[ticker] = real_themes
-
-    except Exception as e:
-        print(f"Warning: Failed to fetch Google Sheet: {e}")
-
-    # Step 2: Identify tickers that STILL need tagging
-    tickers_needing_tags = []
-    for ticker in screener_tickers:
-        if ticker not in ticker_themes:
-            tickers_needing_tags.append(ticker)
-        else:
-            current_tags = ticker_themes[ticker]
-            if all(t in ['Uncategorized', 'Singleton'] for t in current_tags):
-                tickers_needing_tags.append(ticker)
-
-    tickers_needing_tags = sorted(tickers_needing_tags)
-
-    if not tickers_needing_tags:
-        print("No tickers need tagging - all resolved via Google Sheet or cache")
-        save_ticker_themes(ticker_themes)
-        return ticker_themes
-
-    print(f"\n{len(tickers_needing_tags)} screened tickers need Gemini tagging")
-
-    # Step 3: Send ALL untagged tickers to Gemini in ONE call
-    existing_themes = get_existing_theme_taxonomy(ticker_themes)
-    print(f"Using {len(existing_themes)} existing themes as reference")
-
-    MAX_TICKERS_PER_CALL = 100
-
-    all_new_tags = {}
-
-    if len(tickers_needing_tags) <= MAX_TICKERS_PER_CALL:
-        print(f"\nSending all {len(tickers_needing_tags)} tickers to Gemini for grouping...")
-        try:
-            all_new_tags = tag_tickers_with_gemini(tickers_needing_tags, existing_themes)
-        except Exception as e:
-            print(f"Error calling Gemini API: {e}")
-    else:
-        for i in range(0, len(tickers_needing_tags), MAX_TICKERS_PER_CALL):
-            batch = tickers_needing_tags[i:i + MAX_TICKERS_PER_CALL]
-            print(f"\nProcessing batch {i//MAX_TICKERS_PER_CALL + 1} ({len(batch)} tickers)...")
-            try:
-                batch_tags = tag_tickers_with_gemini(batch, existing_themes)
-                all_new_tags.update(batch_tags)
-            except Exception as e:
-                print(f"Error processing batch: {e}")
-                continue
-
-    if not all_new_tags:
-        print("Warning: Gemini returned no tags")
-        save_ticker_themes(ticker_themes)
-        return ticker_themes
-
-    ticker_themes.update(all_new_tags)
-
-    save_ticker_themes(ticker_themes)
-    print(f"\nOK Updated ticker_themes.json with {len(all_new_tags)} new ticker(s)")
-
-    for ticker, themes in sorted(all_new_tags.items()):
-        print(f"  {ticker}: {themes}")
-
-    return ticker_themes
+    return sync_screened_ticker_themes(screener_tickers).ticker_themes
 
 
-if __name__ == '__main__':
-    test_tickers = {'NVDA', 'TSLA', 'AAPL', 'LUNR', 'LMND'}
-    result = tag_new_tickers(test_tickers)
-    print(f"\nTotal tickers in database: {len(result)}")
+if __name__ == "__main__":
+    test_tickers = {"NVDA", "TSLA", "AAPL", "LUNR", "LMND"}
+    result = sync_screened_ticker_themes(test_tickers)
+    print(f"\nTotal tickers in database: {len(result.ticker_themes)}")

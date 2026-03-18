@@ -18,10 +18,14 @@ from glob import glob
 
 import src.stock_utils as su
 from src.themes.analyze_theme_strength import analyze_theme_strength
-from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB, SCREENING_OUTPUT_DIR, TICKER_THEMES_FILE
+from src.themes.theme_registry import load_ticker_themes
+from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB, SCREENING_OUTPUT_DIR
 
 OUTPUT_DIR = REPORTS_DIR
 OUTPUT_DIR.mkdir(exist_ok=True)
+SPECIAL_THEME_NAMES = {'Uncategorized', 'Singleton'}
+DASHBOARD_THEME_LIMIT = CONFIG["themes"].get("dashboard_theme_limit", 30)
+DASHBOARD_TICKERS_PER_THEME = CONFIG["themes"].get("dashboard_tickers_per_theme", 10)
 
 
 def load_fundamentals(tickers: List[str]) -> Dict[str, Dict]:
@@ -71,6 +75,63 @@ def format_inst_trans(value):
     if val > 0:
         return f"+{val:.1f}"
     return f"{val:.1f}"
+
+
+def select_dashboard_theme_tickers(
+    theme_df: pd.DataFrame,
+    master_df: pd.DataFrame,
+    screened_tickers: Set[str],
+    *,
+    max_themes: int = DASHBOARD_THEME_LIMIT,
+    max_tickers_per_theme: int = DASHBOARD_TICKERS_PER_THEME,
+) -> List[str]:
+    """Select the exact screened tickers that can appear in the dashboard theme tab."""
+    if theme_df.empty or not screened_tickers:
+        return []
+
+    screened_set = {str(ticker).strip().upper() for ticker in screened_tickers if str(ticker).strip()}
+    screened_df = master_df.copy()
+    screened_df['ticker'] = screened_df['ticker'].astype(str).str.upper()
+    screened_df = screened_df[screened_df['ticker'].isin(screened_set)].copy()
+
+    if screened_df.empty:
+        return []
+
+    selected: List[str] = []
+    seen = set()
+    theme_count = 0
+
+    for _, theme_row in theme_df.iterrows():
+        if theme_count >= max_themes:
+            break
+
+        theme_name = str(theme_row.get('theme', '')).strip()
+        if theme_name in SPECIAL_THEME_NAMES:
+            continue
+
+        theme_tickers_in_db = {
+            str(ticker).strip().upper()
+            for ticker in theme_row.get('tickers', [])
+            if str(ticker).strip()
+        }
+        active_theme_tickers = list(theme_tickers_in_db.intersection(screened_set))
+        if not active_theme_tickers:
+            continue
+
+        theme_count += 1
+        theme_stocks_df = screened_df[screened_df['ticker'].isin(active_theme_tickers)].copy()
+        theme_stocks_df = theme_stocks_df.sort_values(
+            ['rs_sts_pct', 'adr_pct'],
+            ascending=[False, False],
+        )
+
+        for ticker in theme_stocks_df['ticker'].head(max_tickers_per_theme):
+            if ticker in seen:
+                continue
+            seen.add(ticker)
+            selected.append(ticker)
+
+    return selected
 
 
 def generate_market_context(market_breadth: Dict) -> str:
@@ -209,7 +270,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
 
     displayed_tickers = set()
     theme_count = 0
-    max_themes = 30
+    max_themes = DASHBOARD_THEME_LIMIT
 
     for _, theme_row in theme_df.iterrows():
         if theme_count >= max_themes:
@@ -218,7 +279,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_name = theme_row['theme']
 
         # Skip special themes to display them at the bottom
-        if theme_name in ['Uncategorized', 'Singleton']:
+        if theme_name in SPECIAL_THEME_NAMES:
             continue
 
         theme_tickers_in_db = set(theme_row['tickers'])
@@ -252,7 +313,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_stocks_df['short_interest'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('short_interest'))
 
         # Sort by RS%, then ADR% as tiebreaker — show only top tickers
-        MAX_TICKERS_PER_THEME = 10
+        MAX_TICKERS_PER_THEME = DASHBOARD_TICKERS_PER_THEME
         theme_stocks_df = theme_stocks_df.sort_values(
             ['rs_sts_pct', 'adr_pct'], ascending=[False, False]
         )
@@ -298,8 +359,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
 
     # Handle Uncategorized / Singleton stocks
     try:
-        with open(TICKER_THEMES_FILE, 'r') as f:
-            ticker_themes = json.load(f)
+        ticker_themes = load_ticker_themes()
     except Exception:
         ticker_themes = {}
 

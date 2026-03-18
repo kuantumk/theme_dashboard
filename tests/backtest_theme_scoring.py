@@ -5,23 +5,25 @@ Runs both scoring systems on all available historical master CSVs
 and compares rankings, score distributions, and specific theme behavior.
 """
 
-import json
 import sys
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from collections import defaultdict, Counter
 from datetime import datetime
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+import numpy as np
+import pandas as pd
+from src.themes.theme_registry import load_ticker_themes
+
 # ── Paths ────────────────────────────────────────────────────────
-ROOT = Path(r"C:\Users\kuantumk\repos\theme_dashboard")
 MASTER_DIR = ROOT / "screening_output" / "master"
 CONSOLIDATED_DIR = ROOT / "screening_output" / "consolidated"
-THEMES_FILE = ROOT / "data" / "ticker_themes.json"
 
 # ── Load themes ──────────────────────────────────────────────────
-with open(THEMES_FILE) as f:
-    TICKER_THEMES = json.load(f)
+TICKER_THEMES = load_ticker_themes()
 
 # Reverse: theme -> tickers
 THEME_TICKERS = defaultdict(list)

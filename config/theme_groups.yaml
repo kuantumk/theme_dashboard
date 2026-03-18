@@ -1,0 +1,212 @@
+# Theme Grouping Configuration — Iteration 9d
+# Strategy: Aggressive consolidation (reduces competition) +
+# breadth-limited SI multiplier (only helps small emerging themes,
+# not large consolidated sectors).
+
+theme_groups:
+  # ── AI GROUPS (consume — eliminates sub-theme competition) ────
+  "AI - Data Center Infrastructure":
+    mode: consume
+    members:
+      - "AI - Data Center & Cloud Services"
+      - "AI - Data Center & Cloud"
+      - "AI - Data Center Components"
+      - "AI - Data Center Power"
+      - "AI - Infra / Connectivity"
+      - "AI - Infra / Core Chips"
+      - "AI - Infra / Power/Cooling"
+      - "AI - Processors"
+
+  "AI - Data Center - Optics":
+    mode: consume
+    members:
+      - "AI - Optics"
+      - "AI - Optoelectronics"
+      - "AI - Infra / Optics"
+
+  "Robotics":
+    mode: consume
+    members:
+      - "AI - Robotics"
+      - "AI - Robotics & Automation"
+
+  # ── SECTOR GROUPS (aggressive consolidation) ──────────────────
+
+  "Precious Metals":
+    mode: consume
+    prefix: ["Precious Metals"]
+
+  "Metals & Mining":
+    mode: consume
+    prefix: ["Metals", "Mining"]
+    members:
+      - "Gold Mining"
+      - "Strategic Minerals"
+      - "Critical Minerals / Rare Earth Elements"
+      - "Steel / Vertically Integrated"
+
+  "Biotechnology":
+    mode: consume
+    prefix: ["Biotech", "Biotechnology"]
+    members:
+      - "AI - Biotech & Drug Discovery"
+      - "AI - Drug Discovery"
+      - "Life Sciences / Genomics"
+      - "Life Sciences / Spatial Biology"
+
+  "Financial Services":
+    mode: consume
+    prefix: ["Financials", "Financial Services", "Fintech"]
+
+  "Healthcare":
+    mode: consume
+    prefix: ["Healthcare", "Medical"]
+    members:
+      - "Medical Isotopes"
+      - "MedTech / Diagnostics"
+      - "MedTech / Diabetes Management"
+      - "Health"
+
+  "Software":
+    mode: consume
+    prefix: ["Software"]
+    members:
+      - "Software Services"
+      - "IT Services & Consulting"
+      - "EdTech / Online Learning"
+      - "AI - Software & Analytics"
+      - "AI - Software Services"
+
+  "Energy":
+    mode: consume
+    prefix: ["Energy"]
+    members:
+      - "Infrastructure / Energy & Renewables"
+      - "Energy Services / Completion Fluids"
+      - "Electricity / Power Generation"
+      - "Electrcity/Power"
+      - "Natural Gas / LNG Infrastructure"
+      - "Fuel Cell"
+      - "Renewable Fuels / Ethanol"
+      - "Batteries"
+
+  "Semiconductor Manufacturing":
+    mode: consume
+    prefix: ["Semiconductor", "Semiconductors", "AI - Semiconductor"]
+
+  "Gaming & Entertainment":
+    mode: consume
+    prefix: ["Gaming", "Digital Entertainment"]
+    members:
+      - "Entertainment / Themed Attractions"
+      - "Entertainment / Live Events"
+
+  "Chemicals":
+    mode: consume
+    prefix: ["Chemicals"]
+
+  "Cryptocurrency":
+    mode: consume
+    prefix: ["Cryptocurrency"]
+
+  "Travel & Transportation":
+    mode: consume
+    prefix: ["Travel", "Airlines"]
+
+  "Consumer":
+    mode: consume
+    prefix: ["Consumer"]
+    members:
+      - "Consumer Goods / Health & Wellness"
+      - "Consumer Goods / Batteries"
+      - "Human Capital Management / Benefits Tech"
+
+  "Retail":
+    mode: consume
+    prefix: ["Retail"]
+    members:
+      - "E-commerce and Digital Retail"
+      - "Luxury Retail / Home Furnishings"
+      - "Home Furnishings"
+      - "E-commerce / Automotive Marketplace"
+      - "E-commerce / Luxury Resale"
+      - "E-commerce / Event Ticketing"
+      - "E-commerce / Southeast Asia"
+
+  "Real Estate":
+    mode: consume
+    prefix: ["Real Estate"]
+
+  "Aerospace & Defense":
+    mode: consume
+    prefix: ["Aerospace", "Defense"]
+    members:
+      - "Drones"
+
+  "Telecom":
+    mode: consume
+    prefix: ["Telecom"]
+    members:
+      - "Connectivity / High-Speed Video & Data"
+      - "Connectivity / RF Filters"
+
+  "Automotive":
+    mode: consume
+    prefix: ["Automotive"]
+    members:
+      - "EV & AV"
+      - "EV / Charging Infrastructure"
+      - "LiDAR & AV Tech"
+
+  "Industrial":
+    mode: consume
+    prefix: ["Industrial"]
+    members:
+      - "Building Materials / Wood Products"
+      - "Building Materials / Distribution"
+      - "Infrastructure / Modular Space"
+
+  "Logistics":
+    mode: consume
+    prefix: ["Logistics"]
+
+  # ── NEW SECTOR GROUPS ────────────────────────────────────────
+
+  "Nuclear":
+    mode: consume
+    prefix: ["Nuclear"]
+
+  "Cybersecurity":
+    mode: consume
+    prefix: ["Cybersecurity", "Cyber"]
+
+  "Space":
+    mode: consume
+    prefix: ["Space"]
+
+  "Solar":
+    mode: consume
+    prefix: ["Solar"]
+
+  "Agriculture":
+    mode: consume
+    prefix: ["Agriculture"]
+
+  "Security & Surveillance":
+    mode: consume
+    prefix: ["Security"]
+    members:
+      - "AI - Security & Surveillance"
+      - "Smart Home / IoT Security"
+
+  "Ads & Marketing Tech":
+    mode: consume
+    prefix: ["Ads Tech"]
+
+  # ── REMOVE (noise themes) ───────────────────────────────────
+  "_remove_noise":
+    mode: remove
+    members:
+      - "Individual Episodic Pivots / Singletons"
+      - "Uncategorized"
+      - "Meme Stocks"

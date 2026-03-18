@@ -241,7 +241,8 @@ def run_daily_workflow():
         master_df = pd.read_csv(latest_master)
         theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
-        logger.info(f"✓ Analyzed {len(theme_df)} themes\n")
+        regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'
+        logger.info(f"✓ Analyzed {len(theme_df)} themes (regime: {regime})\n")
 
         # Step 10: Validate dashboard-visible ticker themes
         logger.info(f"{'='*80}")

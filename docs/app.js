@@ -339,28 +339,14 @@
           // Parse date (DD/MM/YYYY) and time (HH:MM) — stored as US Eastern
           const parts = ev.date.split('/');
           const day = parts[0], month = parts[1], year = parts[2];
-          const timeStr = ev.time || '00:00';
-          const [hours, mins] = timeStr.split(':');
 
-          // Convert event time from US Eastern to local timezone
-          const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hours.padStart(2, '0')}:${mins.padStart(2, '0')}:00`;
-          // Step 1: Find ET's UTC offset for this date
-          // Format a known UTC instant in both ET and local, compare the difference
-          const probe = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00Z`);
-          const etParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false, year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(probe);
-          const etH = parseInt(etParts.find(p => p.type === 'hour').value);
-          const etM = parseInt(etParts.find(p => p.type === 'minute').value);
-          // ET shows (etH:etM) when UTC is 12:00, so ET offset = (etH*60+etM) - 720 minutes
-          const etOffsetMins = (etH * 60 + etM) - 720;
-          // Step 2: event is at isoStr in ET, so UTC = isoStr - etOffset
-          const eventUtcMs = new Date(isoStr + 'Z').getTime() - (etOffsetMins * 60000);
-          const eventDate = new Date(eventUtcMs);
-
-          const localDateStr = eventDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          const localTimeStr = ev.time ? eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-          const displayDate = (localDateStr !== lastLocalDate) ? localDateStr : '';
-          lastLocalDate = localDateStr;
-          const dtDisplay = displayDate ? (displayDate + ' ' + localTimeStr) : localTimeStr;
+          // Display original Eastern time directly (no timezone conversion)
+          const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T12:00:00Z`);
+          const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+          const timeStr = ev.time || '';
+          const displayDate = (dateStr !== lastLocalDate) ? dateStr : '';
+          lastLocalDate = dateStr;
+          const dtDisplay = displayDate ? (displayDate + (timeStr ? ' ' + timeStr : '')) : timeStr;
 
           html += `
             <div class="event-item">

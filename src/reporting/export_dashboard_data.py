@@ -59,9 +59,9 @@ MACRO_TICKERS = {
         {'yahoo': 'NG=F', 'label': 'Natural Gas', 'name': 'Natural Gas', 'tv': 'OANDA:NATGASUSD'},
     ],
     'yields': [
-        {'yahoo': '^IRX', 'label': '2Y', 'name': '2Y Treasury', 'tv': 'TVC:US02Y'},
-        {'yahoo': '^TNX', 'label': '10Y', 'name': '10Y Treasury', 'tv': 'TVC:US10Y'},
-        {'yahoo': '^TYX', 'label': '30Y', 'name': '30Y Treasury', 'tv': 'TVC:US30Y'},
+        {'yahoo': '^IRX', 'label': '2Y', 'name': '2Y Treasury', 'tv': 'CAPITALCOM:US2YR'},
+        {'yahoo': '^TNX', 'label': '10Y', 'name': '10Y Treasury', 'tv': 'CAPITALCOM:US10YR'},
+        {'yahoo': '^TYX', 'label': '30Y', 'name': '30Y Treasury', 'tv': 'CAPITALCOM:US30YR'},
     ],
     'dollar': [
         {'yahoo': 'DX-Y.NYB', 'label': 'DXY', 'name': 'Dollar Index', 'tv': 'CAPITALCOM:DXY'},

@@ -11,7 +11,6 @@ Shared helpers for morning (BMO) and afternoon (AMC) EP scans:
 import json
 import os
 import time
-import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, time as dt_time, date
 from pathlib import Path
@@ -20,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
+import requests
 import yfinance as yf
 
 try:
@@ -35,10 +35,7 @@ ET = ZoneInfo("America/New_York")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DOCS_DATA_DIR = PROJECT_ROOT / "docs" / "data"
 
-DISCORD_WEBHOOK_URL = (
-    "https://discord.com/api/webhooks/1484426859872784505/"
-    "jC5k8jq4O8nhbnVPUYkaeD92Ov4NEQGytq27w4aleGutZRJmqCsHAYev11aMiEn1O6rA"
-)
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_EP_SCAN_WEBHOOK_URL", "")
 
 ALPACA_KEY = os.environ.get("ALPACA_API_KEY", "")
 ALPACA_SECRET = os.environ.get("ALPACA_API_SECRET", "")
@@ -422,16 +419,20 @@ def send_discord_notification(
     if len(content) > 1990:
         content = content[:1987] + '...'
 
+    if not DISCORD_WEBHOOK_URL:
+        print("  Discord notification skipped: DISCORD_EP_SCAN_WEBHOOK_URL not set")
+        return
+
     try:
-        payload = json.dumps({'content': content}).encode('utf-8')
-        req = urllib.request.Request(
+        resp = requests.post(
             DISCORD_WEBHOOK_URL,
-            data=payload,
-            headers={'Content-Type': 'application/json'},
-            method='POST',
+            json={'content': content},
+            timeout=10,
         )
-        resp = urllib.request.urlopen(req, timeout=10)
-        print(f"  Discord notification sent (HTTP {resp.status})")
+        if resp.status_code >= 300:
+            print(f"  Discord notification failed ({resp.status_code}): {resp.text[:300]}")
+        else:
+            print(f"  Discord notification sent (HTTP {resp.status_code})")
     except Exception as e:
         print(f"  Discord notification failed: {e}")
 

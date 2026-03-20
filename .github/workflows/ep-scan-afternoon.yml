@@ -2,11 +2,11 @@ name: EP Scan — Afternoon (AMC Earnings)
 
 on:
   schedule:
-    # Dual-cron for DST-aware 2:00 PM Pacific (Mon-Fri)
+    # Dual-cron for DST-aware 2:00 PM Pacific (Mon-Thu, no Friday AMC)
     # 9:00 PM UTC = 2:00 PM PDT (Mar-Nov)
-    - cron: '0 21 * * 1-5'
+    - cron: '0 21 * * 1-4'
     # 10:00 PM UTC = 2:00 PM PST (Nov-Mar)
-    - cron: '0 22 * * 1-5'
+    - cron: '0 22 * * 1-4'
   workflow_dispatch:
 
 permissions:
@@ -34,8 +34,8 @@ jobs:
         env:
           WORKFLOW_EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_EVENT_SCHEDULE: ${{ github.event.schedule }}
-          SCHEDULE_GUARD_PDT_CRON: "0 21 * * 1-5"
-          SCHEDULE_GUARD_PST_CRON: "0 22 * * 1-5"
+          SCHEDULE_GUARD_PDT_CRON: "0 21 * * 1-4"
+          SCHEDULE_GUARD_PST_CRON: "0 22 * * 1-4"
         run: |
           python3 -m src.ci.daily_screening_schedule_guard
 

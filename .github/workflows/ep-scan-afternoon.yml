@@ -57,6 +57,7 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+          DISCORD_EP_SCAN_WEBHOOK_URL: ${{ secrets.DISCORD_EP_SCAN_WEBHOOK_URL }}
           PYTHONPATH: .
         run: |
           python src/reporting/ep_scan_afternoon.py || echo "EP scan failed - continuing"

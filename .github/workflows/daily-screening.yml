@@ -2,11 +2,11 @@ name: Daily Stock Screening and Dashboard Deployment
 
 on:
   schedule:
-    # Dual-cron for DST-aware 1:30 PM Pacific (Mon-Fri)
-    # 8:30 PM UTC = 1:30 PM PDT (Mar-Nov)
-    - cron: '30 20 * * 1-5'
-    # 9:30 PM UTC = 1:30 PM PST (Nov-Mar)
-    - cron: '30 21 * * 1-5'
+    # Dual-cron for DST-aware 1:15 PM Pacific (Mon-Fri)
+    # 8:15 PM UTC = 1:15 PM PDT (Mar-Nov)
+    - cron: '15 20 * * 1-5'
+    # 9:15 PM UTC = 1:15 PM PST (Nov-Mar)
+    - cron: '15 21 * * 1-5'
   workflow_dispatch: # Allow manual triggering (always runs)
 
 permissions:
@@ -37,6 +37,8 @@ jobs:
         env:
           WORKFLOW_EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_EVENT_SCHEDULE: ${{ github.event.schedule }}
+          SCHEDULE_GUARD_PDT_CRON: "15 20 * * 1-5"
+          SCHEDULE_GUARD_PST_CRON: "15 21 * * 1-5"
         run: |
           python3 -m src.ci.daily_screening_schedule_guard
 
@@ -70,13 +72,6 @@ jobs:
           PYTHONPATH: .
         run: |
           python src/reporting/export_dashboard_data.py
-
-      - name: Run EP Scanner export (AMC earnings after-hours)
-        if: steps.schedule-guard.outputs.should_run == 'true'
-        env:
-          PYTHONPATH: .
-        run: |
-          python src/reporting/ep_scan_export.py || echo "EP scan failed or no qualifying tickers - continuing"
 
       - name: Commit and push results
         if: steps.schedule-guard.outputs.should_run == 'true'

@@ -24,11 +24,15 @@
   let sortState = {
     etf: { column: 'rs_sts', dir: 'desc' },
     industry: { column: 'rs_sts', dir: 'desc' },
-    ep: { column: 'float', dir: 'asc' },
+    ep_afternoon: { column: 'float', dir: 'asc' },
+    ep_morning: { column: 'float', dir: 'asc' },
   };
   let etfData = [];
   let industryData = [];
-  let epData = [];
+  let epAfternoonData = [];
+  let epMorningData = [];
+  // Combined lookup for news by ticker
+  let epAllTickers = {};
 
   function withCacheBust(url) {
     const separator = url.includes('?') ? '&' : '?';
@@ -50,10 +54,13 @@
     loadIndustryETFData();
     loadETFData();
     loadMacroEvents();
-    loadEPScannerData();
+    loadEPAfternoonData();
+    loadEPMorningData();
     initTableSort();
+    initEPNewsClick();
     // Auto-refresh EP data every 10 minutes
-    setInterval(loadEPScannerData, 10 * 60 * 1000);
+    setInterval(loadEPAfternoonData, 10 * 60 * 1000);
+    setInterval(loadEPMorningData, 10 * 60 * 1000);
   });
 
   // ── CLOCK ─────────────────────────────────────────────
@@ -820,27 +827,25 @@
         th.classList.add(state.dir === 'desc' ? 'sorted-desc' : 'sorted-asc');
 
         if (tab === 'industry') sortAndRenderIndustry();
-        else if (tab === 'ep') sortAndRenderEP();
+        else if (tab === 'ep_afternoon') sortAndRenderEPAfternoon();
+        else if (tab === 'ep_morning') sortAndRenderEPMorning();
         else sortAndRenderETF();
       });
     });
   }
 
-  // ── EP SCANNER DATA ──────────────────────────────────────
-  const EP_SCAN_URL = 'data/ep_scan.json';
+  // ── EP SCANNER DATA (Afternoon + Morning) ──────────────────
+  const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
+  const EP_MORNING_URL = 'data/ep_scan_morning.json';
 
-  function loadEPScannerData() {
-    fetch(withCacheBust(EP_SCAN_URL))
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+  function loadEPAfternoonData() {
+    fetch(withCacheBust(EP_AFTERNOON_URL))
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
-        epData = data.tickers || [];
-        sortAndRenderEP();
-
-        // Update refresh badge
-        const infoEl = document.getElementById('ep-refresh-info');
+        epAfternoonData = data.tickers || [];
+        epAfternoonData.forEach(t => { epAllTickers[t.ticker] = t; });
+        sortAndRenderEPAfternoon();
+        const infoEl = document.getElementById('ep-afternoon-refresh-info');
         if (infoEl && data.timestamp) {
           const dt = new Date(data.timestamp);
           infoEl.textContent = 'Updated: ' + dt.toLocaleDateString() + ' ' +
@@ -848,62 +853,109 @@
         }
       })
       .catch(() => {
-        document.getElementById('ep-body').innerHTML =
-          '<tr><td colspan="6" class="no-data">EP scan data not available.</td></tr>';
-        const infoEl = document.getElementById('ep-refresh-info');
-        if (infoEl) infoEl.textContent = 'No data';
+        document.getElementById('ep-afternoon-body').innerHTML =
+          '<tr><td colspan="8" class="no-data">Afternoon EP data not available.</td></tr>';
       });
   }
 
-  function sortAndRenderEP() {
-    const s = sortState.ep;
-    epData.sort((a, b) => {
+  function loadEPMorningData() {
+    fetch(withCacheBust(EP_MORNING_URL))
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        epMorningData = data.tickers || [];
+        epMorningData.forEach(t => { epAllTickers[t.ticker] = t; });
+        sortAndRenderEPMorning();
+        const infoEl = document.getElementById('ep-morning-refresh-info');
+        if (infoEl && data.timestamp) {
+          const dt = new Date(data.timestamp);
+          infoEl.textContent = 'Updated: ' + dt.toLocaleDateString() + ' ' +
+            dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+      })
+      .catch(() => {
+        document.getElementById('ep-morning-body').innerHTML =
+          '<tr><td colspan="8" class="no-data">Morning EP data not available.</td></tr>';
+      });
+  }
+
+  function sortAndRenderEPAfternoon() {
+    const s = sortState.ep_afternoon;
+    epAfternoonData.sort((a, b) => {
       const av = a[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
       const bv = b[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
       return s.dir === 'desc' ? bv - av : av - bv;
     });
-    renderEPTable();
+    renderEPAfternoonTable();
   }
 
-  function renderEPTable() {
-    const tbody = document.getElementById('ep-body');
-    if (!epData.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="no-data">No EP scan results for today.</td></tr>';
+  function sortAndRenderEPMorning() {
+    const s = sortState.ep_morning;
+    epMorningData.sort((a, b) => {
+      const av = a[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
+      const bv = b[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
+      return s.dir === 'desc' ? bv - av : av - bv;
+    });
+    renderEPMorningTable();
+  }
+
+  function renderEPAfternoonTable() {
+    const tbody = document.getElementById('ep-afternoon-body');
+    if (!epAfternoonData.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="no-data">No afternoon EP results.</td></tr>';
       return;
     }
-
     let html = '';
-    epData.forEach(row => {
-      const floatClass = (row.float != null && row.float < 150) ? 'ep-float-green' : 'neu';
-      const shortClass = epShortClass(row.short);
-      const dist52wClass = epDist52wClass(row.dist_52w_high);
-      const atrClass = epAtrClass(row.atr_multiple);
-
-      const floatStr = row.float != null ? row.float.toFixed(1) + 'M' : '—';
-      const shortStr = row.short != null ? row.short.toFixed(1) + '%' : '—';
-      const dist52wStr = row.dist_52w_high != null
-        ? (row.dist_52w_high > 0 ? '+' : '') + row.dist_52w_high.toFixed(1) + '%'
-        : '—';
-      const atrStr = row.atr_multiple != null ? row.atr_multiple.toFixed(1) + '×' : '—';
-      const ahChgStr = row.ah_chg_pct != null
-        ? (row.ah_chg_pct > 0 ? '+' : '') + row.ah_chg_pct.toFixed(2) + '%'
-        : '—';
-      const ahChgClass = pctClass(row.ah_chg_pct);
-
-      html += `
-        <tr>
-          <td class="l">
-            <span class="tn-link" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP Scan')}">${escHtml(row.ticker)}</span>
-          </td>
-          <td class="${floatClass}">${floatStr}</td>
-          <td class="${shortClass}">${shortStr}</td>
-          <td class="${dist52wClass}">${dist52wStr}</td>
-          <td class="${atrClass}">${atrStr}</td>
-          <td class="${ahChgClass}">${ahChgStr}</td>
-        </tr>
-      `;
+    epAfternoonData.forEach(row => {
+      html += epRow(row, 'ah_chg_pct', 'ah_price', 'AH');
     });
     tbody.innerHTML = html;
+  }
+
+  function renderEPMorningTable() {
+    const tbody = document.getElementById('ep-morning-body');
+    if (!epMorningData.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="no-data">No morning EP results.</td></tr>';
+      return;
+    }
+    let html = '';
+    epMorningData.forEach(row => {
+      html += epRow(row, 'pm_chg_pct', 'pm_price', 'PM');
+    });
+    tbody.innerHTML = html;
+  }
+
+  function epRow(row, chgKey, priceKey, label) {
+    const floatClass = (row.float != null && row.float < 150) ? 'ep-float-green' : 'neu';
+    const shortClass = epShortClass(row.short);
+    const dist52wClass = epDist52wClass(row.dist_52w_high);
+    const atrClass = epAtrClass(row.atr_multiple);
+    const rvolClass = epRvolClass(row.rvol);
+
+    const floatStr = row.float != null ? row.float.toFixed(1) + 'M' : '—';
+    const shortStr = row.short != null ? row.short.toFixed(1) + '%' : '—';
+    const dist52wStr = row.dist_52w_high != null
+      ? (row.dist_52w_high > 0 ? '+' : '') + row.dist_52w_high.toFixed(1) + '%' : '—';
+    const atrStr = row.atr_multiple != null ? row.atr_multiple.toFixed(1) + '×' : '—';
+    const chgVal = row[chgKey];
+    const chgStr = chgVal != null ? (chgVal > 0 ? '+' : '') + chgVal.toFixed(2) + '%' : '—';
+    const chgClass = pctClass(chgVal);
+    const priceStr = row[priceKey] != null ? row[priceKey].toFixed(2) : '—';
+    const rvolStr = row.rvol != null ? row.rvol.toFixed(1) + 'x' : '—';
+
+    return `
+      <tr>
+        <td class="l">
+          <span class="tn-link" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP ' + label)}">${escHtml(row.ticker)}</span>
+        </td>
+        <td class="${floatClass}">${floatStr}</td>
+        <td class="${shortClass}">${shortStr}</td>
+        <td class="${dist52wClass}">${dist52wStr}</td>
+        <td class="${atrClass}">${atrStr}</td>
+        <td class="${chgClass}">${chgStr}</td>
+        <td>${priceStr}</td>
+        <td class="${rvolClass}">${rvolStr}</td>
+      </tr>
+    `;
   }
 
   // EP color helpers
@@ -915,19 +967,62 @@
   }
 
   function epDist52wClass(val) {
-    // val is % distance: (ah_price - 52w_high) / 52w_high * 100
-    // green if better than -10% (i.e., val > -10)
     if (val == null) return 'neu';
     return val > -10 ? 'up' : 'neu';
   }
 
   function epAtrClass(val) {
-    // ATR multiple: green <5, blue <7, normal <9, red >=10
     if (val == null) return 'neu';
     if (val < 5) return 'up';
     if (val < 7) return 'short-blue';
     if (val < 9) return 'neu';
     return 'dn';
+  }
+
+  function epRvolClass(val) {
+    if (val == null) return 'neu';
+    if (val >= 3) return 'rvol-high';
+    if (val >= 1.5) return 'rvol-medium';
+    return 'rvol-low';
+  }
+
+  // ── EP NEWS (shown on ticker click) ───────────────────────
+  function initEPNewsClick() {
+    document.getElementById('content-ep').addEventListener('click', (e) => {
+      const link = e.target.closest('.tn-link');
+      if (!link) return;
+      const sym = link.dataset.sym;
+      if (!sym) return;
+      const tickerData = epAllTickers[sym];
+      if (!tickerData || !tickerData.news || tickerData.news.length === 0) {
+        hideEPNews();
+        return;
+      }
+      showEPNews(sym, tickerData.news);
+    });
+  }
+
+  function showEPNews(ticker, newsItems) {
+    const section = document.getElementById('ep-news-section');
+    const tickerEl = document.getElementById('ep-news-ticker');
+    const contentEl = document.getElementById('ep-news-content');
+
+    tickerEl.textContent = ticker;
+    let html = '';
+    newsItems.forEach(item => {
+      html += `
+        <div class="ep-news-item">
+          <a href="${escAttr(item.link)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
+          <div class="ep-news-meta">${escHtml(item.source)} · ${escHtml(item.date)}</div>
+        </div>
+      `;
+    });
+    contentEl.innerHTML = html;
+    section.style.display = '';
+  }
+
+  function hideEPNews() {
+    document.getElementById('ep-news-section').style.display = 'none';
   }
 
   // ── STATUS UPDATE ─────────────────────────────────────

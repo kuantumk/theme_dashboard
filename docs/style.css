@@ -857,6 +857,58 @@ th.sorted-asc::after {
   letter-spacing: 1px;
 }
 
+/* ── EP NEWS SECTION ───────────────────────────────────── */
+.ep-news-card {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ep-news-content {
+  padding: 8px 12px;
+}
+
+.ep-news-item {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(28, 37, 53, 0.4);
+}
+
+.ep-news-item:last-child {
+  border-bottom: none;
+}
+
+.ep-news-item a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: color 0.15s;
+}
+
+.ep-news-item a:hover {
+  color: var(--accent);
+}
+
+.ep-news-meta {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+/* ── EP RVOL COLOR ────────────────────────────────────── */
+.rvol-high {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.rvol-medium {
+  color: var(--amber);
+}
+
+.rvol-low {
+  color: var(--text3);
+}
+
 /* ── ACTIVE TICKER ROW HIGHLIGHT ───────────────────────── */
 tbody tr.nav-active {
   background: rgba(0, 200, 255, 0.06) !important;

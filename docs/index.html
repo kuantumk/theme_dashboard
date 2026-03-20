@@ -447,42 +447,74 @@
   <!-- ══ TAB 5: EP SCANNER ══════════════════════════════ -->
   <div class="tab-content" id="content-ep">
     <div class="left-panel" id="ep-left">
+
+      <!-- Afternoon Section (AMC) -->
       <div class="card">
-        <div class="card-lbl">▸ Earnings Pivot Scanner &nbsp;<span class="badge">AMC · After-Hours</span>
-          <span class="ep-refresh-info" id="ep-refresh-info">—</span>
+        <div class="card-lbl">▸ Afternoon Earnings (AMC) &nbsp;<span class="badge">After-Hours</span>
+          <span class="ep-refresh-info" id="ep-afternoon-refresh-info">—</span>
         </div>
-        <table id="ep-table">
+        <table id="ep-afternoon-table">
           <thead>
             <tr>
               <th class="l">Ticker</th>
-              <th class="sortable sorted-asc" data-sort="float" data-tab="ep">Float(M)</th>
-              <th class="sortable" data-sort="short" data-tab="ep">Short%</th>
-              <th class="sortable" data-sort="dist_52w_high" data-tab="ep">52W Hi%</th>
-              <th class="sortable" data-sort="atr_multiple" data-tab="ep">ATR×</th>
-              <th class="sortable" data-sort="ah_chg_pct" data-tab="ep">AH Chg%</th>
+              <th class="sortable sorted-asc" data-sort="float" data-tab="ep_afternoon">Float(M)</th>
+              <th class="sortable" data-sort="short" data-tab="ep_afternoon">Short%</th>
+              <th class="sortable" data-sort="dist_52w_high" data-tab="ep_afternoon">52W Hi%</th>
+              <th class="sortable" data-sort="atr_multiple" data-tab="ep_afternoon">ATR×</th>
+              <th class="sortable" data-sort="ah_chg_pct" data-tab="ep_afternoon">AH Chg%</th>
+              <th class="sortable" data-sort="ah_price" data-tab="ep_afternoon">AH Price</th>
+              <th class="sortable" data-sort="rvol" data-tab="ep_afternoon">RVol</th>
             </tr>
           </thead>
-          <tbody id="ep-body">
-            <tr>
-              <td colspan="6" class="loading">Loading EP scan data...</td>
-            </tr>
+          <tbody id="ep-afternoon-body">
+            <tr><td colspan="8" class="loading">Loading afternoon EP data...</td></tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Morning Section (BMO) -->
+      <div class="card">
+        <div class="card-lbl">▸ Morning Earnings (BMO) &nbsp;<span class="badge">Pre-Market</span>
+          <span class="ep-refresh-info" id="ep-morning-refresh-info">—</span>
+        </div>
+        <table id="ep-morning-table">
+          <thead>
+            <tr>
+              <th class="l">Ticker</th>
+              <th class="sortable sorted-asc" data-sort="float" data-tab="ep_morning">Float(M)</th>
+              <th class="sortable" data-sort="short" data-tab="ep_morning">Short%</th>
+              <th class="sortable" data-sort="dist_52w_high" data-tab="ep_morning">52W Hi%</th>
+              <th class="sortable" data-sort="atr_multiple" data-tab="ep_morning">ATR×</th>
+              <th class="sortable" data-sort="pm_chg_pct" data-tab="ep_morning">PM Chg%</th>
+              <th class="sortable" data-sort="pm_price" data-tab="ep_morning">PM Price</th>
+              <th class="sortable" data-sort="rvol" data-tab="ep_morning">RVol</th>
+            </tr>
+          </thead>
+          <tbody id="ep-morning-body">
+            <tr><td colspan="8" class="loading">Loading morning EP data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- News Section (shown on ticker click) -->
+      <div class="card ep-news-card" id="ep-news-section" style="display:none">
+        <div class="card-lbl">▸ News — <span id="ep-news-ticker">—</span></div>
+        <div id="ep-news-content" class="ep-news-content"></div>
+      </div>
+
     </div>
     <div class="resize-handle" data-panel="ep"></div>
     <div class="right-panel" id="ep-right">
       <div class="chart-header" id="ep-chart-header" style="display:none">
         <span class="chart-symbol" id="ep-chart-sym"></span>
         <span class="chart-name" id="ep-chart-name"></span>
-        <a class="chart-alert-btn" id="ep-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        <a class="chart-alert-btn" id="ep-alert-link" href="#" target="_blank">Set Alert on TradingView</a>
       </div>
       <div class="chart-area" id="ep-chart-area">
         <div class="chart-placeholder">
-          <div class="placeholder-icon">🔍</div>
+          <div class="placeholder-icon">EP</div>
           <div>Click any ticker to open chart</div>
-          <div class="placeholder-sub">Daily timeframe · MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)
-          </div>
+          <div class="placeholder-sub">Daily timeframe · MA Ribbon: 20 SMA (green) · 50 SMA (yellow) · 200 SMA (red)</div>
         </div>
       </div>
     </div>

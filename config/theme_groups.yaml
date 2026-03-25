@@ -57,6 +57,8 @@ theme_groups:
   "Financial Services":
     mode: consume
     prefix: ["Financials", "Financial Services", "Fintech"]
+    exclude:
+      - "Financials / Argentina"  # geographic — not a financial services theme
 
   "Healthcare":
     mode: consume

@@ -4,9 +4,11 @@ from datetime import datetime
 from src.themes.tag_new_tickers import (
     apply_google_sheet_ground_truth,
     apply_validation_decisions,
+    filter_sector_inconsistent_themes,
     select_validation_tickers,
     themes_match,
 )
+from src.themes.theme_taxonomy import _matches_group
 
 
 class ThemeSyncTests(unittest.TestCase):
@@ -130,6 +132,71 @@ class ThemeSyncTests(unittest.TestCase):
                 ["AI - Infra / Power/Cooling", "AI - Infra / Optics"],
             )
         )
+
+
+class SectorConsistencyFilterTests(unittest.TestCase):
+    """Tests for filter_sector_inconsistent_themes."""
+
+    def test_removes_financials_theme_from_energy_ticker(self) -> None:
+        tags = {"YPF": ["Energy / Oil & Gas E&P", "Financials / Argentina"]}
+        profiles = {"YPF": {"sector": "Energy"}}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["YPF"], ["Energy / Oil & Gas E&P"])
+
+    def test_removes_logistics_theme_from_consumer_cyclical(self) -> None:
+        tags = {"CART": ["E-commerce and Digital Retail", "Logistics / Freight Brokerage"]}
+        profiles = {"CART": {"sector": "Consumer Cyclical"}}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["CART"], ["E-commerce and Digital Retail"])
+
+    def test_keeps_first_theme_when_all_blocked(self) -> None:
+        tags = {"BAD": ["Financials / Argentina"]}
+        profiles = {"BAD": {"sector": "Energy"}}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["BAD"], ["Financials / Argentina"])
+
+    def test_no_change_when_sector_consistent(self) -> None:
+        tags = {"AAPL": ["AI - Software & Analytics"]}
+        profiles = {"AAPL": {"sector": "Technology"}}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["AAPL"], ["AI - Software & Analytics"])
+
+    def test_no_change_when_sector_missing(self) -> None:
+        tags = {"UNKNOWN": ["Financials / Argentina"]}
+        profiles = {}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["UNKNOWN"], ["Financials / Argentina"])
+
+    def test_no_change_when_sector_not_in_blocklist(self) -> None:
+        tags = {"X": ["Some Theme"]}
+        profiles = {"X": {"sector": "Communication Services"}}
+        result = filter_sector_inconsistent_themes(tags, profiles)
+        self.assertEqual(result["X"], ["Some Theme"])
+
+
+class ThemeGroupExcludeTests(unittest.TestCase):
+    """Tests for _matches_group exclude support."""
+
+    def test_exclude_overrides_prefix_match(self) -> None:
+        config = {
+            "prefix": ["Financials"],
+            "members": [],
+            "exclude": ["Financials / Argentina"],
+        }
+        self.assertFalse(_matches_group("Financials / Argentina", config))
+        self.assertTrue(_matches_group("Financials / Banking", config))
+
+    def test_exclude_overrides_member_match(self) -> None:
+        config = {
+            "prefix": [],
+            "members": ["Financials / Argentina"],
+            "exclude": ["Financials / Argentina"],
+        }
+        self.assertFalse(_matches_group("Financials / Argentina", config))
+
+    def test_no_exclude_preserves_original_behavior(self) -> None:
+        config = {"prefix": ["Logistics"], "members": []}
+        self.assertTrue(_matches_group("Logistics / Maritime Shipping", config))
 
 
 if __name__ == "__main__":

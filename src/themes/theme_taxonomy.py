@@ -33,13 +33,20 @@ def load_theme_groups(path: str = None) -> Dict[str, dict]:
         groups[super_theme] = {
             "members": info.get("members", []),
             "prefix": info.get("prefix", []),
+            "exclude": info.get("exclude", []),
             "mode": info.get("mode", "keep"),
         }
     return groups
 
 
 def _matches_group(theme_name: str, group_config: dict) -> bool:
-    """Check if a theme name matches a group's prefix or member list."""
+    """Check if a theme name matches a group's prefix or member list.
+
+    Themes in the ``exclude`` list are never matched, even if they
+    would otherwise match a prefix or member entry.
+    """
+    if theme_name in group_config.get("exclude", []):
+        return False
     for prefix in group_config.get("prefix", []):
         if theme_name.startswith(prefix):
             return True

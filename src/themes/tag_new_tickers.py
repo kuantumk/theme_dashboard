@@ -197,6 +197,41 @@ Prefer reusing an existing theme when it fits cleanly.
 If a stock is clearly idiosyncratic, use "Individual Episodic Pivots / Singletons".
 </task>
 
+<rules>
+1. SECTOR CONSISTENCY: Each theme MUST align with the company's sector and industry.
+   Do NOT assign themes from an unrelated sector. Examples:
+   - An Energy-sector company must NOT get themes starting with "Financials", "Software", "Healthcare", etc.
+   - A Consumer Cyclical / Internet Retail company is retail/e-commerce, NOT logistics or freight.
+
+2. CORE BUSINESS ONLY: Classify by the company's primary revenue source and products/services.
+   Do NOT classify by:
+   - Where it is headquartered (no "Financials / Argentina" for an oil company).
+   - What industry it serves as a platform (a grocery delivery app is e-commerce, not logistics;
+     a ride-sharing app is transportation tech, not automotive).
+   - Tangential attributes or customer segments.
+
+3. GEOGRAPHIC QUALIFIERS: Only use a geographic qualifier when geography IS the investment
+   thesis — e.g. "Financials / Argentina" is valid ONLY for actual Argentine banks or financial
+   companies, never for an Argentine energy or industrial company.
+
+4. SECOND THEME: A second theme must reflect a distinct core business line (e.g. a company
+   with both cloud software and cybersecurity products). If no second core business exists,
+   assign only one theme. Do NOT add a second theme for country, customer type, or other
+   secondary attributes.
+</rules>
+
+<negative_examples>
+WRONG: CART (Maplebear/Instacart, sector=Consumer Cyclical, industry=Internet Retail)
+       -> ["E-commerce and Digital Retail", "Logistics / Freight Brokerage"]
+       Instacart is a retail marketplace, not a freight broker.
+       CORRECT: ["E-commerce and Digital Retail"]
+
+WRONG: YPF (sector=Energy, industry=Oil & Gas Integrated)
+       -> ["Energy / Oil & Gas Exploration & Production", "Financials / Argentina"]
+       YPF is an energy company. Being Argentine does not make it financial services.
+       CORRECT: ["Energy / Oil & Gas Exploration & Production"]
+</negative_examples>
+
 <existing_themes>
 {chr(10).join(f"- {theme}" for theme in existing_themes)}
 </existing_themes>
@@ -236,6 +271,59 @@ def classify_tickers_with_gemini(
         print(f"Warning: {len(missing)} classification ticker(s) missing from Gemini response: {missing}")
 
     return normalized_tags
+
+
+# Sector → theme-prefix pairs that are clearly incompatible.
+# Conservative: only blocks obviously wrong cross-sector assignments.
+SECTOR_THEME_BLOCKLIST: Dict[str, Set[str]] = {
+    "Energy": {"Financials", "Financial Services", "Fintech", "Software", "Healthcare", "Biotech"},
+    "Consumer Cyclical": {"Financials", "Financial Services", "Logistics"},
+    "Consumer Defensive": {"Financials", "Financial Services", "Logistics"},
+    "Healthcare": {"Financials", "Financial Services", "Energy", "Logistics"},
+    "Industrials": {"Financials", "Financial Services", "Healthcare", "Biotech"},
+    "Basic Materials": {"Financials", "Financial Services", "Software", "Healthcare"},
+    "Financial Services": {"Energy", "Healthcare", "Biotech", "Logistics"},
+    "Real Estate": {"Energy", "Logistics", "Biotech"},
+    "Utilities": {"Financials", "Financial Services", "Logistics", "Biotech"},
+}
+
+
+def filter_sector_inconsistent_themes(
+    classified_tags: Dict[str, List[str]],
+    profiles: Mapping[str, Mapping[str, str]],
+) -> Dict[str, List[str]]:
+    """Remove themes that are clearly incompatible with a ticker's sector.
+
+    Uses a conservative blocklist so only obviously wrong pairings are caught.
+    Never leaves a ticker themeless — keeps the first theme if all would be removed.
+    """
+    result: Dict[str, List[str]] = {}
+    for ticker, themes in classified_tags.items():
+        sector = (profiles.get(ticker) or {}).get("sector", "")
+        blocked_prefixes = SECTOR_THEME_BLOCKLIST.get(sector, set())
+        if not blocked_prefixes:
+            result[ticker] = themes
+            continue
+
+        kept: List[str] = []
+        removed: List[str] = []
+        for theme in themes:
+            if any(theme.startswith(prefix) for prefix in blocked_prefixes):
+                removed.append(theme)
+            else:
+                kept.append(theme)
+
+        if removed:
+            if not kept:
+                # Never leave a ticker themeless — keep the first theme
+                kept = [themes[0]]
+                removed = removed[1:] if len(removed) > 1 else []
+                print(f"  Sector guard: all themes blocked for {ticker} (sector={sector}), keeping first: {kept}")
+            for theme in removed:
+                print(f"  Sector guard removed '{theme}' from {ticker} (sector={sector})")
+
+        result[ticker] = kept or themes
+    return result
 
 
 def identify_tickers_needing_classification(
@@ -307,6 +395,7 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
             batch = classification_candidates[start:start + CLASSIFICATION_BATCH_SIZE]
             existing_themes = get_existing_theme_taxonomy({**ticker_themes, **classified_tags})
             batch_tags = classify_tickers_with_gemini(batch, existing_themes, profiles)
+            batch_tags = filter_sector_inconsistent_themes(batch_tags, profiles)
             classified_tags.update(batch_tags)
 
         for ticker, themes in classified_tags.items():

@@ -216,15 +216,27 @@
         "hide_top_toolbar": false,
         "hide_legend": false,
         "save_image": false,
+        "disabled_features": [
+          "use_localstorage_for_settings"
+        ],
         "container_id": containerId,
         "hotlist": false,
         "details": false,
         "calendar": false,
         "hide_volume": true,
         "studies": [
-          "STD;MA%Ribbon",
+          "MAExp@tv-basicstudies",
+          "MASimple@tv-basicstudies",
           "STD;Volume"
-        ]
+        ],
+        "studies_overrides": {
+          "moving average exponential.length": 20,
+          "moving average exponential.ma.color": "#4CAF50",
+          "moving average exponential.ma.linewidth": 2,
+          "moving average.length": 50,
+          "moving average.ma.color": "#FFD700",
+          "moving average.ma.linewidth": 2
+        }
       });
     }
 
@@ -586,7 +598,7 @@
         html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link${t.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : t.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -694,7 +706,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>
@@ -792,7 +804,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.day_pattern ? ' day-pattern' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>

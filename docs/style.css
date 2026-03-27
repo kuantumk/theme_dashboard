@@ -508,9 +508,14 @@ td.l {
   border-bottom-style: solid;
 }
 
-/* Inside Day or Tight Day pattern — green ticker */
-.tn-link.day-pattern {
+/* Tight/inside day + close to EMA10/20 — green ticker */
+.tn-link.day-pattern-green {
   color: var(--green);
+}
+
+/* Tight/inside day but NOT close to MAs — blue ticker */
+.tn-link.day-pattern-blue {
+  color: #42a5f5;
 }
 
 /* ── THEME CARD ─────────────────────────────────────────── */

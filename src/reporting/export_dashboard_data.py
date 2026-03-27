@@ -605,12 +605,12 @@ def enrich_themes_from_db(theme_data):
     print(f"   Enriched {enriched_count} tickers with finviz inst%/short% from DB")
 
 
-def load_day_pattern_flags():
-    """Load inside_day and tight_day flags from the latest price data."""
+def load_ticker_color_flags():
+    """Load tight/inside_day + close_to_ma flags, return {ticker: 'green'|'blue'}."""
     try:
         daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
     except Exception as e:
-        print(f"   Warning: Could not load price data for day patterns: {e}")
+        print(f"   Warning: Could not load price data for ticker colors: {e}")
         return {}
 
     flags = {}
@@ -618,29 +618,30 @@ def load_day_pattern_flags():
         if ticker.startswith('^') or df.empty:
             continue
         last = df.iloc[-1]
-        inside = bool(last.get('inside_day', False))
-        tight = bool(last.get('tight_day', False))
-        if inside or tight:
-            flags[ticker] = True
+        tight = bool(last.get('tight_day', False)) or bool(last.get('inside_day', False))
+        if not tight:
+            continue
+        close_to_ma = bool(last.get('close_to_ma', False))
+        flags[ticker] = 'green' if close_to_ma else 'blue'
     return flags
 
 
-def enrich_with_day_pattern(data_list, flags, ticker_key='ticker'):
-    """Add day_pattern flag to a list of ticker dicts."""
+def enrich_with_ticker_color(data_list, flags, ticker_key='ticker'):
+    """Add ticker_color ('green'|'blue') to a list of ticker dicts."""
     count = 0
     for item in data_list:
         tk = item.get(ticker_key, '')
         if tk in flags:
-            item['day_pattern'] = True
+            item['ticker_color'] = flags[tk]
             count += 1
     return count
 
 
-def fetch_etf_day_patterns(tickers):
-    """Download recent OHLC from yfinance for ETF tickers and compute day patterns.
+def fetch_etf_ticker_colors(tickers):
+    """Download recent OHLC for ETF tickers and compute ticker colors.
 
     This is a standalone fetch that does NOT pollute the main price data pipeline.
-    Returns a dict of {ticker: True} for tickers with inside_day or tight_day.
+    Returns a dict of {ticker: 'green'|'blue'} for tight/inside-day tickers.
     """
     if not tickers:
         return {}
@@ -648,10 +649,10 @@ def fetch_etf_day_patterns(tickers):
         import yfinance as yf
         import pandas as pd
     except ImportError:
-        print("   Warning: yfinance not installed, skipping ETF day patterns")
+        print("   Warning: yfinance not installed, skipping ETF ticker colors")
         return {}
 
-    # Download 2 months to securely have enough for 20-day ADR% rolling window (1mo can have <20 trading days depending on holidays)
+    # Download 2 months to securely have enough for rolling windows
     unique_tickers = list(set(tickers))
     print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
     try:
@@ -671,25 +672,48 @@ def fetch_etf_day_patterns(tickers):
             if len(df) < 2:
                 continue
 
+            high = pd.to_numeric(df['High'])
+            low = pd.to_numeric(df['Low'])
+            close = pd.to_numeric(df['Close'])
+
             # ADR% (20-day rolling avg of high/low ratio - 1)
-            adr_pct = (pd.to_numeric(df['High']) / pd.to_numeric(df['Low'])).rolling(window=20, min_periods=1).mean() - 1
+            adr_pct = (high / low).rolling(window=20, min_periods=1).mean() - 1
+
+            # EMA10, EMA20
+            ema10 = close.ewm(span=10, adjust=False).mean()
+            ema20 = close.ewm(span=20, adjust=False).mean()
+
+            # ATR14
+            high_low = high - low
+            high_prev = (high - close.shift(1)).abs()
+            low_prev = (low - close.shift(1)).abs()
+            tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
+            atr14 = tr.rolling(window=14, min_periods=1).mean()
 
             last = df.iloc[-1]
             prev = df.iloc[-2]
+            last_close = float(last['Close'])
+            last_open = float(last['Open'])
 
             # Inside Day
             inside = float(last['High']) < float(prev['High']) and float(last['Low']) > float(prev['Low'])
 
-            # Tight Day
-            tight = abs(float(last['Close']) - float(last['Open'])) < 0.2 * float(adr_pct.iloc[-1]) * float(last['Close'])
+            # Tight Day (0.25 * ADR% * open)
+            tight = abs(last_close - last_open) < 0.25 * float(adr_pct.iloc[-1]) * last_open
 
-            if inside or tight:
-                flags[ticker] = True
+            if not (inside or tight):
+                continue
+
+            # Close to MAs
+            close_to_ema10 = abs(last_close - float(ema10.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
+            close_to_ema20 = abs(last_close - float(ema20.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
+
+            flags[ticker] = 'green' if (close_to_ema10 or close_to_ema20) else 'blue'
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")
             continue
 
-    print(f"   Found {len(flags)} ETFs with inside_day or tight_day")
+    print(f"   Found {len(flags)} ETFs with tight/inside day colors")
     return flags
 
 
@@ -712,17 +736,17 @@ def export_all():
         # Enrich theme tickers with fresh finviz data from fundamentals DB
         enrich_themes_from_db(theme_data)
 
-        # Enrich theme tickers with inside_day / tight_day flags
-        day_flags = load_day_pattern_flags()
+        # Enrich theme tickers with ticker color flags (tight/inside + close_to_ma)
+        day_flags = load_ticker_color_flags()
         theme_pattern_count = 0
         for theme in theme_data.get('themes', []):
-            theme_pattern_count += enrich_with_day_pattern(theme.get('tickers', []), day_flags)
-        print(f"   Enriched {theme_pattern_count} theme tickers with day pattern flags")
+            theme_pattern_count += enrich_with_ticker_color(theme.get('tickers', []), day_flags)
+        print(f"   Enriched {theme_pattern_count} theme tickers with ticker color flags")
 
         theme_output = OUTPUT_DIR / "themes.json"
         with open(theme_output, 'w', encoding='utf-8') as f:
             json.dump(theme_data, f, indent=2)
-        print(f"   → {theme_output} ({len(theme_data['themes'])} themes)")
+        print(f"   -> {theme_output} ({len(theme_data['themes'])} themes)")
     else:
         print("\n1. No report found, skipping themes export")
 
@@ -737,7 +761,7 @@ def export_all():
         etf_output = OUTPUT_DIR / "etf_data.json"
         with open(etf_output, 'w', encoding='utf-8') as f:
             json.dump(etf_data, f, indent=2)
-        print(f"   → {etf_output} ({len(etf_data)} ETFs)")
+        print(f"   -> {etf_output} ({len(etf_data)} ETFs)")
 
     # 4. Fetch Industry ETF data
     print("\n4. Fetching industry ETF data")
@@ -746,7 +770,7 @@ def export_all():
         ind_output = OUTPUT_DIR / "industry_etf.json"
         with open(ind_output, 'w', encoding='utf-8') as f:
             json.dump(industry_data, f, indent=2)
-        print(f"   → {ind_output} ({len(industry_data)} industry ETFs)")
+        print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
 
     # 4b. Enrich ETFs with inside_day / tight_day via standalone yfinance fetch
     all_etf_tickers = []
@@ -755,20 +779,20 @@ def export_all():
     if industry_data:
         all_etf_tickers += [e['ticker'] for e in industry_data]
     if all_etf_tickers:
-        print("\n   Computing day patterns for ETFs...")
-        etf_day_flags = fetch_etf_day_patterns(all_etf_tickers)
+        print("\n   Computing ticker colors for ETFs...")
+        etf_day_flags = fetch_etf_ticker_colors(all_etf_tickers)
         if etf_day_flags:
             if etf_data:
-                etf_pc = enrich_with_day_pattern(etf_data, etf_day_flags)
-                print(f"   Enriched {etf_pc} leverage ETFs with day pattern flags")
+                etf_pc = enrich_with_ticker_color(etf_data, etf_day_flags)
+                print(f"   Enriched {etf_pc} leverage ETFs with ticker color flags")
                 with open(OUTPUT_DIR / "etf_data.json", 'w', encoding='utf-8') as f:
                     json.dump(etf_data, f, indent=2)
             if industry_data:
-                ind_pc = enrich_with_day_pattern(industry_data, etf_day_flags)
-                print(f"   Enriched {ind_pc} industry ETFs with day pattern flags")
+                ind_pc = enrich_with_ticker_color(industry_data, etf_day_flags)
+                print(f"   Enriched {ind_pc} industry ETFs with ticker color flags")
                 with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
                     json.dump(industry_data, f, indent=2)
-        print(f"   → {ind_output} ({len(industry_data)} industry ETFs)")
+        print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
 
     # 5. Fetch Yahoo Finance macro data
     print("\n5. Fetching Yahoo Finance macro data")
@@ -777,9 +801,9 @@ def export_all():
         macro_output = OUTPUT_DIR / "macro_data.json"
         with open(macro_output, 'w', encoding='utf-8') as f:
             json.dump(macro_data, f, indent=2)
-        print(f"   → {macro_output}")
+        print(f"   -> {macro_output}")
     else:
-        print("   → Macro data fetch failed, charts will show TradingView data only")
+        print("   -> Macro data fetch failed, charts will show TradingView data only")
 
     # 6. Fetch upcoming macro events from Investing.com
     print("\n6. Fetching upcoming macro events")
@@ -788,9 +812,9 @@ def export_all():
         if macro_events:
             write_events_json(macro_events, OUTPUT_DIR / "events.json")
         else:
-            print("   → Macro events fetch returned no data, keeping existing events.json")
+            print("   -> Macro events fetch returned no data, keeping existing events.json")
     except Exception as e:
-        print(f"   → Macro events fetch failed: {e} — keeping existing events.json")
+        print(f"   -> Macro events fetch failed: {e} -- keeping existing events.json")
 
     # 7. Report meta
     print("\n7. Writing report meta")

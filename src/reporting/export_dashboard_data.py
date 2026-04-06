@@ -868,7 +868,7 @@ def export_all():
     else:
         print("   -> Macro data fetch failed, charts will show TradingView data only")
 
-    # 6. Fetch upcoming macro events from Investing.com
+    # 6. Fetch upcoming macro events from Forex Factory
     print("\n6. Fetching upcoming macro events")
     try:
         macro_events = fetch_macro_events()

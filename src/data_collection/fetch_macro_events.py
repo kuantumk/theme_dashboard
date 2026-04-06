@@ -1,19 +1,31 @@
 """
-Fetch upcoming high-importance US macro events from Investing.com economic calendar.
+Fetch upcoming high-importance US macro events from the Forex Factory JSON feed.
 
-Uses investpy to retrieve events and outputs them in the format expected by the
-dashboard (DD/MM/YYYY dates, HH:MM times in US Eastern).
+Replaces the previous investpy/Investing.com backend which:
+  - Used an internal AJAX endpoint not designed for programmatic access
+  - Returned 403 from datacenter IPs (GitHub Actions runners)
+  - Required fragile HTML/regex parsing
+
+Forex Factory feed (https://nfs.faireconomy.media/ff_calendar_thisweek.json):
+  - Public, CDN-hosted JSON — no API key, no bot detection
+  - Covers the current FF week (Sunday–Saturday)
+  - Dates carry an ET offset so no timezone conversion is needed
+  - High-impact US events only when filtered by country="USD" + impact="High"
 """
 
 import json
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional
 
+import requests
 
-# Eastern Time zone for investpy (EST = GMT-5, but investpy returns correct
-# "wall clock" ET values with this setting regardless of DST)
-INVESTPY_TIMEZONE = "GMT -5:00"
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_FF_CALENDAR_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 
 # Only keep events whose name contains one of these keywords (case-insensitive).
 # These are the releases that consistently move the S&P and set the macro tone.
@@ -24,13 +36,18 @@ MARKET_MOVING_KEYWORDS = [
     "PCE Price",
     # Employment
     "Nonfarm Payrolls",
+    "Non-Farm Employment Change",
     "Unemployment Rate",
     "Average Hourly Earnings",
     "ADP Nonfarm",
+    "ADP Non-Farm",
     "Initial Jobless Claims",
+    "Unemployment Claims",
     # Fed
     "Fed Interest Rate",
+    "Federal Funds Rate",
     "FOMC Interest Rate",
+    "FOMC Statement",
     "FOMC Press Conference",
     # Growth
     "GDP",
@@ -45,98 +62,121 @@ MARKET_MOVING_KEYWORDS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
 def _is_market_moving(event_name: str) -> bool:
     """Return True if the event matches one of the curated market-moving keywords."""
     lower = event_name.lower()
     return any(kw.lower() in lower for kw in MARKET_MOVING_KEYWORDS)
 
 
+def _fetch_ff_raw() -> Optional[list]:
+    """
+    Fetch the raw Forex Factory calendar JSON with retry + rate-limit handling.
+
+    Returns the parsed JSON list on success, None on failure.
+    """
+    headers = {"User-Agent": "macro-events-bot/1.0", "Accept": "application/json"}
+    for attempt in range(3):
+        try:
+            resp = requests.get(_FF_CALENDAR_URL, headers=headers, timeout=20)
+            if resp.status_code == 429:
+                wait = 2 ** attempt * 5  # 5s, 10s, 20s
+                print(f"  Rate limited by FF, retrying in {wait}s ...")
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            print(f"  Error fetching Forex Factory calendar: {e}")
+            return None
+    print("  Error: FF calendar rate limit exceeded after retries.")
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 def fetch_macro_events(days_ahead: int = 30) -> Optional[List[Dict[str, str]]]:
     """
-    Fetch upcoming US high-importance macro events from Investing.com.
+    Fetch upcoming US high-importance macro events from the Forex Factory feed.
+
+    The FF feed covers the *current* week (Sunday–Saturday).  We filter to the
+    window [today, today + days_ahead], keeping only US/High-impact events that
+    match our market-moving keyword list.
 
     Args:
-        days_ahead: Number of days ahead to fetch events for.
+        days_ahead: Number of calendar days ahead to include.
 
     Returns:
         List of event dicts with 'date' (DD/MM/YYYY), 'time' (HH:MM ET),
-        and 'event' keys, sorted chronologically. Returns None on failure.
+        and 'event' keys, sorted chronologically.  Returns None on failure.
     """
-    try:
-        import investpy
-    except ImportError:
-        print("  Warning: investpy not installed. Run: pip install investpy")
-        return None
-
     today = datetime.now()
     end_date = today + timedelta(days=days_ahead)
 
-    from_date = today.strftime("%d/%m/%Y")
-    to_date = end_date.strftime("%d/%m/%Y")
+    from_str = today.strftime("%Y-%m-%d")
+    to_str = end_date.strftime("%Y-%m-%d")
 
-    print(f"  Fetching macro events from Investing.com "
+    print(f"  Fetching macro events from Forex Factory "
           f"({today.strftime('%b %d')} – {end_date.strftime('%b %d')})...")
 
-    try:
-        df = investpy.economic_calendar(
-            from_date=from_date,
-            to_date=to_date,
-            countries=["united states"],
-            importances=["high"],
-            time_zone=INVESTPY_TIMEZONE,
-        )
-    except Exception as e:
-        print(f"  Error fetching economic calendar: {e}")
+    data = _fetch_ff_raw()
+    if data is None:
         return None
 
-    if df.empty:
-        print("  No high-importance US events found")
-        return None
+    events: List[Dict[str, str]] = []
+    seen: set = set()
 
-    # Filter out "All Day" events and rows without a valid time
-    df = df[df["time"].str.match(r"^\d{1,2}:\d{2}$", na=False)].copy()
-
-    if df.empty:
-        print("  No timed events found after filtering")
-        return None
-
-    # Build output list — only keep curated market-moving events
-    events = []
-    seen = set()
-
-    for _, row in df.iterrows():
-        date_str = row["date"]     # already DD/MM/YYYY
-        time_str = row["time"]     # HH:MM in ET
-        event_name = row["event"].strip()
-
-        # Skip events that aren't in our curated whitelist
-        if not _is_market_moving(event_name):
+    for item in data:
+        # USD events only
+        if item.get("country") != "USD":
+            continue
+        # High-impact only
+        if item.get("impact") != "High":
             continue
 
-        # Normalize time to zero-padded HH:MM
-        parts = time_str.split(":")
-        time_str = f"{int(parts[0]):02d}:{parts[1]}"
+        title = (item.get("title") or "").strip()
+        if not title or not _is_market_moving(title):
+            continue
 
-        # Deduplicate
-        key = f"{date_str}|{time_str}|{event_name}"
+        date_raw = (item.get("date") or "").strip()
+        if not date_raw:
+            continue
+
+        try:
+            dt = datetime.fromisoformat(date_raw)
+        except ValueError:
+            continue
+
+        # Filter to requested window
+        day_str = dt.strftime("%Y-%m-%d")
+        if day_str < from_str or day_str > to_str:
+            continue
+
+        # FF dates already carry an ET offset — use wall-clock time directly
+        date_fmt = dt.strftime("%d/%m/%Y")   # DD/MM/YYYY (dashboard format)
+        time_fmt = dt.strftime("%H:%M")       # HH:MM ET
+
+        key = f"{date_fmt}|{time_fmt}|{title}"
         if key in seen:
             continue
         seen.add(key)
 
         events.append({
-            "date": date_str,
-            "time": time_str,
-            "event": event_name,
+            "date": date_fmt,
+            "time": time_fmt,
+            "event": title,
         })
 
-    # Sort by date (YYYY/MM/DD) then time
-    events.sort(key=lambda e: (
-        e["date"].split("/")[::-1],  # [YYYY, MM, DD]
-        e["time"],
-    ))
+    # Sort chronologically: YYYY, MM, DD, then time
+    events.sort(key=lambda e: (e["date"].split("/")[::-1], e["time"]))
 
     print(f"  Found {len(events)} market-moving US events")
-    return events
+    return events if events else None
 
 
 def write_events_json(events: List[Dict[str, str]], output_path: Path) -> None:

@@ -717,6 +717,61 @@ def fetch_etf_ticker_colors(tickers):
     return flags
 
 
+THEMES_HISTORY_MAX = 5  # Keep last N trading sessions
+
+
+def _update_history_file(history_file, report_date, entry):
+    """Append an entry to a history JSON file, keeping last N sessions.
+
+    Each entry in the history array must have a 'report_date' key.
+    """
+    history = []
+    if history_file.exists():
+        try:
+            with open(history_file, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            history = []
+
+    # Replace existing entry for same date, or append
+    history = [h for h in history if h.get('report_date') != report_date]
+    history.append(entry)
+
+    # Sort descending by date, keep only last N
+    history.sort(key=lambda x: x.get('report_date', ''), reverse=True)
+    history = history[:THEMES_HISTORY_MAX]
+
+    with open(history_file, 'w', encoding='utf-8') as f:
+        json.dump(history, f, indent=2)
+    dates = [h['report_date'] for h in history]
+    print(f"   -> {history_file} (history: {', '.join(dates)})")
+
+
+def update_themes_history(theme_data):
+    """Append current theme snapshot to history."""
+    _update_history_file(
+        OUTPUT_DIR / "themes_history.json",
+        theme_data.get('report_date', ''),
+        theme_data,
+    )
+
+
+def update_etf_history(report_date, etf_data, industry_data):
+    """Append current ETF snapshots to their history files."""
+    if etf_data:
+        _update_history_file(
+            OUTPUT_DIR / "etf_data_history.json",
+            report_date,
+            {'report_date': report_date, 'data': etf_data},
+        )
+    if industry_data:
+        _update_history_file(
+            OUTPUT_DIR / "industry_etf_history.json",
+            report_date,
+            {'report_date': report_date, 'data': industry_data},
+        )
+
+
 def export_all():
     """Main export function."""
     print("=" * 60)
@@ -747,6 +802,9 @@ def export_all():
         with open(theme_output, 'w', encoding='utf-8') as f:
             json.dump(theme_data, f, indent=2)
         print(f"   -> {theme_output} ({len(theme_data['themes'])} themes)")
+
+        # Update themes history (keep last 5 trading sessions)
+        update_themes_history(theme_data)
     else:
         print("\n1. No report found, skipping themes export")
 
@@ -793,6 +851,11 @@ def export_all():
                 with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
                     json.dump(industry_data, f, indent=2)
         print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
+
+    # 4c. Update ETF history (use theme report_date as session date)
+    report_date = theme_data.get('report_date', '') if theme_data else ''
+    if report_date and (etf_data or industry_data):
+        update_etf_history(report_date, etf_data, industry_data)
 
     # 5. Fetch Yahoo Finance macro data
     print("\n5. Fetching Yahoo Finance macro data")

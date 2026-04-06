@@ -7,6 +7,9 @@
 
   // ── CONFIG ────────────────────────────────────────────
   const THEME_DATA_URL = 'data/themes.json';
+  const THEME_HISTORY_URL = 'data/themes_history.json';
+  const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
+  const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
   const MACRO_DATA_URL = 'data/macro_data.json';
   const INDUSTRY_ETF_URL = 'data/industry_etf.json';
@@ -554,18 +557,100 @@
     });
   }
 
-  // ── THEME DATA ────────────────────────────────────────
+  // ── THEME DATA + TIME TRAVEL ──────────────────────────
+  let themesHistory = [];    // Array of theme snapshots, newest first
+  let industryHistory = [];  // Array of {report_date, data} snapshots
+  let etfHistory = [];       // Array of {report_date, data} snapshots
+  let activeSessionDate = null;
+
   function loadThemeData() {
-    fetch(withCacheBust(THEME_DATA_URL))
-      .then(r => r.json())
-      .then(data => {
-        renderThemes(data);
+    // Load current themes and history in parallel
+    Promise.all([
+      fetch(withCacheBust(THEME_DATA_URL)).then(r => r.json()),
+      fetch(withCacheBust(THEME_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        // Build history: merge current into history (deduplicate by date)
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        themesHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+
+        // Default to most recent
+        activeSessionDate = themesHistory.length > 0 ? themesHistory[0].report_date : null;
+        renderAllTimeTravelBars();
+        renderThemes(current);
       })
       .catch(err => {
         console.warn('Theme data not available:', err);
         document.getElementById('themes-container').innerHTML =
           '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
       });
+  }
+
+  /** Collect all available session dates and render all time-travel bars. */
+  function getSessionDates() {
+    const dates = new Set();
+    themesHistory.forEach(h => dates.add(h.report_date));
+    industryHistory.forEach(h => dates.add(h.report_date));
+    etfHistory.forEach(h => dates.add(h.report_date));
+    return [...dates].sort().reverse();
+  }
+
+  function onTimeTravelSelect(date) {
+    // Themes
+    const themeSnap = themesHistory.find(h => h.report_date === date);
+    if (themeSnap) renderThemes(themeSnap);
+    // Industry ETFs
+    const indSnap = industryHistory.find(h => h.report_date === date);
+    if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
+    // Leverage ETFs
+    const etfSnap = etfHistory.find(h => h.report_date === date);
+    if (etfSnap) { etfData = etfSnap.data; sortAndRenderETF(); }
+  }
+
+  function renderAllTimeTravelBars() {
+    const dates = getSessionDates();
+    renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
+  }
+
+  /**
+   * Render a time-travel date-selector bar.
+   * @param {string} containerId  - DOM id of the .time-travel-dates element
+   * @param {Array}  dates        - ordered list of report_date strings (newest first)
+   * @param {Function} onSelect   - callback(date) when user picks a date
+   */
+  function renderTimeTravelBar(containerId, dates, onSelect) {
+    const container = document.getElementById(containerId);
+    if (!container || dates.length === 0) return;
+
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    container.innerHTML = dates.map(rd => {
+      const d = new Date(rd + 'T12:00:00');
+      const wd = weekdays[d.getDay()];
+      const parts = rd.split('-');
+      const label = `${parts[1]}/${parts[2]}`;
+      const isActive = rd === activeSessionDate ? ' active' : '';
+      return `<button class="tt-date-btn${isActive}" data-date="${rd}">${label}<span class="tt-weekday">${wd}</span></button>`;
+    }).join('');
+
+    container.querySelectorAll('.tt-date-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const date = btn.dataset.date;
+        if (date === activeSessionDate) return;
+        activeSessionDate = date;
+        // Update ALL time-travel bars to stay in sync
+        document.querySelectorAll('.time-travel-dates .tt-date-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.date === date);
+        });
+        onSelect(date);
+      });
+    });
   }
 
   function renderThemes(data) {
@@ -635,13 +720,23 @@
 
   // ── INDUSTRY ETF DATA ─────────────────────────────────
   function loadIndustryETFData() {
-    fetch(withCacheBust(INDUSTRY_ETF_URL))
-      .then(r => {
-        if (!r.ok) throw new Error('Not found');
-        return r.json();
-      })
-      .then(data => {
+    Promise.all([
+      fetch(withCacheBust(INDUSTRY_ETF_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(withCacheBust(INDUSTRY_ETF_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([data, history]) => {
         industryData = data;
+
+        // Build history, merge current using activeSessionDate
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (activeSessionDate && data) {
+          byDate[activeSessionDate] = { report_date: activeSessionDate, data };
+        }
+        industryHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+
+        renderAllTimeTravelBars();
         sortAndRenderIndustry();
       })
       .catch(() => {
@@ -731,13 +826,23 @@
 
   // ── LEVERAGE ETF DATA ─────────────────────────────────
   function loadETFData() {
-    fetch(withCacheBust(ETF_FALLBACK_URL))
-      .then(r => {
-        if (!r.ok) throw new Error('Not found');
-        return r.json();
-      })
-      .then(data => {
+    Promise.all([
+      fetch(withCacheBust(ETF_FALLBACK_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(withCacheBust(ETF_DATA_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([data, history]) => {
         etfData = data;
+
+        // Build history, merge current using activeSessionDate
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (activeSessionDate && data) {
+          byDate[activeSessionDate] = { report_date: activeSessionDate, data };
+        }
+        etfHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+
+        renderAllTimeTravelBars();
         sortAndRenderETF();
       })
       .catch(() => {

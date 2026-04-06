@@ -7,6 +7,7 @@ import traceback
 
 try:
     import argparse
+    import numpy as np
     import pandas as pd
     from tqdm import tqdm
     import warnings
@@ -44,6 +45,9 @@ def create_master_table(offset_days, daily_price, date_list):
         if ticker in daily_price:
             ticker_df = daily_price[ticker][:run_date].tail(1).copy()
             if not ticker_df.empty:
+                # Skip stale data: last row must be within 7 calendar days of run_date
+                if (run_date - ticker_df.index[0]).days > 7:
+                    continue
                 ticker_df['ticker'] = ticker
                 ticker_dfs.append(ticker_df)
 
@@ -52,26 +56,26 @@ def create_master_table(offset_days, daily_price, date_list):
 
     # Volume spike rank
     df['vol_ratio'] = df['vol_sma40'] / df['vol_sma252']
-    df['vol_ratio_rank'] = pd.qcut(df['vol_ratio'].rank(method='first'), 100, labels=False, duplicates='drop')
+    df['vol_ratio_rank'] = pd.qcut(df['vol_ratio'].rank(method='first'), 100, labels=False)
 
     # Relative performance rank
     months = [1, 3, 6]
     for month in months:
         if f'perf_{month}mo' in df.columns:
-            df[f'perf_{month}mo_rank'] = pd.qcut(df[f'perf_{month}mo'].rank(method='first'), 100, labels=False, duplicates='drop')
+            df[f'perf_{month}mo_rank'] = pd.qcut(df[f'perf_{month}mo'].rank(method='first'), 100, labels=False)
         if f'rela_perf_{month}mo' in df.columns:
-            df[f'rela_perf_{month}mo_rank'] = pd.qcut(df[f'rela_perf_{month}mo'].rank(method='first'), 100, labels=False, duplicates='drop')
+            df[f'rela_perf_{month}mo_rank'] = pd.qcut(df[f'rela_perf_{month}mo'].rank(method='first'), 100, labels=False)
 
     # Current price vs past low rank
     lookback_days = [30, 60, 90, 120]
     for lookback in lookback_days:
         if f'min{lookback}' in df.columns:
-            df[f'c0_c{lookback}_rank'] = pd.qcut((df['close'] / df[f'min{lookback}']).rank(method='first'), 100, labels=False, duplicates='drop')
+            df[f'c0_c{lookback}_rank'] = pd.qcut((df['close'] / df[f'min{lookback}']).rank(method='first'), 100, labels=False)
 
     # RS_STS%
     print("Calculating RS_STS%...")
     rs_sts = calculate_rs_sts_for_tickers(daily_price)
-    df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(0)
+    df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(np.nan)
 
     # Re-arrange columns
     cols_to_pop = ['ticker']

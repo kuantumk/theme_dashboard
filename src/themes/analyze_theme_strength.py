@@ -19,7 +19,7 @@ style breakout trading: strong RS, broad participation, tight near highs.
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from math import exp
 from pathlib import Path
 
@@ -93,10 +93,10 @@ def _save_score_history(history: Dict, today_key: str, today_data: Dict) -> None
 def _get_historical_value(history: Dict, theme: str, field: str, lookback: int = 5) -> Optional[float]:
     """Look up a theme's metric from ~lookback trading days ago."""
     sorted_dates = sorted(history.keys(), reverse=True)
-    # Skip today (index 0), look for the entry at position `lookback`
-    # If exact offset missing (weekends), use nearest available
-    for date_key in sorted_dates[1:]:  # skip most recent
-        if len(sorted_dates) - sorted_dates.index(date_key) >= lookback:
+    # sorted_dates[0] is today (most recent). We want the entry at index >= lookback.
+    # If exact offset is missing (weekends/holidays), use the nearest older entry.
+    for date_key in sorted_dates[1:]:  # skip today (index 0)
+        if sorted_dates.index(date_key) >= lookback:
             theme_data = history.get(date_key, {}).get(theme)
             if theme_data and field in theme_data:
                 return theme_data[field]
@@ -145,6 +145,8 @@ def compute_market_regime(master_df: pd.DataFrame, market_breadth: Dict = None) 
 
 def _get_short_interest_data(tickers: List[str]) -> Dict[str, float]:
     """Load short interest from fundamentals DB for the given tickers."""
+    if not tickers:
+        return {}
     if not FUNDAMENTALS_DB.exists():
         return {}
     try:
@@ -449,7 +451,7 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None,
     theme_df['regime'] = regime
 
     # Persist today's data for tomorrow's acceleration/momentum lookback
-    today_key = datetime.now().strftime("%Y-%m-%d")
+    today_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     _save_score_history(history, today_key, today_history)
 
     return theme_df

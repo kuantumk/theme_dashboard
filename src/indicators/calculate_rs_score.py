@@ -51,7 +51,7 @@ def calculate_rs_sts_for_tickers(price_data: Dict, lookback_days: int = None) ->
         ticker_prices = ticker_df['close'].tail(lookback_days)
 
         common_index = ticker_prices.index.intersection(spy_prices.index)
-        if len(common_index) < lookback_days * 0.8:
+        if len(common_index) < lookback_days * 0.95:
             continue
 
         ticker_prices_aligned = ticker_prices.loc[common_index]

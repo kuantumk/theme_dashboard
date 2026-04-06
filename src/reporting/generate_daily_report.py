@@ -52,7 +52,7 @@ def load_fundamentals(tickers: List[str]) -> Dict[str, Dict]:
             'eps_growth': row[2],
             'sales_growth': row[3],
             'short_interest': row[4],
-            'inst_trans': int(row[5]) if row[5] else None
+            'inst_trans': row[5]
         }
 
     conn.close()

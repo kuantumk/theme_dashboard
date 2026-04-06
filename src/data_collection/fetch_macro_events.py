@@ -15,7 +15,7 @@ Forex Factory feed (https://nfs.faireconomy.media/ff_calendar_thisweek.json):
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -115,7 +115,7 @@ def fetch_macro_events(days_ahead: int = 30) -> Optional[List[Dict[str, str]]]:
         List of event dicts with 'date' (DD/MM/YYYY), 'time' (HH:MM ET),
         and 'event' keys, sorted chronologically.  Returns None on failure.
     """
-    today = datetime.now()
+    today = datetime.now(timezone.utc)
     end_date = today + timedelta(days=days_ahead)
 
     from_str = today.strftime("%Y-%m-%d")

@@ -448,7 +448,7 @@ def export_scan_results(
     DOCS_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     output = {
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(ET).isoformat(),
         'scan_date': datetime.now(ET).strftime('%Y-%m-%d'),
         'scan_type': scan_type,
         'count': len(results),

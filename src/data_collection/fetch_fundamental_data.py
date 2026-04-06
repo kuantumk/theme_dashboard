@@ -9,7 +9,7 @@ import re
 import time
 import sqlite3
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, List
 from bs4 import BeautifulSoup
 from tqdm import tqdm
@@ -40,7 +40,7 @@ def init_database():
             sales_growth_yoy REAL,
             short_interest REAL,
             inst_ownership REAL,
-            inst_transactions INTEGER,
+            inst_transactions REAL,
             last_updated TIMESTAMP
         )
     ''')
@@ -145,7 +145,7 @@ def save_to_database(ticker: str, fundamentals: Dict):
         fundamentals.get('short_interest'),
         fundamentals.get('inst_ownership'),
         fundamentals.get('inst_transactions'),
-        datetime.now()
+        datetime.now(timezone.utc)
     ))
 
     conn.commit()
@@ -159,7 +159,7 @@ def get_cached_fundamentals(tickers: List[str], max_age_days: int = None) -> Dic
     if max_age_days is None:
         max_age_days = CACHE_DAYS
 
-    cutoff_date = datetime.now() - timedelta(days=max_age_days)
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=max_age_days)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

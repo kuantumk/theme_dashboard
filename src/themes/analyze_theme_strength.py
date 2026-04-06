@@ -54,6 +54,51 @@ REGIME_WEIGHTS = REGIME_CFG.get("weights", {
     "bear": {"strength": 0.80, "confirmation": 0.20},
 })
 
+# Legacy weights (used only as fallback)
+LEGACY_WEIGHTS = CONFIG["themes"].get("strength_weights", {})
+
+
+# ── History persistence ─────────────────────────────────────────────────
+
+def _load_score_history() -> Dict:
+    """Load theme score history from disk (last 10 days)."""
+    if HISTORY_FILE.exists():
+        try:
+            with open(HISTORY_FILE) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+    return {}
+
+
+def _save_score_history(history: Dict, today_key: str, today_data: Dict) -> None:
+    """Save today's metrics and prune entries older than 10 days."""
+    history[today_key] = today_data
+    sorted_dates = sorted(history.keys(), reverse=True)[:10]
+    pruned = {d: history[d] for d in sorted_dates}
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(pruned, f, indent=2)
+
+
+def _get_historical_value(history: Dict, theme: str, field: str, lookback: int = 5) -> Optional[float]:
+    """Look up a theme's metric from ~lookback trading days ago."""
+    sorted_dates = sorted(history.keys(), reverse=True)
+    # Skip today (index 0), look for the entry at position `lookback`
+    # If exact offset missing (weekends), use nearest available
+    for date_key in sorted_dates[1:]:  # skip most recent
+        if len(sorted_dates) - sorted_dates.index(date_key) >= lookback:
+            theme_data = history.get(date_key, {}).get(theme)
+            if theme_data and field in theme_data:
+                return theme_data[field]
+    # Fallback: use the oldest available entry if we have at least 2 days
+    if len(sorted_dates) > 1:
+        oldest = sorted_dates[-1]
+        theme_data = history.get(oldest, {}).get(theme)
+        if theme_data and field in theme_data:
+            return theme_data[field]
+    return None
+
 
 # ── Market regime ───────────────────────────────────────────────────────
 
@@ -91,6 +136,8 @@ def compute_market_regime(master_df: pd.DataFrame, market_breadth: Dict = None) 
 
 def _get_short_interest_data(tickers: List[str]) -> Dict[str, float]:
     """Load short interest from fundamentals DB for the given tickers."""
+    if not tickers:
+        return {}
     if not FUNDAMENTALS_DB.exists():
         return {}
     try:

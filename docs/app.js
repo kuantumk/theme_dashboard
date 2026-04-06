@@ -17,6 +17,15 @@
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
   const PAGE_LOAD_CACHE_KEY = Date.now();
 
+  // Symbols that need a different symbol for TradingView widget vs data fetch.
+  // NOTE: TVC/CAPITALCOM/CBOE treasury yield symbols are all restricted in the
+  // embedded widget. FRED is the only embeddable source (line chart, no candlestick).
+  const TV_CHART_SYM_MAP = {
+    'CAPITALCOM:US2YR':  'FRED:DGS2',
+    'CAPITALCOM:US10YR': 'FRED:DGS10',
+    'CAPITALCOM:US30YR': 'FRED:DGS30',
+  };
+
   // Active chart per tab
   let activeCharts = { macro: null, themes: null, industry: null, etf: null, ep: null };
 
@@ -162,6 +171,7 @@
       if (!link) return;
 
       const sym = link.dataset.sym;
+      const chartSym = link.dataset.chartSym || sym;
       const name = link.dataset.nm || sym;
       if (!sym) return;
 
@@ -179,7 +189,7 @@
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
       link.classList.add('active-ticker');
 
-      openChart(tabId, sym, name);
+      openChart(tabId, chartSym, name);
     });
   }
 
@@ -316,7 +326,7 @@
       }
 
       // Open chart
-      openChart(tabId, sym, name);
+      openChart(tabId, link.dataset.chartSym || sym, name);
     });
 
     // Sync nav index when user clicks a ticker
@@ -454,7 +464,7 @@
                 });
 
                 tr.style.cursor = 'pointer';
-                tr.onclick = () => openChart('macro', item.tv, item.name);
+                tr.onclick = () => openChart('macro', TV_CHART_SYM_MAP[item.tv] || item.tv, item.name);
               }
             }
           }

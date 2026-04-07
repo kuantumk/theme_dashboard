@@ -68,9 +68,10 @@ def create_master_table(offset_days, daily_price, date_list):
         if f'min{lookback}' in df.columns:
             df[f'c0_c{lookback}_rank'] = pd.qcut((df['close'] / df[f'min{lookback}']).rank(method='first'), 100, labels=False, duplicates='drop')
 
-    # RS_STS%
+    # RS_STS% — filter price data to run_date to avoid lookahead bias
     print("Calculating RS_STS%...")
-    rs_sts = calculate_rs_sts_for_tickers(daily_price)
+    price_data_as_of = {t: d[:run_date] for t, d in daily_price.items()}
+    rs_sts = calculate_rs_sts_for_tickers(price_data_as_of)
     df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(0)
 
     # Re-arrange columns

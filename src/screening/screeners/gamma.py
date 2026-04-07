@@ -1,5 +1,5 @@
 # screener name: gamma
-# description: top performer >= 20% gain in last 30 sessions
+# description: top performer >= 20% high-to-low range in last 30 sessions
 
 
 def filter_master_table(master_df):

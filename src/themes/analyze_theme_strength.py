@@ -93,10 +93,11 @@ def _save_score_history(history: Dict, today_key: str, today_data: Dict) -> None
 def _get_historical_value(history: Dict, theme: str, field: str, lookback: int = 5) -> Optional[float]:
     """Look up a theme's metric from ~lookback trading days ago."""
     sorted_dates = sorted(history.keys(), reverse=True)
-    # Skip today (index 0), look for the entry at position `lookback`
-    # If exact offset missing (weekends), use nearest available
+    # sorted_dates[0] is today; we want the entry at position `lookback`
+    # If exact offset missing (weekends/gaps), use nearest older entry
     for date_key in sorted_dates[1:]:  # skip most recent
-        if len(sorted_dates) - sorted_dates.index(date_key) >= lookback:
+        idx = sorted_dates.index(date_key)
+        if idx >= lookback:
             theme_data = history.get(date_key, {}).get(theme)
             if theme_data and field in theme_data:
                 return theme_data[field]
@@ -445,7 +446,7 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None,
     # Sort by final score (aliased as strength_score)
     theme_df = theme_df.sort_values('strength_score', ascending=False).reset_index(drop=True)
 
-    theme_df['is_hot'] = theme_df['avg_rs_sts'] > HOT_THRESHOLD
+    theme_df['is_hot'] = (theme_df['avg_rs_sts'] > HOT_THRESHOLD) & (theme_df['breadth'] >= 3)
     theme_df['regime'] = regime
 
     # Persist today's data for tomorrow's acceleration/momentum lookback

@@ -30,7 +30,7 @@ def calculate_technical_indicators():
     # SPX performance for relative performance calculation
     spx = daily_price['^GSPC'].copy(deep=True)
     for month, dt in zip(months, dts):
-        spx[f'perf_{month}mo'] = spx['close'] / spx['close'].shift(periods=dt)
+        spx[f'perf_{month}mo'] = spx['close'] / spx['close'].shift(periods=dt) - 1
 
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
@@ -43,28 +43,28 @@ def calculate_technical_indicators():
             daily['ema10'] = daily['close'].ewm(span=10, adjust=False).mean()
             daily['ema20'] = daily['close'].ewm(span=20, adjust=False).mean()
 
-            # SMAs
-            daily['sma25'] = daily['close'].rolling(window=25, min_periods=1).mean()
-            daily['sma30'] = daily['close'].rolling(window=30, min_periods=1).mean()
-            daily['sma50'] = daily['close'].rolling(window=50, min_periods=1).mean()
-            daily['sma100'] = daily['close'].rolling(window=100, min_periods=1).mean()
-            daily['sma200'] = daily['close'].rolling(window=200, min_periods=1).mean()
+            # SMAs — require half the window to avoid spurious values for new listings
+            daily['sma25'] = daily['close'].rolling(window=25, min_periods=13).mean()
+            daily['sma30'] = daily['close'].rolling(window=30, min_periods=15).mean()
+            daily['sma50'] = daily['close'].rolling(window=50, min_periods=25).mean()
+            daily['sma100'] = daily['close'].rolling(window=100, min_periods=50).mean()
+            daily['sma200'] = daily['close'].rolling(window=200, min_periods=100).mean()
 
             # MIN/MAX lookbacks
             for lookback in min_max_lookback:
-                daily[f'min{lookback}'] = daily['low'].rolling(window=lookback, min_periods=1).min()
-                daily[f'max{lookback}'] = daily['high'].rolling(window=lookback, min_periods=1).max()
+                daily[f'min{lookback}'] = daily['low'].rolling(window=lookback, min_periods=max(lookback // 2, 1)).min()
+                daily[f'max{lookback}'] = daily['high'].rolling(window=lookback, min_periods=max(lookback // 2, 1)).max()
 
             # Volume indicators
-            daily['vol_sma40'] = daily['volume'].rolling(window=40, min_periods=1).mean()
-            daily['vol_sma50'] = daily['volume'].rolling(window=50, min_periods=1).mean()
-            daily['vol_sma252'] = daily['volume'].rolling(window=252, min_periods=1).mean()
+            daily['vol_sma40'] = daily['volume'].rolling(window=40, min_periods=20).mean()
+            daily['vol_sma50'] = daily['volume'].rolling(window=50, min_periods=25).mean()
+            daily['vol_sma252'] = daily['volume'].rolling(window=252, min_periods=126).mean()
 
             # Average dollar volume
-            daily['avg_dollar_vol'] = (daily['volume'] * daily['close']).rolling(window=20, min_periods=1).mean()
+            daily['avg_dollar_vol'] = (daily['volume'] * daily['close']).rolling(window=20, min_periods=10).mean()
 
             # ADR%
-            daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=1).mean() - 1
+            daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=10).mean() - 1
 
             # ATR14 (14-period Average True Range)
             high_low = daily['high'] - daily['low']

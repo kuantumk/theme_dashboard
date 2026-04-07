@@ -254,7 +254,7 @@ def fetch_yahoo_macro_data():
                 # YTD%
                 ytd_start = hist[hist.index.year == hist.index[-1].year]
                 if not ytd_start.empty:
-                    ytd_open = float(ytd_start['Close'].iloc[0])
+                    ytd_open = float(ytd_start['Open'].iloc[0])
                     ytd_pct = ((current - ytd_open) / ytd_open) * 100
                 else:
                     ytd_pct = 0
@@ -850,7 +850,6 @@ def export_all():
                 print(f"   Enriched {ind_pc} industry ETFs with ticker color flags")
                 with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
                     json.dump(industry_data, f, indent=2)
-        print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
 
     # 4c. Update ETF history (use theme report_date as session date)
     report_date = theme_data.get('report_date', '') if theme_data else ''

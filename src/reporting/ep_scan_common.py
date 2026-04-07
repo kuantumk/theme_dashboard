@@ -144,13 +144,13 @@ def get_ticker_news(ticker: str, max_items: int = 3) -> List[Dict]:
 def _alpaca_get(path: str) -> dict:
     """Make an authenticated GET request to Alpaca data API."""
     url = f"{ALPACA_DATA_URL}{path}"
-    req = urllib.request.Request(url, headers={
+    resp = requests.get(url, headers={
         'APCA-API-KEY-ID': ALPACA_KEY,
         'APCA-API-SECRET-KEY': ALPACA_SECRET,
         'accept': 'application/json',
-    })
-    resp = urllib.request.urlopen(req, timeout=15)
-    return json.loads(resp.read().decode())
+    }, timeout=15)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def _fetch_alpaca_bars(symbol: str, start_iso: str, end_iso: str) -> List[dict]:

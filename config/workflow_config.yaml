@@ -47,7 +47,7 @@ themes:
   high_momentum_threshold: 80.0
   min_scored_breadth: 2
 
-  # Scoring formula (Iteration 9d — backtested & validated)
+  # Scoring formula (backtested & validated)
   scoring:
     max_scoring_tickers: 10
     leader_rs_threshold: 80
@@ -59,22 +59,7 @@ themes:
     extension_sigmoid:
       midpoint: 15
       steepness: 5
-    volume_thresholds:
-      high: 1.5
-      medium: 1.2
-      high_factor: 1.15
-      medium_factor: 1.08
     breadth_penalty_two: 0.75
-    rs_acceleration:
-      lookback: 5
-      coeff: 0.015
-      min: 0.85
-      max: 1.35
-    breadth_momentum:
-      lookback: 5
-      coeff: 0.05
-      min: 0.90
-      max: 1.25
     enrichment:
       coeff: 0.08
       max: 1.35
@@ -83,7 +68,6 @@ themes:
       min_si: 0.07
       coeff: 2.5
       max_bonus: 0.45
-    history_file: "data/theme_score_history.json"
     theme_groups_file: "config/theme_groups.yaml"
 
   # 4-tier regime from master table pct_above_50sma
@@ -99,14 +83,6 @@ themes:
       choppy: {strength: 0.70, confirmation: 0.30}
       bear: {strength: 0.80, confirmation: 0.20}
 
-  # Legacy weights (kept for reference, superseded by regime.weights)
-  strength_weights:
-    bull_market:
-      strength: 0.50
-      confirmation: 0.50
-    bear_market:
-      strength: 0.70
-      confirmation: 0.30
 
 # Dashboard data sources (Google Sheets)
 dashboard:

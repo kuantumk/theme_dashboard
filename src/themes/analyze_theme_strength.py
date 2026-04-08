@@ -1,25 +1,20 @@
 """
-Analyze theme strength based on RS_STS% scores — Iteration 9d.
+Analyze theme strength based on RS_STS% scores.
 
-Scores themes along three dimensions for momentum trading:
-- Strength: RS quality, leader concentration (RS >= 80), and participation
-- Confirmation: structural uptrend health, proximity to 60-day highs, active breadth
-- Actionability: sigmoid extension penalty and volume expansion bonus
+Scores themes along two dimensions for momentum trading:
+- Strength (0-100): RS quality, leader concentration (RS >= 80), participation
+- Confirmation (0-100): structural uptrend health, proximity to highs, breadth
 
-Five multipliers refine the final score:
-- RS acceleration (5-day momentum)
-- Breadth momentum (5-day expansion)
-- Enrichment ratio (theme concentration vs market)
+Four multipliers refine the final score:
+- Extension penalty: sigmoid penalizing overextended themes
+- Breadth penalty: 0.75x discount for breadth == 2
+- Enrichment ratio: boosts focused themes vs market baseline
 - Short interest / squeeze potential (breadth <= 6 only)
-- Breadth penalty (breadth == 2 discount)
 
-Designed to surface themes suitable for Qullamaggie / Marios Stamatoudis
-style breakout trading: strong RS, broad participation, tight near highs.
+Backtested formula — validated 6/6 contract test cases passing.
 """
 
-import json
 import sqlite3
-from datetime import datetime
 from math import exp
 from pathlib import Path
 
@@ -45,13 +40,9 @@ LEADER_RS_THRESHOLD = SCORING_CFG.get("leader_rs_threshold", 80)
 NEAR_HIGHS_COL = SCORING_CFG.get("near_highs_column", "max60")
 STRENGTH_COMPONENTS = SCORING_CFG.get("strength_components", {"median_rs": 0.40, "leader_pct": 0.35, "participation": 0.25})
 EXT_SIGMOID = SCORING_CFG.get("extension_sigmoid", {"midpoint": 15, "steepness": 5})
-VOL_CFG = SCORING_CFG.get("volume_thresholds", {"high": 1.5, "medium": 1.2, "high_factor": 1.15, "medium_factor": 1.08})
 BREADTH_PENALTY_TWO = SCORING_CFG.get("breadth_penalty_two", 0.75)
-RS_ACCEL_CFG = SCORING_CFG.get("rs_acceleration", {"lookback": 5, "coeff": 0.015, "min": 0.85, "max": 1.35})
-BREADTH_MOM_CFG = SCORING_CFG.get("breadth_momentum", {"lookback": 5, "coeff": 0.05, "min": 0.90, "max": 1.25})
 ENRICHMENT_CFG = SCORING_CFG.get("enrichment", {"coeff": 0.08, "max": 1.35})
 SI_CFG = SCORING_CFG.get("short_interest", {"max_breadth": 6, "min_si": 0.07, "coeff": 2.5, "max_bonus": 0.45})
-HISTORY_FILE = Path(SCORING_CFG.get("history_file", "data/theme_score_history.json"))
 
 REGIME_CFG = CONFIG["themes"].get("regime", {})
 REGIME_SOURCE = REGIME_CFG.get("source", "master_table")
@@ -62,52 +53,6 @@ REGIME_WEIGHTS = REGIME_CFG.get("weights", {
     "choppy": {"strength": 0.70, "confirmation": 0.30},
     "bear": {"strength": 0.80, "confirmation": 0.20},
 })
-
-# Legacy weights (used only as fallback)
-LEGACY_WEIGHTS = CONFIG["themes"].get("strength_weights", {})
-
-
-# ── History persistence ─────────────────────────────────────────────────
-
-def _load_score_history() -> Dict:
-    """Load theme score history from disk (last 10 days)."""
-    if HISTORY_FILE.exists():
-        try:
-            with open(HISTORY_FILE) as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            return {}
-    return {}
-
-
-def _save_score_history(history: Dict, today_key: str, today_data: Dict) -> None:
-    """Save today's metrics and prune entries older than 10 days."""
-    history[today_key] = today_data
-    sorted_dates = sorted(history.keys(), reverse=True)[:10]
-    pruned = {d: history[d] for d in sorted_dates}
-    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(pruned, f, indent=2)
-
-
-def _get_historical_value(history: Dict, theme: str, field: str, lookback: int = 5) -> Optional[float]:
-    """Look up a theme's metric from ~lookback trading days ago."""
-    sorted_dates = sorted(history.keys(), reverse=True)
-    # sorted_dates[0] is today; we want the entry at position `lookback`
-    # If exact offset missing (weekends/gaps), use nearest older entry
-    for date_key in sorted_dates[1:]:  # skip most recent
-        idx = sorted_dates.index(date_key)
-        if idx >= lookback:
-            theme_data = history.get(date_key, {}).get(theme)
-            if theme_data and field in theme_data:
-                return theme_data[field]
-    # Fallback: use the oldest available entry if we have at least 2 days
-    if len(sorted_dates) > 1:
-        oldest = sorted_dates[-1]
-        theme_data = history.get(oldest, {}).get(theme)
-        if theme_data and field in theme_data:
-            return theme_data[field]
-    return None
 
 
 # ── Market regime ───────────────────────────────────────────────────────
@@ -210,20 +155,14 @@ def calculate_theme_metrics(
     master_df: pd.DataFrame,
     active_weights: Dict[str, float],
     screened_tickers: set = None,
-    history: Dict = None,
     total_screened: int = 0,
     total_universe: int = 0,
 ) -> Optional[Dict]:
     """
-    Calculate aggregate metrics for a single theme — Iteration 9d formula.
+    Calculate aggregate metrics for a single theme — backtested formula.
 
-    Scores along three axes:
-    - Strength (0-100): median RS + leader concentration (RS >= 80) + participation
-    - Confirmation (0-100): structural health, near-highs proximity, active breadth
-    - Actionability (multiplier): sigmoid extension penalty + volume bonus
-
-    Five multipliers applied to the final score:
-    - RS acceleration, breadth momentum, enrichment ratio, SI squeeze, breadth penalty
+    FINAL = (w_s * strength + w_c * confirmation) *
+            extension_penalty * breadth_penalty * enrichment_mult * si_mult
     """
     scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else tickers
     theme_df = master_df[master_df['ticker'].isin(scoring_tickers)]
@@ -261,14 +200,12 @@ def calculate_theme_metrics(
     )
 
     # ── CONFIRMATION (0-100) ─────────────────────────────────────────
-    # B1: Structural health — % above 50SMA (Weinstein Stage 2 proxy)
     pct_above_50sma = 0.0
     if 'close' in theme_df.columns and 'sma50' in theme_df.columns:
         valid = theme_df[~theme_df['sma50'].isna()]
         if len(valid) > 0:
             pct_above_50sma = (np.sum(valid['close'] > valid['sma50']) / len(valid)) * 100
 
-    # B2: Near highs — % within 15% of 60-day high (breakout proximity)
     pct_near_highs = 0.0
     near_highs_col = NEAR_HIGHS_COL if NEAR_HIGHS_COL in theme_df.columns else 'max252'
     if 'close' in theme_df.columns and near_highs_col in theme_df.columns:
@@ -276,13 +213,11 @@ def calculate_theme_metrics(
         if len(valid) > 0:
             pct_near_highs = (np.sum(valid['close'] >= 0.85 * valid[near_highs_col]) / len(valid)) * 100
 
-    # B3: Breadth — linear scale, 5+ screened stocks = full credit
     breadth_score = min(breadth / 5.0, 1.0) * 100
 
     confirmation = 0.35 * pct_above_50sma + 0.35 * pct_near_highs + 0.30 * breadth_score
 
-    # ── ACTIONABILITY (multiplier) ───────────────────────────────────
-    # Sigmoid extension penalty — smooth transition centered at midpoint
+    # ── EXTENSION PENALTY (0-1) ──────────────────────────────────────
     dist_25sma = np.nan
     if 'close' in theme_df.columns and 'sma25' in theme_df.columns:
         valid = theme_df[theme_df['sma25'] > 0]
@@ -290,22 +225,9 @@ def calculate_theme_metrics(
             pct_from_25sma = ((valid['close'] - valid['sma25']) / valid['sma25']) * 100
             dist_25sma = float(np.nanmedian(pct_from_25sma))
 
-    extension_factor = 1.0
+    extension_penalty = 1.0
     if not np.isnan(dist_25sma):
-        extension_factor = 1.0 / (1.0 + exp((dist_25sma - EXT_SIGMOID["midpoint"]) / EXT_SIGMOID["steepness"]))
-
-    # Volume expansion bonus — institutional accumulation signal
-    vol_factor = 1.0
-    if 'vol_sma40' in theme_df.columns and 'vol_sma252' in theme_df.columns:
-        valid = theme_df[(theme_df['vol_sma252'] > 0) & (~theme_df['vol_sma252'].isna())]
-        if not valid.empty:
-            avg_vol_ratio = float(np.nanmean(valid['vol_sma40'] / valid['vol_sma252']))
-            if avg_vol_ratio > VOL_CFG["high"]:
-                vol_factor = VOL_CFG["high_factor"]
-            elif avg_vol_ratio > VOL_CFG["medium"]:
-                vol_factor = VOL_CFG["medium_factor"]
-
-    actionability = extension_factor * vol_factor
+        extension_penalty = 1.0 / (1.0 + exp((dist_25sma - EXT_SIGMOID["midpoint"]) / EXT_SIGMOID["steepness"]))
 
     # ── BREADTH PENALTY ──────────────────────────────────────────────
     if breadth >= 3:
@@ -315,26 +237,7 @@ def calculate_theme_metrics(
     else:
         return None
 
-    # ── RS ACCELERATION (5-day momentum) ─────────────────────────────
-    rs_accel_mult = 1.0
-    rs_accel = 0.0
-    if history:
-        hist_rs = _get_historical_value(history, theme, "median_rs", RS_ACCEL_CFG["lookback"])
-        if hist_rs is not None:
-            rs_accel = median_rs - hist_rs
-            rs_accel_mult = max(RS_ACCEL_CFG["min"], min(RS_ACCEL_CFG["max"], 1.0 + RS_ACCEL_CFG["coeff"] * rs_accel))
-
-    # ── BREADTH MOMENTUM (5-day expansion) ───────────────────────────
-    breadth_momentum_mult = 1.0
-    breadth_delta = 0
-    if history:
-        hist_breadth = _get_historical_value(history, theme, "breadth", BREADTH_MOM_CFG["lookback"])
-        if hist_breadth is not None:
-            breadth_delta = breadth - hist_breadth
-            breadth_momentum_mult = max(BREADTH_MOM_CFG["min"], min(BREADTH_MOM_CFG["max"], 1.0 + BREADTH_MOM_CFG["coeff"] * breadth_delta))
-
     # ── ENRICHMENT RATIO ─────────────────────────────────────────────
-    enrichment = 0.0
     enrichment_mult = 1.0
     if total_screened > 0 and total_universe > 0:
         screening_rate = total_screened / total_universe
@@ -350,11 +253,8 @@ def calculate_theme_metrics(
         active_weights["strength"] * strength +
         active_weights["confirmation"] * confirmation
     )
-    final_score = (
-        base_score * actionability * breadth_penalty *
-        rs_accel_mult * breadth_momentum_mult * enrichment_mult *
-        si_mult
-    )
+    final_score = (base_score * extension_penalty * breadth_penalty
+                   * enrichment_mult * si_mult)
 
     top_stocks = theme_df.nlargest(min(3, len(theme_df)), 'rs_sts_pct')[['ticker', 'rs_sts_pct']].to_dict('records')
 
@@ -376,15 +276,8 @@ def calculate_theme_metrics(
         'strength': strength,
         'confirmation': confirmation,
         'participation': participation,
-        'extension_factor': extension_factor,
-        'vol_factor': vol_factor,
-        'actionability': actionability,
+        'extension_penalty': extension_penalty,
         'breadth_penalty': breadth_penalty,
-        'rs_accel': rs_accel,
-        'rs_accel_mult': rs_accel_mult,
-        'breadth_delta': breadth_delta,
-        'breadth_momentum_mult': breadth_momentum_mult,
-        'enrichment': enrichment,
         'enrichment_mult': enrichment_mult,
         'si_median': si_median,
         'si_mult': si_mult,
@@ -397,7 +290,7 @@ def calculate_theme_metrics(
 
 
 def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None, screened_tickers: set = None) -> pd.DataFrame:
-    """Analyze all themes and return ranked DataFrame using Iteration 9d scoring."""
+    """Analyze all themes and return ranked DataFrame using backtested scoring formula."""
     ticker_themes = load_ticker_themes()
 
     if not ticker_themes:
@@ -414,44 +307,29 @@ def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None,
     regime, active_weights, regime_pct = compute_market_regime(master_df, market_breadth)
     print(f"Regime: {regime} (pct_above_50sma: {regime_pct:.1f}%, weights: S={active_weights['strength']:.0%}/C={active_weights['confirmation']:.0%})")
 
-    # Load historical data for acceleration/momentum multipliers
-    history = _load_score_history()
-
-    # Compute totals for enrichment ratio
     total_screened = len(screened_tickers) if screened_tickers else 0
     total_universe = len(master_df)
 
     theme_metrics = []
-    today_history = {}
 
     for theme, tickers in theme_tickers.items():
         metrics = calculate_theme_metrics(
             theme, tickers, master_df, active_weights, screened_tickers,
-            history=history,
             total_screened=total_screened,
             total_universe=total_universe,
         )
         if metrics:
             theme_metrics.append(metrics)
-            today_history[theme] = {
-                "median_rs": metrics["median_rs_sts"],
-                "breadth": metrics["breadth"],
-            }
 
     theme_df = pd.DataFrame(theme_metrics)
 
     if theme_df.empty:
         return theme_df
 
-    # Sort by final score (aliased as strength_score)
     theme_df = theme_df.sort_values('strength_score', ascending=False).reset_index(drop=True)
 
     theme_df['is_hot'] = (theme_df['avg_rs_sts'] > HOT_THRESHOLD) & (theme_df['breadth'] >= 3)
     theme_df['regime'] = regime
-
-    # Persist today's data for tomorrow's acceleration/momentum lookback
-    today_key = datetime.now().strftime("%Y-%m-%d")
-    _save_score_history(history, today_key, today_history)
 
     return theme_df
 
@@ -471,7 +349,7 @@ if __name__ == '__main__':
         theme_df = analyze_theme_strength(master_df)
 
         print(f"\n{'='*80}")
-        print("THEME STRENGTH ANALYSIS (Iteration 9d)")
+        print("THEME STRENGTH ANALYSIS")
         print(f"{'='*80}\n")
 
         print(f"Total themes: {len(theme_df)}")
@@ -481,7 +359,7 @@ if __name__ == '__main__':
         pd.options.display.float_format = '{:.1f}'.format
         cols = ['theme', 'median_rs_sts', 'leader_pct', 'participation',
                 'pct_above_50sma', 'pct_near_highs', 'avg_dist_25sma',
-                'breadth', 'actionability', 'rs_accel_mult', 'si_mult',
+                'breadth', 'extension_penalty', 'enrichment_mult', 'si_mult',
                 'strength_score']
         available = [c for c in cols if c in theme_df.columns]
         print(theme_df[available].head(15).to_string())

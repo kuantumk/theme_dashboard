@@ -18,6 +18,7 @@ Runs the complete stock screening pipeline:
 import os
 import sys
 import subprocess
+import time
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -219,19 +220,26 @@ def run_daily_workflow():
         logger.info(f"{'='*80}")
 
         classification_result = None
-        try:
-            classification_result = sync_screened_ticker_themes(all_tickers)
-            ticker_themes = classification_result.ticker_themes
-            logger.info(
-                "Theme classification complete "
-                f"({len(classification_result.classified_tickers)} classified, "
-                f"{len(classification_result.new_tickers)} new, "
-                f"{len(classification_result.unresolved_tickers)} unresolved)\n"
-            )
-        except Exception as e:
-            logger.error(f"Theme classification FAILED: {e}")
-            logger.warning("Continuing workflow with existing themes only...")
-            ticker_themes = load_existing_themes()
+        max_attempts = 2
+        for attempt in range(1, max_attempts + 1):
+            try:
+                classification_result = sync_screened_ticker_themes(all_tickers)
+                ticker_themes = classification_result.ticker_themes
+                logger.info(
+                    "Theme classification complete "
+                    f"({len(classification_result.classified_tickers)} classified, "
+                    f"{len(classification_result.new_tickers)} new, "
+                    f"{len(classification_result.unresolved_tickers)} unresolved)\n"
+                )
+                break
+            except Exception as e:
+                logger.error(f"Theme classification attempt {attempt}/{max_attempts} FAILED: {e}")
+                if attempt < max_attempts:
+                    time.sleep(10)
+                    logger.info("Retrying theme classification...")
+                else:
+                    logger.warning("All classification attempts failed. Continuing with existing themes...")
+                    ticker_themes = load_existing_themes()
 
         # Step 9: Analyze theme strength
         logger.info(f"{'='*80}")

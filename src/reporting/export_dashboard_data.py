@@ -136,6 +136,10 @@ def parse_report(filepath):
         re.MULTILINE
     )
 
+    # Collect ALL ### header positions (numbered themes AND uncategorized/other)
+    # so we never bleed one section's tickers into another.
+    all_section_starts = [m.start() for m in re.finditer(r'^### ', theme_text, re.MULTILINE)]
+
     for match in theme_pattern.finditer(theme_text):
         rank = int(match.group(1))
         name = match.group(2).strip()
@@ -143,8 +147,8 @@ def parse_report(filepath):
         avg_rs = float(match.group(4))
 
         start = match.end()
-        next_theme = theme_pattern.search(theme_text, start)
-        end = next_theme.start() if next_theme else len(theme_text)
+        next_starts = [s for s in all_section_starts if s > match.start()]
+        end = next_starts[0] if next_starts else len(theme_text)
         section = theme_text[start:end]
 
         tickers = parse_ticker_table(section)
@@ -171,6 +175,8 @@ def parse_ticker_table(section):
         line = line.strip()
         if not line:
             continue
+        if line.startswith('###'):
+            break
         if line.startswith('**Tickers:**'):
             continue
         if '|' in line:
@@ -181,6 +187,8 @@ def parse_ticker_table(section):
                     headers = cells
                     in_table = True
                 continue
+            if cells and ('Ticker' in cells[0] or 'ticker' in cells[0].lower()):
+                break
             if all(c.replace('-', '').replace(':', '') == '' for c in cells):
                 continue
             if len(cells) >= 7 and headers:

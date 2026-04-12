@@ -391,12 +391,17 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
 
     if classification_candidates:
         profiles = ensure_company_profiles(classification_candidates)
+        total_batches = (len(classification_candidates) + CLASSIFICATION_BATCH_SIZE - 1) // CLASSIFICATION_BATCH_SIZE
         for start in range(0, len(classification_candidates), CLASSIFICATION_BATCH_SIZE):
             batch = classification_candidates[start:start + CLASSIFICATION_BATCH_SIZE]
+            batch_num = start // CLASSIFICATION_BATCH_SIZE + 1
             existing_themes = get_existing_theme_taxonomy({**ticker_themes, **classified_tags})
-            batch_tags = classify_tickers_with_gemini(batch, existing_themes, profiles)
-            batch_tags = filter_sector_inconsistent_themes(batch_tags, profiles)
-            classified_tags.update(batch_tags)
+            try:
+                batch_tags = classify_tickers_with_gemini(batch, existing_themes, profiles)
+                batch_tags = filter_sector_inconsistent_themes(batch_tags, profiles)
+                classified_tags.update(batch_tags)
+            except Exception as exc:
+                print(f"  Warning: classification batch {batch_num}/{total_batches} failed ({len(batch)} tickers): {exc}")
 
         for ticker, themes in classified_tags.items():
             if not themes_match(ticker_themes.get(ticker), themes):

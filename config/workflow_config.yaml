@@ -53,19 +53,19 @@ themes:
     leader_rs_threshold: 80
     near_highs_column: "max60"
     strength_components:
-      median_rs: 0.40
+      median_rs: 0.45
       leader_pct: 0.35
-      participation: 0.25
+      participation: 0.20
     extension_sigmoid:
-      midpoint: 15
-      steepness: 5
+      midpoint: 18
+      steepness: 4
     breadth_penalty_two: 0.75
     enrichment:
-      coeff: 0.08
+      coeff: 0.12
       max: 1.35
     short_interest:
       max_breadth: 6
-      min_si: 0.07
+      min_si: 0.03
       coeff: 2.5
       max_bonus: 0.45
     theme_groups_file: "config/theme_groups.yaml"

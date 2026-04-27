@@ -45,7 +45,7 @@ cd tests && python backtest_theme_scoring.py
 2. **Indicators** 25 pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
 3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`
 4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/`
-5. **Screeners** 5 pattern filters run in parallel → per-screener CSVs
+5. **Screeners** 6 pattern filters run in parallel → per-screener CSVs
 6. **Consolidate** union all screener tickers → `screening_output/consolidated/`
 7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
 8. **AI Tagging** Gemini 3 Flash classifies new tickers into themes → `data/ticker_themes.json`
@@ -86,7 +86,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
 
-### Five Screeners (`src/screening/screeners/`)
+### Six Screeners (`src/screening/screeners/`)
 
 | Screener | Pattern | ADR | Key Filter |
 |----------|---------|-----|------------|
@@ -95,6 +95,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `gamma` | Short-term burst | ≥4% | 20%+ gain in 30 days |
 | `htf` | High Tight Flag | >4% | 150-day 2x range, tight close |
 | `darvas` | Extended recovery | ≥4% | 252-day 2x range, near high |
+| `momentum_136` | 1/3/6-mo leaders | ≥4% | 25%+/50%+/100%+ over 1/3/6mo, $15M dollar vol, 750k shares |
 
 ### Theme Scoring Formula
 

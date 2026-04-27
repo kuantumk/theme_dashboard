@@ -41,6 +41,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="macro" id="tab-macro">▸ Macro Overview</button>
       <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
+      <button class="tab-btn" data-tab="momentum" id="tab-momentum">▸ Momentum 1/3/6</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
       <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP Scanner</button>
@@ -357,6 +358,34 @@
           <a class="chart-alert-btn" id="themes-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
         </div>
         <div class="chart-area" id="themes-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 2b: MOMENTUM 1/3/6 ════════════════════════ -->
+    <div class="tab-content" id="content-momentum">
+      <div class="left-panel" id="momentum-left">
+        <div class="time-travel-bar">
+          <span class="time-travel-label">SESSION:</span>
+          <div class="time-travel-dates" id="momentum-tt-dates"></div>
+        </div>
+        <div id="momentum-container">
+          <div class="loading">Loading momentum data...</div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="momentum"></div>
+      <div class="right-panel" id="momentum-right">
+        <div class="chart-header" id="momentum-chart-header" style="display:none">
+          <span class="chart-symbol" id="momentum-chart-sym"></span>
+          <span class="chart-name" id="momentum-chart-name"></span>
+          <a class="chart-alert-btn" id="momentum-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="momentum-chart-area">
           <div class="chart-placeholder">
             <div class="placeholder-icon">📈</div>
             <div>Click any ticker to open chart</div>

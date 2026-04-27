@@ -15,7 +15,8 @@ from datetime import datetime
 
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
-    DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE
+    DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE,
+    SCREENING_OUTPUT_DIR
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
@@ -780,6 +781,159 @@ def update_etf_history(report_date, etf_data, industry_data):
         )
 
 
+def _fmt_float_m(val):
+    """Format raw share count as float-in-millions string (e.g. 132300000 -> '132.3')."""
+    if val is None:
+        return None
+    try:
+        return f"{float(val) / 1e6:.1f}"
+    except (ValueError, TypeError):
+        return None
+
+
+def _fmt_growth(val):
+    """Format an EPS/sales growth percent value with no decimals (e.g. 15.4 -> '15')."""
+    if val is None:
+        return None
+    try:
+        return f"{float(val):.0f}"
+    except (ValueError, TypeError):
+        return None
+
+
+def _fmt_inst(val):
+    """Format institutional transaction percentage with explicit sign (e.g. 0.9 -> '+0.9')."""
+    if val is None:
+        return None
+    try:
+        v = float(val)
+    except (ValueError, TypeError):
+        return None
+    return f"+{v:.1f}" if v > 0 else f"{v:.1f}"
+
+
+def export_momentum_136(day_flags):
+    """Export momentum_136 screener results grouped by theme to docs/data/momentum_136.json.
+
+    Singletons preserved (passes empty groups dict to build_theme_to_tickers).
+    Themes ordered by ticker count desc, alphabetical tiebreaker.
+    Also appends to docs/data/momentum_136_history.json (last 5 sessions).
+    """
+    import sqlite3
+    import pandas as pd
+    from src.themes.theme_registry import load_ticker_themes
+    from src.themes.theme_taxonomy import build_theme_to_tickers
+
+    # Locate latest screener output CSV
+    try:
+        csv_file = su.get_latest_file(
+            SCREENING_OUTPUT_DIR / 'momentum_136', 'momentum_136_*.csv', 1
+        )
+    except Exception as e:
+        print(f"   No momentum_136 CSV found, skipping: {e}")
+        return
+
+    df = pd.read_csv(csv_file).fillna(0)
+    if df.empty:
+        print("   momentum_136 CSV is empty, skipping export")
+        return
+
+    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
+
+    # Build ticker -> themes filtered map (Uncategorized fallback so untagged tickers still appear)
+    ticker_themes = load_ticker_themes()
+    screener_tickers = df['ticker'].astype(str).str.upper().tolist()
+    filtered_map = {
+        t: ticker_themes.get(t) or ['Uncategorized']
+        for t in screener_tickers
+    }
+
+    # Reverse to theme -> tickers; empty groups dict skips consolidation/removal (preserves singletons)
+    theme_to_tickers = build_theme_to_tickers(filtered_map, {})
+
+    # Single-shot fundamentals lookup
+    fundamentals = {}
+    if FUNDAMENTALS_DB.exists() and screener_tickers:
+        conn = sqlite3.connect(FUNDAMENTALS_DB)
+        placeholders = ','.join(['?'] * len(screener_tickers))
+        rows = conn.execute(f'''
+            SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
+                   short_interest, inst_transactions
+            FROM fundamentals
+            WHERE ticker IN ({placeholders})
+        ''', screener_tickers).fetchall()
+        conn.close()
+        for r in rows:
+            fundamentals[r[0]] = {
+                'shares_float': r[1],
+                'eps_growth_yoy': r[2],
+                'sales_growth_yoy': r[3],
+                'short_interest': r[4],
+                'inst_transactions': r[5],
+            }
+
+    # Per-ticker dict from master CSV row + fundamentals
+    per_ticker = {}
+    for _, row in df.iterrows():
+        t = str(row['ticker']).upper()
+        f = fundamentals.get(t, {})
+        short_val = f.get('short_interest')
+        per_ticker[t] = {
+            'ticker': t,
+            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
+            'price': round(float(row.get('close', 0) or 0), 2),
+            'float': _fmt_float_m(f.get('shares_float')),
+            'eps': _fmt_growth(f.get('eps_growth_yoy')),
+            'sales': _fmt_growth(f.get('sales_growth_yoy')),
+            'inst': _fmt_inst(f.get('inst_transactions')),
+            'short': round(float(short_val), 1) if short_val is not None else None,
+        }
+
+    # Build theme list (sort tickers within theme by RS desc, themes by count desc)
+    themes_list = []
+    for theme_name, tickers in theme_to_tickers.items():
+        ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
+        if not ticker_dicts:
+            continue
+        ticker_dicts.sort(key=lambda x: -x['rs'])
+        themes_list.append({'name': theme_name, 'tickers': ticker_dicts})
+
+    # Catch-all buckets (mirrors _remove_noise in config/theme_groups.yaml) sort to the
+    # bottom regardless of count — they're overflow, not thematic concentration.
+    catchall_themes = {
+        'Uncategorized',
+        'Individual Episodic Pivots / Singletons',
+        'Meme Stocks',
+    }
+    themes_list.sort(key=lambda th: (
+        th['name'] in catchall_themes,
+        -len(th['tickers']),
+        th['name'],
+    ))
+
+    # Apply ticker_color flags
+    if day_flags:
+        for th in themes_list:
+            enrich_with_ticker_color(th['tickers'], day_flags)
+
+    momentum_data = {
+        'report_date': csv_date,
+        'themes': themes_list,
+    }
+
+    out = OUTPUT_DIR / "momentum_136.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(momentum_data, fh, indent=2)
+    total_tickers = sum(len(th['tickers']) for th in themes_list)
+    print(f"   -> {out} ({len(themes_list)} themes, {total_tickers} tickers)")
+
+    _update_history_file(
+        OUTPUT_DIR / "momentum_136_history.json",
+        csv_date,
+        momentum_data,
+    )
+
+
 def export_all():
     """Main export function."""
     print("=" * 60)
@@ -815,6 +969,12 @@ def export_all():
         update_themes_history(theme_data)
     else:
         print("\n1. No report found, skipping themes export")
+
+    # 1b. Export Momentum 1/3/6 screener (independent of daily report)
+    print("\n1b. Exporting momentum_136 data")
+    if day_flags is None:
+        day_flags = load_ticker_color_flags()
+    export_momentum_136(day_flags)
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")

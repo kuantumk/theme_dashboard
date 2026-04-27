@@ -60,7 +60,7 @@ def scan_finviz_tickers(earnings_filter: str) -> List[str]:
         overview = Overview()
         overview.set_filter(filters_dict={
             'Earnings Date': earnings_filter,
-            'Short Float': 'Over 10%',
+            'Float Short': 'Over 10%',
             'Average Volume': 'Over 1M',
         })
         df = overview.screener_view()

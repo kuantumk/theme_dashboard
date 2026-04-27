@@ -8,6 +8,8 @@
   // ── CONFIG ────────────────────────────────────────────
   const THEME_DATA_URL = 'data/themes.json';
   const THEME_HISTORY_URL = 'data/themes_history.json';
+  const MOMENTUM_DATA_URL = 'data/momentum_136.json';
+  const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
@@ -30,7 +32,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, industry: null, etf: null, ep: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, industry: null, etf: null, ep: null };
 
   // Sort state per table
   let sortState = {
@@ -63,6 +65,7 @@
     loadMacroData();
     loadBreadthData();
     loadThemeData();
+    loadMomentumData();
     loadIndustryETFData();
     loadETFData();
     loadMacroEvents();
@@ -184,6 +187,7 @@
       let tabId;
       if (tabContent.id === 'content-macro') tabId = 'macro';
       else if (tabContent.id === 'content-themes') tabId = 'themes';
+      else if (tabContent.id === 'content-momentum') tabId = 'momentum';
       else if (tabContent.id === 'content-industry') tabId = 'industry';
       else if (tabContent.id === 'content-etf') tabId = 'etf';
       else if (tabContent.id === 'content-ep') tabId = 'ep';
@@ -274,7 +278,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, industry: -1, etf: -1, ep: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, industry: -1, etf: -1, ep: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -559,6 +563,7 @@
 
   // ── THEME DATA + TIME TRAVEL ──────────────────────────
   let themesHistory = [];    // Array of theme snapshots, newest first
+  let momentumHistory = [];  // Array of momentum snapshots, newest first
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let activeSessionDate = null;
@@ -591,10 +596,34 @@
       });
   }
 
+  function loadMomentumData() {
+    Promise.all([
+      fetch(withCacheBust(MOMENTUM_DATA_URL)).then(r => r.json()),
+      fetch(withCacheBust(MOMENTUM_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        momentumHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderMomentum(current);
+      })
+      .catch(err => {
+        console.warn('Momentum data not available:', err);
+        document.getElementById('momentum-container').innerHTML =
+          '<div class="no-data">Momentum data not available.<br>Run the daily workflow to generate data.</div>';
+      });
+  }
+
   /** Collect all available session dates and render all time-travel bars. */
   function getSessionDates() {
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
+    momentumHistory.forEach(h => dates.add(h.report_date));
     industryHistory.forEach(h => dates.add(h.report_date));
     etfHistory.forEach(h => dates.add(h.report_date));
     return [...dates].sort().reverse();
@@ -604,6 +633,9 @@
     // Themes
     const themeSnap = themesHistory.find(h => h.report_date === date);
     if (themeSnap) renderThemes(themeSnap);
+    // Momentum 1/3/6
+    const momSnap = momentumHistory.find(h => h.report_date === date);
+    if (momSnap) renderMomentum(momSnap);
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
     if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
@@ -615,6 +647,7 @@
   function renderAllTimeTravelBars() {
     const dates = getSessionDates();
     renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
   }
@@ -669,6 +702,73 @@
             <span class="theme-rank">#${idx + 1}</span>
             <span class="theme-name">${escHtml(theme.name)}</span>
             <span class="theme-score">Score: ${theme.score?.toFixed(1) || '—'} · Avg RS: ${theme.avg_rs?.toFixed(1) || '—'}%</span>
+          </div>
+          <div class="theme-body">
+            <table>
+              <thead><tr>
+                <th class="l">Ticker</th>
+                <th>RS%</th>
+                <th>Float(M)</th>
+                <th>EPS%</th>
+                <th>Sales%</th>
+                <th>Inst%</th>
+                <th>Short%</th>
+              </tr></thead>
+              <tbody>
+      `;
+
+      (theme.tickers || []).forEach(t => {
+        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
+        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+        const shortVal = parseFloat(t.short);
+        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+        html += `
+                <tr>
+                  <td class="l">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : t.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                      ${escHtml(t.ticker)}
+                    </span>
+                  </td>
+                  <td class="${rsClass}">${t.rs ?? '—'}</td>
+                  <td>${t.float ?? '—'}</td>
+                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
+                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
+                  <td class="${instClass}">${t.inst ?? '—'}</td>
+                  <td class="${shortClass}">${t.short ?? '—'}</td>
+                </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function renderMomentum(data) {
+    const container = document.getElementById('momentum-container');
+    if (!container) return;
+
+    if (!data || !data.themes || data.themes.length === 0) {
+      container.innerHTML = '<div class="no-data">No momentum stocks found for this date.</div>';
+      return;
+    }
+
+    let html = '';
+    data.themes.forEach((theme, idx) => {
+      const count = (theme.tickers || []).length;
+      html += `
+        <div class="theme-block">
+          <div class="theme-header">
+            <span class="theme-rank">#${idx + 1}</span>
+            <span class="theme-name">${escHtml(theme.name)}</span>
+            <span class="theme-score">${count} ticker${count === 1 ? '' : 's'}</span>
           </div>
           <div class="theme-body">
             <table>

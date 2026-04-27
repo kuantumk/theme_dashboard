@@ -1,7 +1,9 @@
 @echo off
 REM EP Scan Morning — Local launcher for Windows Task Scheduler
-REM Runs the BMO earnings scan and pushes results to GitHub.
-REM GitHub Actions workflow remains as a backup (will no-op if JSON unchanged).
+REM Runs the BMO earnings scan locally for diagnostic purposes.
+REM Does NOT commit or push — the dashboard is updated by ep-scan-morning.yml
+REM in GitHub Actions (5:45 AM PT). The local JSON write is left in the working
+REM tree; refresh it with `git checkout -- docs\data\ep_scan_morning.json` if needed.
 
 cd /d C:\Users\kuantumk\repos\theme_dashboard
 
@@ -12,13 +14,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Commit and push results so dashboard stays updated
-git add docs\data\ep_scan_morning.json
-git diff --staged --quiet && (
-    echo No changes to commit at %date% %time% >> scripts\ep_scan_morning_local.log
-    exit /b 0
-)
-git commit -m "EP scan morning %date:~-4%-%date:~4,2%-%date:~7,2% (local)"
-git pull --rebase origin main
-git push origin main
-echo Scan completed and pushed at %date% %time% >> scripts\ep_scan_morning_local.log
+echo Scan completed at %date% %time% >> scripts\ep_scan_morning_local.log

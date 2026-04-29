@@ -40,6 +40,13 @@ themes:
   company_metadata_cache_days: 90
   validation_stale_days: 30
   validation_confirmation_threshold: 2
+
+  # Periodic Claude Opus audit (src/themes/prepare_theme_audit.py +
+  # apply_theme_audit.py). Runs as a /schedule routine separate from the
+  # daily Gemini pipeline; targets stale tickers not in today's screened pool.
+  audit_batch_size: 50
+  audit_stale_days: 30
+  audit_confidence_threshold: 0.85
   dashboard_theme_limit: 30
   dashboard_tickers_per_theme: 10
   min_stocks_per_theme: 3

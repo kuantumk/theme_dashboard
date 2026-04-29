@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find /c/Users/kuantumk/repos/theme_dashboard/docs -type f -name \"*.md\" -o -name \"*.txt\" 2>/dev/null | head -20)"
+      "Bash(find /c/Users/kuantumk/repos/theme_dashboard/docs -type f -name \"*.md\" -o -name \"*.txt\" 2>/dev/null | head -20)",
+      "Bash(PYTHONPATH=. python src/themes/prepare_theme_audit.py --limit 20 --tickers SNAP,NFLX,AAPL,TSLA)",
+      "Bash(PYTHONPATH=. python src/themes/apply_theme_audit.py --dry-run --confidence-threshold 0.99)",
+      "Bash(PYTHONPATH=. python src/themes/apply_theme_audit.py)",
+      "Bash(PYTHONPATH=. python src/themes/prepare_theme_audit.py --audit-date 2026-04-28-regression --limit 50)",
+      "Bash(PYTHONPATH=. python src/themes/prepare_theme_audit.py --tickers ADI,ANNA,ASAN,BAX,BBWI,BHC,DVA,FRPT,GPRO,IP,LRCX,MRVL,SNAP,SQ,TWLO)",
+      "Bash(PYTHONPATH=. python src/themes/apply_theme_audit.py --dry-run)"
     ]
   }
 }

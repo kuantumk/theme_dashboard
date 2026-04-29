@@ -1,0 +1,80 @@
+{
+  "batch_id": "001",
+  "decisions": {
+    "ADI": {
+      "action": "uncertain",
+      "themes": [],
+      "confidence": 0.30,
+      "rationale": "Profile fields are entirely empty; cannot validate or propose a theme without sector/industry/summary."
+    },
+    "ANNA": {
+      "action": "uncertain",
+      "themes": [],
+      "confidence": 0.30,
+      "rationale": "Profile fields empty (AleAnna Class A); no business context available to judge."
+    },
+    "ASAN": {
+      "action": "uncertain",
+      "themes": [],
+      "confidence": 0.30,
+      "rationale": "Profile fields empty for Asana; cannot reason from name alone per the routine rules."
+    },
+    "BAX": {
+      "action": "keep",
+      "confidence": 0.65,
+      "rationale": "Diversified healthcare conglomerate (IV systems, dialysis machines, pharmaceuticals); no single existing theme captures the breadth, so singleton is plausibly correct."
+    },
+    "BBWI": {
+      "action": "keep",
+      "confidence": 0.55,
+      "rationale": "Specialty retailer of personal care and home fragrance; closest existing theme is Consumer/Cosmetics but BBWI is more body care/fragrance than makeup — no clean fit, singleton acceptable."
+    },
+    "BHC": {
+      "action": "keep",
+      "confidence": 0.60,
+      "rationale": "Diversified specialty pharma (Salix, Bausch + Lomb, Solta) spanning multiple therapeutic areas; no single biotech sub-theme captures it cleanly."
+    },
+    "DVA": {
+      "action": "keep",
+      "confidence": 0.85,
+      "rationale": "DaVita is the only major outpatient dialysis operator in the taxonomy; genuinely idiosyncratic with no peer theme available."
+    },
+    "FRPT": {
+      "action": "keep",
+      "confidence": 0.85,
+      "rationale": "Freshpet is a standalone fresh pet food brand; no pet-food or animal-nutrition theme exists in the taxonomy, so singleton is correct."
+    },
+    "GPRO": {
+      "action": "keep",
+      "confidence": 0.80,
+      "rationale": "Action camera maker; no consumer electronics / camera theme exists in the current taxonomy, so singleton remains the best available label."
+    },
+    "IP": {
+      "action": "keep",
+      "confidence": 0.80,
+      "rationale": "Renewable fiber-based packaging (containerboard); no paper/packaging theme exists in the current taxonomy."
+    },
+    "LRCX": {
+      "action": "keep",
+      "confidence": 0.95,
+      "rationale": "Lam Research designs and services semiconductor processing equipment used in IC fabrication; current tag 'AI - Semiconductor Processing' is a precise match."
+    },
+    "MRVL": {
+      "action": "keep",
+      "confidence": 0.92,
+      "rationale": "Marvell delivers data-infrastructure silicon spanning data center core to network edge; both current themes (AI - Infra / Core Chips, AI - Data Center & Cloud) reflect the business accurately."
+    },
+    "SNAP": {
+      "action": "change",
+      "themes": ["Ads Tech & Marketing"],
+      "confidence": 0.92,
+      "rationale": "Snap operates Snapchat, a visual messaging platform whose revenue is overwhelmingly driven by advertising; current singleton tag is a stale fallback from initial classification."
+    },
+    "TWLO": {
+      "action": "uncertain",
+      "themes": [],
+      "confidence": 0.55,
+      "rationale": "Twilio is a cloud communications/customer-engagement API platform; current 'Software / Data & Analytics' tag is mediocre but no clearly better existing theme captures communications-platform-as-a-service — flag for human review of taxonomy gap."
+    }
+  }
+}

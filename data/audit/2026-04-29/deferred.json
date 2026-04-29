@@ -1,0 +1,46 @@
+{
+  "deferred": [
+    {
+      "confidence": 0.3,
+      "from": [
+        "Individual Episodic Pivots / Singletons"
+      ],
+      "rationale": "Profile fields are entirely empty; cannot validate or propose a theme without sector/industry/summary.",
+      "reason": "uncertain",
+      "ticker": "ADI",
+      "to": []
+    },
+    {
+      "confidence": 0.3,
+      "from": [
+        "Individual Episodic Pivots / Singletons"
+      ],
+      "rationale": "Profile fields empty (AleAnna Class A); no business context available to judge.",
+      "reason": "uncertain",
+      "ticker": "ANNA",
+      "to": []
+    },
+    {
+      "confidence": 0.3,
+      "from": [
+        "Individual Episodic Pivots / Singletons"
+      ],
+      "rationale": "Profile fields empty for Asana; cannot reason from name alone per the routine rules.",
+      "reason": "uncertain",
+      "ticker": "ASAN",
+      "to": []
+    },
+    {
+      "confidence": 0.55,
+      "from": [
+        "Software / Data & Analytics"
+      ],
+      "rationale": "Twilio is a cloud communications/customer-engagement API platform; current 'Software / Data & Analytics' tag is mediocre but no clearly better existing theme captures communications-platform-as-a-service \u2014 flag for human review of taxonomy gap.",
+      "reason": "uncertain",
+      "ticker": "TWLO",
+      "to": []
+    }
+  ],
+  "invalid": [],
+  "skipped": []
+}

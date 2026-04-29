@@ -376,48 +376,77 @@ def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
 
 # ── Discord notification ─────────────────────────────────────────────────────
 
+NEWS_TITLE_MAX = 55  # truncate news titles for the news-table column
+
+
+def _format_metric(value: object, suffix: str = "", *, signed: bool = False) -> str:
+    """Format a numeric metric, returning 'N/A' if missing."""
+    if value is None:
+        return "N/A"
+    fmt = "{:+.1f}" if signed else "{:.1f}"
+    return f"{fmt.format(value)}{suffix}"
+
+
 def send_discord_notification(
     scan_type: str,
     scan_date: str,
     tickers: List[Dict],
 ) -> None:
-    """Send EP scan results to Discord via webhook."""
+    """Send EP scan results to Discord via webhook.
+
+    Renders two monospace code-block tables:
+      1. Metrics: Ticker | Float | Short | 52W High | ATR | (BM|AH) CHG
+      2. News:    Ticker | News
+    The change-column label flips between BM CHG (morning/PM) and AH CHG
+    (afternoon/AH) based on the data shape of the first ticker.
+    """
     if not tickers:
         content = f"**EP Scan - {scan_type} ({scan_date})**\nNo qualifying tickers found."
     else:
-        lines = [
-            f"**EP Scan - {scan_type} ({scan_date})**",
-            f"Found {len(tickers)} qualifying ticker(s)",
-            "",
-        ]
+        # Detect scan flavor from the first ticker's keys (matches the prior
+        # per-ticker check, but resolved once for the table header).
+        is_after_hours = "ah_chg_pct" in tickers[0]
+        chg_label = "AH CHG" if is_after_hours else "BM CHG"
+        chg_key = "ah_chg_pct" if is_after_hours else "pm_chg_pct"
+
+        metrics_header = (
+            f"{'Ticker':<7}{'Float':>9}{'Short':>8}"
+            f"{'52W High':>10}{'ATR':>7}{chg_label:>8}"
+        )
+        metrics_rows: List[str] = [metrics_header, "-" * len(metrics_header)]
         for t in tickers:
-            float_str = f"{t['float']:.1f}M" if t.get('float') else 'N/A'
-            short_str = f"{t['short']:.1f}%" if t.get('short') is not None else 'N/A'
-            dist_str = (f"{t['dist_52w_high']:+.1f}%"
-                        if t.get('dist_52w_high') is not None else 'N/A')
-            atr_str = (f"{t['atr_multiple']:.1f}x"
-                       if t.get('atr_multiple') is not None else 'N/A')
+            metrics_rows.append(
+                f"{t['ticker']:<7}"
+                f"{_format_metric(t.get('float'), 'M'):>9}"
+                f"{_format_metric(t.get('short'), '%'):>8}"
+                f"{_format_metric(t.get('dist_52w_high'), '%', signed=True):>10}"
+                f"{_format_metric(t.get('atr_multiple'), 'x'):>7}"
+                f"{_format_metric(t.get(chg_key), '%', signed=True):>8}"
+            )
 
-            chg_key = 'ah_chg_pct' if 'ah_chg_pct' in t else 'pm_chg_pct'
-            chg_label = 'AH CHG' if 'ah_chg_pct' in t else 'BM CHG'
-            chg_val = t.get(chg_key)
-            chg_str = f"{chg_val:+.1f}%" if chg_val is not None else 'N/A'
+        news_header = f"{'Ticker':<7}News"
+        news_rows: List[str] = [news_header, "-" * (7 + NEWS_TITLE_MAX)]
+        for t in tickers:
+            news_items = t.get("news") or []
+            raw_title = news_items[0]["title"] if news_items else "No news"
+            # Strip backticks so they cannot prematurely close the code block.
+            cleaned = raw_title.replace("`", "'")
+            if len(cleaned) > NEWS_TITLE_MAX:
+                cleaned = cleaned[: NEWS_TITLE_MAX - 3] + "..."
+            news_rows.append(f"{t['ticker']:<7}{cleaned}")
 
-            news_items = t.get('news', [])
-            news_str = news_items[0]['title'] if news_items else 'No news'
-
-            lines.append(f"- **{t['ticker']}**")
-            lines.append(f"{float_str} ({short_str})")
-            lines.append(f"52W High: {dist_str}")
-            lines.append(f"ATR: {atr_str}")
-            lines.append(f"{chg_label}: {chg_str}")
-            lines.append(f"News: {news_str}")
-            lines.append("")
-
-        content = '\n'.join(lines)
+        content = (
+            f"**EP Scan - {scan_type} ({scan_date})**\n"
+            f"Found {len(tickers)} qualifying ticker(s)\n"
+            "```\n" + "\n".join(metrics_rows) + "\n```\n"
+            "```\n" + "\n".join(news_rows) + "\n```"
+        )
 
     if len(content) > 1990:
-        content = content[:1987] + '...'
+        # Preserve a closing fence if truncation lands inside an open code block.
+        content = content[:1980] + "..."
+        if content.count("```") % 2 == 1:
+            content += "\n```"
 
     if not DISCORD_WEBHOOK_URL:
         print("  Discord notification skipped: DISCORD_EP_SCAN_WEBHOOK_URL not set")

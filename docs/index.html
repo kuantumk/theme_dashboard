@@ -41,7 +41,9 @@
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="macro" id="tab-macro">▸ Macro Overview</button>
       <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
+      <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">▸ Theme Viz</button>
       <button class="tab-btn" data-tab="momentum" id="tab-momentum">▸ Momentum 1/3/6</button>
+      <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">▸ Momentum Viz</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
       <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP Scanner</button>
@@ -339,7 +341,56 @@
       </div>
     </div>
 
-    <!-- ══ TAB 2: THEMES ═════════════════════════════════ -->
+    <!-- ══ TAB 2: THEME VIZ ══════════════════════════════ -->
+    <div class="tab-content" id="content-themeviz">
+      <div class="left-panel viz-left" id="themeviz-left">
+        <div class="time-travel-bar">
+          <span class="time-travel-label">SESSION:</span>
+          <div class="time-travel-dates" id="themeviz-tt-dates"></div>
+        </div>
+        <div class="card themeviz-card">
+          <div class="card-lbl">▸ Theme Network — hot themes (avg RS ≥ 70, breadth ≥ 3)</div>
+          <div class="themeviz-meta" id="themeviz-meta">—</div>
+          <div class="theme-network-wrap">
+            <div id="theme-network" class="theme-network"></div>
+            <div id="themeviz-overlay" class="themeviz-overlay"></div>
+            <div id="themeviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
+          </div>
+          <div class="themeviz-legend">
+            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing theme (score ≥ 100)</span>
+            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
+            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
+            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
+            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
+            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
+            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
+            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
+            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="themeviz"></div>
+      <div class="right-panel" id="themeviz-right">
+        <div class="chart-header" id="themeviz-chart-header" style="display:none">
+          <span class="chart-symbol" id="themeviz-chart-sym"></span>
+          <span class="chart-name" id="themeviz-chart-name"></span>
+          <a class="chart-alert-btn" id="themeviz-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="themeviz-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker node to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 3: THEMES ═════════════════════════════════ -->
     <div class="tab-content" id="content-themes">
       <div class="left-panel" id="themes-left">
         <div class="time-travel-bar" id="time-travel-bar">
@@ -389,6 +440,55 @@
           <div class="chart-placeholder">
             <div class="placeholder-icon">📈</div>
             <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: MOMENTUM VIZ ═════════════════════════════ -->
+    <div class="tab-content" id="content-momentumviz">
+      <div class="left-panel viz-left" id="momentumviz-left">
+        <div class="time-travel-bar">
+          <span class="time-travel-label">SESSION:</span>
+          <div class="time-travel-dates" id="momentumviz-tt-dates"></div>
+        </div>
+        <div class="card themeviz-card">
+          <div class="card-lbl">▸ Momentum Network — 1/3/6-month leaders (avg RS ≥ 70, breadth ≥ 3)</div>
+          <div class="themeviz-meta" id="momentumviz-meta">—</div>
+          <div class="theme-network-wrap">
+            <div id="momentum-network" class="theme-network"></div>
+            <div id="momentumviz-overlay" class="themeviz-overlay"></div>
+            <div id="momentumviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
+          </div>
+          <div class="themeviz-legend">
+            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing (strength ≥ 100)</span>
+            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
+            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
+            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
+            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
+            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
+            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
+            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
+            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="momentumviz"></div>
+      <div class="right-panel" id="momentumviz-right">
+        <div class="chart-header" id="momentumviz-chart-header" style="display:none">
+          <span class="chart-symbol" id="momentumviz-chart-sym"></span>
+          <span class="chart-name" id="momentumviz-chart-name"></span>
+          <a class="chart-alert-btn" id="momentumviz-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="momentumviz-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker node to open chart</div>
             <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
           </div>
         </div>
@@ -563,6 +663,7 @@
 
   </div> <!-- Enclosing app-wrap -->
 
+  <script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
   <script src="app.js"></script>
 </body>
 

@@ -588,11 +588,14 @@
         activeSessionDate = themesHistory.length > 0 ? themesHistory[0].report_date : null;
         renderAllTimeTravelBars();
         renderThemes(current);
+        renderThemeNetwork(current);
       })
       .catch(err => {
         console.warn('Theme data not available:', err);
         document.getElementById('themes-container').innerHTML =
           '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
+        const tnContainer = document.getElementById('theme-network');
+        if (tnContainer) tnContainer.innerHTML = '<div class="no-data">Theme data not available.</div>';
       });
   }
 
@@ -611,11 +614,14 @@
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
         renderAllTimeTravelBars();
         renderMomentum(current);
+        renderMomentumNetwork(current);
       })
       .catch(err => {
         console.warn('Momentum data not available:', err);
         document.getElementById('momentum-container').innerHTML =
           '<div class="no-data">Momentum data not available.<br>Run the daily workflow to generate data.</div>';
+        const mnContainer = document.getElementById('momentum-network');
+        if (mnContainer) mnContainer.innerHTML = '<div class="no-data">Momentum data not available.</div>';
       });
   }
 
@@ -632,10 +638,16 @@
   function onTimeTravelSelect(date) {
     // Themes
     const themeSnap = themesHistory.find(h => h.report_date === date);
-    if (themeSnap) renderThemes(themeSnap);
+    if (themeSnap) {
+      renderThemes(themeSnap);
+      renderThemeNetwork(themeSnap);
+    }
     // Momentum 1/3/6
     const momSnap = momentumHistory.find(h => h.report_date === date);
-    if (momSnap) renderMomentum(momSnap);
+    if (momSnap) {
+      renderMomentum(momSnap);
+      renderMomentumNetwork(momSnap);
+    }
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
     if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
@@ -650,6 +662,8 @@
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
   }
 
   /**
@@ -683,6 +697,476 @@
         });
         onSelect(date);
       });
+    });
+  }
+
+  // ── NETWORK VIZ — Theme Viz + Momentum Viz ─────────────
+  // Both tabs share one Cytoscape force-directed renderer. They differ only
+  // in (a) where strength comes from — themes carry a server-computed `score`,
+  // momentum derives strength client-side from avg RS + breadth — and
+  // (b) which DOM containers they target.
+
+  const VIZ_MODES = {
+    themes: {
+      containerId: 'theme-network',
+      metaId: 'themeviz-meta',
+      tooltipId: 'themeviz-tooltip',
+      overlayId: 'themeviz-overlay',
+      tabBtnId: 'tab-themeviz',
+      hotLabel: 'hot themes',
+    },
+    momentum: {
+      containerId: 'momentum-network',
+      metaId: 'momentumviz-meta',
+      tooltipId: 'momentumviz-tooltip',
+      overlayId: 'momentumviz-overlay',
+      tabBtnId: 'tab-momentumviz',
+      hotLabel: 'momentum themes',
+    },
+  };
+
+  // Per-mode runtime state — cytoscape instance, tab handler flag, pending snap
+  const vizState = {
+    themes:   { cy: null, pendingSnap: null, tabHandlerInstalled: false },
+    momentum: { cy: null, pendingSnap: null, tabHandlerInstalled: false },
+  };
+
+  function isVizVisible(mode) {
+    const c = document.getElementById(VIZ_MODES[mode].containerId);
+    return !!(c && c.offsetHeight > 0 && c.offsetWidth > 0);
+  }
+
+  function installVizTabHandler(mode) {
+    const state = vizState[mode];
+    if (state.tabHandlerInstalled) return;
+    const cfg = VIZ_MODES[mode];
+    const tabBtn = document.getElementById(cfg.tabBtnId);
+    if (!tabBtn) return;
+    tabBtn.addEventListener('click', () => {
+      // Defer one tick so the tab content's display has switched on
+      setTimeout(() => {
+        if (state.pendingSnap) {
+          const snap = state.pendingSnap;
+          state.pendingSnap = null;
+          actuallyRenderNetwork(snap, mode);
+          return;
+        }
+        if (state.cy) {
+          state.cy.resize();
+          state.cy.fit(undefined, 40);
+          syncTightPulses(state.cy, mode);
+        }
+      }, 60);
+    });
+    state.tabHandlerInstalled = true;
+  }
+
+  function computeAvgRs(theme) {
+    const tk = theme.tickers || [];
+    if (tk.length === 0) return 0;
+    return tk.reduce((s, t) => s + (t.rs ?? 0), 0) / tk.length;
+  }
+
+  // Theme strength signal — server `score` for themes, derived for momentum.
+  function computeStrength(theme, mode) {
+    if (mode === 'themes') return theme.score ?? 0;
+    const tk = theme.tickers || [];
+    if (tk.length === 0) return 0;
+    const breadthFactor = Math.min(tk.length / 8, 1.5); // saturates around 8-12 tickers
+    return Math.round(computeAvgRs(theme) * (0.6 + 0.4 * breadthFactor) * 10) / 10;
+  }
+
+  function actionabilityScore(theme, mode) {
+    const tk = theme.tickers || [];
+    if (tk.length === 0) return 0;
+    const leaderDensity = tk.filter(t => (t.rs ?? 0) >= 90).length / tk.length;
+    const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
+    const scoreQuality = mode === 'themes'
+      ? Math.min((theme.score ?? 0) / 100, 1.2)
+      : Math.min(computeAvgRs(theme) / 90, 1.2);
+    return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
+  }
+
+  function themeFill(strength, action) {
+    // Warm-scale by strength; saturation modulated by actionability
+    let hue, baseSat, light;
+    if (strength >= 100)      { hue = 14;  baseSat = 92; light = 56; }   // scarlet — blazing
+    else if (strength >= 80)  { hue = 35;  baseSat = 88; light = 53; }   // orange — strong
+    else if (strength >= 60)  { hue = 50;  baseSat = 70; light = 48; }   // gold   — solid
+    else                      { hue = 215; baseSat = 14; light = 40; }   // slate  — faded
+    const sat = Math.round(baseSat * Math.max(0.45, Math.min(1.0, action)));
+    return `hsl(${hue}, ${sat}%, ${light}%)`;
+  }
+
+  function rsFill(rs) {
+    // Match dashboard 4-tier ticker palette
+    if (rs >= 90) return '#00e676';   // --green
+    if (rs >= 80) return '#00c8ff';   // --accent (cyan)
+    if (rs >= 50) return '#ffb300';   // --amber
+    return '#ff3355';                  // --red
+  }
+
+  function actionabilityLabel(a) {
+    if (a >= 0.95) return 'Highly actionable';
+    if (a >= 0.75) return 'Actionable';
+    if (a >= 0.55) return 'Mixed';
+    return 'Late / extended';
+  }
+
+  function buildVizTooltip(node, mode) {
+    const d = node.data();
+    if (d.kind === 'theme') {
+      const strengthLabel = mode === 'themes' ? 'Score' : 'Strength';
+      return (
+        `<div class="tip-title">${d.label}</div>` +
+        `<div class="tip-sub">Rank #${d.rank} · ${actionabilityLabel(d.action)}</div>` +
+        `<div class="tip-grid">` +
+        `<span class="tip-k">${strengthLabel}</span><span class="tip-v">${d.strength?.toFixed?.(1) ?? '—'}</span>` +
+        `<span class="tip-k">Avg RS</span><span class="tip-v">${d.avg_rs?.toFixed?.(1) ?? '—'}%</span>` +
+        `<span class="tip-k">Breadth</span><span class="tip-v">${d.breadth} tickers</span>` +
+        `<span class="tip-k">Action</span><span class="tip-v">${(d.action * 100).toFixed(0)}%</span>` +
+        `</div>`
+      );
+    }
+    const tags = [];
+    if (d.isLeader) tags.push('<span class="tip-tag tag-leader">LEADER</span>');
+    if (d.isBridge) tags.push('<span class="tip-tag tag-bridge">BRIDGE</span>');
+    if (d.isTight)  tags.push('<span class="tip-tag tag-tight">TIGHT</span>');
+    return (
+      `<div class="tip-title">${d.label} ${tags.join(' ')}</div>` +
+      `<div class="tip-sub">RS ${d.rs?.toFixed?.(1) ?? '—'}%</div>` +
+      `<div class="tip-grid">` +
+      `<span class="tip-k">Price</span><span class="tip-v">$${d.price ?? '—'}</span>` +
+      `<span class="tip-k">Float</span><span class="tip-v">${d.float ?? '—'}M</span>` +
+      `<span class="tip-k">EPS</span><span class="tip-v">${d.eps ?? '—'}</span>` +
+      `<span class="tip-k">Sales</span><span class="tip-v">${d.sales ?? '—'}</span>` +
+      `<span class="tip-k">Short</span><span class="tip-v">${d.short ?? '—'}%</span>` +
+      `</div>`
+    );
+  }
+
+  function syncTightPulses(cy, mode) {
+    const overlay = document.getElementById(VIZ_MODES[mode].overlayId);
+    if (!overlay) return;
+    overlay.innerHTML = '';
+    cy.nodes('.tight').forEach(node => {
+      const pos = node.renderedPosition();
+      const r = (node.renderedWidth() / 2) + 7;
+      const ring = document.createElement('div');
+      ring.className = 'tight-pulse-ring';
+      ring.style.left = `${pos.x - r}px`;
+      ring.style.top  = `${pos.y - r}px`;
+      ring.style.width  = `${r * 2}px`;
+      ring.style.height = `${r * 2}px`;
+      overlay.appendChild(ring);
+    });
+  }
+
+  function buildVizMetaHtml(snap, hot, mode) {
+    const date = `<span class="meta-date">${snap.report_date ?? '—'}</span>`;
+    const count = `<span class="meta-pill">${hot.length} ${VIZ_MODES[mode].hotLabel}</span>`;
+    if (mode === 'themes') {
+      return date +
+        `<span class="meta-pill">NCFD ${snap.ncfd != null ? snap.ncfd.toFixed(1) + '%' : '—'}</span>` +
+        `<span class="meta-pill">MMFI ${snap.mmfi != null ? snap.mmfi.toFixed(1) + '%' : '—'}</span>` +
+        count;
+    }
+    // Momentum snapshot doesn't carry NCFD/MMFI; just date + count
+    return date + count;
+  }
+
+  function filterAndRankThemes(snap, mode) {
+    const HOT_RS = 70, HOT_BREADTH = 3;
+    let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_BREADTH);
+    if (mode === 'themes') {
+      hot = hot.filter(t => (t.avg_rs ?? 0) >= HOT_RS);
+    } else {
+      hot = hot.filter(t => computeAvgRs(t) >= HOT_RS);
+    }
+    return hot
+      .map(t => Object.assign({}, t, {
+        _strength: computeStrength(t, mode),
+        _avg_rs:   mode === 'themes' ? (t.avg_rs ?? 0) : computeAvgRs(t),
+      }))
+      .sort((a, b) => b._strength - a._strength)
+      .map((t, i) => Object.assign(t, { _rank: i + 1 }));
+  }
+
+  // Public entry — defers heavy work until the target tab is visible so that
+  // cose layout and fit() see real container dimensions.
+  function renderNetwork(snap, mode) {
+    const cfg = VIZ_MODES[mode];
+    const meta = document.getElementById(cfg.metaId);
+    if (meta && snap) {
+      const hot = filterAndRankThemes(snap, mode);
+      meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
+    }
+    installVizTabHandler(mode);
+    if (isVizVisible(mode)) {
+      actuallyRenderNetwork(snap, mode);
+    } else {
+      vizState[mode].pendingSnap = snap;
+    }
+  }
+
+  function renderThemeNetwork(snap)    { renderNetwork(snap, 'themes'); }
+  function renderMomentumNetwork(snap) { renderNetwork(snap, 'momentum'); }
+
+  function actuallyRenderNetwork(snap, mode) {
+    const cfg = VIZ_MODES[mode];
+    const state = vizState[mode];
+    const container = document.getElementById(cfg.containerId);
+    const meta = document.getElementById(cfg.metaId);
+    const tooltip = document.getElementById(cfg.tooltipId);
+    const overlay = document.getElementById(cfg.overlayId);
+    if (!container || !meta) return;
+    if (typeof cytoscape === 'undefined') {
+      container.innerHTML = '<div class="no-data">Cytoscape library failed to load.</div>';
+      return;
+    }
+    if (!snap) return;
+
+    // Clean up any previous render
+    if (state.cy) { try { state.cy.destroy(); } catch (e) {} state.cy = null; }
+    if (overlay) overlay.innerHTML = '';
+    if (tooltip) tooltip.style.display = 'none';
+
+    const hot = filterAndRankThemes(snap, mode);
+    meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
+
+    if (hot.length === 0) {
+      container.innerHTML = '<div class="no-data" style="margin:60px auto;text-align:center">No qualifying themes for this date.</div>';
+      return;
+    }
+    container.innerHTML = '';
+
+    // Index ticker → list of themes (bridge detection)
+    const tickerThemes = {};
+    for (const theme of hot) {
+      for (const tk of (theme.tickers || [])) {
+        (tickerThemes[tk.ticker] = tickerThemes[tk.ticker] || []).push(theme.name);
+      }
+    }
+    // Per-theme leader (highest RS within theme)
+    const leaderByTheme = {};
+    for (const theme of hot) {
+      const top = [...(theme.tickers || [])].sort((a, b) => (b.rs ?? 0) - (a.rs ?? 0))[0];
+      if (top) leaderByTheme[theme.name] = top.ticker;
+    }
+
+    const elements = [];
+    const seen = new Set();
+    for (const theme of hot) {
+      const themeId = `theme::${theme.name}`;
+      const action = actionabilityScore(theme, mode);
+      elements.push({
+        data: {
+          id: themeId, kind: 'theme',
+          label: theme.name,
+          strength: theme._strength,
+          avg_rs:   theme._avg_rs,
+          breadth: (theme.tickers || []).length,
+          rank: theme._rank,
+          action,
+          fill: themeFill(theme._strength, action),
+          ringWidth: 2 + Math.round(action * 4),
+        },
+      });
+      for (const tk of (theme.tickers || [])) {
+        if (!seen.has(tk.ticker)) {
+          seen.add(tk.ticker);
+          const isLeader = leaderByTheme[theme.name] === tk.ticker;
+          const isBridge = (tickerThemes[tk.ticker] || []).length >= 2;
+          const isTight  = tk.ticker_color === 'green';
+          const cls = [
+            isLeader ? 'leader' : '',
+            isBridge ? 'bridge' : '',
+            isTight  ? 'tight'  : '',
+          ].filter(Boolean).join(' ');
+          elements.push({
+            data: {
+              id: tk.ticker, kind: 'ticker',
+              label: tk.ticker,
+              rs: tk.rs ?? 0, price: tk.price, float: tk.float,
+              eps: tk.eps, sales: tk.sales, short: tk.short,
+              fill: rsFill(tk.rs ?? 0),
+              isLeader, isBridge, isTight,
+            },
+            classes: cls,
+          });
+        }
+        elements.push({
+          data: {
+            source: themeId, target: tk.ticker,
+            weight: tk.rs ?? 0,
+            isLeader: leaderByTheme[theme.name] === tk.ticker,
+          },
+        });
+      }
+    }
+
+    // Pre-position top-3 themes near canvas center
+    const seed = {};
+    if (hot[0]) seed[`theme::${hot[0].name}`] = { x: 0,    y: 0    };
+    if (hot[1]) seed[`theme::${hot[1].name}`] = { x: -260, y: -150 };
+    if (hot[2]) seed[`theme::${hot[2].name}`] = { x: 260,  y: -150 };
+    for (const el of elements) {
+      if (el.data && el.data.kind === 'theme' && seed[el.data.id]) {
+        el.position = seed[el.data.id];
+      }
+    }
+
+    state.cy = cytoscape({
+      container,
+      elements,
+      layout: {
+        name: 'cose',
+        animate: false,
+        randomize: false,
+        nodeRepulsion: function (n) { return n.data('kind') === 'theme' ? 22000 : 4500; },
+        idealEdgeLength: function () { return 130; },
+        gravity: 0.18,
+        numIter: 1500,
+        padding: 30,
+        fit: true,
+      },
+      style: [
+        { selector: 'node[kind = "theme"]', style: {
+            'background-color': 'data(fill)',
+            'label': 'data(label)',
+            'color': '#ffffff',
+            'font-size': 13,
+            'font-weight': 'bold',
+            'font-family': 'DM Sans, system-ui, sans-serif',
+            'width':  'mapData(strength, 30, 130, 32, 110)',
+            'height': 'mapData(strength, 30, 130, 32, 110)',
+            'border-width': 'data(ringWidth)',
+            'border-color': '#0c0f15',
+            'border-opacity': 0.95,
+            'text-valign': 'center', 'text-halign': 'center',
+            'text-outline-color': '#07090d', 'text-outline-width': 2,
+            'text-wrap': 'wrap', 'text-max-width': 110,
+        }},
+        { selector: 'node[kind = "theme"][rank = 1]', style: {
+            'border-color': '#fde68a',
+            'border-width': 6,
+            'shadow-blur': 30,
+            'shadow-color': '#fde68a',
+            'shadow-opacity': 0.55,
+        }},
+        { selector: 'node[kind = "ticker"]', style: {
+            'background-color': 'data(fill)',
+            'label': 'data(label)',
+            'color': '#c8d8ea',
+            'font-size': 10,
+            'font-family': 'IBM Plex Mono, monospace',
+            'width':  'mapData(rs, 0, 100, 14, 32)',
+            'height': 'mapData(rs, 0, 100, 14, 32)',
+            'text-valign': 'bottom',
+            'text-margin-y': 4,
+            'border-width': 0,
+        }},
+        { selector: 'node.leader', style: {
+            'font-size': 12,
+            'font-weight': 'bold',
+            'shadow-blur': 22,
+            'shadow-color': 'data(fill)',
+            'shadow-opacity': 0.9,
+            'shadow-offset-x': 0,
+            'shadow-offset-y': 0,
+        }},
+        { selector: 'node.bridge', style: {
+            'border-width': 2,
+            'border-color': '#ffffff',
+            'border-opacity': 0.85,
+        }},
+        { selector: 'node.leader.bridge', style: {
+            'border-width': 2,
+            'border-color': '#ffffff',
+        }},
+        { selector: 'node.active-ticker', style: {
+            'border-width': 4,
+            'border-color': '#ffd700',
+            'border-opacity': 1.0,
+            'shadow-blur': 28,
+            'shadow-color': '#ffd700',
+            'shadow-opacity': 0.95,
+            'shadow-offset-x': 0,
+            'shadow-offset-y': 0,
+            'z-index': 50,
+        }},
+        { selector: 'edge', style: {
+            'width': 'mapData(weight, 0, 100, 1, 4.5)',
+            'line-color': '#243044',
+            'opacity': 0.55,
+            'curve-style': 'bezier',
+        }},
+        { selector: 'edge[?isLeader]', style: {
+            'line-color': '#7292b0',
+            'opacity': 0.85,
+        }},
+      ],
+      wheelSensitivity: 0.25,
+      minZoom: 0.3,
+      maxZoom: 3.0,
+    });
+
+    // Tight-pulse rings — repositioned on pan/zoom/render
+    syncTightPulses(state.cy, mode);
+    state.cy.on('pan zoom resize', () => syncTightPulses(state.cy, mode));
+    state.cy.on('layoutstop', () => syncTightPulses(state.cy, mode));
+    state.cy.on('position', 'node', () => syncTightPulses(state.cy, mode));
+
+    // ResizeObserver — keeps the canvas filling the container when the user
+    // drags the resize-handle between left/right panels.
+    if (state.resizeObs) { try { state.resizeObs.disconnect(); } catch (e) {} }
+    if (typeof ResizeObserver !== 'undefined') {
+      let resizeTimer;
+      state.resizeObs = new ResizeObserver(() => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (!state.cy) return;
+          state.cy.resize();
+          syncTightPulses(state.cy, mode);
+        }, 80);
+      });
+      state.resizeObs.observe(container);
+    }
+
+    installVizTabHandler(mode);
+    if (container.offsetHeight > 0) {
+      setTimeout(() => {
+        state.cy.resize();
+        state.cy.fit(undefined, 40);
+        syncTightPulses(state.cy, mode);
+      }, 30);
+    }
+
+    // Hover tooltip
+    if (tooltip) {
+      state.cy.on('mouseover', 'node', (evt) => {
+        tooltip.innerHTML = buildVizTooltip(evt.target, mode);
+        tooltip.style.display = 'block';
+      });
+      state.cy.on('mousemove', 'node', (evt) => {
+        const pos = evt.target.renderedPosition();
+        tooltip.style.left = `${pos.x + 18}px`;
+        tooltip.style.top  = `${pos.y + 18}px`;
+      });
+      state.cy.on('mouseout', 'node', () => {
+        tooltip.style.display = 'none';
+      });
+    }
+
+    // Click ticker node → open TradingView chart in the right panel
+    state.cy.on('tap', 'node[kind = "ticker"]', (evt) => {
+      const ticker = evt.target.data('label');
+      if (!ticker) return;
+      // Highlight selected ticker
+      state.cy.nodes('node[kind = "ticker"]').removeClass('active-ticker');
+      evt.target.addClass('active-ticker');
+      const tabId = mode === 'themes' ? 'themeviz' : 'momentumviz';
+      if (typeof openChart === 'function') openChart(tabId, ticker, ticker);
     });
   }
 

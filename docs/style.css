@@ -1013,3 +1013,229 @@ tbody tr.nav-active {
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   THEME VIZ + MOMENTUM VIZ — Force-directed network tabs
+   ═══════════════════════════════════════════════════════ */
+
+/* 50/50 default split for viz tabs — equal weight to network and chart */
+.viz-left {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.viz-left .time-travel-bar {
+  flex: 0 0 auto;
+}
+
+.themeviz-card {
+  margin: 10px 0 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.themeviz-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0 14px;
+  font-family: var(--mono);
+}
+
+.themeviz-meta .meta-date {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.themeviz-meta .meta-pill {
+  background: var(--bg3);
+  color: var(--text);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+}
+
+.theme-network-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 360px;
+  display: flex;
+}
+
+.theme-network {
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  background: radial-gradient(ellipse at center, var(--bg2) 0%, var(--bg) 75%, var(--bg) 100%);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.themeviz-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes tight-pulse {
+  0%, 100% { opacity: 0.30; transform: scale(1.00); }
+  50%      { opacity: 0.85; transform: scale(1.18); }
+}
+
+.tight-pulse-ring {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.55);
+  animation: tight-pulse 1.6s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.themeviz-tooltip {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  background: rgba(7, 9, 13, 0.97);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  min-width: 180px;
+  max-width: 260px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+  line-height: 1.45;
+}
+
+.themeviz-tooltip .tip-title {
+  font-weight: 700;
+  color: #fff;
+  font-size: 13px;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+}
+
+.themeviz-tooltip .tip-sub {
+  color: var(--text2);
+  font-size: 10px;
+  margin-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 4px;
+}
+
+.themeviz-tooltip .tip-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+}
+
+.themeviz-tooltip .tip-k {
+  color: var(--text3);
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  align-self: center;
+}
+
+.themeviz-tooltip .tip-v {
+  color: var(--text);
+  text-align: right;
+}
+
+.themeviz-tooltip .tip-tag {
+  display: inline-block;
+  font-size: 8px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  font-weight: 700;
+}
+
+.themeviz-tooltip .tag-leader { background: rgba(0, 230, 118, 0.20); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.4); }
+.themeviz-tooltip .tag-bridge { background: rgba(255, 255, 255, 0.10); color: #fff;        border: 1px solid rgba(255, 255, 255, 0.4); }
+.themeviz-tooltip .tag-tight  { background: rgba(0, 200, 255, 0.16);  color: var(--accent); border: 1px solid rgba(0, 200, 255, 0.4); }
+
+.themeviz-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text2);
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  font-family: var(--mono);
+  align-items: center;
+}
+
+.themeviz-legend .lg-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.themeviz-legend .lg-sep {
+  color: var(--text3);
+  padding: 0 4px;
+}
+
+.lg-dot, .lg-ring, .lg-leader-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.lg-dot { border-radius: 50%; }
+
+/* Theme strength swatches */
+.lg-blazing { background: hsl(14, 90%, 55%); }
+.lg-strong  { background: hsl(35, 85%, 52%); }
+.lg-solid   { background: hsl(50, 65%, 48%); }
+.lg-faded   { background: hsl(215, 14%, 42%); }
+
+/* Ticker RS swatches */
+.lg-rs90 { background: var(--green); }
+.lg-rs80 { background: var(--accent); }
+.lg-rs50 { background: var(--amber); }
+.lg-rs0  { background: var(--red); }
+
+.lg-ring { border-radius: 50%; background: transparent; }
+.lg-tight  { border: 2px solid var(--green); box-shadow: 0 0 6px rgba(0, 230, 118, 0.7); }
+.lg-bridge { border: 2px solid #fff; }
+
+.lg-leader-dot {
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green), 0 0 4px var(--green);
+}
+
+/* Cytoscape canvas should fill its container */
+.theme-network > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+}

@@ -12,6 +12,10 @@
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
+  const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
+  const EP_AFTERNOON_HISTORY_URL = 'data/ep_scan_afternoon_history.json';
+  const EP_MORNING_URL = 'data/ep_scan_morning.json';
+  const EP_MORNING_HISTORY_URL = 'data/ep_scan_morning_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
@@ -48,6 +52,10 @@
   let industryData = [];
   let epAfternoonData = [];
   let epMorningData = [];
+  let epAfternoonHistory = [];
+  let epMorningHistory = [];
+  let epAfternoonEmptyMessage = 'No afternoon EP results.';
+  let epMorningEmptyMessage = 'No morning EP results.';
   let parabolicData = [];
   // Combined lookup for news by ticker
   let epAllTickers = {};
@@ -574,6 +582,7 @@
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let activeSessionDate = null;
+  let hasUserSelectedSession = false;
 
   function loadThemeData() {
     // Load current themes and history in parallel
@@ -592,7 +601,9 @@
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
 
         // Default to most recent
-        activeSessionDate = themesHistory.length > 0 ? themesHistory[0].report_date : null;
+        if (!hasUserSelectedSession) {
+          activeSessionDate = themesHistory.length > 0 ? themesHistory[0].report_date : null;
+        }
         renderAllTimeTravelBars();
         renderThemes(current);
         renderThemeNetwork(current);
@@ -668,6 +679,8 @@
     themesHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
     parabolicHistory.forEach(h => dates.add(h.report_date));
+    epAfternoonHistory.forEach(h => dates.add(h.report_date));
+    epMorningHistory.forEach(h => dates.add(h.report_date));
     industryHistory.forEach(h => dates.add(h.report_date));
     etfHistory.forEach(h => dates.add(h.report_date));
     return [...dates].sort().reverse();
@@ -689,6 +702,15 @@
     // Parabolic
     const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
     if (parabolicSnap) { parabolicData = parabolicSnap.tickers || []; sortAndRenderParabolic(); }
+    // EP Scanner
+    applyEPAfternoonSnapshot(
+      epAfternoonHistory.find(h => h.report_date === date),
+      date
+    );
+    applyEPMorningSnapshot(
+      epMorningHistory.find(h => h.report_date === date),
+      date
+    );
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
     if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
@@ -703,6 +725,7 @@
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('ep-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('parabolic-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
@@ -731,8 +754,9 @@
     container.querySelectorAll('.tt-date-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const date = btn.dataset.date;
-        if (date === activeSessionDate) return;
+        if (date === activeSessionDate && hasUserSelectedSession) return;
         activeSessionDate = date;
+        hasUserSelectedSession = true;
         // Update ALL time-travel bars to stay in sync
         document.querySelectorAll('.time-travel-dates .tt-date-btn').forEach(b => {
           b.classList.toggle('active', b.dataset.date === date);
@@ -1642,44 +1666,123 @@
   }
 
   // ── EP SCANNER DATA (Afternoon + Morning) ──────────────────
-  const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
-  const EP_MORNING_URL = 'data/ep_scan_morning.json';
+
+  function normalizeEPSnapshot(snapshot) {
+    if (!snapshot) return null;
+    const reportDate = snapshot.report_date || snapshot.scan_date;
+    if (!reportDate) return null;
+    return { ...snapshot, report_date: reportDate };
+  }
+
+  function buildEPHistory(current, history) {
+    const byDate = {};
+    (history || []).forEach(item => {
+      const snap = normalizeEPSnapshot(item);
+      if (snap) byDate[snap.report_date] = snap;
+    });
+
+    const currentSnap = normalizeEPSnapshot(current);
+    if (currentSnap) {
+      byDate[currentSnap.report_date] = currentSnap;
+    }
+
+    return Object.values(byDate)
+      .sort((a, b) => b.report_date.localeCompare(a.report_date))
+      .slice(0, 5);
+  }
+
+  function refreshEPAllTickers() {
+    epAllTickers = {};
+    epAfternoonData.forEach(t => { epAllTickers[t.ticker] = t; });
+    epMorningData.forEach(t => { epAllTickers[t.ticker] = t; });
+  }
+
+  function formatEPSnapshotInfo(snapshot, selectedDate) {
+    if (!snapshot) {
+      return selectedDate ? `Session: ${selectedDate} | no scan` : '—';
+    }
+
+    const dateLabel = snapshot.scan_date || snapshot.report_date || selectedDate || '';
+    if (!snapshot.timestamp) {
+      return dateLabel ? `Session: ${dateLabel}` : '—';
+    }
+
+    const dt = new Date(snapshot.timestamp);
+    const updated = dt.toLocaleDateString() + ' ' +
+      dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return dateLabel ? `Session: ${dateLabel} | Updated: ${updated}` : `Updated: ${updated}`;
+  }
+
+  function applyEPAfternoonSnapshot(snapshot, selectedDate = null) {
+    const snap = normalizeEPSnapshot(snapshot);
+    epAfternoonData = snap ? (snap.tickers || []) : [];
+    epAfternoonEmptyMessage = selectedDate && !snap
+      ? 'No afternoon EP scan for this date.'
+      : 'No afternoon EP results.';
+    sortAndRenderEPAfternoon();
+    refreshEPAllTickers();
+
+    const infoEl = document.getElementById('ep-afternoon-refresh-info');
+    if (infoEl) infoEl.textContent = formatEPSnapshotInfo(snap, selectedDate);
+  }
+
+  function applyEPMorningSnapshot(snapshot, selectedDate = null) {
+    const snap = normalizeEPSnapshot(snapshot);
+    epMorningData = snap ? (snap.tickers || []) : [];
+    epMorningEmptyMessage = selectedDate && !snap
+      ? 'No morning EP scan for this date.'
+      : 'No morning EP results.';
+    sortAndRenderEPMorning();
+    refreshEPAllTickers();
+
+    const infoEl = document.getElementById('ep-morning-refresh-info');
+    if (infoEl) infoEl.textContent = formatEPSnapshotInfo(snap, selectedDate);
+  }
+
+  function preferredEPSnapshot(current, history) {
+    if (hasUserSelectedSession && activeSessionDate) {
+      return history.find(h => h.report_date === activeSessionDate) || null;
+    }
+    return normalizeEPSnapshot(current) || history[0] || null;
+  }
 
   function loadEPAfternoonData() {
-    fetch(withCacheBust(EP_AFTERNOON_URL))
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(data => {
-        epAfternoonData = data.tickers || [];
-        epAfternoonData.forEach(t => { epAllTickers[t.ticker] = t; });
-        sortAndRenderEPAfternoon();
-        const infoEl = document.getElementById('ep-afternoon-refresh-info');
-        if (infoEl && data.timestamp) {
-          const dt = new Date(data.timestamp);
-          infoEl.textContent = 'Updated: ' + dt.toLocaleDateString() + ' ' +
-            dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
+    Promise.all([
+      fetch(withCacheBust(EP_AFTERNOON_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+      fetch(withCacheBust(EP_AFTERNOON_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        epAfternoonHistory = buildEPHistory(current, history);
+        renderAllTimeTravelBars();
+        applyEPAfternoonSnapshot(
+          preferredEPSnapshot(current, epAfternoonHistory),
+          hasUserSelectedSession ? activeSessionDate : null
+        );
       })
       .catch(() => {
+        epAfternoonHistory = [];
+        renderAllTimeTravelBars();
         document.getElementById('ep-afternoon-body').innerHTML =
           '<tr><td colspan="8" class="no-data">Afternoon EP data not available.</td></tr>';
       });
   }
 
   function loadEPMorningData() {
-    fetch(withCacheBust(EP_MORNING_URL))
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(data => {
-        epMorningData = data.tickers || [];
-        epMorningData.forEach(t => { epAllTickers[t.ticker] = t; });
-        sortAndRenderEPMorning();
-        const infoEl = document.getElementById('ep-morning-refresh-info');
-        if (infoEl && data.timestamp) {
-          const dt = new Date(data.timestamp);
-          infoEl.textContent = 'Updated: ' + dt.toLocaleDateString() + ' ' +
-            dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
+    Promise.all([
+      fetch(withCacheBust(EP_MORNING_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+      fetch(withCacheBust(EP_MORNING_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        epMorningHistory = buildEPHistory(current, history);
+        renderAllTimeTravelBars();
+        applyEPMorningSnapshot(
+          preferredEPSnapshot(current, epMorningHistory),
+          hasUserSelectedSession ? activeSessionDate : null
+        );
       })
       .catch(() => {
+        epMorningHistory = [];
+        renderAllTimeTravelBars();
         document.getElementById('ep-morning-body').innerHTML =
           '<tr><td colspan="8" class="no-data">Morning EP data not available.</td></tr>';
       });
@@ -1708,7 +1811,7 @@
   function renderEPAfternoonTable() {
     const tbody = document.getElementById('ep-afternoon-body');
     if (!epAfternoonData.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="no-data">No afternoon EP results.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="8" class="no-data">${escHtml(epAfternoonEmptyMessage)}</td></tr>`;
       return;
     }
     let html = '';
@@ -1721,7 +1824,7 @@
   function renderEPMorningTable() {
     const tbody = document.getElementById('ep-morning-body');
     if (!epMorningData.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="no-data">No morning EP results.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="8" class="no-data">${escHtml(epMorningEmptyMessage)}</td></tr>`;
       return;
     }
     let html = '';

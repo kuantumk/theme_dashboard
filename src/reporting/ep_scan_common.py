@@ -468,6 +468,59 @@ def send_discord_notification(
 
 # ── JSON export helper ───────────────────────────────────────────────────────
 
+SCAN_HISTORY_MAX = 5
+
+
+def _scan_history_path(output_filename: str) -> Path:
+    """Return docs/data/<scan_name>_history.json for a scan output filename."""
+    output_path = Path(output_filename)
+    return DOCS_DATA_DIR / f"{output_path.stem}_history.json"
+
+
+def _normalize_scan_history_entry(entry: Dict) -> Optional[Dict]:
+    """Normalize scan history entries to the dashboard's report_date key."""
+    report_date = entry.get('report_date') or entry.get('scan_date')
+    if not report_date:
+        return None
+    normalized = dict(entry)
+    normalized['report_date'] = report_date
+    return normalized
+
+
+def update_scan_history(output: Dict, output_filename: str) -> Path:
+    """Append an EP scan snapshot to its last-five-session history file."""
+    history_path = _scan_history_path(output_filename)
+    history: List[Dict] = []
+
+    if history_path.exists():
+        try:
+            with open(history_path, 'r', encoding='utf-8') as f:
+                loaded = json.load(f)
+            for item in loaded:
+                normalized = _normalize_scan_history_entry(item)
+                if normalized is not None:
+                    history.append(normalized)
+        except (json.JSONDecodeError, OSError):
+            history = []
+
+    current = _normalize_scan_history_entry(output)
+    if current is None:
+        return history_path
+
+    report_date = current['report_date']
+    history = [h for h in history if h.get('report_date') != report_date]
+    history.append(current)
+    history.sort(key=lambda h: h.get('report_date', ''), reverse=True)
+    history = history[:SCAN_HISTORY_MAX]
+
+    with open(history_path, 'w', encoding='utf-8') as f:
+        json.dump(history, f, indent=2)
+
+    dates = [h['report_date'] for h in history]
+    print(f"-> Updated EP history {history_path} ({', '.join(dates)})")
+    return history_path
+
+
 def export_scan_results(
     results: List[Dict],
     scan_type: str,
@@ -475,10 +528,13 @@ def export_scan_results(
 ) -> Path:
     """Write scan results to docs/data/<output_filename>."""
     DOCS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(ET)
+    scan_date = now.strftime('%Y-%m-%d')
 
     output = {
-        'timestamp': datetime.now(ET).isoformat(),
-        'scan_date': datetime.now(ET).strftime('%Y-%m-%d'),
+        'timestamp': now.isoformat(),
+        'report_date': scan_date,
+        'scan_date': scan_date,
         'scan_type': scan_type,
         'count': len(results),
         'tickers': results,
@@ -489,4 +545,5 @@ def export_scan_results(
         json.dump(output, f, indent=2)
 
     print(f"\n-> Exported {len(results)} tickers to {out_path}")
+    update_scan_history(output, output_filename)
     return out_path

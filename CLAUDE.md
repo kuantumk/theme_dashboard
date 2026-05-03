@@ -42,10 +42,10 @@ cd tests && python backtest_theme_scoring.py
 `run_daily_workflow.py` orchestrates the pipeline by spawning each step as a subprocess:
 
 1. **Download** ~8000 stocks × 500 days OHLCV via yfinance → `data/price_daily.pkl`
-2. **Indicators** 25 pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
+2. **Indicators** pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
 3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`
 4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/`
-5. **Screeners** 6 pattern filters run in parallel → per-screener CSVs
+5. **Screeners** 7 pattern filters run in parallel → per-screener CSVs
 6. **Consolidate** union all screener tickers → `screening_output/consolidated/`
 7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
 8. **AI Tagging** Gemini 3 Flash classifies new tickers into themes → `data/ticker_themes.json`
@@ -68,7 +68,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | File | Format | Content |
 |------|--------|---------|
 | `data/price_daily.pkl` | Pickle (dict of DataFrames) | Raw OHLCV history |
-| `data/price_daily_ta.pkl` | Pickle | Price data + 25 technical indicators |
+| `data/price_daily_ta.pkl` | Pickle | Price data + technical indicators |
 | `data/fundamentals.db` | SQLite | Finviz fundamentals with 7-day TTL |
 | `data/ticker_themes.json` | JSON | `{ticker: [theme1, theme2]}` mapping |
 | `config/workflow_config.yaml` | YAML | All tunable parameters |
@@ -81,12 +81,12 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **`src/stock_utils.py`** — shared pickle/ticker/file helpers used across modules
 - **`src/data_collection/`** — external data: yfinance prices, Finviz fundamentals, barchart breadth
 - **`src/indicators/`** — technical indicator calculation and RS_STS% (PERCENTRANK vs SPY)
-- **`src/screening/`** — master table generation + 5 screeners in `screeners/` subdir
+- **`src/screening/`** — master table generation + screeners in `screeners/` subdir
 - **`src/themes/`** — Gemini AI tagging, theme strength scoring, Google Sheets import
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
 
-### Six Screeners (`src/screening/screeners/`)
+### Seven Screeners (`src/screening/screeners/`)
 
 | Screener | Pattern | ADR | Key Filter |
 |----------|---------|-----|------------|
@@ -96,6 +96,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `htf` | High Tight Flag | >4% | 150-day 2x range, tight close |
 | `darvas` | Extended recovery | ≥4% | 252-day 2x range, near high |
 | `momentum_136` | 1/3/6-mo leaders | ≥4% | 25%+/50%+/100%+ over 1/3/6mo, $15M dollar vol, 750k shares |
+| `parabolic` | Parabolic short watch | ≥4% | $10M dollar vol, price ≥ $5, ATR multiple from 50SMA ≥ 10, no-overlap up candle, volume expansion |
 
 ### Theme Scoring Formula
 

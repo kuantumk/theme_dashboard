@@ -220,6 +220,8 @@ body::before {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   padding: 0 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .tab-btn {

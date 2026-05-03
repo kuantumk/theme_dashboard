@@ -119,9 +119,12 @@ def consolidate_screener_results(date_str: str):
         logger.warning(f"No screener files found for {txt_date}")
         return set()
 
-    # Combine all tickers
+    # Combine all tickers (skip 0-match screeners that produced empty files)
     all_tickers = set()
     for f in screener_files:
+        if f.stat().st_size == 0:
+            logger.info(f"  {f.name}: 0 matches (empty file, skipping)")
+            continue
         df = pd.read_csv(f, header=None)
         all_tickers.update(df[0].tolist())
 

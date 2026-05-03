@@ -6,6 +6,7 @@ JSON files for the web dashboard in docs/data/.
 """
 
 import json
+import math
 import re
 import csv
 import io
@@ -934,6 +935,225 @@ def export_momentum_136(day_flags):
     )
 
 
+def _numeric_series(df, column):
+    """Return a numeric Series for a DataFrame column, or NaN values if absent."""
+    import pandas as pd
+
+    if column not in df.columns:
+        return pd.Series(float('nan'), index=df.index)
+    return pd.to_numeric(df[column], errors='coerce')
+
+
+def _round_or_none(value, digits=1):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return round(number, digits)
+
+
+def _int_or_none(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return int(number)
+
+
+def _load_fundamentals_for_tickers(tickers):
+    """Load float, institutional transactions, and short interest for tickers."""
+    import sqlite3
+
+    unique = sorted({str(t).upper() for t in tickers if str(t).strip()})
+    if not unique or not FUNDAMENTALS_DB.exists():
+        return {}
+
+    try:
+        conn = sqlite3.connect(FUNDAMENTALS_DB)
+        placeholders = ','.join(['?'] * len(unique))
+        rows = conn.execute(f'''
+            SELECT ticker, shares_float, short_interest, inst_transactions
+            FROM fundamentals
+            WHERE ticker IN ({placeholders})
+        ''', unique).fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"   Warning: fundamentals lookup failed for parabolic export: {e}")
+        return {}
+
+    return {
+        str(row[0]).upper(): {
+            'shares_float': row[1],
+            'short_interest': row[2],
+            'inst_transactions': row[3],
+        }
+        for row in rows
+    }
+
+
+def add_parabolic_derived_columns(master_df, previous_df=None):
+    """Add atr_multi_50sma and previous-session fields needed by parabolic."""
+    df = master_df.copy()
+    df['ticker'] = df['ticker'].astype(str).str.upper()
+
+    if 'atr_multi_50sma' in df.columns:
+        df['atr_multi_50sma'] = _numeric_series(df, 'atr_multi_50sma')
+    else:
+        close = _numeric_series(df, 'close')
+        sma50 = _numeric_series(df, 'sma50')
+        if 'atr_pct' in df.columns:
+            atr_pct = _numeric_series(df, 'atr_pct')
+        else:
+            atr_pct = _numeric_series(df, 'atr14') / close
+        df['atr_multi_50sma'] = (close / sma50 - 1) / atr_pct
+
+    previous_columns = {
+        'previous_session_high': 'high',
+        'previous_session_low': 'low',
+        'previous_session_volume': 'volume',
+    }
+
+    missing_previous = [
+        col for col in previous_columns
+        if col not in df.columns
+    ]
+    if missing_previous and previous_df is not None and not previous_df.empty:
+        prev = previous_df.copy()
+        prev['ticker'] = prev['ticker'].astype(str).str.upper()
+        prev = prev.drop_duplicates(subset='ticker').set_index('ticker')
+        for out_col, source_col in previous_columns.items():
+            if out_col in df.columns:
+                df[out_col] = _numeric_series(df, out_col)
+            elif source_col in prev.columns:
+                df[out_col] = df['ticker'].map(prev[source_col])
+                df[out_col] = _numeric_series(df, out_col)
+    else:
+        for out_col in previous_columns:
+            df[out_col] = _numeric_series(df, out_col)
+
+    return df
+
+
+def filter_parabolic_candidates(master_df, previous_df=None):
+    """Return parabolic candidates sorted by atr_multi_50sma descending."""
+    df = add_parabolic_derived_columns(master_df, previous_df)
+
+    avg_dollar_vol = _numeric_series(df, 'avg_dollar_vol')
+    adr_pct = _numeric_series(df, 'adr_pct')
+    close = _numeric_series(df, 'close')
+    high = _numeric_series(df, 'high')
+    low = _numeric_series(df, 'low')
+    volume = _numeric_series(df, 'volume')
+    atr_multi = _numeric_series(df, 'atr_multi_50sma')
+    previous_high = _numeric_series(df, 'previous_session_high')
+    previous_volume = _numeric_series(df, 'previous_session_volume')
+
+    mask = (
+        (avg_dollar_vol >= 10.0e6) &
+        (adr_pct >= 0.04) &
+        (close >= 5.0) &
+        (atr_multi >= 10) &
+        (low >= previous_high) &
+        (high > low) &
+        (volume > previous_volume)
+    )
+
+    return (
+        df[mask]
+        .copy()
+        .sort_values('atr_multi_50sma', ascending=False, na_position='last')
+    )
+
+
+def _parabolic_item_from_row(row, fundamentals):
+    ticker = str(row.get('ticker', '')).upper()
+    f = fundamentals.get(ticker, {})
+    short_val = f.get('short_interest')
+
+    return {
+        'ticker': ticker,
+        'price': _round_or_none(row.get('close'), 2),
+        'float': _fmt_float_m(f.get('shares_float')),
+        'inst': _fmt_inst(f.get('inst_transactions')),
+        'short': _round_or_none(short_val, 1),
+        'atr_multi_50sma': _round_or_none(row.get('atr_multi_50sma'), 1),
+        'avg_dollar_vol': _round_or_none(row.get('avg_dollar_vol'), 0),
+        'adr_pct': _round_or_none(row.get('adr_pct'), 4),
+        'current_session_low': _round_or_none(row.get('low'), 2),
+        'current_session_high': _round_or_none(row.get('high'), 2),
+        'previous_session_high': _round_or_none(row.get('previous_session_high'), 2),
+        'current_session_volume': _int_or_none(row.get('volume')),
+        'previous_session_volume': _int_or_none(row.get('previous_session_volume')),
+    }
+
+
+def _parabolic_snapshot(report_date, candidates, fundamentals):
+    tickers = [
+        _parabolic_item_from_row(row, fundamentals)
+        for _, row in candidates.iterrows()
+    ]
+    return {
+        'report_date': report_date,
+        'count': len(tickers),
+        'tickers': tickers,
+    }
+
+
+def export_parabolic():
+    """Export parabolic scanner data and a last-5-session history."""
+    import pandas as pd
+
+    master_dir = SCREENING_OUTPUT_DIR / 'master'
+    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    if not master_files:
+        print("   No master CSVs found, skipping parabolic export")
+        return None
+
+    candidate_sets = []
+    all_tickers = set()
+    current_files = master_files[:THEMES_HISTORY_MAX]
+
+    for idx, master_file in enumerate(current_files):
+        previous_file = master_files[idx + 1] if idx + 1 < len(master_files) else None
+        master_df = pd.read_csv(master_file)
+        previous_df = pd.read_csv(previous_file) if previous_file else None
+        report_date = (
+            str(master_df['date'].iloc[0])
+            if 'date' in master_df.columns and not master_df.empty
+            else master_file.stem.replace('master_', '')
+        )
+
+        candidates = filter_parabolic_candidates(master_df, previous_df)
+        all_tickers.update(candidates['ticker'].astype(str).str.upper().tolist())
+        candidate_sets.append((report_date, candidates))
+
+    fundamentals = _load_fundamentals_for_tickers(all_tickers)
+
+    history = []
+    for report_date, candidates in candidate_sets:
+        snapshot = _parabolic_snapshot(report_date, candidates, fundamentals)
+        history.append(snapshot)
+
+    current = history[0]
+
+    out = OUTPUT_DIR / "parabolic.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(current, fh, indent=2)
+    print(f"   -> {out} ({current['count']} tickers)")
+
+    history_out = OUTPUT_DIR / "parabolic_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(history, fh, indent=2)
+    dates = [h['report_date'] for h in history]
+    print(f"   -> {history_out} (history: {', '.join(dates)})")
+
+    return current
+
+
 def export_all():
     """Main export function."""
     print("=" * 60)
@@ -942,6 +1162,7 @@ def export_all():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     day_flags = None  # Lazy-loaded day pattern flags
+    parabolic_data = None
 
     # 1. Parse latest report
     report_file = find_latest_report()
@@ -975,6 +1196,10 @@ def export_all():
     if day_flags is None:
         day_flags = load_ticker_color_flags()
     export_momentum_136(day_flags)
+
+    # 1c. Export Parabolic screener data (independent of daily report)
+    print("\n1c. Exporting parabolic data")
+    parabolic_data = export_parabolic()
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")
@@ -1052,6 +1277,7 @@ def export_all():
         'export_timestamp': datetime.now().isoformat(),
         'report_date': theme_data.get('report_date') if theme_data else None,
         'theme_count': len(theme_data.get('themes', [])) if theme_data else 0,
+        'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
         'etf_count': len(etf_data) if etf_data else 0,
         'industry_etf_count': len(industry_data) if industry_data else 0,
     }

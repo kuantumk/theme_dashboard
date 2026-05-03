@@ -152,7 +152,7 @@ def run_daily_workflow():
         # Step 2: Calculate technical indicators
         run_script(
             'src/indicators/create_technical_indicators.py',
-            description="Calculate technical indicators (OPTIMIZED: 25 indicators)"
+            description="Calculate technical indicators"
         )
 
         # Step 3: Scrape market breadth

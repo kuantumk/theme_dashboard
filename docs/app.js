@@ -10,6 +10,8 @@
   const THEME_HISTORY_URL = 'data/themes_history.json';
   const MOMENTUM_DATA_URL = 'data/momentum_136.json';
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
+  const PARABOLIC_DATA_URL = 'data/parabolic.json';
+  const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
@@ -32,7 +34,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, industry: null, etf: null, ep: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, industry: null, etf: null, ep: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -40,11 +42,13 @@
     industry: { column: 'rs_sts', dir: 'desc' },
     ep_afternoon: { column: 'float', dir: 'asc' },
     ep_morning: { column: 'float', dir: 'asc' },
+    parabolic: { column: 'atr_multi_50sma', dir: 'desc' },
   };
   let etfData = [];
   let industryData = [];
   let epAfternoonData = [];
   let epMorningData = [];
+  let parabolicData = [];
   // Combined lookup for news by ticker
   let epAllTickers = {};
 
@@ -68,6 +72,7 @@
     loadMomentumData();
     loadIndustryETFData();
     loadETFData();
+    loadParabolicData();
     loadMacroEvents();
     loadEPAfternoonData();
     loadEPMorningData();
@@ -191,6 +196,7 @@
       else if (tabContent.id === 'content-industry') tabId = 'industry';
       else if (tabContent.id === 'content-etf') tabId = 'etf';
       else if (tabContent.id === 'content-ep') tabId = 'ep';
+      else if (tabContent.id === 'content-parabolic') tabId = 'parabolic';
       else return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
@@ -278,7 +284,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, industry: -1, etf: -1, ep: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -564,6 +570,7 @@
   // ── THEME DATA + TIME TRAVEL ──────────────────────────
   let themesHistory = [];    // Array of theme snapshots, newest first
   let momentumHistory = [];  // Array of momentum snapshots, newest first
+  let parabolicHistory = []; // Array of parabolic snapshots, newest first
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let activeSessionDate = null;
@@ -625,11 +632,42 @@
       });
   }
 
+  function loadParabolicData() {
+    Promise.all([
+      fetch(withCacheBust(PARABOLIC_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(withCacheBust(PARABOLIC_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        parabolicHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        if (!activeSessionDate && parabolicHistory.length > 0) {
+          activeSessionDate = parabolicHistory[0].report_date;
+        }
+        const activeSnap = activeSessionDate
+          ? parabolicHistory.find(h => h.report_date === activeSessionDate)
+          : null;
+        parabolicData = (activeSnap || current || {}).tickers || [];
+        renderAllTimeTravelBars();
+        sortAndRenderParabolic();
+      })
+      .catch(err => {
+        console.warn('Parabolic data not available:', err);
+        document.getElementById('parabolic-body').innerHTML =
+          '<tr><td colspan="5" class="no-data">Parabolic data not available.</td></tr>';
+      });
+  }
+
   /** Collect all available session dates and render all time-travel bars. */
   function getSessionDates() {
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
+    parabolicHistory.forEach(h => dates.add(h.report_date));
     industryHistory.forEach(h => dates.add(h.report_date));
     etfHistory.forEach(h => dates.add(h.report_date));
     return [...dates].sort().reverse();
@@ -648,6 +686,9 @@
       renderMomentum(momSnap);
       renderMomentumNetwork(momSnap);
     }
+    // Parabolic
+    const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
+    if (parabolicSnap) { parabolicData = parabolicSnap.tickers || []; sortAndRenderParabolic(); }
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
     if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
@@ -662,6 +703,7 @@
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('parabolic-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
   }
@@ -1302,6 +1344,59 @@
     container.innerHTML = html;
   }
 
+  // ── PARABOLIC DATA ────────────────────────────────────
+  function sortAndRenderParabolic() {
+    const s = sortState.parabolic;
+    parabolicData.sort((a, b) => {
+      const av = parseFloat(a[s.column]);
+      const bv = parseFloat(b[s.column]);
+      const aVal = Number.isNaN(av) ? (s.dir === 'asc' ? Infinity : -Infinity) : av;
+      const bVal = Number.isNaN(bv) ? (s.dir === 'asc' ? Infinity : -Infinity) : bv;
+      return s.dir === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    renderParabolicTable();
+  }
+
+  function renderParabolicTable() {
+    const tbody = document.getElementById('parabolic-body');
+    const countEl = document.getElementById('parabolic-count');
+    if (!tbody) return;
+
+    if (countEl) {
+      countEl.textContent = `${parabolicData.length} ticker${parabolicData.length === 1 ? '' : 's'}`;
+    }
+
+    if (!parabolicData.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="no-data">No parabolic results for this date.</td></tr>';
+      return;
+    }
+
+    let html = '';
+    parabolicData.forEach(row => {
+      const instVal = parseFloat(String(row.inst).replace(/[+%]/g, ''));
+      const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+      const shortVal = parseFloat(row.short);
+      const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+      const atrVal = parseFloat(row.atr_multi_50sma);
+      const atrClass = isNaN(atrVal) ? 'neu' : atrVal >= 15 ? 'dn' : atrVal >= 12 ? 'short-blue' : 'neu';
+      const atrStr = isNaN(atrVal) ? '—' : atrVal.toFixed(1) + 'x';
+
+      html += `
+        <tr>
+          <td class="l">
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
+          </td>
+          <td>${row.float ?? '—'}</td>
+          <td class="${instClass}">${row.inst ?? '—'}</td>
+          <td class="${shortClass}">${row.short ?? '—'}</td>
+          <td class="${atrClass}"><strong>${atrStr}</strong></td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
   // ── INDUSTRY ETF DATA ─────────────────────────────────
   function loadIndustryETFData() {
     Promise.all([
@@ -1540,6 +1635,7 @@
         if (tab === 'industry') sortAndRenderIndustry();
         else if (tab === 'ep_afternoon') sortAndRenderEPAfternoon();
         else if (tab === 'ep_morning') sortAndRenderEPMorning();
+        else if (tab === 'parabolic') sortAndRenderParabolic();
         else sortAndRenderETF();
       });
     });

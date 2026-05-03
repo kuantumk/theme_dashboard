@@ -1,7 +1,7 @@
 """
 Optimized technical indicators calculation.
 
-Only calculates the 28 indicators actually used by screeners and master table.
+Only calculates the indicators actually used by screeners and master table.
 Uses pandas only - NO TA-Lib required for easier installation!
 """
 
@@ -72,6 +72,15 @@ def calculate_technical_indicators():
             low_prev = (daily['low'] - daily['close'].shift(1)).abs()
             tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
             daily['atr14'] = tr.rolling(window=14, min_periods=1).mean()
+            daily['atr_pct'] = daily['atr14'] / daily['close']
+
+            # ATR multiple from the 50-day SMA, matching Project608 parash logic.
+            daily['atr_multi_50sma'] = (daily['close'] / daily['sma50'] - 1) / daily['atr_pct']
+
+            # Previous-session fields for gap/no-overlap screeners.
+            daily['previous_session_high'] = daily['high'].shift(1)
+            daily['previous_session_low'] = daily['low'].shift(1)
+            daily['previous_session_volume'] = daily['volume'].shift(1)
 
             # Inside Day: current bar's range is within previous bar's range
             daily['inside_day'] = (daily['high'] < daily['high'].shift(1)) & (daily['low'] > daily['low'].shift(1))

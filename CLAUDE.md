@@ -97,7 +97,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `darvas` | Extended recovery | ≥4% | 252-day 2x range, near high |
 | `momentum_136` | 1/3/6-mo leaders | ≥4% | 25%+/50%+/100%+ over 1/3/6mo, $15M dollar vol, 750k shares |
 | `parabolic` | Parabolic short watch | ≥4% | $40M dollar vol, price ≥ $5, ATR multiple from 50SMA ≥ 12, no-overlap up candle, volume expansion |
-| `vars` | Volatility-adjusted RS leaders | ≥3.3% | $40M dollar vol, 1M shares, price > $2, VARS > 2, VARS 20EMA > 2 |
+| `vars` | Volatility-adjusted RS leaders | ≥3.3% | $40M dollar vol, 1M shares, price > $2, VARS > 2, VARS 20EMA > 1 |
 
 ### VARS — Volatility-Adjusted Relative Strength
 

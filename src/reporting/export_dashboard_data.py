@@ -774,6 +774,207 @@ def update_themes_history(theme_data):
     )
 
 
+def _build_themes_snapshot(master_csv_file, union_file, day_flags):
+    """Build a themes snapshot for one historical day, bypassing the markdown round-trip.
+
+    This is the backfill counterpart to `parse_report` — instead of parsing
+    today's daily_report_*.md, we re-run `analyze_theme_strength` on a
+    historical master CSV and convert its theme_df + per-day union of
+    screened tickers into the same JSON structure the dashboard expects.
+
+    Used by `export_themes_history` so every workflow run produces a full
+    40-session themes_history.json (matching what momentum/vars/parabolic
+    already do via per-day CSVs). Returns None if the master CSV is empty
+    or there are no screened tickers for that day.
+
+    Notes:
+    - Regime is derived from master_df itself (config sets `regime.source:
+      master_table`), so historical breadth (NCFD/MMFI) isn't required.
+    - Ticker theme tags are point-in-time (today's `data/ticker_themes.json`
+      applied to past data) — same trade-off as the existing `momentum_136`
+      and `vars` backfills.
+    - NCFD/MMFI fields are left None on historical entries; the dashboard
+      shows "—" in the meta strip and the current themes.json (parsed from
+      today's report) overrides today's history entry on the JS side.
+    """
+    import pandas as pd
+    import sqlite3
+    from src.themes.analyze_theme_strength import analyze_theme_strength
+    from src.reporting.generate_daily_report import (
+        SPECIAL_THEME_NAMES,
+        DASHBOARD_THEME_LIMIT,
+        DASHBOARD_TICKERS_PER_THEME,
+    )
+
+    master_df = pd.read_csv(master_csv_file).fillna(0)
+    if master_df.empty:
+        return None
+
+    csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
+    if not csv_date:
+        return None
+
+    # Load screened tickers for this day from union file
+    screened_set = set()
+    if union_file and union_file.exists():
+        try:
+            with open(union_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    t = line.strip()
+                    if t:
+                        screened_set.add(t.upper())
+        except OSError:
+            pass
+
+    if not screened_set:
+        return None
+
+    theme_df = analyze_theme_strength(
+        master_df, market_breadth=None, screened_tickers=screened_set
+    )
+    if theme_df.empty:
+        return None
+
+    master_df['ticker'] = master_df['ticker'].astype(str).str.upper()
+
+    # Phase 1: collect the (theme, top_tickers) pairs we'll emit, plus the union
+    # of all displayed tickers — for a single fundamentals query.
+    theme_picks = []
+    all_display_tickers = set()
+    rank = 0
+    for _, theme_row in theme_df.iterrows():
+        if rank >= DASHBOARD_THEME_LIMIT:
+            break
+        theme_name = str(theme_row.get('theme', '')).strip()
+        if theme_name in SPECIAL_THEME_NAMES:
+            continue
+        active = {
+            str(t).upper() for t in theme_row.get('tickers', [])
+            if str(t).strip()
+        }.intersection(screened_set)
+        if not active:
+            continue
+        theme_master = master_df[master_df['ticker'].isin(active)].sort_values(
+            ['rs_sts_pct', 'adr_pct'], ascending=[False, False]
+        ).head(DASHBOARD_TICKERS_PER_THEME)
+        if theme_master.empty:
+            continue
+        rank += 1
+        theme_picks.append((rank, theme_row, theme_master))
+        all_display_tickers.update(theme_master['ticker'].tolist())
+
+    # Phase 2: one fundamentals lookup for everything
+    fundamentals = {}
+    if FUNDAMENTALS_DB.exists() and all_display_tickers:
+        try:
+            conn = sqlite3.connect(FUNDAMENTALS_DB)
+            placeholders = ','.join(['?'] * len(all_display_tickers))
+            rows = conn.execute(f'''
+                SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
+                       short_interest, inst_transactions
+                FROM fundamentals
+                WHERE ticker IN ({placeholders})
+            ''', list(all_display_tickers)).fetchall()
+            conn.close()
+            for r in rows:
+                fundamentals[r[0]] = {
+                    'shares_float': r[1],
+                    'eps_growth_yoy': r[2],
+                    'sales_growth_yoy': r[3],
+                    'short_interest': r[4],
+                    'inst_transactions': r[5],
+                }
+        except sqlite3.Error as e:
+            print(f"   Warning: fundamentals lookup failed for themes backfill: {e}")
+
+    # Phase 3: emit JSON
+    themes_out = []
+    for rank, theme_row, theme_master in theme_picks:
+        ticker_dicts = []
+        for _, m_row in theme_master.iterrows():
+            t = str(m_row['ticker']).upper()
+            f = fundamentals.get(t, {})
+            short_val = f.get('short_interest')
+            ticker_dicts.append({
+                'ticker': t,
+                'rs': round(float(m_row.get('rs_sts_pct', 0) or 0), 1),
+                'price': round(float(m_row.get('close', 0) or 0), 2),
+                'float': _fmt_float_m(f.get('shares_float')),
+                'eps': _fmt_growth(f.get('eps_growth_yoy')),
+                'sales': _fmt_growth(f.get('sales_growth_yoy')),
+                'inst': _fmt_inst(f.get('inst_transactions')),
+                'short': round(float(short_val), 1) if short_val is not None else None,
+            })
+        themes_out.append({
+            'rank': rank,
+            'name': str(theme_row.get('theme', '')).strip(),
+            'score': round(float(theme_row.get('strength_score', 0) or 0), 1),
+            'avg_rs': round(float(theme_row.get('avg_rs_sts', 0) or 0), 1),
+            'tickers': ticker_dicts,
+        })
+
+    if day_flags:
+        for th in themes_out:
+            enrich_with_ticker_color(th['tickers'], day_flags)
+
+    return {
+        'report_date': csv_date,
+        'ncfd': None,  # historical breadth not stored — dashboard shows "—"
+        'mmfi': None,
+        'themes': themes_out,
+    }
+
+
+def export_themes_history(day_flags, current_themes_data=None):
+    """Rewrite themes_history.json with up to N sessions backfilled from master CSVs.
+
+    Mirrors `export_momentum_136` / `export_vars` / `export_parabolic`: every
+    workflow run produces a fresh full-history file rather than appending one
+    entry. Today's parsed-from-report entry (with NCFD/MMFI) is preserved by
+    swapping it into the history list when the dates match.
+    """
+    master_dir = SCREENING_OUTPUT_DIR / 'master'
+    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    if not master_files:
+        print("   No master CSVs found, skipping themes history backfill")
+        return
+
+    consolidated = SCREENING_OUTPUT_DIR / 'consolidated'
+
+    history = []
+    for master_file in master_files[:THEMES_HISTORY_MAX]:
+        date_str = master_file.stem.replace('master_', '')  # YYYY-MM-DD
+        try:
+            yyyy, mm, dd = date_str.split('-')
+            txt_date = f'{mm}{dd}{yyyy}'  # MMDDYYYY (consolidated file format)
+        except ValueError:
+            continue
+        union_file = consolidated / f'_union_{txt_date}.txt'
+
+        # Reuse today's report-parsed snapshot when it covers the same date —
+        # this preserves NCFD/MMFI and any report-only fields for the latest
+        # entry while past entries come from the analytic backfill.
+        if (current_themes_data
+                and current_themes_data.get('report_date') == date_str):
+            history.append(current_themes_data)
+            continue
+
+        snap = _build_themes_snapshot(master_file, union_file, day_flags)
+        if snap is None:
+            continue
+        history.append(snap)
+
+    if not history:
+        print("   Themes backfill produced no entries")
+        return
+
+    history_out = OUTPUT_DIR / 'themes_history.json'
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(history, fh, indent=2)
+    dates = [h['report_date'] for h in history]
+    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
+
+
 def update_etf_history(report_date, etf_data, industry_data):
     """Append current ETF snapshots to their history files."""
     if etf_data:
@@ -1402,15 +1603,25 @@ def export_all():
             json.dump(theme_data, f, indent=2)
         print(f"   -> {theme_output} ({len(theme_data['themes'])} themes)")
 
-        # Update themes history (keep last 5 trading sessions)
+        # Update themes history (keep last N trading sessions); kept as a
+        # fallback for the case where master CSVs aren't available — the
+        # backfill below normally rewrites this file from scratch.
         update_themes_history(theme_data)
     else:
         print("\n1. No report found, skipping themes export")
 
-    # 1b. Export Momentum 1/3/6 screener (independent of daily report)
-    print("\n1b. Exporting momentum_136 data")
+    # 1a-bis. Backfill 40-session themes_history.json from master CSVs.
+    # Mirrors the momentum/vars/parabolic flow: every workflow run produces a
+    # complete dropdown history rather than letting it accumulate one entry
+    # per run. Today's report-parsed entry (if present) is preserved in the
+    # output so NCFD/MMFI display correctly.
     if day_flags is None:
         day_flags = load_ticker_color_flags()
+    print("\n1a-bis. Backfilling themes history from master CSVs")
+    export_themes_history(day_flags, current_themes_data=theme_data)
+
+    # 1b. Export Momentum 1/3/6 screener (independent of daily report)
+    print("\n1b. Exporting momentum_136 data")
     export_momentum_136(day_flags)
 
     # 1c. Export VARS screener (independent of daily report)

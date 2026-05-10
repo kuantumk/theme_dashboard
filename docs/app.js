@@ -59,6 +59,9 @@
   let epAfternoonEmptyMessage = 'No afternoon EP results.';
   let epMorningEmptyMessage = 'No morning EP results.';
   let parabolicData = [];
+  let parabolicEmptyMessage = 'No parabolic results for this date.';
+  let industryEmptyMessage = 'No industry ETF data available.';
+  let etfEmptyMessage = 'No ETF data available.';
   // Combined lookup for news by ticker
   let epAllTickers = {};
 
@@ -729,27 +732,32 @@
   }
 
   function onTimeTravelSelect(date) {
+    // Each tab's history accumulates independently (e.g. vars_history can lag
+    // themes_history if the screener was added recently). The shared session
+    // dropdown is the union of all dates, so a click can land on a date that
+    // exists in one tab's history but not another's. ALWAYS re-render every
+    // tab — render functions show a date-specific empty state when the snap
+    // is missing so we never leave stale content on screen.
+    //
     // Themes
     const themeSnap = themesHistory.find(h => h.report_date === date);
-    if (themeSnap) {
-      renderThemes(themeSnap);
-      renderThemeNetwork(themeSnap);
-    }
+    renderThemes(themeSnap, date);
+    renderThemeNetwork(themeSnap, date);
     // Momentum 1/3/6
     const momSnap = momentumHistory.find(h => h.report_date === date);
-    if (momSnap) {
-      renderMomentum(momSnap);
-      renderMomentumNetwork(momSnap);
-    }
+    renderMomentum(momSnap, date);
+    renderMomentumNetwork(momSnap, date);
     // VARS
     const varsSnap = varsHistory.find(h => h.report_date === date);
-    if (varsSnap) {
-      renderVARS(varsSnap);
-      renderVARSNetwork(varsSnap);
-    }
+    renderVARS(varsSnap, date);
+    renderVARSNetwork(varsSnap, date);
     // Parabolic
     const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
-    if (parabolicSnap) { parabolicData = parabolicSnap.tickers || []; sortAndRenderParabolic(); }
+    parabolicData = parabolicSnap ? (parabolicSnap.tickers || []) : [];
+    parabolicEmptyMessage = !parabolicSnap && date
+      ? `No parabolic results for ${date}.`
+      : 'No parabolic results for this date.';
+    sortAndRenderParabolic();
     // EP Scanner
     applyEPAfternoonSnapshot(
       epAfternoonHistory.find(h => h.report_date === date),
@@ -761,10 +769,18 @@
     );
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
-    if (indSnap) { industryData = indSnap.data; sortAndRenderIndustry(); }
+    industryData = indSnap ? indSnap.data : [];
+    industryEmptyMessage = !indSnap && date
+      ? `No industry ETF data for ${date}.`
+      : 'No industry ETF data available.';
+    sortAndRenderIndustry();
     // Leverage ETFs
     const etfSnap = etfHistory.find(h => h.report_date === date);
-    if (etfSnap) { etfData = etfSnap.data; sortAndRenderETF(); }
+    etfData = etfSnap ? etfSnap.data : [];
+    etfEmptyMessage = !etfSnap && date
+      ? `No ETF data for ${date}.`
+      : 'No ETF data available.';
+    sortAndRenderETF();
   }
 
   function renderAllTimeTravelBars() {
@@ -892,11 +908,11 @@
     },
   };
 
-  // Per-mode runtime state — cytoscape instance, tab handler flag, pending snap
+  // Per-mode runtime state — cytoscape instance, tab handler flag, pending render
   const vizState = {
-    themes:   { cy: null, pendingSnap: null, tabHandlerInstalled: false },
-    momentum: { cy: null, pendingSnap: null, tabHandlerInstalled: false },
-    vars:     { cy: null, pendingSnap: null, tabHandlerInstalled: false },
+    themes:   { cy: null, pending: null, tabHandlerInstalled: false },
+    momentum: { cy: null, pending: null, tabHandlerInstalled: false },
+    vars:     { cy: null, pending: null, tabHandlerInstalled: false },
   };
 
   function isVizVisible(mode) {
@@ -913,10 +929,10 @@
     tabBtn.addEventListener('click', () => {
       // Defer one tick so the tab content's display has switched on
       setTimeout(() => {
-        if (state.pendingSnap) {
-          const snap = state.pendingSnap;
-          state.pendingSnap = null;
-          actuallyRenderNetwork(snap, mode);
+        if (state.pending) {
+          const { snap, date } = state.pending;
+          state.pending = null;
+          actuallyRenderNetwork(snap, mode, date);
           return;
         }
         if (state.cy) {
@@ -1106,26 +1122,30 @@
 
   // Public entry — defers heavy work until the target tab is visible so that
   // cose layout and fit() see real container dimensions.
-  function renderNetwork(snap, mode) {
+  function renderNetwork(snap, mode, date) {
     const cfg = VIZ_MODES[mode];
     const meta = document.getElementById(cfg.metaId);
-    if (meta && snap) {
-      const hot = filterAndRankThemes(snap, mode);
-      meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
+    if (meta) {
+      if (snap) {
+        const hot = filterAndRankThemes(snap, mode);
+        meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
+      } else if (date) {
+        meta.innerHTML = `<span class="meta-date">${date}</span>`;
+      }
     }
     installVizTabHandler(mode);
     if (isVizVisible(mode)) {
-      actuallyRenderNetwork(snap, mode);
+      actuallyRenderNetwork(snap, mode, date);
     } else {
-      vizState[mode].pendingSnap = snap;
+      vizState[mode].pending = { snap, date };
     }
   }
 
-  function renderThemeNetwork(snap)    { renderNetwork(snap, 'themes'); }
-  function renderMomentumNetwork(snap) { renderNetwork(snap, 'momentum'); }
-  function renderVARSNetwork(snap)     { renderNetwork(snap, 'vars'); }
+  function renderThemeNetwork(snap, date)    { renderNetwork(snap, 'themes', date); }
+  function renderMomentumNetwork(snap, date) { renderNetwork(snap, 'momentum', date); }
+  function renderVARSNetwork(snap, date)     { renderNetwork(snap, 'vars', date); }
 
-  function actuallyRenderNetwork(snap, mode) {
+  function actuallyRenderNetwork(snap, mode, date) {
     const cfg = VIZ_MODES[mode];
     const state = vizState[mode];
     const container = document.getElementById(cfg.containerId);
@@ -1137,12 +1157,19 @@
       container.innerHTML = '<div class="no-data">Cytoscape library failed to load.</div>';
       return;
     }
-    if (!snap) return;
 
-    // Clean up any previous render
+    // Always tear down the previous render so a date-switch never leaves a
+    // stale graph on screen — even when the new date has no snapshot.
     if (state.cy) { try { state.cy.destroy(); } catch (e) {} state.cy = null; }
     if (overlay) overlay.innerHTML = '';
     if (tooltip) tooltip.style.display = 'none';
+
+    if (!snap) {
+      if (date) meta.innerHTML = `<span class="meta-date">${date}</span>`;
+      const dateLabel = date ? ` for ${date}` : ' for this session';
+      container.innerHTML = `<div class="no-data" style="margin:60px auto;text-align:center">No data${dateLabel}.</div>`;
+      return;
+    }
 
     const hot = filterAndRankThemes(snap, mode);
     meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
@@ -1386,11 +1413,13 @@
     });
   }
 
-  function renderThemes(data) {
+  function renderThemes(data, date) {
     const container = document.getElementById('themes-container');
+    if (!container) return;
 
-    if (!data.themes || data.themes.length === 0) {
-      container.innerHTML = '<div class="no-data">No themes found for this date.</div>';
+    if (!data || !data.themes || data.themes.length === 0) {
+      const msg = (date && !data) ? `No themes data for ${date}.` : 'No themes found for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
 
@@ -1451,12 +1480,13 @@
     container.innerHTML = html;
   }
 
-  function renderMomentum(data) {
+  function renderMomentum(data, date) {
     const container = document.getElementById('momentum-container');
     if (!container) return;
 
     if (!data || !data.themes || data.themes.length === 0) {
-      container.innerHTML = '<div class="no-data">No momentum stocks found for this date.</div>';
+      const msg = (date && !data) ? `No momentum data for ${date}.` : 'No momentum stocks found for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
 
@@ -1518,12 +1548,13 @@
     container.innerHTML = html;
   }
 
-  function renderVARS(data) {
+  function renderVARS(data, date) {
     const container = document.getElementById('vars-container');
     if (!container) return;
 
     if (!data || !data.themes || data.themes.length === 0) {
-      container.innerHTML = '<div class="no-data">No VARS leaders found for this date.</div>';
+      const msg = (date && !data) ? `No VARS data for ${date}.` : 'No VARS leaders found for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
 
@@ -1620,7 +1651,7 @@
     }
 
     if (!parabolicData.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="no-data">No parabolic results for this date.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="5" class="no-data">${parabolicEmptyMessage}</td></tr>`;
       return;
     }
 
@@ -1734,7 +1765,7 @@
   function renderIndustryTable() {
     const tbody = document.getElementById('industry-body');
     if (!industryData.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="no-data">No industry ETF data available.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="6" class="no-data">${industryEmptyMessage}</td></tr>`;
       return;
     }
 
@@ -1842,7 +1873,7 @@
   function renderETFTable() {
     const tbody = document.getElementById('etf-body');
     if (!etfData.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="no-data">No ETF data available.</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="6" class="no-data">${etfEmptyMessage}</td></tr>`;
       return;
     }
 

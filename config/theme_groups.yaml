@@ -4,18 +4,10 @@
 # not large consolidated sectors).
 
 theme_groups:
-  # ── AI GROUPS (consume — eliminates sub-theme competition) ────
-  "AI - Data Center Infrastructure":
-    mode: consume
-    members:
-      - "AI - Data Center & Cloud Services"
-      - "AI - Data Center & Cloud"
-      - "AI - Data Center Components"
-      - "AI - Data Center Power"
-      - "AI - Infra / Connectivity"
-      - "AI - Infra / Core Chips"
-      - "AI - Infra / Power/Cooling"
-      - "AI - Processors"
+  # ── AI - DATA CENTER (3-level: AI > Data Center > sub-domain) ─
+  # Each sub-domain consolidates redundant LLM-emitted variants but preserves
+  # semantic granularity. INTC (chips) and FSLY (cloud/edge) end up in
+  # different sub-domains rather than a single coarse infrastructure bucket.
 
   "AI - Data Center - Optics":
     mode: consume
@@ -23,6 +15,34 @@ theme_groups:
       - "AI - Optics"
       - "AI - Optoelectronics"
       - "AI - Infra / Optics"
+
+  "AI - Data Center - Cloud / Hyperscalers":
+    mode: consume
+    members:
+      - "AI - Data Center & Cloud Services"
+      - "AI - Data Center & Cloud"
+
+  "AI - Data Center - Chips / Processors":
+    mode: consume
+    members:
+      - "AI - Processors"
+      - "AI - Infra / Core Chips"
+
+  "AI - Data Center - Power & Cooling":
+    mode: consume
+    members:
+      - "AI - Data Center Power"
+      - "AI - Infra / Power/Cooling"
+
+  "AI - Data Center - Connectivity / Networking":
+    mode: consume
+    members:
+      - "AI - Infra / Connectivity"
+
+  "AI - Data Center - Components":
+    mode: consume
+    members:
+      - "AI - Data Center Components"
 
   "Robotics":
     mode: consume

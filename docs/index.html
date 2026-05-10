@@ -47,6 +47,8 @@
       <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
       <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP Scanner</button>
+      <button class="tab-btn" data-tab="vars" id="tab-vars">▸ VARS</button>
+      <button class="tab-btn" data-tab="varsviz" id="tab-varsviz">▸ VARS Viz</button>
       <button class="tab-btn" data-tab="parabolic" id="tab-parabolic">▸ Parabolic</button>
     </div>
 
@@ -666,6 +668,73 @@
     </div>
   </div>
 
+  <!-- ══ TAB: VARS ═════════════════════════════════════ -->
+  <div class="tab-content" id="content-vars">
+    <div class="left-panel" id="vars-left">
+      <div class="time-travel-bar">
+        <span class="time-travel-label">SESSION:</span>
+        <div class="time-travel-dates" id="vars-tt-dates"></div>
+      </div>
+      <div id="vars-container">
+        <div class="loading">Loading VARS data...</div>
+      </div>
+    </div>
+    <div class="resize-handle" data-panel="vars"></div>
+    <div class="right-panel" id="vars-right">
+      <div class="chart-header" id="vars-chart-header" style="display:none">
+        <span class="chart-symbol" id="vars-chart-sym"></span>
+        <span class="chart-name" id="vars-chart-name"></span>
+        <a class="chart-alert-btn" id="vars-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+      </div>
+      <div class="chart-area" id="vars-chart-area">
+        <div class="chart-placeholder">
+          <div class="placeholder-icon">📈</div>
+          <div>Click any ticker to open chart</div>
+          <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: VARS VIZ ═════════════════════════════════ -->
+  <div class="tab-content" id="content-varsviz">
+    <div class="left-panel viz-left" id="varsviz-left">
+      <div class="time-travel-bar">
+        <span class="time-travel-label">SESSION:</span>
+        <div class="time-travel-dates" id="varsviz-tt-dates"></div>
+      </div>
+      <div class="card themeviz-card">
+        <div class="card-lbl">▸ VARS Network — Volatility-Adjusted Relative Strength leaders</div>
+        <div class="themeviz-meta" id="varsviz-meta">—</div>
+        <div class="theme-network-wrap">
+          <div id="vars-network" class="theme-network"></div>
+          <div id="varsviz-overlay" class="themeviz-overlay"></div>
+          <div id="varsviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
+        </div>
+        <div class="themeviz-legend">
+          <span class="lg-item"><span class="lg-dot lg-blazing"></span>VARS ≥ 6</span>
+          <span class="lg-item"><span class="lg-dot lg-strong"></span>VARS ≥ 4</span>
+          <span class="lg-item"><span class="lg-dot lg-solid"></span>VARS ≥ 2</span>
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" data-panel="varsviz"></div>
+    <div class="right-panel" id="varsviz-right">
+      <div class="chart-header" id="varsviz-chart-header" style="display:none">
+        <span class="chart-symbol" id="varsviz-chart-sym"></span>
+        <span class="chart-name" id="varsviz-chart-name"></span>
+        <a class="chart-alert-btn" id="varsviz-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+      </div>
+      <div class="chart-area" id="varsviz-chart-area">
+        <div class="chart-placeholder">
+          <div class="placeholder-icon">📈</div>
+          <div>Click any ticker node to open chart</div>
+          <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="tab-content" id="content-parabolic">
     <div class="left-panel" id="parabolic-left">
       <div class="time-travel-bar">
@@ -712,7 +781,7 @@
   </div> <!-- Enclosing app-wrap -->
 
   <script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260509f"></script>
 </body>
 
 </html>

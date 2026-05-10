@@ -616,7 +616,12 @@ def enrich_themes_from_db(theme_data):
 
 
 def load_ticker_color_flags():
-    """Load tight/inside_day + close_to_ma flags, return {ticker: 'green'|'blue'}."""
+    """Load tight/inside_day + close_to_ma flags, return {ticker: 'green'}.
+
+    Only green is emitted: a ticker qualifies when its latest bar is a tight or
+    inside day AND price is close to the EMA10/EMA20. Tickers that fail either
+    condition are omitted from the dict (no blue tier).
+    """
     try:
         daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
     except Exception as e:
@@ -628,16 +633,17 @@ def load_ticker_color_flags():
         if ticker.startswith('^') or df.empty:
             continue
         last = df.iloc[-1]
-        tight = bool(last.get('tight_day', False)) or bool(last.get('inside_day', False))
-        if not tight:
+        tight_or_inside = bool(last.get('tight_day', False)) or bool(last.get('inside_day', False))
+        if not tight_or_inside:
             continue
-        close_to_ma = bool(last.get('close_to_ma', False))
-        flags[ticker] = 'green' if close_to_ma else 'blue'
+        if not bool(last.get('close_to_ma', False)):
+            continue
+        flags[ticker] = 'green'
     return flags
 
 
 def enrich_with_ticker_color(data_list, flags, ticker_key='ticker'):
-    """Add ticker_color ('green'|'blue') to a list of ticker dicts."""
+    """Add ticker_color ('green') to a list of ticker dicts."""
     count = 0
     for item in data_list:
         tk = item.get(ticker_key, '')
@@ -708,8 +714,8 @@ def fetch_etf_ticker_colors(tickers):
             # Inside Day
             inside = float(last['High']) < float(prev['High']) and float(last['Low']) > float(prev['Low'])
 
-            # Tight Day (0.25 * ADR% * open)
-            tight = abs(last_close - last_open) < 0.25 * float(adr_pct.iloc[-1]) * last_open
+            # Tight Day: fractional body (vs close) < 0.2 of ADR%
+            tight = abs(last_close - last_open) / last_close < 0.2 * float(adr_pct.iloc[-1])
 
             if not (inside or tight):
                 continue
@@ -718,7 +724,9 @@ def fetch_etf_ticker_colors(tickers):
             close_to_ema10 = abs(last_close - float(ema10.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
             close_to_ema20 = abs(last_close - float(ema20.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
 
-            flags[ticker] = 'green' if (close_to_ema10 or close_to_ema20) else 'blue'
+            if not (close_to_ema10 or close_to_ema20):
+                continue
+            flags[ticker] = 'green'
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")
             continue
@@ -727,7 +735,7 @@ def fetch_etf_ticker_colors(tickers):
     return flags
 
 
-THEMES_HISTORY_MAX = 5  # Keep last N trading sessions
+THEMES_HISTORY_MAX = 40  # Keep last N trading sessions (5 visible as buttons, rest in dropdown)
 
 
 def _update_history_file(history_file, report_date, entry):
@@ -813,31 +821,20 @@ def _fmt_inst(val):
     return f"+{v:.1f}" if v > 0 else f"{v:.1f}"
 
 
-def export_momentum_136(day_flags):
-    """Export momentum_136 screener results grouped by theme to docs/data/momentum_136.json.
+def _build_momentum_136_snapshot(csv_file, day_flags):
+    """Build a single momentum_136 snapshot dict from one screener CSV.
 
-    Singletons preserved (passes empty groups dict to build_theme_to_tickers).
-    Themes ordered by ticker count desc, alphabetical tiebreaker.
-    Also appends to docs/data/momentum_136_history.json (last 5 sessions).
+    Returns the JSON-serializable {'report_date', 'themes': [...]} structure or
+    None if the CSV is empty / unreadable. Pure function — no I/O side effects.
     """
     import sqlite3
     import pandas as pd
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers
 
-    # Locate latest screener output CSV
-    try:
-        csv_file = su.get_latest_file(
-            SCREENING_OUTPUT_DIR / 'momentum_136', 'momentum_136_*.csv', 1
-        )
-    except Exception as e:
-        print(f"   No momentum_136 CSV found, skipping: {e}")
-        return
-
     df = pd.read_csv(csv_file).fillna(0)
     if df.empty:
-        print("   momentum_136 CSV is empty, skipping export")
-        return
+        return None
 
     csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
 
@@ -917,22 +914,206 @@ def export_momentum_136(day_flags):
         for th in themes_list:
             enrich_with_ticker_color(th['tickers'], day_flags)
 
-    momentum_data = {
+    return {
         'report_date': csv_date,
         'themes': themes_list,
     }
 
+
+def export_momentum_136(day_flags):
+    """Export latest momentum_136 snapshot + append to history JSON."""
+    try:
+        csv_file = su.get_latest_file(
+            SCREENING_OUTPUT_DIR / 'momentum_136', 'momentum_136_*.csv', 1
+        )
+    except Exception as e:
+        print(f"   No momentum_136 CSV found, skipping: {e}")
+        return
+
+    momentum_data = _build_momentum_136_snapshot(csv_file, day_flags)
+    if momentum_data is None:
+        print("   momentum_136 CSV is empty, skipping export")
+        return
+
     out = OUTPUT_DIR / "momentum_136.json"
     with open(out, 'w', encoding='utf-8') as fh:
         json.dump(momentum_data, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in themes_list)
-    print(f"   -> {out} ({len(themes_list)} themes, {total_tickers} tickers)")
+    total_tickers = sum(len(th['tickers']) for th in momentum_data['themes'])
+    print(f"   -> {out} ({len(momentum_data['themes'])} themes, {total_tickers} tickers)")
 
     _update_history_file(
         OUTPUT_DIR / "momentum_136_history.json",
-        csv_date,
+        momentum_data['report_date'],
         momentum_data,
     )
+
+
+def _build_vars_snapshot(csv_file, day_flags):
+    """Build a single VARS snapshot dict from one screener CSV.
+
+    Theme groups in config/theme_groups.yaml are applied to consolidate sub-themes
+    (e.g. "AI - Optics" + "AI - Infra / Optics" -> "AI - Data Center - Optics").
+    Themes with fewer than 3 tickers and "Uncategorized" are dropped.
+    Themes are sorted by avg VARS desc; within each theme tickers are sorted by VARS desc.
+    Returns the JSON dict or None if the CSV is empty. Pure function.
+    """
+    import sqlite3
+    import pandas as pd
+    from src.themes.theme_registry import load_ticker_themes
+    from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
+
+    df = pd.read_csv(csv_file).fillna(0)
+    if df.empty:
+        return None
+
+    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
+
+    ticker_themes = load_ticker_themes()
+    screener_tickers = df['ticker'].astype(str).str.upper().tolist()
+    filtered_map = {
+        t: ticker_themes.get(t) or ['Uncategorized']
+        for t in screener_tickers
+    }
+    # Apply theme_groups consolidation so AI - Optics, AI - Infra / Optics, etc. merge.
+    theme_groups = load_theme_groups()
+    theme_to_tickers = build_theme_to_tickers(filtered_map, theme_groups)
+
+    # Single-shot fundamentals lookup
+    fundamentals = {}
+    if FUNDAMENTALS_DB.exists() and screener_tickers:
+        conn = sqlite3.connect(FUNDAMENTALS_DB)
+        placeholders = ','.join(['?'] * len(screener_tickers))
+        rows = conn.execute(f'''
+            SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
+                   short_interest, inst_transactions
+            FROM fundamentals
+            WHERE ticker IN ({placeholders})
+        ''', screener_tickers).fetchall()
+        conn.close()
+        for r in rows:
+            fundamentals[r[0]] = {
+                'shares_float': r[1],
+                'eps_growth_yoy': r[2],
+                'sales_growth_yoy': r[3],
+                'short_interest': r[4],
+                'inst_transactions': r[5],
+            }
+
+    per_ticker = {}
+    for _, row in df.iterrows():
+        t = str(row['ticker']).upper()
+        f = fundamentals.get(t, {})
+        short_val = f.get('short_interest')
+        per_ticker[t] = {
+            'ticker': t,
+            'vars': round(float(row.get('vars', 0) or 0), 2),
+            'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
+            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
+            'price': round(float(row.get('close', 0) or 0), 2),
+            'float': _fmt_float_m(f.get('shares_float')),
+            'eps': _fmt_growth(f.get('eps_growth_yoy')),
+            'sales': _fmt_growth(f.get('sales_growth_yoy')),
+            'inst': _fmt_inst(f.get('inst_transactions')),
+            'short': round(float(short_val), 1) if short_val is not None else None,
+        }
+
+    # Build theme list — drop Uncategorized + themes with < 3 tickers; sort by avg vars desc
+    HIDDEN_THEMES = {'Uncategorized'}
+    MIN_TICKERS_PER_THEME = 3
+    themes_list = []
+    for theme_name, tickers in theme_to_tickers.items():
+        if theme_name in HIDDEN_THEMES:
+            continue
+        ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
+        if len(ticker_dicts) < MIN_TICKERS_PER_THEME:
+            continue
+        ticker_dicts.sort(key=lambda x: -x['vars'])
+        avg_vars = sum(td['vars'] for td in ticker_dicts) / len(ticker_dicts)
+        themes_list.append({
+            'name': theme_name,
+            'avg_vars': round(avg_vars, 2),
+            'tickers': ticker_dicts,
+        })
+
+    # Catch-all bucket (Singletons) sorts to the bottom regardless of avg_vars
+    catchall_themes = {
+        'Individual Episodic Pivots / Singletons',
+        'Meme Stocks',
+    }
+    themes_list.sort(key=lambda th: (
+        th['name'] in catchall_themes,
+        -th['avg_vars'],
+        th['name'],
+    ))
+
+    if day_flags:
+        for th in themes_list:
+            enrich_with_ticker_color(th['tickers'], day_flags)
+
+    return {
+        'report_date': csv_date,
+        'themes': themes_list,
+    }
+
+
+def export_vars(day_flags):
+    """Export latest VARS snapshot + append to history JSON."""
+    try:
+        csv_file = su.get_latest_file(
+            SCREENING_OUTPUT_DIR / 'vars', 'vars_*.csv', 1
+        )
+    except Exception as e:
+        print(f"   No vars CSV found, skipping: {e}")
+        return
+
+    vars_data = _build_vars_snapshot(csv_file, day_flags)
+    if vars_data is None:
+        print("   vars CSV is empty, skipping export")
+        return
+
+    out = OUTPUT_DIR / "vars.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(vars_data, fh, indent=2)
+    total_tickers = sum(len(th['tickers']) for th in vars_data['themes'])
+    print(f"   -> {out} ({len(vars_data['themes'])} themes, {total_tickers} tickers)")
+
+    _update_history_file(
+        OUTPUT_DIR / "vars_history.json",
+        vars_data['report_date'],
+        vars_data,
+    )
+
+
+def backfill_screener_history(day_flags):
+    """Iterate every per-day CSV and rebuild momentum_136 / vars history JSONs.
+
+    Use after running master_table + run_screener with --days N to populate up
+    to N sessions of dropdown history without rerunning the daily workflow N
+    times.
+    """
+    momentum_csvs = sorted(
+        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv')
+    )
+    vars_csvs = sorted(
+        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv')
+    )
+
+    history_path_momentum = OUTPUT_DIR / 'momentum_136_history.json'
+    history_path_vars = OUTPUT_DIR / 'vars_history.json'
+
+    print(f"   Backfilling momentum_136 history from {len(momentum_csvs)} CSVs")
+    for csv_file in momentum_csvs:
+        snap = _build_momentum_136_snapshot(csv_file, day_flags)
+        if snap is None:
+            continue
+        _update_history_file(history_path_momentum, snap['report_date'], snap)
+
+    print(f"   Backfilling vars history from {len(vars_csvs)} CSVs")
+    for csv_file in vars_csvs:
+        snap = _build_vars_snapshot(csv_file, day_flags)
+        if snap is None:
+            continue
+        _update_history_file(history_path_vars, snap['report_date'], snap)
 
 
 def _numeric_series(df, column):
@@ -1197,8 +1378,12 @@ def export_all():
         day_flags = load_ticker_color_flags()
     export_momentum_136(day_flags)
 
-    # 1c. Export Parabolic screener data (independent of daily report)
-    print("\n1c. Exporting parabolic data")
+    # 1c. Export VARS screener (independent of daily report)
+    print("\n1c. Exporting vars data")
+    export_vars(day_flags)
+
+    # 1d. Export Parabolic screener data (independent of daily report)
+    print("\n1d. Exporting parabolic data")
     parabolic_data = export_parabolic()
 
     # 2. Update market breadth history

@@ -921,31 +921,51 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
 
 
 def export_momentum_136(day_flags):
-    """Export latest momentum_136 snapshot + append to history JSON."""
-    try:
-        csv_file = su.get_latest_file(
-            SCREENING_OUTPUT_DIR / 'momentum_136', 'momentum_136_*.csv', 1
-        )
-    except Exception as e:
-        print(f"   No momentum_136 CSV found, skipping: {e}")
+    """Export momentum_136 — rebuilds full N-session history from CSVs every run.
+
+    Like `export_parabolic`, this iterates the most-recent THEMES_HISTORY_MAX
+    per-day momentum_136 CSVs and writes both the current snapshot (newest
+    date) and the history file from scratch. Replaces the old append-only
+    behavior so every workflow run produces a complete dropdown history,
+    even when the daily workflow re-runs `--days N` and regenerates back-
+    dated CSVs (e.g. after a new indicator was added).
+    """
+    csvs = sorted(
+        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv'),
+        reverse=True,  # newest first
+    )
+    if not csvs:
+        print("   No momentum_136 CSVs found, skipping momentum export")
         return
 
-    momentum_data = _build_momentum_136_snapshot(csv_file, day_flags)
-    if momentum_data is None:
-        print("   momentum_136 CSV is empty, skipping export")
+    history = []
+    for csv_file in csvs[:THEMES_HISTORY_MAX]:
+        snap = _build_momentum_136_snapshot(csv_file, day_flags)
+        if snap is None:
+            continue
+        history.append(snap)
+
+    if not history:
+        print("   All momentum_136 CSVs were empty, skipping momentum export")
         return
 
+    # Newest snapshot is the "current" view
+    current = history[0]
     out = OUTPUT_DIR / "momentum_136.json"
     with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(momentum_data, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in momentum_data['themes'])
-    print(f"   -> {out} ({len(momentum_data['themes'])} themes, {total_tickers} tickers)")
-
-    _update_history_file(
-        OUTPUT_DIR / "momentum_136_history.json",
-        momentum_data['report_date'],
-        momentum_data,
+        json.dump(current, fh, indent=2)
+    total_tickers = sum(len(th['tickers']) for th in current['themes'])
+    print(
+        f"   -> {out} ({len(current['themes'])} themes, "
+        f"{total_tickers} tickers, date {current['report_date']})"
     )
+
+    # Rewrite full history (replaces _update_history_file's append-only behavior)
+    history_out = OUTPUT_DIR / "momentum_136_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(history, fh, indent=2)
+    dates = [h['report_date'] for h in history]
+    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
 
 
 def _build_vars_snapshot(csv_file, day_flags):
@@ -1057,31 +1077,46 @@ def _build_vars_snapshot(csv_file, day_flags):
 
 
 def export_vars(day_flags):
-    """Export latest VARS snapshot + append to history JSON."""
-    try:
-        csv_file = su.get_latest_file(
-            SCREENING_OUTPUT_DIR / 'vars', 'vars_*.csv', 1
-        )
-    except Exception as e:
-        print(f"   No vars CSV found, skipping: {e}")
+    """Export VARS — rebuilds full N-session history from CSVs every run.
+
+    Mirrors `export_momentum_136` / `export_parabolic`: iterates the most
+    recent THEMES_HISTORY_MAX per-day vars_*.csv files and writes both the
+    current snapshot and the history file from scratch.
+    """
+    csvs = sorted(
+        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv'),
+        reverse=True,
+    )
+    if not csvs:
+        print("   No vars CSVs found, skipping vars export")
         return
 
-    vars_data = _build_vars_snapshot(csv_file, day_flags)
-    if vars_data is None:
-        print("   vars CSV is empty, skipping export")
+    history = []
+    for csv_file in csvs[:THEMES_HISTORY_MAX]:
+        snap = _build_vars_snapshot(csv_file, day_flags)
+        if snap is None:
+            continue
+        history.append(snap)
+
+    if not history:
+        print("   All vars CSVs were empty, skipping vars export")
         return
 
+    current = history[0]
     out = OUTPUT_DIR / "vars.json"
     with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(vars_data, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in vars_data['themes'])
-    print(f"   -> {out} ({len(vars_data['themes'])} themes, {total_tickers} tickers)")
-
-    _update_history_file(
-        OUTPUT_DIR / "vars_history.json",
-        vars_data['report_date'],
-        vars_data,
+        json.dump(current, fh, indent=2)
+    total_tickers = sum(len(th['tickers']) for th in current['themes'])
+    print(
+        f"   -> {out} ({len(current['themes'])} themes, "
+        f"{total_tickers} tickers, date {current['report_date']})"
     )
+
+    history_out = OUTPUT_DIR / "vars_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(history, fh, indent=2)
+    dates = [h['report_date'] for h in history]
+    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
 
 
 def backfill_screener_history(day_flags):

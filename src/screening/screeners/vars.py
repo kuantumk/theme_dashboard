@@ -17,6 +17,6 @@ def filter_master_table(master_df):
         (master_df['adr_pct'] >= 0.033) &
 
         # VARS > 2 and VARS 20EMA > 2
-        (master_df['vars'] > 2) &
-        (master_df['vars_20ema'] > 2)
+        (master_df['vars'] > 2.0) &
+        (master_df['vars_20ema'] > 1.0)
     )

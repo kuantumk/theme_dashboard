@@ -468,7 +468,11 @@ def send_discord_notification(
 
 # ── JSON export helper ───────────────────────────────────────────────────────
 
-SCAN_HISTORY_MAX = 5
+SCAN_HISTORY_MAX = 40  # Match dashboard time-travel dropdown (5 buttons + 35 in dropdown).
+# EP scans can't be backfilled (Finviz earnings calendar + Alpaca real-time
+# extended-hours volume + per-ticker news are all snapshot-at-scan-time data),
+# so history just accumulates as the workflow runs. Two scans per weekday means
+# the dropdown fills out in ~4 weeks of business days.
 
 
 def _scan_history_path(output_filename: str) -> Path:

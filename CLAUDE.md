@@ -134,7 +134,9 @@ Tickers that fail any condition stay default-colored. Logic lives in `src/report
 
 ### Dashboard Time Travel
 
-Each tab's session bar shows the last 5 trading days as clickable date buttons plus a `+ older sessions…` dropdown to the right that exposes up to 35 additional days (40 total). `THEMES_HISTORY_MAX = 40` in `export_dashboard_data.py` controls retention. `backfill_screener_history()` rebuilds momentum_136 / vars history JSONs from per-day CSVs in one shot — useful after running `master_table --days 40` + `run_screener --days 40` to populate the dropdown without 40 separate workflow runs. Parabolic auto-iterates master CSVs in its own export and benefits from the same retention bump.
+Each tab's session bar shows the last 5 trading days as clickable date buttons plus a `+ older sessions…` dropdown that exposes up to 35 additional days (40 total). `THEMES_HISTORY_MAX = 40` in `export_dashboard_data.py` controls retention.
+
+**Every workflow run produces a fresh 40-session history**: `run_daily_workflow.py` calls `create_master_table.py --days 40` and each `run_screener.py --days 40`, so back-dated master + screener CSVs always carry today's full indicator schema (e.g. when `vars` was added, all 40 dropdown sessions get the new column on the very next workflow run instead of having to wait 40 days). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` all iterate up to 40 per-day CSVs and rewrite `*_history.json` from scratch each run — no append-only drift. Tabs without per-day source data (themes, industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and reach the 40-cap naturally.
 
 ## Configuration
 

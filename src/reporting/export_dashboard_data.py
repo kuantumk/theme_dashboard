@@ -17,12 +17,13 @@ from datetime import datetime
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
     DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE,
-    SCREENING_OUTPUT_DIR
+    PROJECT_ROOT, SCREENING_OUTPUT_DIR
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 
 OUTPUT_DIR = DOCS_DATA_DIR
+VARS_ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "vars"
 
 # Google Sheets
 etf_gid = CONFIG["dashboard"]["etf_sheet_gid"]
@@ -1277,6 +1278,22 @@ def _build_vars_snapshot(csv_file, day_flags):
     }
 
 
+def write_vars_artifact(snapshot, artifact_dir=None):
+    """Write the latest VARS tab snapshot as a date-stamped workflow artifact."""
+    if not snapshot:
+        return None
+
+    out_dir = Path(artifact_dir) if artifact_dir is not None else VARS_ARTIFACT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    report_date = str(snapshot.get('report_date') or 'latest')
+    safe_date = re.sub(r'[^0-9A-Za-z_.-]+', '-', report_date).strip('-') or 'latest'
+    out = out_dir / f"vars_{safe_date}.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(snapshot, fh, indent=2)
+    return out
+
+
 def export_vars(day_flags):
     """Export VARS — rebuilds full N-session history from CSVs every run.
 
@@ -1290,7 +1307,7 @@ def export_vars(day_flags):
     )
     if not csvs:
         print("   No vars CSVs found, skipping vars export")
-        return
+        return None
 
     history = []
     for csv_file in csvs[:THEMES_HISTORY_MAX]:
@@ -1301,7 +1318,7 @@ def export_vars(day_flags):
 
     if not history:
         print("   All vars CSVs were empty, skipping vars export")
-        return
+        return None
 
     current = history[0]
     out = OUTPUT_DIR / "vars.json"
@@ -1318,6 +1335,12 @@ def export_vars(day_flags):
         json.dump(history, fh, indent=2)
     dates = [h['report_date'] for h in history]
     print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
+
+    artifact_out = write_vars_artifact(current)
+    if artifact_out:
+        print(f"   -> {artifact_out} (VARS tab artifact)")
+
+    return current
 
 
 def backfill_screener_history(day_flags):

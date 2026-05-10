@@ -32,6 +32,15 @@ def calculate_technical_indicators():
     for month, dt in zip(months, dts):
         spx[f'perf_{month}mo'] = spx['close'] / spx['close'].shift(periods=dt) - 1
 
+    # SPY ATR14 + cumulative normalized change for VARS calculation (computed once)
+    spx_high_low = spx['high'] - spx['low']
+    spx_high_prev = (spx['high'] - spx['close'].shift(1)).abs()
+    spx_low_prev = (spx['low'] - spx['close'].shift(1)).abs()
+    spx_tr = pd.concat([spx_high_low, spx_high_prev, spx_low_prev], axis=1).max(axis=1)
+    spx_atr14 = spx_tr.rolling(window=14, min_periods=1).mean()
+    spx_norm_change = (spx['close'] - spx['close'].shift(1)) / spx_atr14
+    spx_cum_norm_100 = spx_norm_change.rolling(window=100, min_periods=1).sum()
+
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
 
@@ -77,6 +86,14 @@ def calculate_technical_indicators():
             # ATR multiple from the 50-day SMA, matching Project608 parash logic.
             daily['atr_multi_50sma'] = (daily['close'] / daily['sma50'] - 1) / daily['atr_pct']
 
+            # VARS — Volatility-Adjusted Relative Strength vs SPY (lookback 100, ATR 14, EMA 20).
+            # Each leg is normalized by its own ATR before summing, so values are comparable across tickers.
+            daily['vars_norm_change'] = (daily['close'] - daily['close'].shift(1)) / daily['atr14']
+            ticker_cum_norm_100 = daily['vars_norm_change'].rolling(window=100, min_periods=1).sum()
+            spx_aligned = spx_cum_norm_100.reindex(daily.index)
+            daily['vars'] = ticker_cum_norm_100 - spx_aligned
+            daily['vars_20ema'] = daily['vars'].ewm(span=20, adjust=False, min_periods=1).mean()
+
             # Previous-session fields for gap/no-overlap screeners.
             daily['previous_session_high'] = daily['high'].shift(1)
             daily['previous_session_low'] = daily['low'].shift(1)
@@ -85,8 +102,8 @@ def calculate_technical_indicators():
             # Inside Day: current bar's range is within previous bar's range
             daily['inside_day'] = (daily['high'] < daily['high'].shift(1)) & (daily['low'] > daily['low'].shift(1))
 
-            # Tight Day: close is very near open (abs distance < 25% of ADR% in dollar terms)
-            daily['tight_day'] = (daily['close'] - daily['open']).abs() < 0.25 * daily['adr_pct'] * daily['open']
+            # Tight Day: fractional body size (vs close) < 0.2 of ADR%
+            daily['tight_day'] = (daily['close'] - daily['open']).abs() / daily['close'] < 0.2 * daily['adr_pct']
 
             # Close to MAs: close within 0.5 ATR of EMA10 or EMA20
             daily['close_to_ma'] = (

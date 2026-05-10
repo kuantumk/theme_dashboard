@@ -21,6 +21,7 @@ from config.settings import (
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
+from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 
 OUTPUT_DIR = DOCS_DATA_DIR
 VARS_ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "vars"
@@ -1493,10 +1494,10 @@ def filter_parabolic_candidates(master_df, previous_df=None):
     previous_volume = _numeric_series(df, 'previous_session_volume')
 
     mask = (
-        (avg_dollar_vol >= 10.0e6) &
+        (avg_dollar_vol >= MIN_AVG_DOLLAR_VOL) &
         (adr_pct >= 0.04) &
         (close >= 5.0) &
-        (atr_multi >= 10) &
+        (atr_multi >= MIN_ATR_MULTI_50SMA) &
         (low >= previous_high) &
         (high > low) &
         (volume > previous_volume)

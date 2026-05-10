@@ -4,6 +4,10 @@
 import pandas as pd
 
 
+MIN_AVG_DOLLAR_VOL = 10.0e6
+MIN_ATR_MULTI_50SMA = 10.0
+
+
 def _numeric_col(master_df, column):
     if column not in master_df.columns:
         return pd.Series(float('nan'), index=master_df.index)
@@ -37,7 +41,7 @@ def filter_master_table(master_df):
 
     filter_conditions = (
         # liquidity
-        (avg_dollar_vol >= 40.0e6) &
+        (avg_dollar_vol >= MIN_AVG_DOLLAR_VOL) &
 
         # ADR %
         (adr_pct >= 0.04) &
@@ -46,7 +50,7 @@ def filter_master_table(master_df):
         (close >= 5.0) &
 
         # extended from 50 SMA in ATR units
-        (atr_multi >= 12) &
+        (atr_multi >= MIN_ATR_MULTI_50SMA) &
 
         # current session candle does not overlap the previous session candle
         (low >= previous_session_high) &

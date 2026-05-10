@@ -86,7 +86,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
 
-### Seven Screeners (`src/screening/screeners/`)
+### Eight Screeners (`src/screening/screeners/`)
 
 | Screener | Pattern | ADR | Key Filter |
 |----------|---------|-----|------------|
@@ -96,7 +96,17 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `htf` | High Tight Flag | >4% | 150-day 2x range, tight close |
 | `darvas` | Extended recovery | ≥4% | 252-day 2x range, near high |
 | `momentum_136` | 1/3/6-mo leaders | ≥4% | 25%+/50%+/100%+ over 1/3/6mo, $15M dollar vol, 750k shares |
-| `parabolic` | Parabolic short watch | ≥4% | $10M dollar vol, price ≥ $5, ATR multiple from 50SMA ≥ 10, no-overlap up candle, volume expansion |
+| `parabolic` | Parabolic short watch | ≥4% | $40M dollar vol, price ≥ $5, ATR multiple from 50SMA ≥ 12, no-overlap up candle, volume expansion |
+| `vars` | Volatility-adjusted RS leaders | ≥3.3% | $40M dollar vol, 1M shares, price > $2, VARS > 2, VARS 20EMA > 1 |
+
+### VARS — Volatility-Adjusted Relative Strength
+
+`vars` and `vars_20ema` are computed in `create_technical_indicators.py` (Pine Script-derived):
+- For each ticker: `norm_change = (close - close[1]) / atr14`
+- `vars(ticker) = sum(norm_change[ticker], 100) - sum(norm_change[SPY], 100)` (rolling 100-session sums, `min_periods=1` so recent IPOs still get a value)
+- `vars_20ema = ewm(vars, span=20)`
+
+Both legs are normalized by their own ATR before summing, so VARS values are comparable across tickers regardless of underlying volatility. SPY's cumulative series is computed once before the per-ticker loop and reindexed into each ticker.
 
 ### Theme Scoring Formula
 
@@ -106,6 +116,25 @@ Scoring depends on market regime (bull when MMFI > 50%):
 - **Score** = 0.5 × Strength + 0.5 × Confirmation
 - **Actionability** = extension penalty × volume bonus
 - **Hot threshold**: avg RS_STS% > 70% and breadth ≥ 3 stocks
+
+### Theme Consolidation
+
+`config/theme_groups.yaml` consolidates raw LLM-emitted sub-themes into canonical groups (e.g. `AI - Optics` + `AI - Optoelectronics` + `AI - Infra / Optics` → `AI - Data Center - Optics`). The AI Data Center family is split into 6 third-level themes (`Optics`, `Cloud / Hyperscalers`, `Chips / Processors`, `Power & Cooling`, `Connectivity / Networking`, `Components`) so that semantically distinct names like INTC and FSLY don't share a single bucket.
+
+The Themes / Theme Viz / VARS / VARS Viz tabs apply this consolidation. The Momentum 1/3/6 / Momentum Viz tabs preserve singletons by deliberately passing `{}` to `build_theme_to_tickers()`.
+
+### Day-pattern Ticker Coloring
+
+Per-ticker green highlighting in dashboard tables marks entry-ready setups. A ticker turns green only when **(`tight_day` OR `inside_day`) AND `close_to_ma`** all hold for the latest bar:
+- `inside_day` = today's high < yesterday's high AND today's low > yesterday's low
+- `tight_day` = `|close − open| / close < 0.2 × adr_pct` (fractional body smaller than 20% of ADR%)
+- `close_to_ma` = `|close − EMA10| < 0.5 × ATR14` OR `|close − EMA20| < 0.5 × ATR14`
+
+Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_ticker_colors` (ETF tabs, recomputes on-the-fly from yfinance OHLC).
+
+### Dashboard Time Travel
+
+Each tab's session bar shows the last 5 trading days as clickable date buttons plus a `+ older sessions…` dropdown to the right that exposes up to 35 additional days (40 total). `THEMES_HISTORY_MAX = 40` in `export_dashboard_data.py` controls retention. `backfill_screener_history()` rebuilds momentum_136 / vars history JSONs from per-day CSVs in one shot — useful after running `master_table --days 40` + `run_screener --days 40` to populate the dropdown without 40 separate workflow runs. Parabolic auto-iterates master CSVs in its own export and benefits from the same retention bump.
 
 ## Configuration
 

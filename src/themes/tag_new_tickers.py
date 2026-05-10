@@ -501,8 +501,10 @@ def prune_theme_review_state(
     state: Mapping[str, Mapping[str, object]],
     *,
     max_age_days: int = VALIDATION_STALE_DAYS,
+    reference_time: datetime | None = None,
 ) -> Dict[str, Dict[str, object]]:
-    cutoff = datetime.now() - timedelta(days=max_age_days)
+    reference_time = reference_time or datetime.now()
+    cutoff = reference_time - timedelta(days=max_age_days)
     pruned: Dict[str, Dict[str, object]] = {}
 
     for ticker, entry in state.items():
@@ -529,9 +531,12 @@ def prune_theme_review_state(
 def select_validation_tickers(
     dashboard_tickers: Iterable[str],
     review_state: Mapping[str, Mapping[str, object]],
+    *,
+    reference_time: datetime | None = None,
 ) -> List[str]:
     candidates = set(normalize_tickers(dashboard_tickers))
-    cutoff = datetime.now() - timedelta(days=VALIDATION_STALE_DAYS)
+    reference_time = reference_time or datetime.now()
+    cutoff = reference_time - timedelta(days=VALIDATION_STALE_DAYS)
     for ticker, entry in review_state.items():
         normalized = _normalize_review_entry(entry)
         if normalized["pending_candidate_themes"]:
@@ -749,7 +754,7 @@ def apply_validation_decisions(
             }
         )
 
-    updated_state = prune_theme_review_state(updated_state)
+    updated_state = prune_theme_review_state(updated_state, reference_time=validation_time)
     return ValidationApplicationResult(
         ticker_themes=updated_themes,
         review_state=updated_state,

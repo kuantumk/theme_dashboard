@@ -76,6 +76,55 @@ class ParabolicTests(unittest.TestCase):
 
         self.assertEqual(mask.tolist(), [True, False])
 
+    def test_screener_and_export_filters_share_candidate_thresholds(self) -> None:
+        master_df = pd.DataFrame([
+            {
+                "date": "2026-05-01",
+                "ticker": "PASS",
+                "close": 30.0,
+                "high": 35.0,
+                "low": 31.0,
+                "volume": 500_000,
+                "previous_session_high": 30.5,
+                "previous_session_volume": 400_000,
+                "atr_multi_50sma": 10.0,
+                "avg_dollar_vol": 10_000_000,
+                "adr_pct": 0.04,
+            },
+            {
+                "date": "2026-05-01",
+                "ticker": "FAIL_ATR",
+                "close": 30.0,
+                "high": 35.0,
+                "low": 31.0,
+                "volume": 500_000,
+                "previous_session_high": 30.5,
+                "previous_session_volume": 400_000,
+                "atr_multi_50sma": 9.9,
+                "avg_dollar_vol": 10_000_000,
+                "adr_pct": 0.04,
+            },
+            {
+                "date": "2026-05-01",
+                "ticker": "FAIL_DV",
+                "close": 30.0,
+                "high": 35.0,
+                "low": 31.0,
+                "volume": 500_000,
+                "previous_session_high": 30.5,
+                "previous_session_volume": 400_000,
+                "atr_multi_50sma": 10.0,
+                "avg_dollar_vol": 9_999_999,
+                "adr_pct": 0.04,
+            },
+        ])
+
+        screener_tickers = master_df[filter_master_table(master_df)]["ticker"].tolist()
+        export_tickers = filter_parabolic_candidates(master_df)["ticker"].tolist()
+
+        self.assertEqual(screener_tickers, ["PASS"])
+        self.assertEqual(export_tickers, ["PASS"])
+
 
 if __name__ == "__main__":
     unittest.main()

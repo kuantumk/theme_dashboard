@@ -5,6 +5,7 @@ from src.themes.tag_new_tickers import (
     apply_google_sheet_ground_truth,
     apply_validation_decisions,
     filter_sector_inconsistent_themes,
+    prune_theme_review_state,
     select_validation_tickers,
     themes_match,
 )
@@ -124,6 +125,22 @@ class ThemeSyncTests(unittest.TestCase):
         )
 
         self.assertEqual(tickers, ["VSTS"])
+
+    def test_prune_uses_supplied_reference_time(self) -> None:
+        state = {
+            "VSTS": {
+                "last_validated_at": "2026-03-18T13:30:00",
+                "last_applied_at": "2026-03-18T13:30:00",
+                "last_applied_themes": ["Business Services / Uniform Rental & Workplace Supplies"],
+            }
+        }
+
+        pruned = prune_theme_review_state(
+            state,
+            reference_time=datetime(2026, 3, 18, 13, 30, 0),
+        )
+
+        self.assertIn("VSTS", pruned)
 
     def test_theme_match_ignores_array_order(self) -> None:
         self.assertTrue(

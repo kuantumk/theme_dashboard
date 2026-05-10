@@ -132,7 +132,7 @@ def consolidate_screener_results(date_str: str):
     union_file = consolidated_dir / f'_union_{txt_date}.txt'
     pd.DataFrame(sorted(all_tickers)).to_csv(union_file, index=False, header=False)
 
-    logger.info(f"✓ Consolidated {len(screener_files)} screeners -> {len(all_tickers)} unique tickers")
+    logger.info(f"OK Consolidated {len(screener_files)} screeners -> {len(all_tickers)} unique tickers")
     logger.info(f"  Saved to {union_file}")
 
     return all_tickers
@@ -217,7 +217,7 @@ def run_daily_workflow():
         logger.info(f"Fetching fundamentals for {len(screened_list)} screened tickers...")
         try:
             batch_fetch_fundamentals(screened_list)
-            logger.info(f"✓ Fundamental data fetch complete\n")
+            logger.info(f"OK Fundamental data fetch complete\n")
         except Exception as e:
             logger.warning(f"Fundamental data fetch failed: {e}")
             logger.warning("Continuing workflow without fundamentals...")
@@ -258,7 +258,7 @@ def run_daily_workflow():
         theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
         regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'
-        logger.info(f"✓ Analyzed {len(theme_df)} themes (regime: {regime})\n")
+        logger.info(f"OK Analyzed {len(theme_df)} themes (regime: {regime})\n")
 
         # Step 10: Validate dashboard-visible ticker themes
         logger.info(f"{'='*80}")

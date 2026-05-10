@@ -1353,11 +1353,14 @@
       maxZoom: 3.0,
     });
 
-    // Tight-pulse rings — repositioned on pan/zoom/render
+    // Tight-pulse rings — repositioned on pan/zoom/render. The closures
+    // null-check state.cy because cytoscape's internal ResizeObserver can
+    // fire one more 'resize' event after destroy() has nulled state.cy
+    // (e.g. on date-switch with no snapshot for the new date).
     syncTightPulses(state.cy, mode);
-    state.cy.on('pan zoom resize', () => syncTightPulses(state.cy, mode));
-    state.cy.on('layoutstop', () => syncTightPulses(state.cy, mode));
-    state.cy.on('position', 'node', () => syncTightPulses(state.cy, mode));
+    state.cy.on('pan zoom resize', () => { if (state.cy) syncTightPulses(state.cy, mode); });
+    state.cy.on('layoutstop', () => { if (state.cy) syncTightPulses(state.cy, mode); });
+    state.cy.on('position', 'node', () => { if (state.cy) syncTightPulses(state.cy, mode); });
 
     // ResizeObserver — keeps the canvas filling the container when the user
     // drags the resize-handle between left/right panels.
@@ -1378,6 +1381,7 @@
     installVizTabHandler(mode);
     if (container.offsetHeight > 0) {
       setTimeout(() => {
+        if (!state.cy) return;  // user may have switched dates inside the 30ms window
         state.cy.resize();
         state.cy.fit(undefined, 40);
         syncTightPulses(state.cy, mode);

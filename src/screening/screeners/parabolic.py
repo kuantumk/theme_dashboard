@@ -37,7 +37,7 @@ def filter_master_table(master_df):
 
     filter_conditions = (
         # liquidity
-        (avg_dollar_vol >= 10.0e6) &
+        (avg_dollar_vol >= 40.0e6) &
 
         # ADR %
         (adr_pct >= 0.04) &
@@ -46,7 +46,7 @@ def filter_master_table(master_df):
         (close >= 5.0) &
 
         # extended from 50 SMA in ATR units
-        (atr_multi >= 10) &
+        (atr_multi >= 12) &
 
         # current session candle does not overlap the previous session candle
         (low >= previous_session_high) &

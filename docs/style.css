@@ -510,14 +510,9 @@ td.l {
   border-bottom-style: solid;
 }
 
-/* Tight/inside day + close to EMA10/20 — green ticker */
+/* (tight_day OR inside_day) AND close_to_ma — green ticker */
 .tn-link.day-pattern-green {
   color: var(--green);
-}
-
-/* Tight/inside day but NOT close to MAs — blue ticker */
-.tn-link.day-pattern-blue {
-  color: #42a5f5;
 }
 
 /* ── TIME TRAVEL BAR ───────────────────────────────────── */
@@ -580,6 +575,39 @@ td.l {
 
 .tt-date-btn.active .tt-weekday {
   color: var(--accent2);
+}
+
+.tt-date-select {
+  margin-left: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  appearance: auto;
+  outline: none;
+}
+
+.tt-date-select:hover {
+  background: var(--adim);
+  border-color: var(--accent2);
+  color: var(--text);
+}
+
+.tt-date-select.active {
+  background: var(--adim);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tt-date-select option {
+  background: var(--bg2);
+  color: var(--text);
 }
 
 /* ── THEME CARD ─────────────────────────────────────────── */

@@ -10,6 +10,8 @@
   const THEME_HISTORY_URL = 'data/themes_history.json';
   const MOMENTUM_DATA_URL = 'data/momentum_136.json';
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
+  const VARS_DATA_URL = 'data/vars.json';
+  const VARS_HISTORY_URL = 'data/vars_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
@@ -38,7 +40,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, industry: null, etf: null, ep: null, parabolic: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -78,6 +80,7 @@
     loadBreadthData();
     loadThemeData();
     loadMomentumData();
+    loadVARSData();
     loadIndustryETFData();
     loadETFData();
     loadParabolicData();
@@ -201,6 +204,7 @@
       if (tabContent.id === 'content-macro') tabId = 'macro';
       else if (tabContent.id === 'content-themes') tabId = 'themes';
       else if (tabContent.id === 'content-momentum') tabId = 'momentum';
+      else if (tabContent.id === 'content-vars') tabId = 'vars';
       else if (tabContent.id === 'content-industry') tabId = 'industry';
       else if (tabContent.id === 'content-etf') tabId = 'etf';
       else if (tabContent.id === 'content-ep') tabId = 'ep';
@@ -230,7 +234,11 @@
     alertEl.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym) + '&interval=D';
 
     const containerId = 'tv_container_' + tabId;
-    areaEl.innerHTML = `<div id="${containerId}" style="width:100%;height:100%"></div>`;
+    // Pin the widget container with absolute positioning so it always fills
+    // chart-area regardless of flex layout timing. chart-area is given
+    // position:relative below.
+    areaEl.style.position = 'relative';
+    areaEl.innerHTML = `<div id="${containerId}" style="position:absolute;inset:0"></div>`;
 
     function renderWidget() {
       new TradingView.widget({
@@ -285,6 +293,12 @@
       }
     }
 
+    // Nudge any TradingView autosize observers a few times after creation so a
+    // tab that was hidden / a flex layout still settling redraws to full size.
+    [200, 600, 1500].forEach(ms => setTimeout(
+      () => window.dispatchEvent(new Event('resize')), ms
+    ));
+
     activeCharts[tabId] = sym;
   }
 
@@ -292,7 +306,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, vars: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -578,6 +592,7 @@
   // ── THEME DATA + TIME TRAVEL ──────────────────────────
   let themesHistory = [];    // Array of theme snapshots, newest first
   let momentumHistory = [];  // Array of momentum snapshots, newest first
+  let varsHistory = [];      // Array of vars snapshots, newest first
   let parabolicHistory = []; // Array of parabolic snapshots, newest first
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
@@ -643,6 +658,32 @@
       });
   }
 
+  function loadVARSData() {
+    Promise.all([
+      fetch(withCacheBust(VARS_DATA_URL)).then(r => r.json()),
+      fetch(withCacheBust(VARS_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        varsHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderVARS(current);
+        renderVARSNetwork(current);
+      })
+      .catch(err => {
+        console.warn('VARS data not available:', err);
+        const c = document.getElementById('vars-container');
+        if (c) c.innerHTML = '<div class="no-data">VARS data not available.<br>Run the daily workflow to generate data.</div>';
+        const vn = document.getElementById('vars-network');
+        if (vn) vn.innerHTML = '<div class="no-data">VARS data not available.</div>';
+      });
+  }
+
   function loadParabolicData() {
     Promise.all([
       fetch(withCacheBust(PARABOLIC_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
@@ -678,6 +719,7 @@
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
+    varsHistory.forEach(h => dates.add(h.report_date));
     parabolicHistory.forEach(h => dates.add(h.report_date));
     epAfternoonHistory.forEach(h => dates.add(h.report_date));
     epMorningHistory.forEach(h => dates.add(h.report_date));
@@ -698,6 +740,12 @@
     if (momSnap) {
       renderMomentum(momSnap);
       renderMomentumNetwork(momSnap);
+    }
+    // VARS
+    const varsSnap = varsHistory.find(h => h.report_date === date);
+    if (varsSnap) {
+      renderVARS(varsSnap);
+      renderVARSNetwork(varsSnap);
     }
     // Parabolic
     const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
@@ -729,10 +777,15 @@
     renderTimeTravelBar('parabolic-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('vars-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('varsviz-tt-dates', dates, onTimeTravelSelect);
   }
 
   /**
    * Render a time-travel date-selector bar.
+   * Shows the last 5 sessions as clickable buttons and the rest (up to 40 total)
+   * in a dropdown to the right so users can jump farther back without clutter.
+   *
    * @param {string} containerId  - DOM id of the .time-travel-dates element
    * @param {Array}  dates        - ordered list of report_date strings (newest first)
    * @param {Function} onSelect   - callback(date) when user picks a date
@@ -742,28 +795,68 @@
     if (!container || dates.length === 0) return;
 
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    container.innerHTML = dates.map(rd => {
+    const VISIBLE = 5;  // first N as buttons; remainder go in the dropdown
+    const fmt = (rd) => {
       const d = new Date(rd + 'T12:00:00');
       const wd = weekdays[d.getDay()];
       const parts = rd.split('-');
-      const label = `${parts[1]}/${parts[2]}`;
+      return { label: `${parts[1]}/${parts[2]}`, wd };
+    };
+
+    const buttons = dates.slice(0, VISIBLE);
+    const dropdown = dates.slice(VISIBLE);
+
+    let html = buttons.map(rd => {
+      const { label, wd } = fmt(rd);
       const isActive = rd === activeSessionDate ? ' active' : '';
       return `<button class="tt-date-btn${isActive}" data-date="${rd}">${label}<span class="tt-weekday">${wd}</span></button>`;
     }).join('');
+
+    if (dropdown.length > 0) {
+      const activeInDropdown = dropdown.includes(activeSessionDate);
+      const selectedDate = activeInDropdown ? activeSessionDate : '';
+      const selectLabel = activeInDropdown
+        ? (() => { const { label, wd } = fmt(activeSessionDate); return `${label} ${wd}`; })()
+        : '+ older sessions…';
+      const options = dropdown.map(rd => {
+        const { label, wd } = fmt(rd);
+        const sel = rd === activeSessionDate ? ' selected' : '';
+        return `<option value="${rd}"${sel}>${label} ${wd}</option>`;
+      }).join('');
+      html += `
+        <select class="tt-date-select${activeInDropdown ? ' active' : ''}" data-tt-select="1">
+          <option value="" disabled${activeInDropdown ? '' : ' selected'}>${selectLabel}</option>
+          ${options}
+        </select>
+      `;
+    }
+
+    container.innerHTML = html;
 
     container.querySelectorAll('.tt-date-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const date = btn.dataset.date;
         if (date === activeSessionDate && hasUserSelectedSession) return;
-        activeSessionDate = date;
-        hasUserSelectedSession = true;
-        // Update ALL time-travel bars to stay in sync
-        document.querySelectorAll('.time-travel-dates .tt-date-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.date === date);
-        });
-        onSelect(date);
+        applyTimeTravelDate(date, onSelect);
       });
     });
+
+    const select = container.querySelector('.tt-date-select');
+    if (select) {
+      select.addEventListener('change', (e) => {
+        const date = e.target.value;
+        if (!date) return;
+        applyTimeTravelDate(date, onSelect);
+      });
+    }
+  }
+
+  function applyTimeTravelDate(date, onSelect) {
+    activeSessionDate = date;
+    hasUserSelectedSession = true;
+    // Re-render every time-travel bar so dropdown selection state stays in sync.
+    renderAllTimeTravelBars();
+    onSelect(date);
   }
 
   // ── NETWORK VIZ — Theme Viz + Momentum Viz ─────────────
@@ -789,12 +882,21 @@
       tabBtnId: 'tab-momentumviz',
       hotLabel: 'momentum themes',
     },
+    vars: {
+      containerId: 'vars-network',
+      metaId: 'varsviz-meta',
+      tooltipId: 'varsviz-tooltip',
+      overlayId: 'varsviz-overlay',
+      tabBtnId: 'tab-varsviz',
+      hotLabel: 'VARS themes',
+    },
   };
 
   // Per-mode runtime state — cytoscape instance, tab handler flag, pending snap
   const vizState = {
     themes:   { cy: null, pendingSnap: null, tabHandlerInstalled: false },
     momentum: { cy: null, pendingSnap: null, tabHandlerInstalled: false },
+    vars:     { cy: null, pendingSnap: null, tabHandlerInstalled: false },
   };
 
   function isVizVisible(mode) {
@@ -833,18 +935,35 @@
     return tk.reduce((s, t) => s + (t.rs ?? 0), 0) / tk.length;
   }
 
-  // Theme strength signal — server `score` for themes, derived for momentum.
+  function computeAvgVars(theme) {
+    if (typeof theme.avg_vars === 'number') return theme.avg_vars;
+    const tk = theme.tickers || [];
+    if (tk.length === 0) return 0;
+    return tk.reduce((s, t) => s + (t.vars ?? 0), 0) / tk.length;
+  }
+
+  // Theme strength signal — server `score` for themes, derived for momentum/vars.
   function computeStrength(theme, mode) {
     if (mode === 'themes') return theme.score ?? 0;
     const tk = theme.tickers || [];
     if (tk.length === 0) return 0;
     const breadthFactor = Math.min(tk.length / 8, 1.5); // saturates around 8-12 tickers
+    if (mode === 'vars') {
+      // Scale avg_vars (typical 2-10 range) into strength bands aligned with momentum (60/80/100)
+      const avgVars = computeAvgVars(theme);
+      return Math.round(avgVars * 15 * (0.6 + 0.4 * breadthFactor) * 10) / 10;
+    }
     return Math.round(computeAvgRs(theme) * (0.6 + 0.4 * breadthFactor) * 10) / 10;
   }
 
   function actionabilityScore(theme, mode) {
     const tk = theme.tickers || [];
     if (tk.length === 0) return 0;
+    if (mode === 'vars') {
+      const leaderDensity = tk.filter(t => (t.vars ?? 0) >= 6).length / tk.length;
+      const scoreQuality = Math.min(computeAvgVars(theme) / 6, 1.2);
+      return scoreQuality * (0.55 + 0.45 * leaderDensity);
+    }
     const leaderDensity = tk.filter(t => (t.rs ?? 0) >= 90).length / tk.length;
     const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
     const scoreQuality = mode === 'themes'
@@ -872,6 +991,14 @@
     return '#ff3355';                  // --red
   }
 
+  function varsFill(v) {
+    // 4-tier palette aligned to VARS bands (>2 is screener gate; >6 is exceptional)
+    if (v >= 6) return '#00e676';
+    if (v >= 4) return '#00c8ff';
+    if (v >= 2) return '#ffb300';
+    return '#ff3355';
+  }
+
   function actionabilityLabel(a) {
     if (a >= 0.95) return 'Highly actionable';
     if (a >= 0.75) return 'Actionable';
@@ -883,12 +1010,16 @@
     const d = node.data();
     if (d.kind === 'theme') {
       const strengthLabel = mode === 'themes' ? 'Score' : 'Strength';
+      const avgLabel = mode === 'vars' ? 'Avg VARS' : 'Avg RS';
+      const avgFmt = mode === 'vars'
+        ? (d.avg_rs?.toFixed?.(2) ?? '—')
+        : ((d.avg_rs?.toFixed?.(1) ?? '—') + '%');
       return (
         `<div class="tip-title">${d.label}</div>` +
         `<div class="tip-sub">Rank #${d.rank} · ${actionabilityLabel(d.action)}</div>` +
         `<div class="tip-grid">` +
         `<span class="tip-k">${strengthLabel}</span><span class="tip-v">${d.strength?.toFixed?.(1) ?? '—'}</span>` +
-        `<span class="tip-k">Avg RS</span><span class="tip-v">${d.avg_rs?.toFixed?.(1) ?? '—'}%</span>` +
+        `<span class="tip-k">${avgLabel}</span><span class="tip-v">${avgFmt}</span>` +
         `<span class="tip-k">Breadth</span><span class="tip-v">${d.breadth} tickers</span>` +
         `<span class="tip-k">Action</span><span class="tip-v">${(d.action * 100).toFixed(0)}%</span>` +
         `</div>`
@@ -898,9 +1029,12 @@
     if (d.isLeader) tags.push('<span class="tip-tag tag-leader">LEADER</span>');
     if (d.isBridge) tags.push('<span class="tip-tag tag-bridge">BRIDGE</span>');
     if (d.isTight)  tags.push('<span class="tip-tag tag-tight">TIGHT</span>');
+    const headLine = mode === 'vars'
+      ? `VARS ${d.vars?.toFixed?.(2) ?? '—'} · 20EMA ${d.vars_20ema?.toFixed?.(2) ?? '—'}`
+      : `RS ${d.rs?.toFixed?.(1) ?? '—'}%`;
     return (
       `<div class="tip-title">${d.label} ${tags.join(' ')}</div>` +
-      `<div class="tip-sub">RS ${d.rs?.toFixed?.(1) ?? '—'}%</div>` +
+      `<div class="tip-sub">${headLine}</div>` +
       `<div class="tip-grid">` +
       `<span class="tip-k">Price</span><span class="tip-v">$${d.price ?? '—'}</span>` +
       `<span class="tip-k">Float</span><span class="tip-v">${d.float ?? '—'}M</span>` +
@@ -937,12 +1071,24 @@
         `<span class="meta-pill">MMFI ${snap.mmfi != null ? snap.mmfi.toFixed(1) + '%' : '—'}</span>` +
         count;
     }
-    // Momentum snapshot doesn't carry NCFD/MMFI; just date + count
+    // Momentum / VARS snapshots don't carry NCFD/MMFI; just date + count
     return date + count;
   }
 
   function filterAndRankThemes(snap, mode) {
-    const HOT_RS = 70, HOT_BREADTH = 3;
+    const HOT_RS = 70, HOT_BREADTH = 3, HOT_VARS = 2, HOT_VARS_BREADTH = 1;
+    if (mode === 'vars') {
+      // VARS export is already filtered to vars > 2 by the screener — keep singletons
+      let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_VARS_BREADTH);
+      hot = hot.filter(t => computeAvgVars(t) >= HOT_VARS);
+      return hot
+        .map(t => Object.assign({}, t, {
+          _strength: computeStrength(t, mode),
+          _avg_rs:   computeAvgVars(t),  // reused as primary metric in tooltip/meta
+        }))
+        .sort((a, b) => b._strength - a._strength)
+        .map((t, i) => Object.assign(t, { _rank: i + 1 }));
+    }
     let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_BREADTH);
     if (mode === 'themes') {
       hot = hot.filter(t => (t.avg_rs ?? 0) >= HOT_RS);
@@ -977,6 +1123,7 @@
 
   function renderThemeNetwork(snap)    { renderNetwork(snap, 'themes'); }
   function renderMomentumNetwork(snap) { renderNetwork(snap, 'momentum'); }
+  function renderVARSNetwork(snap)     { renderNetwork(snap, 'vars'); }
 
   function actuallyRenderNetwork(snap, mode) {
     const cfg = VIZ_MODES[mode];
@@ -1013,10 +1160,11 @@
         (tickerThemes[tk.ticker] = tickerThemes[tk.ticker] || []).push(theme.name);
       }
     }
-    // Per-theme leader (highest RS within theme)
+    // Per-theme leader (highest RS within theme; highest VARS for vars mode)
     const leaderByTheme = {};
     for (const theme of hot) {
-      const top = [...(theme.tickers || [])].sort((a, b) => (b.rs ?? 0) - (a.rs ?? 0))[0];
+      const sortKey = mode === 'vars' ? 'vars' : 'rs';
+      const top = [...(theme.tickers || [])].sort((a, b) => (b[sortKey] ?? 0) - (a[sortKey] ?? 0))[0];
       if (top) leaderByTheme[theme.name] = top.ticker;
     }
 
@@ -1055,7 +1203,8 @@
               label: tk.ticker,
               rs: tk.rs ?? 0, price: tk.price, float: tk.float,
               eps: tk.eps, sales: tk.sales, short: tk.short,
-              fill: rsFill(tk.rs ?? 0),
+              vars: tk.vars ?? 0, vars_20ema: tk.vars_20ema ?? 0,
+              fill: mode === 'vars' ? varsFill(tk.vars ?? 0) : rsFill(tk.rs ?? 0),
               isLeader, isBridge, isTight,
             },
             classes: cls,
@@ -1064,7 +1213,7 @@
         elements.push({
           data: {
             source: themeId, target: tk.ticker,
-            weight: tk.rs ?? 0,
+            weight: mode === 'vars' ? (tk.vars ?? 0) * 10 : (tk.rs ?? 0),
             isLeader: leaderByTheme[theme.name] === tk.ticker,
           },
         });
@@ -1231,7 +1380,8 @@
       // Highlight selected ticker
       state.cy.nodes('node[kind = "ticker"]').removeClass('active-ticker');
       evt.target.addClass('active-ticker');
-      const tabId = mode === 'themes' ? 'themeviz' : 'momentumviz';
+      const tabIdMap = { themes: 'themeviz', momentum: 'momentumviz', vars: 'varsviz' };
+      const tabId = tabIdMap[mode] || 'momentumviz';
       if (typeof openChart === 'function') openChart(tabId, ticker, ticker);
     });
   }
@@ -1276,7 +1426,7 @@
         html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : t.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -1343,11 +1493,90 @@
         html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : t.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
+                  <td>${t.float ?? '—'}</td>
+                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
+                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
+                  <td class="${instClass}">${t.inst ?? '—'}</td>
+                  <td class="${shortClass}">${t.short ?? '—'}</td>
+                </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function renderVARS(data) {
+    const container = document.getElementById('vars-container');
+    if (!container) return;
+
+    if (!data || !data.themes || data.themes.length === 0) {
+      container.innerHTML = '<div class="no-data">No VARS leaders found for this date.</div>';
+      return;
+    }
+
+    let html = '';
+    data.themes.forEach((theme, idx) => {
+      const tickers = theme.tickers || [];
+      const count = tickers.length;
+      const avgVars = (typeof theme.avg_vars === 'number')
+        ? theme.avg_vars
+        : (count ? tickers.reduce((s, t) => s + (t.vars ?? 0), 0) / count : 0);
+      html += `
+        <div class="theme-block">
+          <div class="theme-header">
+            <span class="theme-rank">#${idx + 1}</span>
+            <span class="theme-name">${escHtml(theme.name)}</span>
+            <span class="theme-score">avg VARS ${avgVars.toFixed(2)} · ${count} ticker${count === 1 ? '' : 's'}</span>
+          </div>
+          <div class="theme-body">
+            <table>
+              <thead><tr>
+                <th class="l">Ticker</th>
+                <th>VARS</th>
+                <th>VARS 20EMA</th>
+                <th>RS%</th>
+                <th>Price</th>
+                <th>Float(M)</th>
+                <th>EPS%</th>
+                <th>Sales%</th>
+                <th>Inst%</th>
+                <th>Short%</th>
+              </tr></thead>
+              <tbody>
+      `;
+
+      tickers.forEach(t => {
+        const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
+        const ema20Class = t.vars_20ema >= 6 ? 'up' : t.vars_20ema < 2 ? 'dn' : '';
+        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
+        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+        const shortVal = parseFloat(t.short);
+        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+        html += `
+                <tr>
+                  <td class="l">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                      ${escHtml(t.ticker)}
+                    </span>
+                  </td>
+                  <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}</td>
+                  <td class="${ema20Class}">${(t.vars_20ema ?? 0).toFixed(2)}</td>
+                  <td class="${rsClass}">${t.rs ?? '—'}</td>
+                  <td>${t.price ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
                   <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
                   <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
@@ -1408,7 +1637,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
           </td>
           <td>${row.float ?? '—'}</td>
           <td class="${instClass}">${row.inst ?? '—'}</td>
@@ -1514,7 +1743,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>
@@ -1622,7 +1851,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : row.ticker_color === 'blue' ? ' day-pattern-blue' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>

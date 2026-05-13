@@ -1,48 +1,87 @@
 {
-  "report_date": "2026-05-12",
-  "ncfd": 35.5,
-  "mmfi": 58.0,
+  "report_date": "2026-05-13",
+  "ncfd": 38.1,
+  "mmfi": 54.8,
   "themes": [
     {
       "rank": 1,
-      "name": "Cybersecurity",
-      "score": 98.7,
-      "avg_rs": 87.7,
+      "name": "Robotics",
+      "score": 99.0,
+      "avg_rs": 56.9,
       "tickers": [
         {
-          "ticker": "CSCO",
-          "rs": 100.0,
-          "price": 99.29,
-          "float": "3940.0",
-          "eps": "9",
-          "sales": "10",
-          "inst": "+0.8",
-          "short": 1.6
+          "ticker": "RR",
+          "rs": 96.2,
+          "price": 2.82,
+          "float": "181.7",
+          "eps": "-27",
+          "sales": "-9",
+          "inst": "+30.1",
+          "short": 27.6
         },
         {
-          "ticker": "BB",
-          "rs": 96.2,
-          "price": 6.22,
-          "float": "585.9",
-          "eps": "12",
-          "sales": "10",
+          "ticker": "CGNX",
+          "rs": 84.6,
+          "price": 63.64,
+          "float": "165.8",
+          "eps": "43",
+          "sales": "24",
           "inst": "+0.3",
-          "short": 5.4
+          "short": 3.3
         },
         {
-          "ticker": "AKAM",
-          "rs": 96.2,
-          "price": 149.56,
-          "float": "143.8",
-          "eps": "-5",
-          "sales": "6",
-          "inst": "+1.5",
+          "ticker": "HCAI",
+          "rs": 53.8,
+          "price": 9.86,
+          "float": "0.6",
+          "eps": "N/A",
+          "sales": "-73",
+          "inst": "N/A",
+          "short": 0.4,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "PRCT",
+          "rs": 50.0,
+          "price": 25.7,
+          "float": "54.4",
+          "eps": "11",
+          "sales": "20",
+          "inst": "+0.2",
           "short": 11.0
         },
         {
+          "ticker": "SERV",
+          "rs": 0.0,
+          "price": 8.63,
+          "float": "67.7",
+          "eps": "-60",
+          "sales": "577",
+          "inst": "+7.6",
+          "short": 31.6
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "name": "Cybersecurity",
+      "score": 96.7,
+      "avg_rs": 84.6,
+      "tickers": [
+        {
+          "ticker": "AKAM",
+          "rs": 100.0,
+          "price": 161.14,
+          "float": "142.1",
+          "eps": "-5",
+          "sales": "6",
+          "inst": "+1.5",
+          "short": 11.1
+        },
+        {
           "ticker": "DDOG",
-          "rs": 92.3,
-          "price": 199.94,
+          "rs": 100.0,
+          "price": 205.31,
           "float": "320.9",
           "eps": "18",
           "sales": "32",
@@ -51,50 +90,69 @@
         },
         {
           "ticker": "FTNT",
-          "rs": 92.3,
-          "price": 113.87,
-          "float": "613.4",
+          "rs": 100.0,
+          "price": 117.69,
+          "float": "607.4",
           "eps": "14",
           "sales": "20",
           "inst": "-0.2",
           "short": 3.1
         },
         {
-          "ticker": "RBRK",
+          "ticker": "CSCO",
+          "rs": 100.0,
+          "price": 101.87,
+          "float": "3940.0",
+          "eps": "9",
+          "sales": "10",
+          "inst": "+0.8",
+          "short": 1.6
+        },
+        {
+          "ticker": "ZS",
           "rs": 88.5,
-          "price": 60.47,
+          "price": 152.43,
+          "float": "103.9",
+          "eps": "22",
+          "sales": "26",
+          "inst": "+3.6",
+          "short": 9.8
+        },
+        {
+          "ticker": "BB",
+          "rs": 84.6,
+          "price": 6.1,
+          "float": "585.9",
+          "eps": "12",
+          "sales": "10",
+          "inst": "+0.3",
+          "short": 5.4
+        },
+        {
+          "ticker": "RBRK",
+          "rs": 80.8,
+          "price": 59.48,
           "float": "149.8",
           "eps": "1829",
           "sales": "46",
           "inst": "+2.4",
-          "short": 8.6
+          "short": 8.6,
+          "ticker_color": "green"
         },
         {
           "ticker": "S",
           "rs": 80.8,
-          "price": 15.74,
+          "price": 16.08,
           "float": "316.3",
           "eps": "70",
           "sales": "20",
           "inst": "+8.3",
-          "short": 7.6,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "RPD",
-          "rs": 76.9,
-          "price": 6.57,
-          "float": "64.8",
-          "eps": "-25",
-          "sales": "-0",
-          "inst": "+4.4",
-          "short": 11.8,
-          "ticker_color": "green"
+          "short": 7.6
         },
         {
           "ticker": "VRNS",
-          "rs": 76.9,
-          "price": 27.84,
+          "rs": 61.5,
+          "price": 27.01,
           "float": "108.9",
           "eps": "-34",
           "sales": "27",
@@ -102,37 +160,27 @@
           "short": 7.9
         },
         {
-          "ticker": "CVLT",
-          "rs": 76.9,
-          "price": 102.23,
-          "float": "43.3",
-          "eps": "21",
-          "sales": "13",
-          "inst": "-2.8",
-          "short": 5.0
+          "ticker": "RPD",
+          "rs": 50.0,
+          "price": 6.18,
+          "float": "64.8",
+          "eps": "-25",
+          "sales": "-0",
+          "inst": "+4.4",
+          "short": 11.8
         }
       ]
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "Space",
-      "score": 96.1,
-      "avg_rs": 79.6,
+      "score": 90.7,
+      "avg_rs": 88.8,
       "tickers": [
         {
-          "ticker": "RKLB",
-          "rs": 100.0,
-          "price": 117.56,
-          "float": "570.8",
-          "eps": "40",
-          "sales": "63",
-          "inst": "+2.2",
-          "short": 5.8
-        },
-        {
           "ticker": "LUNR",
-          "rs": 96.2,
-          "price": 32.09,
+          "rs": 100.0,
+          "price": 35.68,
           "float": "117.1",
           "eps": "94",
           "sales": "-18",
@@ -140,9 +188,39 @@
           "short": 23.9
         },
         {
-          "ticker": "VSAT",
+          "ticker": "RKLB",
+          "rs": 100.0,
+          "price": 124.15,
+          "float": "570.8",
+          "eps": "40",
+          "sales": "63",
+          "inst": "+2.2",
+          "short": 5.8
+        },
+        {
+          "ticker": "VOYG",
           "rs": 96.2,
-          "price": 70.99,
+          "price": 33.6,
+          "float": "50.8",
+          "eps": "-45",
+          "sales": "2",
+          "inst": "+8.0",
+          "short": 14.9
+        },
+        {
+          "ticker": "SATL",
+          "rs": 92.3,
+          "price": 8.1,
+          "float": "92.6",
+          "eps": "-270",
+          "sales": "80",
+          "inst": "+7.0",
+          "short": 11.4
+        },
+        {
+          "ticker": "VSAT",
+          "rs": 92.3,
+          "price": 70.58,
           "float": "128.4",
           "eps": "77",
           "sales": "3",
@@ -150,29 +228,9 @@
           "short": 7.8
         },
         {
-          "ticker": "RDW",
-          "rs": 88.5,
-          "price": 11.56,
-          "float": "187.6",
-          "eps": "69",
-          "sales": "58",
-          "inst": "-25.4",
-          "short": 14.7
-        },
-        {
-          "ticker": "PL",
-          "rs": 88.5,
-          "price": 40.68,
-          "float": "266.3",
-          "eps": "-211",
-          "sales": "41",
-          "inst": "+2.8",
-          "short": 12.1
-        },
-        {
           "ticker": "BKSY",
-          "rs": 80.8,
-          "price": 40.31,
+          "rs": 88.5,
+          "price": 41.15,
           "float": "30.8",
           "eps": "30",
           "sales": "-30",
@@ -180,982 +238,77 @@
           "short": 22.7
         },
         {
+          "ticker": "RDW",
+          "rs": 84.6,
+          "price": 11.46,
+          "float": "187.6",
+          "eps": "67",
+          "sales": "58",
+          "inst": "-25.4",
+          "short": 14.7
+        },
+        {
+          "ticker": "PL",
+          "rs": 84.6,
+          "price": 40.74,
+          "float": "266.3",
+          "eps": "-211",
+          "sales": "41",
+          "inst": "+2.8",
+          "short": 12.1
+        },
+        {
           "ticker": "IRDM",
-          "rs": 73.1,
-          "price": 41.66,
+          "rs": 80.8,
+          "price": 43.09,
           "float": "91.4",
           "eps": "6",
           "sales": "2",
           "inst": "-2.5",
-          "short": 5.9,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "SATL",
-          "rs": 61.5,
-          "price": 7.55,
-          "float": "92.6",
-          "eps": "29",
-          "sales": "80",
-          "inst": "+7.0",
-          "short": 11.4,
-          "ticker_color": "green"
+          "short": 5.9
         },
         {
           "ticker": "MNTS",
-          "rs": 57.7,
-          "price": 5.34,
+          "rs": 69.2,
+          "price": 5.88,
           "float": "5.7",
           "eps": "N/A",
           "sales": "27",
           "inst": "+0.9",
           "short": 20.2
-        },
-        {
-          "ticker": "SATS",
-          "rs": 53.8,
-          "price": 129.38,
-          "float": "130.5",
-          "eps": "98",
-          "sales": "-5",
-          "inst": "-1.6",
-          "short": 31.2
-        }
-      ]
-    },
-    {
-      "rank": 3,
-      "name": "Nuclear",
-      "score": 94.4,
-      "avg_rs": 64.2,
-      "tickers": [
-        {
-          "ticker": "BW",
-          "rs": 100.0,
-          "price": 19.75,
-          "float": "130.8",
-          "eps": "130",
-          "sales": "18",
-          "inst": "+19.4",
-          "short": 7.4
-        },
-        {
-          "ticker": "URG",
-          "rs": 100.0,
-          "price": 1.94,
-          "float": "359.6",
-          "eps": "45",
-          "sales": "N/A",
-          "inst": "+1.1",
-          "short": 7.9
-        },
-        {
-          "ticker": "ASPI",
-          "rs": 96.2,
-          "price": 5.97,
-          "float": "112.9",
-          "eps": "50",
-          "sales": "1295",
-          "inst": "+8.0",
-          "short": 22.1
-        },
-        {
-          "ticker": "NNE",
-          "rs": 84.6,
-          "price": 27.09,
-          "float": "42.3",
-          "eps": "-2",
-          "sales": "N/A",
-          "inst": "+19.8",
-          "short": 22.7
-        },
-        {
-          "ticker": "OKLO",
-          "rs": 76.9,
-          "price": 73.63,
-          "float": "142.2",
-          "eps": "-10",
-          "sales": "N/A",
-          "inst": "+5.4",
-          "short": 20.2,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "UEC",
-          "rs": 61.5,
-          "price": 15.5,
-          "float": "481.4",
-          "eps": "49",
-          "sales": "-59",
-          "inst": "-0.9",
-          "short": 12.2
-        },
-        {
-          "ticker": "GEV",
-          "rs": 53.8,
-          "price": 1071.98,
-          "float": "268.4",
-          "eps": "61",
-          "sales": "16",
-          "inst": "-2.4",
-          "short": 2.9,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "SMR",
-          "rs": 30.8,
-          "price": 12.0,
-          "float": "312.8",
-          "eps": "75",
-          "sales": "-96",
-          "inst": "+11.9",
-          "short": 20.9
-        },
-        {
-          "ticker": "UUUU",
-          "rs": 30.8,
-          "price": 20.95,
-          "float": "245.8",
-          "eps": "52",
-          "sales": "112",
-          "inst": "-0.9",
-          "short": 14.9
-        },
-        {
-          "ticker": "CCJ",
-          "rs": 7.7,
-          "price": 116.93,
-          "float": "434.2",
-          "eps": "13",
-          "sales": "12",
-          "inst": "-2.1",
-          "short": 1.3,
-          "ticker_color": "green"
         }
       ]
     },
     {
       "rank": 4,
-      "name": "Metals & Mining",
-      "score": 91.5,
-      "avg_rs": 99.2,
+      "name": "Telecom",
+      "score": 90.1,
+      "avg_rs": 67.5,
       "tickers": [
         {
-          "ticker": "USAS",
+          "ticker": "VLN",
           "rs": 100.0,
-          "price": 7.41,
-          "float": "258.8",
-          "eps": "172",
-          "sales": "39",
-          "inst": "+1.6",
-          "short": 3.7
-        },
-        {
-          "ticker": "EXK",
-          "rs": 100.0,
-          "price": 11.46,
-          "float": "295.1",
-          "eps": "4338",
-          "sales": "231",
-          "inst": "+3.9",
-          "short": 6.9
-        },
-        {
-          "ticker": "VZLA",
-          "rs": 100.0,
-          "price": 3.85,
-          "float": "330.0",
-          "eps": "-220",
-          "sales": "N/A",
-          "inst": "+6.0",
-          "short": 11.4
-        },
-        {
-          "ticker": "SVM",
-          "rs": 100.0,
-          "price": 15.19,
-          "float": "211.3",
-          "eps": "53",
-          "sales": "51",
-          "inst": "+14.7",
-          "short": 13.1
-        },
-        {
-          "ticker": "TTI",
-          "rs": 100.0,
-          "price": 10.26,
-          "float": "127.0",
-          "eps": "-1",
-          "sales": "-1",
-          "inst": "+2.2",
-          "short": 4.9
-        },
-        {
-          "ticker": "AG",
-          "rs": 100.0,
-          "price": 24.21,
-          "float": "486.9",
-          "eps": "122",
-          "sales": "169",
+          "price": 2.95,
+          "float": "76.1",
+          "eps": "-2",
+          "sales": "16",
           "inst": "-0.1",
-          "short": 4.8
+          "short": 0.8
         },
         {
-          "ticker": "HBM",
+          "ticker": "NOK",
           "rs": 100.0,
-          "price": 27.12,
-          "float": "381.5",
-          "eps": "132",
-          "sales": "35",
-          "inst": "+3.7",
-          "short": 2.3
-        },
-        {
-          "ticker": "TECK",
-          "rs": 100.0,
-          "price": 65.97,
-          "float": "466.5",
-          "eps": "54",
-          "sales": "80",
-          "inst": "-3.3",
-          "short": 1.6
-        },
-        {
-          "ticker": "ASM",
-          "rs": 96.2,
-          "price": 7.97,
-          "float": "156.5",
-          "eps": "110",
-          "sales": "-0",
-          "inst": "-5.2",
-          "short": 2.2
-        },
-        {
-          "ticker": "BTG",
-          "rs": 96.2,
-          "price": 5.38,
-          "float": "1260.0",
-          "eps": "70",
-          "sales": "118",
-          "inst": "+2.4",
-          "short": 5.0
-        }
-      ]
-    },
-    {
-      "rank": 5,
-      "name": "Ads & Marketing Tech",
-      "score": 89.4,
-      "avg_rs": 73.9,
-      "tickers": [
-        {
-          "ticker": "TDIC",
-          "rs": 100.0,
-          "price": 2.36,
-          "float": "3.0",
-          "eps": "N/A",
-          "sales": "29",
-          "inst": "N/A",
-          "short": 5.2
-        },
-        {
-          "ticker": "SST",
-          "rs": 96.2,
-          "price": 4.45,
-          "float": "4.1",
-          "eps": "N/A",
-          "sales": "-31",
-          "inst": "-0.8",
-          "short": 15.7
-        },
-        {
-          "ticker": "EVC",
-          "rs": 96.2,
-          "price": 8.11,
-          "float": "61.5",
-          "eps": "N/A",
-          "sales": "114",
-          "inst": "-0.7",
-          "short": 1.3
-        },
-        {
-          "ticker": "TBLA",
-          "rs": 92.3,
-          "price": 5.16,
-          "float": "114.8",
-          "eps": "237",
-          "sales": "9",
-          "inst": "+2.6",
-          "short": 5.0
-        },
-        {
-          "ticker": "APP",
-          "rs": 80.8,
-          "price": 490.69,
-          "float": "262.8",
-          "eps": "64",
-          "sales": "24",
-          "inst": "-1.3",
-          "short": 4.2
-        },
-        {
-          "ticker": "ROKU",
-          "rs": 80.8,
-          "price": 127.63,
-          "float": "130.1",
-          "eps": "313",
-          "sales": "22",
-          "inst": "+8.8",
-          "short": 5.7
-        },
-        {
-          "ticker": "MGNI",
-          "rs": 61.5,
-          "price": 13.82,
-          "float": "139.3",
-          "eps": "18",
-          "sales": "6",
-          "inst": "+4.6",
-          "short": 8.7,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "PINS",
-          "rs": 34.6,
-          "price": 20.56,
-          "float": "473.5",
-          "eps": "19",
-          "sales": "18",
-          "inst": "-5.7",
-          "short": 13.7
-        },
-        {
-          "ticker": "SNAP",
-          "rs": 23.1,
-          "price": 5.55,
-          "float": "1090.0",
-          "eps": "76",
-          "sales": "12",
-          "inst": "+1.9",
-          "short": 10.6
-        }
-      ]
-    },
-    {
-      "rank": 6,
-      "name": "Chemicals",
-      "score": 87.3,
-      "avg_rs": 52.7,
-      "tickers": [
-        {
-          "ticker": "PRM",
-          "rs": 84.6,
-          "price": 32.1,
-          "float": "146.8",
-          "eps": "34",
-          "sales": "74",
-          "inst": "+2.9",
-          "short": 2.0
-        },
-        {
-          "ticker": "ALB",
-          "rs": 80.8,
-          "price": 205.52,
-          "float": "117.6",
-          "eps": "1526",
-          "sales": "33",
-          "inst": "-2.9",
-          "short": 8.8
-        },
-        {
-          "ticker": "MEOH",
-          "rs": 61.5,
-          "price": 64.17,
-          "float": "65.1",
-          "eps": "355",
-          "sales": "9",
-          "inst": "+7.4",
+          "price": 14.71,
+          "float": "5590.0",
+          "eps": "13",
+          "sales": "14",
+          "inst": "+8.1",
           "short": 1.2
         },
         {
-          "ticker": "CC",
-          "rs": 38.5,
-          "price": 24.67,
-          "float": "149.0",
-          "eps": "48",
-          "sales": "1",
-          "inst": "-7.4",
-          "short": 5.7
-        },
-        {
-          "ticker": "LYB",
-          "rs": 38.5,
-          "price": 74.31,
-          "float": "257.2",
-          "eps": "452",
-          "sales": "-6",
-          "inst": "+3.6",
-          "short": 4.4,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "HUN",
-          "rs": 34.6,
-          "price": 14.38,
-          "float": "164.8",
-          "eps": "72",
-          "sales": "1",
-          "inst": "-12.2",
-          "short": 13.1
-        },
-        {
-          "ticker": "DOW",
-          "rs": 30.8,
-          "price": 39.43,
-          "float": "718.7",
-          "eps": "415",
-          "sales": "-6",
-          "inst": "+2.3",
-          "short": 3.5
-        }
-      ]
-    },
-    {
-      "rank": 7,
-      "name": "Solar",
-      "score": 86.3,
-      "avg_rs": 79.9,
-      "tickers": [
-        {
-          "ticker": "FSLR",
-          "rs": 96.2,
-          "price": 228.06,
-          "float": "101.6",
-          "eps": "25",
-          "sales": "24",
-          "inst": "-11.9",
-          "short": 7.6
-        },
-        {
-          "ticker": "CSIQ",
-          "rs": 92.3,
-          "price": 19.41,
-          "float": "47.3",
-          "eps": "98",
-          "sales": "-20",
-          "inst": "-5.1",
-          "short": 35.6
-        },
-        {
-          "ticker": "SHLS",
-          "rs": 92.3,
-          "price": 8.63,
-          "float": "166.0",
-          "eps": "14",
-          "sales": "75",
-          "inst": "-0.5",
-          "short": 8.2
-        },
-        {
-          "ticker": "ENPH",
-          "rs": 88.5,
-          "price": 37.48,
-          "float": "127.8",
-          "eps": "-32",
-          "sales": "-21",
-          "inst": "+5.2",
-          "short": 23.7
-        },
-        {
-          "ticker": "SEI",
-          "rs": 84.6,
-          "price": 76.23,
-          "float": "42.6",
-          "eps": "115",
-          "sales": "55",
-          "inst": "+21.4",
-          "short": 29.5
-        },
-        {
-          "ticker": "RUN",
-          "rs": 73.1,
-          "price": 14.1,
-          "float": "229.9",
-          "eps": "-29",
-          "sales": "43",
-          "inst": "-2.6",
-          "short": 24.4
-        },
-        {
-          "ticker": "PN",
-          "rs": 65.4,
-          "price": 4.36,
-          "float": "1.1",
-          "eps": "N/A",
-          "sales": "43",
-          "inst": "N/A",
-          "short": 0.7
-        },
-        {
-          "ticker": "NXT",
-          "rs": 65.4,
-          "price": 125.37,
-          "float": "146.4",
-          "eps": "4",
-          "sales": "34",
-          "inst": "+0.1",
-          "short": 6.0
-        },
-        {
-          "ticker": "ARRY",
-          "rs": 61.5,
-          "price": 8.17,
-          "float": "151.1",
-          "eps": "9",
-          "sales": "-26",
-          "inst": "-2.4",
-          "short": 19.2
-        }
-      ]
-    },
-    {
-      "rank": 8,
-      "name": "Aerospace & Defense",
-      "score": 82.5,
-      "avg_rs": 65.8,
-      "tickers": [
-        {
-          "ticker": "KOPN",
-          "rs": 96.2,
-          "price": 5.35,
-          "float": "170.3",
-          "eps": "-520",
-          "sales": "-43",
-          "inst": "+11.1",
-          "short": 11.7
-        },
-        {
-          "ticker": "LASR",
-          "rs": 96.2,
-          "price": 83.81,
-          "float": "52.1",
-          "eps": "119",
-          "sales": "55",
-          "inst": "+2.8",
-          "short": 5.6
-        },
-        {
-          "ticker": "JOBY",
-          "rs": 88.5,
-          "price": 10.49,
-          "float": "628.5",
-          "eps": "26",
-          "sales": "N/A",
-          "inst": "+1.6",
-          "short": 14.6
-        },
-        {
-          "ticker": "ACHR",
-          "rs": 80.8,
-          "price": 6.39,
-          "float": "634.5",
-          "eps": "-37",
-          "sales": "N/A",
-          "inst": "-0.7",
-          "short": 15.3
-        },
-        {
-          "ticker": "CSTM",
-          "rs": 80.8,
-          "price": 33.31,
-          "float": "119.7",
-          "eps": "169",
-          "sales": "24",
-          "inst": "-3.9",
-          "short": 5.5
-        },
-        {
-          "ticker": "HXL",
-          "rs": 50.0,
-          "price": 92.45,
-          "float": "74.7",
-          "eps": "31",
-          "sales": "8",
-          "inst": "-5.0",
-          "short": 5.5
-        },
-        {
-          "ticker": "ATI",
-          "rs": 46.2,
-          "price": 161.01,
-          "float": "135.0",
-          "eps": "35",
-          "sales": "1",
-          "inst": "-1.2",
-          "short": 2.8,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "EVTL",
-          "rs": 42.3,
-          "price": 2.55,
-          "float": "121.0",
-          "eps": "-122",
-          "sales": "N/A",
-          "inst": "+12.0",
-          "short": 6.5
-        },
-        {
-          "ticker": "SPCE",
-          "rs": 38.5,
-          "price": 2.79,
-          "float": "80.6",
-          "eps": "52",
-          "sales": "-27",
-          "inst": "+4.7",
-          "short": 27.1
-        },
-        {
-          "ticker": "LOAR",
-          "rs": 38.5,
-          "price": 60.95,
-          "float": "75.5",
-          "eps": "10",
-          "sales": "36",
-          "inst": "+1.5",
-          "short": 9.3,
-          "ticker_color": "green"
-        }
-      ]
-    },
-    {
-      "rank": 9,
-      "name": "Logistics",
-      "score": 81.6,
-      "avg_rs": 60.7,
-      "tickers": [
-        {
-          "ticker": "SBLK",
-          "rs": 100.0,
-          "price": 27.34,
-          "float": "82.3",
-          "eps": "286",
-          "sales": "-3",
-          "inst": "+3.2",
-          "short": 1.9
-        },
-        {
-          "ticker": "CMBT",
-          "rs": 96.2,
-          "price": 15.15,
-          "float": "85.6",
-          "eps": "110",
-          "sales": "161",
-          "inst": "+0.3",
-          "short": 1.1
-        },
-        {
-          "ticker": "FRO",
-          "rs": 76.9,
-          "price": 38.53,
-          "float": "143.2",
-          "eps": "287",
-          "sales": "47",
-          "inst": "-1.2",
-          "short": 4.4
-        },
-        {
-          "ticker": "RXO",
-          "rs": 61.5,
-          "price": 20.05,
-          "float": "163.6",
-          "eps": "184",
-          "sales": "-1",
-          "inst": "-2.9",
-          "short": 8.4
-        },
-        {
-          "ticker": "STNG",
-          "rs": 57.7,
-          "price": 83.51,
-          "float": "44.9",
-          "eps": "130",
-          "sales": "46",
-          "inst": "-2.7",
-          "short": 4.0,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "VG",
-          "rs": 50.0,
-          "price": 13.27,
-          "float": "497.9",
-          "eps": "54",
-          "sales": "192",
-          "inst": "+0.6",
-          "short": 8.0
-        },
-        {
-          "ticker": "PBI",
-          "rs": 46.2,
-          "price": 15.31,
-          "float": "134.7",
-          "eps": "20",
-          "sales": "-3",
-          "inst": "-7.5",
-          "short": 14.7
-        },
-        {
-          "ticker": "NAT",
-          "rs": 30.8,
-          "price": 5.83,
-          "float": "200.5",
-          "eps": "838",
-          "sales": "15",
-          "inst": "+0.6",
-          "short": 9.3,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "DHT",
-          "rs": 26.9,
-          "price": 18.72,
-          "float": "142.8",
-          "eps": "124",
-          "sales": "58",
-          "inst": "+3.5",
-          "short": 5.7,
-          "ticker_color": "green"
-        }
-      ]
-    },
-    {
-      "rank": 10,
-      "name": "Precious Metals",
-      "score": 79.8,
-      "avg_rs": 71.9,
-      "tickers": [
-        {
-          "ticker": "HBM",
-          "rs": 100.0,
-          "price": 27.12,
-          "float": "381.5",
-          "eps": "132",
-          "sales": "35",
-          "inst": "+3.7",
-          "short": 2.3
-        },
-        {
-          "ticker": "PAAS",
-          "rs": 100.0,
-          "price": 63.78,
-          "float": "421.2",
-          "eps": "83",
-          "sales": "49",
-          "inst": "-5.6",
-          "short": 0.9
-        },
-        {
-          "ticker": "HYMC",
-          "rs": 92.3,
-          "price": 45.16,
-          "float": "49.2",
-          "eps": "-17",
-          "sales": "N/A",
-          "inst": "+19.3",
-          "short": 17.5
-        },
-        {
-          "ticker": "MUX",
-          "rs": 88.5,
-          "price": 26.16,
-          "float": "51.1",
-          "eps": "135",
-          "sales": "107",
-          "inst": "+10.0",
-          "short": 20.5
-        },
-        {
-          "ticker": "BVN",
-          "rs": 73.1,
-          "price": 38.09,
-          "float": "253.7",
-          "eps": "47",
-          "sales": "102",
-          "inst": "+1.1",
-          "short": 2.0
-        },
-        {
-          "ticker": "HL",
-          "rs": 69.2,
-          "price": 20.57,
-          "float": "665.1",
-          "eps": "96",
-          "sales": "57",
-          "inst": "-6.5",
-          "short": 4.7
-        },
-        {
-          "ticker": "CDE",
-          "rs": 57.7,
-          "price": 20.17,
-          "float": "1030.0",
-          "eps": "129",
-          "sales": "138",
-          "inst": "+3.7",
-          "short": 3.3
-        },
-        {
-          "ticker": "FSM",
-          "rs": 53.8,
-          "price": 10.82,
-          "float": "301.8",
-          "eps": "120",
-          "sales": "18",
-          "inst": "-0.7",
-          "short": 6.0
-        },
-        {
-          "ticker": "SKE",
-          "rs": 50.0,
-          "price": 33.69,
-          "float": "91.9",
-          "eps": "N/A",
-          "sales": "N/A",
-          "inst": "+1.2",
-          "short": 4.1
-        },
-        {
-          "ticker": "IAUX",
-          "rs": 34.6,
-          "price": 1.59,
-          "float": "741.6",
-          "eps": "52",
-          "sales": "-8",
-          "inst": "+2.0",
-          "short": 8.6,
-          "ticker_color": "green"
-        }
-      ]
-    },
-    {
-      "rank": 11,
-      "name": "Financial Services",
-      "score": 76.8,
-      "avg_rs": 95.0,
-      "tickers": [
-        {
-          "ticker": "FIGR",
-          "rs": 100.0,
-          "price": 39.5,
-          "float": "116.4",
-          "eps": "78",
-          "sales": "103",
-          "inst": "+7.4",
-          "short": 9.3
-        },
-        {
-          "ticker": "MIAX",
-          "rs": 100.0,
-          "price": 52.47,
-          "float": "82.8",
-          "eps": "-15",
-          "sales": "13",
-          "inst": "+30.7",
-          "short": 2.9
-        },
-        {
-          "ticker": "IVZ",
-          "rs": 100.0,
-          "price": 28.38,
-          "float": "439.8",
-          "eps": "27",
-          "sales": "17",
-          "inst": "+2.2",
-          "short": 4.0
-        },
-        {
-          "ticker": "BEN",
-          "rs": 100.0,
-          "price": 31.68,
-          "float": "275.2",
-          "eps": "23",
-          "sales": "5",
-          "inst": "+0.1",
-          "short": 8.1
-        },
-        {
-          "ticker": "GLXY",
-          "rs": 96.2,
-          "price": 31.38,
-          "float": "187.2",
-          "eps": "53",
-          "sales": "-21",
-          "inst": "+7.6",
-          "short": 12.8
-        },
-        {
-          "ticker": "HRB",
-          "rs": 96.2,
-          "price": 36.67,
-          "float": "125.0",
-          "eps": "11",
-          "sales": "5",
-          "inst": "+0.2",
-          "short": 14.2
-        },
-        {
-          "ticker": "DXYZ",
-          "rs": 92.3,
-          "price": 53.4,
-          "float": "13.7",
-          "eps": "N/A",
-          "sales": "-14",
-          "inst": "N/A",
-          "short": 21.5
-        },
-        {
-          "ticker": "FA",
-          "rs": 88.5,
-          "price": 15.56,
-          "float": "79.2",
-          "eps": "18",
-          "sales": "9",
-          "inst": "+0.2",
-          "short": 17.6
-        },
-        {
-          "ticker": "VYX",
-          "rs": 88.5,
-          "price": 7.6,
-          "float": "136.5",
-          "eps": "1",
-          "sales": "-2",
-          "inst": "-1.0",
-          "short": 18.6
-        },
-        {
-          "ticker": "FLYW",
-          "rs": 88.5,
-          "price": 16.66,
-          "float": "111.7",
-          "eps": "300",
-          "sales": "41",
-          "inst": "+4.4",
-          "short": 3.4
-        }
-      ]
-    },
-    {
-      "rank": 12,
-      "name": "Telecom",
-      "score": 76.4,
-      "avg_rs": 58.2,
-      "tickers": [
-        {
           "ticker": "HLIT",
           "rs": 100.0,
-          "price": 12.95,
+          "price": 13.35,
           "float": "108.1",
           "eps": "37",
           "sales": "-9",
@@ -1164,8 +317,8 @@
         },
         {
           "ticker": "MTSI",
-          "rs": 96.2,
-          "price": 362.76,
+          "rs": 100.0,
+          "price": 381.55,
           "float": "68.5",
           "eps": "45",
           "sales": "22",
@@ -1173,60 +326,50 @@
           "short": 4.2
         },
         {
-          "ticker": "TE",
-          "rs": 92.3,
-          "price": 5.85,
-          "float": "202.0",
-          "eps": "92",
-          "sales": "12087",
-          "inst": "+32.5",
-          "short": 21.9
-        },
-        {
-          "ticker": "NOK",
-          "rs": 76.9,
-          "price": 13.17,
-          "float": "5590.0",
-          "eps": "13",
-          "sales": "14",
-          "inst": "+8.1",
-          "short": 1.2,
-          "ticker_color": "green"
-        },
-        {
           "ticker": "SWKS",
-          "rs": 76.9,
-          "price": 66.31,
+          "rs": 80.8,
+          "price": 68.14,
           "float": "149.8",
           "eps": "-16",
           "sales": "-1",
           "inst": "+7.8",
-          "short": 15.1
+          "short": 15.1,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "TE",
+          "rs": 76.9,
+          "price": 5.61,
+          "float": "202.0",
+          "eps": "92",
+          "sales": "232",
+          "inst": "+32.5",
+          "short": 21.9
         },
         {
           "ticker": "ADTN",
-          "rs": 19.2,
-          "price": 15.04,
+          "rs": 26.9,
+          "price": 15.77,
           "float": "74.3",
-          "eps": "135",
+          "eps": "123",
           "sales": "15",
           "inst": "-1.0",
           "short": 15.0
         },
         {
           "ticker": "TIGO",
-          "rs": 3.8,
-          "price": 80.13,
+          "rs": 15.4,
+          "price": 81.98,
           "float": "85.9",
-          "eps": "-35",
-          "sales": "16",
+          "eps": "-36",
+          "sales": "44",
           "inst": "-0.2",
           "short": 4.0
         },
         {
           "ticker": "UNIT",
-          "rs": 0.0,
-          "price": 11.22,
+          "rs": 7.7,
+          "price": 11.3,
           "float": "221.1",
           "eps": "-134",
           "sales": "236",
@@ -1236,296 +379,343 @@
       ]
     },
     {
-      "rank": 13,
-      "name": "Gaming & Entertainment",
-      "score": 75.4,
-      "avg_rs": 63.5,
+      "rank": 5,
+      "name": "Nuclear",
+      "score": 89.0,
+      "avg_rs": 51.5,
       "tickers": [
         {
-          "ticker": "TDIC",
+          "ticker": "ASPI",
           "rs": 100.0,
-          "price": 2.36,
-          "float": "3.0",
-          "eps": "N/A",
-          "sales": "29",
-          "inst": "N/A",
-          "short": 5.2
+          "price": 6.32,
+          "float": "112.9",
+          "eps": "50",
+          "sales": "1295",
+          "inst": "+8.0",
+          "short": 22.1
         },
         {
-          "ticker": "RUM",
+          "ticker": "URG",
           "rs": 88.5,
-          "price": 7.92,
-          "float": "108.2",
-          "eps": "-2",
-          "sales": "-10",
-          "inst": "+3.0",
-          "short": 21.8,
-          "ticker_color": "green"
+          "price": 1.87,
+          "float": "359.6",
+          "eps": "44",
+          "sales": "N/A",
+          "inst": "+1.1",
+          "short": 7.9
         },
         {
-          "ticker": "ROKU",
+          "ticker": "BW",
           "rs": 80.8,
-          "price": 127.63,
-          "float": "130.1",
-          "eps": "313",
-          "sales": "22",
-          "inst": "+8.8",
-          "short": 5.7
+          "price": 19.35,
+          "float": "130.8",
+          "eps": "130",
+          "sales": "18",
+          "inst": "+19.4",
+          "short": 7.4
         },
         {
-          "ticker": "DKNG",
-          "rs": 69.2,
-          "price": 24.61,
-          "float": "476.2",
-          "eps": "2350",
-          "sales": "17",
-          "inst": "+2.4",
-          "short": 7.6,
+          "ticker": "NNE",
+          "rs": 76.9,
+          "price": 27.05,
+          "float": "42.3",
+          "eps": "-2",
+          "sales": "N/A",
+          "inst": "+19.8",
+          "short": 22.7,
           "ticker_color": "green"
         },
         {
-          "ticker": "RSI",
-          "rs": 65.4,
-          "price": 27.51,
-          "float": "100.0",
-          "eps": "62",
-          "sales": "41",
-          "inst": "-0.4",
-          "short": 7.2
-        },
-        {
-          "ticker": "NMAX",
-          "rs": 61.5,
-          "price": 6.54,
-          "float": "65.8",
-          "eps": "89",
-          "sales": "20",
-          "inst": "+104.1",
-          "short": 10.5,
+          "ticker": "UEC",
+          "rs": 50.0,
+          "price": 15.37,
+          "float": "481.4",
+          "eps": "49",
+          "sales": "-59",
+          "inst": "-0.9",
+          "short": 12.2,
           "ticker_color": "green"
         },
         {
-          "ticker": "SGHC",
-          "rs": 57.7,
-          "price": 12.92,
-          "float": "155.1",
-          "eps": "95",
-          "sales": "8",
-          "inst": "+3.1",
-          "short": 13.5
-        },
-        {
-          "ticker": "SKLZ",
-          "rs": 53.8,
-          "price": 6.34,
-          "float": "8.5",
-          "eps": "32",
-          "sales": "47",
-          "inst": "-2.3",
-          "short": 20.0,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "SIRI",
-          "rs": 30.8,
-          "price": 26.16,
-          "float": "324.7",
-          "eps": "40",
-          "sales": "1",
-          "inst": "-0.0",
-          "short": 8.9
-        },
-        {
-          "ticker": "AGAE",
-          "rs": 26.9,
-          "price": 0.4,
-          "float": "13.3",
-          "eps": "N/A",
-          "sales": "-15",
-          "inst": "-2.0",
-          "short": 17.7
-        }
-      ]
-    },
-    {
-      "rank": 14,
-      "name": "Robotics",
-      "score": 74.6,
-      "avg_rs": 81.5,
-      "tickers": [
-        {
-          "ticker": "PRCT",
-          "rs": 100.0,
-          "price": 28.69,
-          "float": "54.4",
-          "eps": "11",
-          "sales": "20",
-          "inst": "+0.2",
-          "short": 11.0
-        },
-        {
-          "ticker": "TSLA",
-          "rs": 96.2,
-          "price": 433.45,
-          "float": "2910.0",
-          "eps": "16",
+          "ticker": "GEV",
+          "rs": 42.3,
+          "price": 1062.57,
+          "float": "268.4",
+          "eps": "61",
           "sales": "16",
-          "inst": "+0.6",
-          "short": 2.6
+          "inst": "-2.4",
+          "short": 2.9
         },
         {
-          "ticker": "CGNX",
-          "rs": 88.5,
-          "price": 65.68,
-          "float": "165.8",
-          "eps": "43",
-          "sales": "24",
-          "inst": "+0.3",
-          "short": 3.3
+          "ticker": "OKLO",
+          "rs": 38.5,
+          "price": 69.66,
+          "float": "142.2",
+          "eps": "-8",
+          "sales": "N/A",
+          "inst": "+5.4",
+          "short": 20.2
         },
         {
-          "ticker": "HCAI",
-          "rs": 61.5,
-          "price": 10.77,
-          "float": "0.6",
-          "eps": "N/A",
-          "sales": "-73",
-          "inst": "N/A",
-          "short": 0.4,
+          "ticker": "SMR",
+          "rs": 26.9,
+          "price": 11.96,
+          "float": "312.8",
+          "eps": "75",
+          "sales": "-96",
+          "inst": "+11.9",
+          "short": 20.9,
           "ticker_color": "green"
         },
         {
-          "ticker": "RR",
-          "rs": 61.5,
-          "price": 2.57,
-          "float": "181.7",
-          "eps": "-27",
-          "sales": "-9",
-          "inst": "+30.1",
-          "short": 27.6,
+          "ticker": "UUUU",
+          "rs": 11.5,
+          "price": 20.18,
+          "float": "245.8",
+          "eps": "52",
+          "sales": "112",
+          "inst": "-0.9",
+          "short": 14.9
+        },
+        {
+          "ticker": "CCJ",
+          "rs": 0.0,
+          "price": 115.39,
+          "float": "434.2",
+          "eps": "12",
+          "sales": "12",
+          "inst": "-2.1",
+          "short": 1.3,
           "ticker_color": "green"
         }
       ]
     },
     {
-      "rank": 15,
-      "name": "Retail",
-      "score": 74.2,
-      "avg_rs": 71.5,
+      "rank": 6,
+      "name": "Metals & Mining",
+      "score": 88.6,
+      "avg_rs": 96.9,
       "tickers": [
         {
-          "ticker": "SFM",
+          "ticker": "NAK",
           "rs": 100.0,
-          "price": 86.89,
-          "float": "93.4",
-          "eps": "5",
-          "sales": "4",
-          "inst": "-2.7",
-          "short": 10.9
+          "price": 2.25,
+          "float": "549.9",
+          "eps": "79",
+          "sales": "N/A",
+          "inst": "+9.2",
+          "short": 4.7
         },
         {
-          "ticker": "GRPN",
+          "ticker": "SVM",
+          "rs": 100.0,
+          "price": 15.71,
+          "float": "211.3",
+          "eps": "53",
+          "sales": "51",
+          "inst": "+14.7",
+          "short": 13.1
+        },
+        {
+          "ticker": "TTI",
+          "rs": 100.0,
+          "price": 10.65,
+          "float": "127.0",
+          "eps": "-1",
+          "sales": "-1",
+          "inst": "+2.2",
+          "short": 4.9
+        },
+        {
+          "ticker": "HBM",
+          "rs": 100.0,
+          "price": 27.74,
+          "float": "381.5",
+          "eps": "132",
+          "sales": "35",
+          "inst": "+3.7",
+          "short": 2.3
+        },
+        {
+          "ticker": "TECK",
+          "rs": 100.0,
+          "price": 66.84,
+          "float": "466.5",
+          "eps": "54",
+          "sales": "80",
+          "inst": "-3.3",
+          "short": 1.6
+        },
+        {
+          "ticker": "USAS",
+          "rs": 96.2,
+          "price": 7.25,
+          "float": "258.8",
+          "eps": "172",
+          "sales": "39",
+          "inst": "+1.6",
+          "short": 3.7
+        },
+        {
+          "ticker": "VZLA",
+          "rs": 96.2,
+          "price": 3.85,
+          "float": "329.9",
+          "eps": "-220",
+          "sales": "N/A",
+          "inst": "+6.0",
+          "short": 11.4
+        },
+        {
+          "ticker": "AG",
+          "rs": 96.2,
+          "price": 23.98,
+          "float": "486.9",
+          "eps": "96",
+          "sales": "95",
+          "inst": "-0.1",
+          "short": 4.8
+        },
+        {
+          "ticker": "EXK",
           "rs": 92.3,
-          "price": 17.42,
-          "float": "22.9",
-          "eps": "99",
-          "sales": "0",
-          "inst": "-1.6",
-          "short": 59.7
-        },
-        {
-          "ticker": "ACVA",
-          "rs": 88.5,
-          "price": 5.84,
-          "float": "163.4",
-          "eps": "22",
-          "sales": "12",
-          "inst": "-8.4",
+          "price": 11.28,
+          "float": "295.1",
+          "eps": "4338",
+          "sales": "231",
+          "inst": "+3.9",
           "short": 6.9
         },
         {
-          "ticker": "EBAY",
+          "ticker": "ASM",
           "rs": 88.5,
-          "price": 110.4,
-          "float": "442.6",
-          "eps": "11",
-          "sales": "21",
-          "inst": "-2.8",
-          "short": 3.1
-        },
-        {
-          "ticker": "JMIA",
-          "rs": 84.6,
-          "price": 7.98,
-          "float": "123.4",
-          "eps": "34",
-          "sales": "35",
-          "inst": "+2.4",
-          "short": 3.6
-        },
-        {
-          "ticker": "ATER",
-          "rs": 80.8,
-          "price": 1.13,
-          "float": "8.2",
-          "eps": "N/A",
-          "sales": "-39",
-          "inst": "-8.0",
-          "short": 23.5,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "RSI",
-          "rs": 65.4,
-          "price": 27.51,
-          "float": "100.0",
-          "eps": "62",
-          "sales": "41",
-          "inst": "-0.4",
-          "short": 7.2
-        },
-        {
-          "ticker": "GO",
-          "rs": 42.3,
-          "price": 7.96,
-          "float": "90.7",
-          "eps": "-34",
-          "sales": "11",
-          "inst": "-10.6",
-          "short": 27.8
-        },
-        {
-          "ticker": "STUB",
-          "rs": 38.5,
-          "price": 7.32,
-          "float": "238.6",
-          "eps": "105",
-          "sales": "-16",
-          "inst": "+4.7",
-          "short": 8.3
-        },
-        {
-          "ticker": "WIX",
-          "rs": 34.6,
-          "price": 75.88,
-          "float": "53.0",
-          "eps": "-17",
-          "sales": "14",
-          "inst": "-0.7",
-          "short": 15.0
+          "price": 7.83,
+          "float": "156.5",
+          "eps": "110",
+          "sales": "-0",
+          "inst": "-5.2",
+          "short": 2.2
         }
       ]
     },
     {
-      "rank": 16,
+      "rank": 7,
+      "name": "Financial Services",
+      "score": 86.2,
+      "avg_rs": 98.5,
+      "tickers": [
+        {
+          "ticker": "VELO",
+          "rs": 100.0,
+          "price": 21.01,
+          "float": "13.8",
+          "eps": "51",
+          "sales": "48",
+          "inst": "-1.0",
+          "short": 29.3
+        },
+        {
+          "ticker": "RVI",
+          "rs": 100.0,
+          "price": 73.71,
+          "float": "12.6",
+          "eps": "N/A",
+          "sales": "N/A",
+          "inst": "N/A",
+          "short": 3.5
+        },
+        {
+          "ticker": "FIGR",
+          "rs": 100.0,
+          "price": 40.51,
+          "float": "116.4",
+          "eps": "87",
+          "sales": "103",
+          "inst": "+7.4",
+          "short": 9.3
+        },
+        {
+          "ticker": "WT",
+          "rs": 100.0,
+          "price": 19.49,
+          "float": "131.9",
+          "eps": "34",
+          "sales": "48",
+          "inst": "-3.1",
+          "short": 13.9
+        },
+        {
+          "ticker": "ETOR",
+          "rs": 100.0,
+          "price": 41.29,
+          "float": "36.7",
+          "eps": "21",
+          "sales": "18",
+          "inst": "+12.1",
+          "short": 6.4
+        },
+        {
+          "ticker": "MRX",
+          "rs": 100.0,
+          "price": 58.25,
+          "float": "59.8",
+          "eps": "30",
+          "sales": "54",
+          "inst": "+2.3",
+          "short": 3.6
+        },
+        {
+          "ticker": "MIAX",
+          "rs": 100.0,
+          "price": 55.21,
+          "float": "85.7",
+          "eps": "-15",
+          "sales": "13",
+          "inst": "+30.7",
+          "short": 2.8
+        },
+        {
+          "ticker": "BEN",
+          "rs": 100.0,
+          "price": 32.04,
+          "float": "275.2",
+          "eps": "23",
+          "sales": "5",
+          "inst": "+0.1",
+          "short": 8.1
+        },
+        {
+          "ticker": "INV",
+          "rs": 92.3,
+          "price": 7.15,
+          "float": "49.5",
+          "eps": "78",
+          "sales": "-33",
+          "inst": "+16.5",
+          "short": 18.5
+        },
+        {
+          "ticker": "IVZ",
+          "rs": 92.3,
+          "price": 28.09,
+          "float": "439.8",
+          "eps": "27",
+          "sales": "17",
+          "inst": "+2.2",
+          "short": 4.0
+        }
+      ]
+    },
+    {
+      "rank": 8,
       "name": "Quantum Computing",
-      "score": 74.0,
-      "avg_rs": 74.7,
+      "score": 85.8,
+      "avg_rs": 68.7,
       "tickers": [
         {
           "ticker": "QUBT",
-          "rs": 100.0,
-          "price": 11.78,
+          "rs": 96.2,
+          "price": 11.03,
           "float": "197.8",
           "eps": "-47",
           "sales": "9364",
@@ -1534,18 +724,18 @@
         },
         {
           "ticker": "Q",
-          "rs": 100.0,
-          "price": 168.36,
+          "rs": 96.2,
+          "price": 162.02,
           "float": "209.3",
-          "eps": "19",
-          "sales": "4",
+          "eps": "21",
+          "sales": "18",
           "inst": "+210.2",
           "short": 1.9
         },
         {
           "ticker": "IONQ",
-          "rs": 96.2,
-          "price": 55.87,
+          "rs": 92.3,
+          "price": 55.26,
           "float": "364.0",
           "eps": "81",
           "sales": "755",
@@ -1553,20 +743,20 @@
           "short": 23.0
         },
         {
-          "ticker": "QBTS",
-          "rs": 76.9,
-          "price": 22.35,
-          "float": "356.9",
-          "eps": "-26",
-          "sales": "19",
-          "inst": "-6.3",
-          "short": 14.6,
+          "ticker": "LAES",
+          "rs": 57.7,
+          "price": 2.96,
+          "float": "215.2",
+          "eps": "29",
+          "sales": "138",
+          "inst": "+2.4",
+          "short": 8.3,
           "ticker_color": "green"
         },
         {
           "ticker": "RGTI",
-          "rs": 69.2,
-          "price": 19.07,
+          "rs": 53.8,
+          "price": 18.42,
           "float": "324.8",
           "eps": "-19",
           "sales": "199",
@@ -1574,19 +764,19 @@
           "short": 15.5
         },
         {
-          "ticker": "LAES",
-          "rs": 53.8,
-          "price": 2.94,
-          "float": "215.2",
-          "eps": "29",
-          "sales": "138",
-          "inst": "+2.4",
-          "short": 8.3
+          "ticker": "QBTS",
+          "rs": 50.0,
+          "price": 21.44,
+          "float": "356.9",
+          "eps": "-17",
+          "sales": "-81",
+          "inst": "-6.3",
+          "short": 14.6
         },
         {
           "ticker": "XNDU",
-          "rs": 26.9,
-          "price": 14.15,
+          "rs": 34.6,
+          "price": 14.89,
           "float": "20.7",
           "eps": "96",
           "sales": "N/A",
@@ -1596,15 +786,701 @@
       ]
     },
     {
-      "rank": 17,
+      "rank": 9,
+      "name": "Gaming & Entertainment",
+      "score": 84.2,
+      "avg_rs": 80.0,
+      "tickers": [
+        {
+          "ticker": "TDIC",
+          "rs": 100.0,
+          "price": 23.05,
+          "float": "3.0",
+          "eps": "N/A",
+          "sales": "29",
+          "inst": "N/A",
+          "short": 5.2
+        },
+        {
+          "ticker": "BZFD",
+          "rs": 96.2,
+          "price": 1.31,
+          "float": "23.4",
+          "eps": "N/A",
+          "sales": "-12",
+          "inst": "-8.7",
+          "short": 8.5
+        },
+        {
+          "ticker": "RUM",
+          "rs": 96.2,
+          "price": 8.32,
+          "float": "108.2",
+          "eps": "-2",
+          "sales": "-10",
+          "inst": "+3.0",
+          "short": 21.8
+        },
+        {
+          "ticker": "GRND",
+          "rs": 96.2,
+          "price": 14.61,
+          "float": "32.8",
+          "eps": "40",
+          "sales": "38",
+          "inst": "-7.2",
+          "short": 16.9
+        },
+        {
+          "ticker": "DKNG",
+          "rs": 76.9,
+          "price": 25.03,
+          "float": "476.2",
+          "eps": "2350",
+          "sales": "17",
+          "inst": "+2.4",
+          "short": 7.6
+        },
+        {
+          "ticker": "SE",
+          "rs": 73.1,
+          "price": 93.52,
+          "float": "561.1",
+          "eps": "3",
+          "sales": "47",
+          "inst": "+2.5",
+          "short": 3.4
+        },
+        {
+          "ticker": "NMAX",
+          "rs": 69.2,
+          "price": 6.81,
+          "float": "65.8",
+          "eps": "89",
+          "sales": "20",
+          "inst": "+104.1",
+          "short": 10.5
+        },
+        {
+          "ticker": "ROKU",
+          "rs": 69.2,
+          "price": 125.68,
+          "float": "130.1",
+          "eps": "313",
+          "sales": "22",
+          "inst": "+8.8",
+          "short": 5.7
+        },
+        {
+          "ticker": "SGHC",
+          "rs": 61.5,
+          "price": 13.05,
+          "float": "155.1",
+          "eps": "99",
+          "sales": "18",
+          "inst": "+3.1",
+          "short": 13.5,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "RSI",
+          "rs": 61.5,
+          "price": 27.01,
+          "float": "100.0",
+          "eps": "62",
+          "sales": "41",
+          "inst": "-0.4",
+          "short": 7.2
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "name": "Ads & Marketing Tech",
+      "score": 82.7,
+      "avg_rs": 54.2,
+      "tickers": [
+        {
+          "ticker": "TDIC",
+          "rs": 100.0,
+          "price": 23.05,
+          "float": "3.0",
+          "eps": "N/A",
+          "sales": "29",
+          "inst": "N/A",
+          "short": 5.2
+        },
+        {
+          "ticker": "EVC",
+          "rs": 100.0,
+          "price": 8.92,
+          "float": "61.5",
+          "eps": "N/A",
+          "sales": "114",
+          "inst": "-0.7",
+          "short": 1.3
+        },
+        {
+          "ticker": "BZFD",
+          "rs": 96.2,
+          "price": 1.31,
+          "float": "23.4",
+          "eps": "N/A",
+          "sales": "-12",
+          "inst": "-8.7",
+          "short": 8.5
+        },
+        {
+          "ticker": "TBLA",
+          "rs": 84.6,
+          "price": 5.13,
+          "float": "114.8",
+          "eps": "237",
+          "sales": "9",
+          "inst": "+2.6",
+          "short": 5.0
+        },
+        {
+          "ticker": "ROKU",
+          "rs": 69.2,
+          "price": 125.68,
+          "float": "130.1",
+          "eps": "313",
+          "sales": "22",
+          "inst": "+8.8",
+          "short": 5.7
+        },
+        {
+          "ticker": "SST",
+          "rs": 46.2,
+          "price": 3.53,
+          "float": "4.1",
+          "eps": "N/A",
+          "sales": "-31",
+          "inst": "-0.8",
+          "short": 15.7
+        },
+        {
+          "ticker": "SNAP",
+          "rs": 23.1,
+          "price": 5.61,
+          "float": "1090.0",
+          "eps": "75",
+          "sales": "12",
+          "inst": "+1.9",
+          "short": 10.6
+        },
+        {
+          "ticker": "APP",
+          "rs": 15.4,
+          "price": 453.53,
+          "float": "262.8",
+          "eps": "64",
+          "sales": "24",
+          "inst": "-1.3",
+          "short": 4.2
+        },
+        {
+          "ticker": "MGNI",
+          "rs": 3.8,
+          "price": 12.91,
+          "float": "139.3",
+          "eps": "18",
+          "sales": "6",
+          "inst": "+4.6",
+          "short": 8.7
+        },
+        {
+          "ticker": "PINS",
+          "rs": 3.8,
+          "price": 19.35,
+          "float": "473.5",
+          "eps": "18",
+          "sales": "18",
+          "inst": "-5.7",
+          "short": 13.7
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "name": "Chemicals",
+      "score": 80.6,
+      "avg_rs": 43.8,
+      "tickers": [
+        {
+          "ticker": "PRM",
+          "rs": 100.0,
+          "price": 33.91,
+          "float": "146.8",
+          "eps": "34",
+          "sales": "74",
+          "inst": "+2.9",
+          "short": 2.0
+        },
+        {
+          "ticker": "CC",
+          "rs": 57.7,
+          "price": 25.18,
+          "float": "149.0",
+          "eps": "48",
+          "sales": "1",
+          "inst": "-7.4",
+          "short": 5.7
+        },
+        {
+          "ticker": "MEOH",
+          "rs": 57.7,
+          "price": 63.54,
+          "float": "65.1",
+          "eps": "355",
+          "sales": "9",
+          "inst": "+7.4",
+          "short": 1.2,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "ALB",
+          "rs": 50.0,
+          "price": 200.94,
+          "float": "117.6",
+          "eps": "1568",
+          "sales": "33",
+          "inst": "-2.9",
+          "short": 8.8
+        },
+        {
+          "ticker": "HUN",
+          "rs": 26.9,
+          "price": 14.39,
+          "float": "164.8",
+          "eps": "72",
+          "sales": "1",
+          "inst": "-12.2",
+          "short": 13.1
+        },
+        {
+          "ticker": "LYB",
+          "rs": 23.1,
+          "price": 73.74,
+          "float": "257.2",
+          "eps": "452",
+          "sales": "-6",
+          "inst": "+3.6",
+          "short": 4.4,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "RYAM",
+          "rs": 19.2,
+          "price": 9.5,
+          "float": "60.6",
+          "eps": "84",
+          "sales": "-10",
+          "inst": "+0.1",
+          "short": 5.3,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "DOW",
+          "rs": 15.4,
+          "price": 38.84,
+          "float": "718.7",
+          "eps": "431",
+          "sales": "-6",
+          "inst": "+2.3",
+          "short": 3.5
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "name": "Agriculture",
+      "score": 79.9,
+      "avg_rs": 40.0,
+      "tickers": [
+        {
+          "ticker": "ADM",
+          "rs": 100.0,
+          "price": 82.89,
+          "float": "478.7",
+          "eps": "32",
+          "sales": "2",
+          "inst": "+1.5",
+          "short": 2.7
+        },
+        {
+          "ticker": "AGRO",
+          "rs": 30.8,
+          "price": 13.65,
+          "float": "31.6",
+          "eps": "1175",
+          "sales": "26",
+          "inst": "-0.4",
+          "short": 4.3
+        },
+        {
+          "ticker": "CALY",
+          "rs": 30.8,
+          "price": 15.34,
+          "float": "147.1",
+          "eps": "206",
+          "sales": "-37",
+          "inst": "-3.0",
+          "short": 4.0,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "CF",
+          "rs": 23.1,
+          "price": 125.5,
+          "float": "152.8",
+          "eps": "69",
+          "sales": "19",
+          "inst": "+0.1",
+          "short": 5.1,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "LXU",
+          "rs": 15.4,
+          "price": 14.72,
+          "float": "54.4",
+          "eps": "220",
+          "sales": "18",
+          "inst": "-4.4",
+          "short": 2.6
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "name": "Aerospace & Defense",
+      "score": 78.4,
+      "avg_rs": 71.5,
+      "tickers": [
+        {
+          "ticker": "JOBY",
+          "rs": 100.0,
+          "price": 11.06,
+          "float": "628.5",
+          "eps": "26",
+          "sales": "N/A",
+          "inst": "+1.6",
+          "short": 14.6
+        },
+        {
+          "ticker": "CSTM",
+          "rs": 100.0,
+          "price": 34.56,
+          "float": "119.7",
+          "eps": "169",
+          "sales": "24",
+          "inst": "-3.9",
+          "short": 5.5
+        },
+        {
+          "ticker": "KOPN",
+          "rs": 92.3,
+          "price": 5.02,
+          "float": "170.3",
+          "eps": "-580",
+          "sales": "0",
+          "inst": "+11.1",
+          "short": 11.7,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "LASR",
+          "rs": 92.3,
+          "price": 80.42,
+          "float": "52.7",
+          "eps": "119",
+          "sales": "55",
+          "inst": "+2.8",
+          "short": 5.6
+        },
+        {
+          "ticker": "ACHR",
+          "rs": 92.3,
+          "price": 6.52,
+          "float": "634.5",
+          "eps": "-37",
+          "sales": "N/A",
+          "inst": "-0.7",
+          "short": 15.3
+        },
+        {
+          "ticker": "UMAC",
+          "rs": 53.8,
+          "price": 14.97,
+          "float": "34.2",
+          "eps": "46",
+          "sales": "144",
+          "inst": "+16.8",
+          "short": 19.6,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "ATI",
+          "rs": 50.0,
+          "price": 164.83,
+          "float": "135.0",
+          "eps": "35",
+          "sales": "1",
+          "inst": "-1.2",
+          "short": 2.8
+        },
+        {
+          "ticker": "EVTL",
+          "rs": 46.2,
+          "price": 2.58,
+          "float": "121.0",
+          "eps": "-123",
+          "sales": "N/A",
+          "inst": "+12.0",
+          "short": 6.5,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "SPCE",
+          "rs": 46.2,
+          "price": 2.88,
+          "float": "80.6",
+          "eps": "52",
+          "sales": "-27",
+          "inst": "+4.7",
+          "short": 27.1
+        },
+        {
+          "ticker": "LOAR",
+          "rs": 42.3,
+          "price": 61.34,
+          "float": "75.5",
+          "eps": "10",
+          "sales": "36",
+          "inst": "+1.5",
+          "short": 9.3
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "name": "Precious Metals",
+      "score": 77.2,
+      "avg_rs": 69.2,
+      "tickers": [
+        {
+          "ticker": "HBM",
+          "rs": 100.0,
+          "price": 27.74,
+          "float": "381.5",
+          "eps": "132",
+          "sales": "35",
+          "inst": "+3.7",
+          "short": 2.3
+        },
+        {
+          "ticker": "PAAS",
+          "rs": 96.2,
+          "price": 63.66,
+          "float": "421.2",
+          "eps": "83",
+          "sales": "49",
+          "inst": "-5.6",
+          "short": 0.9
+        },
+        {
+          "ticker": "HL",
+          "rs": 84.6,
+          "price": 21.05,
+          "float": "665.1",
+          "eps": "96",
+          "sales": "57",
+          "inst": "-6.5",
+          "short": 4.7
+        },
+        {
+          "ticker": "HYMC",
+          "rs": 80.8,
+          "price": 43.63,
+          "float": "49.2",
+          "eps": "-17",
+          "sales": "N/A",
+          "inst": "+19.3",
+          "short": 17.5
+        },
+        {
+          "ticker": "MUX",
+          "rs": 76.9,
+          "price": 25.92,
+          "float": "51.1",
+          "eps": "135",
+          "sales": "107",
+          "inst": "+10.0",
+          "short": 20.5
+        },
+        {
+          "ticker": "BVN",
+          "rs": 76.9,
+          "price": 38.47,
+          "float": "253.7",
+          "eps": "47",
+          "sales": "102",
+          "inst": "+1.1",
+          "short": 2.0
+        },
+        {
+          "ticker": "FSM",
+          "rs": 46.2,
+          "price": 10.69,
+          "float": "301.8",
+          "eps": "120",
+          "sales": "18",
+          "inst": "-0.7",
+          "short": 6.0
+        },
+        {
+          "ticker": "CDE",
+          "rs": 42.3,
+          "price": 19.74,
+          "float": "1030.0",
+          "eps": "129",
+          "sales": "138",
+          "inst": "+3.7",
+          "short": 3.3
+        },
+        {
+          "ticker": "IAUX",
+          "rs": 19.2,
+          "price": 1.56,
+          "float": "741.6",
+          "eps": "51",
+          "sales": "-8",
+          "inst": "+2.0",
+          "short": 8.6
+        }
+      ]
+    },
+    {
+      "rank": 15,
+      "name": "Real Estate",
+      "score": 74.4,
+      "avg_rs": 83.5,
+      "tickers": [
+        {
+          "ticker": "DHC",
+          "rs": 100.0,
+          "price": 8.73,
+          "float": "217.5",
+          "eps": "50",
+          "sales": "-5",
+          "inst": "+2.4",
+          "short": 4.5
+        },
+        {
+          "ticker": "GEO",
+          "rs": 100.0,
+          "price": 22.65,
+          "float": "127.1",
+          "eps": "42",
+          "sales": "17",
+          "inst": "-4.6",
+          "short": 7.5
+        },
+        {
+          "ticker": "HR",
+          "rs": 100.0,
+          "price": 20.37,
+          "float": "344.3",
+          "eps": "95",
+          "sales": "-7",
+          "inst": "+0.3",
+          "short": 4.6
+        },
+        {
+          "ticker": "SVC",
+          "rs": 96.2,
+          "price": 1.65,
+          "float": "642.1",
+          "eps": "41",
+          "sales": "-17",
+          "inst": "+6.8",
+          "short": 2.1
+        },
+        {
+          "ticker": "HPP",
+          "rs": 92.3,
+          "price": 11.6,
+          "float": "53.4",
+          "eps": "76",
+          "sales": "-8",
+          "inst": "+1.1",
+          "short": 8.7
+        },
+        {
+          "ticker": "COLD",
+          "rs": 92.3,
+          "price": 14.91,
+          "float": "285.0",
+          "eps": "110",
+          "sales": "0",
+          "inst": "+12.1",
+          "short": 8.0
+        },
+        {
+          "ticker": "FRMI",
+          "rs": 80.8,
+          "price": 6.0,
+          "float": "245.6",
+          "eps": "107",
+          "sales": "N/A",
+          "inst": "+214.1",
+          "short": 14.8
+        },
+        {
+          "ticker": "ASST",
+          "rs": 73.1,
+          "price": 16.74,
+          "float": "58.3",
+          "eps": "12",
+          "sales": "491",
+          "inst": "+17.1",
+          "short": 21.8,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "RMAX",
+          "rs": 53.8,
+          "price": 9.22,
+          "float": "15.3",
+          "eps": "-1",
+          "sales": "-6",
+          "inst": "-10.0",
+          "short": 6.7
+        },
+        {
+          "ticker": "COMP",
+          "rs": 46.2,
+          "price": 8.12,
+          "float": "675.2",
+          "eps": "418",
+          "sales": "99",
+          "inst": "+9.1",
+          "short": 6.0
+        }
+      ]
+    },
+    {
+      "rank": 16,
       "name": "AI - Data Center - Power & Cooling",
-      "score": 73.8,
-      "avg_rs": 79.2,
+      "score": 73.2,
+      "avg_rs": 74.2,
       "tickers": [
         {
           "ticker": "WOLF",
           "rs": 100.0,
-          "price": 53.72,
+          "price": 62.6,
           "float": "27.8",
           "eps": "-273",
           "sales": "-19",
@@ -1612,19 +1488,9 @@
           "short": 58.0
         },
         {
-          "ticker": "VICR",
-          "rs": 96.2,
-          "price": 292.53,
-          "float": "24.5",
-          "eps": "6",
-          "sales": "20",
-          "inst": "+1.1",
-          "short": 6.4
-        },
-        {
           "ticker": "VRT",
-          "rs": 96.2,
-          "price": 367.13,
+          "rs": 100.0,
+          "price": 369.99,
           "float": "377.1",
           "eps": "53",
           "sales": "30",
@@ -1633,8 +1499,8 @@
         },
         {
           "ticker": "NVTS",
-          "rs": 92.3,
-          "price": 19.25,
+          "rs": 96.2,
+          "price": 21.17,
           "float": "210.9",
           "eps": "14",
           "sales": "-39",
@@ -1642,29 +1508,29 @@
           "short": 19.9
         },
         {
+          "ticker": "VICR",
+          "rs": 96.2,
+          "price": 309.27,
+          "float": "24.5",
+          "eps": "6",
+          "sales": "20",
+          "inst": "+1.1",
+          "short": 6.4
+        },
+        {
           "ticker": "AAON",
           "rs": 92.3,
-          "price": 133.66,
+          "price": 135.37,
           "float": "68.0",
-          "eps": "59",
+          "eps": "63",
           "sales": "54",
           "inst": "-0.2",
           "short": 10.0
         },
         {
-          "ticker": "MOD",
-          "rs": 88.5,
-          "price": 276.27,
-          "float": "51.8",
-          "eps": "28",
-          "sales": "31",
-          "inst": "+0.2",
-          "short": 6.7
-        },
-        {
           "ticker": "NVT",
           "rs": 88.5,
-          "price": 170.74,
+          "price": 172.91,
           "float": "160.2",
           "eps": "36",
           "sales": "53",
@@ -1673,8 +1539,8 @@
         },
         {
           "ticker": "ALGM",
-          "rs": 69.2,
-          "price": 45.87,
+          "rs": 61.5,
+          "price": 45.97,
           "float": "123.8",
           "eps": "82",
           "sales": "26",
@@ -1682,9 +1548,19 @@
           "short": 8.9
         },
         {
+          "ticker": "AOSL",
+          "rs": 57.7,
+          "price": 41.59,
+          "float": "24.1",
+          "eps": "-348",
+          "sales": "-1",
+          "inst": "+0.1",
+          "short": 7.8
+        },
+        {
           "ticker": "POWI",
-          "rs": 50.0,
-          "price": 70.91,
+          "rs": 46.2,
+          "price": 71.15,
           "float": "54.4",
           "eps": "6",
           "sales": "3",
@@ -1693,8 +1569,8 @@
         },
         {
           "ticker": "RRX",
-          "rs": 19.2,
-          "price": 209.78,
+          "rs": 3.8,
+          "price": 205.72,
           "float": "66.2",
           "eps": "10",
           "sales": "4",
@@ -1705,281 +1581,124 @@
       ]
     },
     {
-      "rank": 18,
-      "name": "AI - Data Center - Components",
-      "score": 73.0,
-      "avg_rs": 78.4,
+      "rank": 17,
+      "name": "Solar",
+      "score": 70.6,
+      "avg_rs": 86.2,
       "tickers": [
         {
-          "ticker": "PENG",
-          "rs": 96.2,
-          "price": 44.13,
-          "float": "48.5",
-          "eps": "15",
-          "sales": "-6",
-          "inst": "-4.4",
-          "short": 18.0
-        },
-        {
-          "ticker": "OSS",
-          "rs": 92.3,
-          "price": 15.55,
-          "float": "21.0",
-          "eps": "118",
-          "sales": "-34",
-          "inst": "-3.0",
-          "short": 8.2
-        },
-        {
-          "ticker": "CRDO",
-          "rs": 88.5,
-          "price": 198.57,
-          "float": "165.7",
-          "eps": "372",
-          "sales": "201",
-          "inst": "+4.3",
-          "short": 5.7
-        },
-        {
-          "ticker": "VSH",
-          "rs": 88.5,
-          "price": 33.63,
-          "float": "122.8",
-          "eps": "1195",
-          "sales": "12",
-          "inst": "-2.0",
-          "short": 9.0
-        },
-        {
-          "ticker": "NVT",
-          "rs": 88.5,
-          "price": 170.74,
-          "float": "160.2",
-          "eps": "36",
-          "sales": "53",
-          "inst": "-2.8",
-          "short": 1.6
-        },
-        {
-          "ticker": "SMCI",
-          "rs": 84.6,
-          "price": 32.79,
-          "float": "515.3",
-          "eps": "25",
-          "sales": "123",
-          "inst": "+2.2",
-          "short": 15.6
-        },
-        {
-          "ticker": "ALAB",
-          "rs": 73.1,
-          "price": 204.42,
-          "float": "138.3",
-          "eps": "61",
-          "sales": "93",
-          "inst": "+0.7",
-          "short": 9.5,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "CLS",
-          "rs": 15.4,
-          "price": 374.07,
-          "float": "113.7",
-          "eps": "70",
-          "sales": "53",
-          "inst": "+4.0",
-          "short": 1.9,
-          "ticker_color": "green"
-        }
-      ]
-    },
-    {
-      "rank": 19,
-      "name": "Security & Surveillance",
-      "score": 69.4,
-      "avg_rs": 59.6,
-      "tickers": [
-        {
-          "ticker": "SOBR",
+          "ticker": "ENPH",
           "rs": 100.0,
-          "price": 1.84,
-          "float": "2.0",
-          "eps": "N/A",
-          "sales": "-9",
-          "inst": "-24.4",
-          "short": 5.7
+          "price": 42.0,
+          "float": "127.8",
+          "eps": "-32",
+          "sales": "-21",
+          "inst": "+5.2",
+          "short": 23.7
         },
         {
-          "ticker": "YOU",
-          "rs": 65.4,
-          "price": 57.64,
-          "float": "92.7",
-          "eps": "50",
-          "sales": "20",
-          "inst": "-3.7",
-          "short": 10.2
-        },
-        {
-          "ticker": "ALM",
-          "rs": 53.8,
-          "price": 22.12,
-          "float": "187.0",
-          "eps": "201",
-          "sales": "39",
-          "inst": "+26.2",
-          "short": 1.7
-        },
-        {
-          "ticker": "AXON",
-          "rs": 19.2,
-          "price": 393.66,
-          "float": "76.3",
-          "eps": "12",
-          "sales": "34",
-          "inst": "+2.7",
-          "short": 4.6
-        }
-      ]
-    },
-    {
-      "rank": 20,
-      "name": "Real Estate",
-      "score": 69.3,
-      "avg_rs": 89.2,
-      "tickers": [
-        {
-          "ticker": "HPP",
+          "ticker": "NXT",
           "rs": 100.0,
-          "price": 11.94,
-          "float": "53.4",
-          "eps": "74",
-          "sales": "-8",
-          "inst": "+1.1",
-          "short": 8.7
-        },
-        {
-          "ticker": "HR",
-          "rs": 100.0,
-          "price": 20.13,
-          "float": "344.3",
-          "eps": "89",
-          "sales": "-7",
-          "inst": "+0.3",
-          "short": 4.6
-        },
-        {
-          "ticker": "SVC",
-          "rs": 96.2,
-          "price": 1.62,
-          "float": "642.1",
-          "eps": "41",
-          "sales": "-17",
-          "inst": "+6.8",
-          "short": 2.1
-        },
-        {
-          "ticker": "DOC",
-          "rs": 96.2,
-          "price": 19.78,
-          "float": "687.3",
-          "eps": "117",
-          "sales": "7",
-          "inst": "-0.2",
-          "short": 4.7
-        },
-        {
-          "ticker": "ASST",
-          "rs": 92.3,
-          "price": 17.07,
-          "float": "58.3",
-          "eps": "12",
-          "sales": "491",
-          "inst": "+17.1",
-          "short": 21.8
-        },
-        {
-          "ticker": "COLD",
-          "rs": 92.3,
-          "price": 14.8,
-          "float": "285.0",
-          "eps": "110",
-          "sales": "0",
-          "inst": "+12.1",
-          "short": 8.0
-        },
-        {
-          "ticker": "DHC",
-          "rs": 92.3,
-          "price": 8.36,
-          "float": "217.5",
-          "eps": "50",
+          "price": 136.37,
+          "float": "146.4",
+          "eps": "2",
           "sales": "-5",
-          "inst": "+2.4",
-          "short": 4.5
-        },
-        {
-          "ticker": "GEO",
-          "rs": 88.5,
-          "price": 21.41,
-          "float": "127.1",
-          "eps": "42",
-          "sales": "17",
-          "inst": "-4.6",
-          "short": 7.5
-        },
-        {
-          "ticker": "COMP",
-          "rs": 76.9,
-          "price": 8.36,
-          "float": "675.2",
-          "eps": "418",
-          "sales": "99",
-          "inst": "+9.1",
+          "inst": "+0.1",
           "short": 6.0
         },
         {
-          "ticker": "RMAX",
-          "rs": 57.7,
-          "price": 9.63,
-          "float": "15.3",
-          "eps": "-1",
-          "sales": "-6",
-          "inst": "-10.0",
-          "short": 6.7
+          "ticker": "ARRY",
+          "rs": 100.0,
+          "price": 8.79,
+          "float": "151.1",
+          "eps": "9",
+          "sales": "-26",
+          "inst": "-2.4",
+          "short": 19.2
+        },
+        {
+          "ticker": "FSLR",
+          "rs": 100.0,
+          "price": 234.6,
+          "float": "101.6",
+          "eps": "25",
+          "sales": "24",
+          "inst": "-11.9",
+          "short": 7.6
+        },
+        {
+          "ticker": "CSIQ",
+          "rs": 96.2,
+          "price": 20.05,
+          "float": "47.3",
+          "eps": "98",
+          "sales": "-20",
+          "inst": "-5.1",
+          "short": 35.6
+        },
+        {
+          "ticker": "SHLS",
+          "rs": 96.2,
+          "price": 9.11,
+          "float": "166.0",
+          "eps": "14",
+          "sales": "75",
+          "inst": "-0.5",
+          "short": 8.2
+        },
+        {
+          "ticker": "SEI",
+          "rs": 88.5,
+          "price": 77.19,
+          "float": "42.6",
+          "eps": "115",
+          "sales": "55",
+          "inst": "+21.4",
+          "short": 29.5,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "RUN",
+          "rs": 76.9,
+          "price": 14.46,
+          "float": "229.9",
+          "eps": "-29",
+          "sales": "43",
+          "inst": "-2.6",
+          "short": 24.4
+        },
+        {
+          "ticker": "PN",
+          "rs": 69.2,
+          "price": 4.91,
+          "float": "1.1",
+          "eps": "N/A",
+          "sales": "43",
+          "inst": "N/A",
+          "short": 0.7
+        },
+        {
+          "ticker": "SEDG",
+          "rs": 34.6,
+          "price": 42.77,
+          "float": "59.3",
+          "eps": "100",
+          "sales": "41",
+          "inst": "+4.8",
+          "short": 17.2
         }
       ]
     },
     {
-      "rank": 21,
+      "rank": 18,
       "name": "Consumer",
-      "score": 68.0,
-      "avg_rs": 58.5,
+      "score": 69.4,
+      "avg_rs": 63.2,
       "tickers": [
         {
-          "ticker": "COCO",
-          "rs": 100.0,
-          "price": 74.61,
-          "float": "48.9",
-          "eps": "46",
-          "sales": "37",
-          "inst": "+11.9",
-          "short": 12.0
-        },
-        {
-          "ticker": "BLMN",
-          "rs": 96.2,
-          "price": 8.32,
-          "float": "84.5",
-          "eps": "-22",
-          "sales": "1",
-          "inst": "-11.8",
-          "short": 8.6
-        },
-        {
           "ticker": "WEN",
-          "rs": 96.2,
-          "price": 7.9,
+          "rs": 100.0,
+          "price": 8.19,
           "float": "173.3",
           "eps": "-35",
           "sales": "3",
@@ -1987,19 +1706,39 @@
           "short": 26.7
         },
         {
+          "ticker": "COCO",
+          "rs": 96.2,
+          "price": 74.77,
+          "float": "48.9",
+          "eps": "46",
+          "sales": "37",
+          "inst": "+11.9",
+          "short": 12.0
+        },
+        {
           "ticker": "WRBY",
-          "rs": 84.6,
-          "price": 26.95,
+          "rs": 92.3,
+          "price": 28.49,
           "float": "100.5",
-          "eps": "28",
+          "eps": "29",
           "sales": "8",
           "inst": "+12.5",
           "short": 10.6
         },
         {
+          "ticker": "BLMN",
+          "rs": 92.3,
+          "price": 8.28,
+          "float": "84.5",
+          "eps": "-22",
+          "sales": "1",
+          "inst": "-11.8",
+          "short": 8.6
+        },
+        {
           "ticker": "HOG",
-          "rs": 84.6,
-          "price": 25.33,
+          "rs": 92.3,
+          "price": 25.6,
           "float": "104.2",
           "eps": "-84",
           "sales": "-12",
@@ -2008,8 +1747,8 @@
         },
         {
           "ticker": "BOBS",
-          "rs": 65.4,
-          "price": 12.47,
+          "rs": 50.0,
+          "price": 12.24,
           "float": "30.4",
           "eps": "-12",
           "sales": "N/A",
@@ -2018,8 +1757,8 @@
         },
         {
           "ticker": "BIRD",
-          "rs": 26.9,
-          "price": 5.14,
+          "rs": 23.1,
+          "price": 4.63,
           "float": "5.6",
           "eps": "44",
           "sales": "-30",
@@ -2029,310 +1768,342 @@
         {
           "ticker": "SG",
           "rs": 19.2,
-          "price": 6.51,
+          "price": 6.58,
           "float": "99.2",
           "eps": "80",
           "sales": "-3",
           "inst": "-0.4",
-          "short": 23.1
+          "short": 23.1,
+          "ticker_color": "green"
         },
         {
           "ticker": "NWL",
-          "rs": 7.7,
-          "price": 4.05,
+          "rs": 3.8,
+          "price": 4.04,
           "float": "418.8",
           "eps": "1",
           "sales": "-1",
           "inst": "-8.1",
           "short": 9.0
+        }
+      ]
+    },
+    {
+      "rank": 19,
+      "name": "Retail",
+      "score": 67.1,
+      "avg_rs": 71.2,
+      "tickers": [
+        {
+          "ticker": "GRPN",
+          "rs": 100.0,
+          "price": 18.38,
+          "float": "22.9",
+          "eps": "99",
+          "sales": "0",
+          "inst": "-1.6",
+          "short": 59.7
         },
         {
-          "ticker": "COTY",
-          "rs": 3.8,
-          "price": 2.28,
-          "float": "374.0",
-          "eps": "41",
-          "sales": "-1",
-          "inst": "-1.1",
-          "short": 11.2
+          "ticker": "SFM",
+          "rs": 100.0,
+          "price": 88.27,
+          "float": "93.4",
+          "eps": "5",
+          "sales": "4",
+          "inst": "-2.7",
+          "short": 10.9
+        },
+        {
+          "ticker": "EBAY",
+          "rs": 96.2,
+          "price": 113.01,
+          "float": "442.7",
+          "eps": "11",
+          "sales": "21",
+          "inst": "-2.8",
+          "short": 3.1
+        },
+        {
+          "ticker": "ACVA",
+          "rs": 84.6,
+          "price": 5.65,
+          "float": "163.4",
+          "eps": "22",
+          "sales": "12",
+          "inst": "-8.4",
+          "short": 6.9
+        },
+        {
+          "ticker": "SE",
+          "rs": 73.1,
+          "price": 93.52,
+          "float": "561.1",
+          "eps": "3",
+          "sales": "47",
+          "inst": "+2.5",
+          "short": 3.4
+        },
+        {
+          "ticker": "ATER",
+          "rs": 61.5,
+          "price": 1.06,
+          "float": "8.2",
+          "eps": "N/A",
+          "sales": "-39",
+          "inst": "-8.0",
+          "short": 23.5
+        },
+        {
+          "ticker": "RSI",
+          "rs": 61.5,
+          "price": 27.01,
+          "float": "100.0",
+          "eps": "62",
+          "sales": "41",
+          "inst": "-0.4",
+          "short": 7.2
+        },
+        {
+          "ticker": "JMIA",
+          "rs": 57.7,
+          "price": 7.69,
+          "float": "123.4",
+          "eps": "34",
+          "sales": "35",
+          "inst": "+2.4",
+          "short": 3.6
+        },
+        {
+          "ticker": "STUB",
+          "rs": 50.0,
+          "price": 7.52,
+          "float": "238.6",
+          "eps": "105",
+          "sales": "-16",
+          "inst": "+4.7",
+          "short": 8.3
+        },
+        {
+          "ticker": "WSHP",
+          "rs": 26.9,
+          "price": 7.17,
+          "float": "1.3",
+          "eps": "N/A",
+          "sales": "-72",
+          "inst": "+14.1",
+          "short": 17.8
+        }
+      ]
+    },
+    {
+      "rank": 20,
+      "name": "Entertainment / Theme Parks",
+      "score": 66.3,
+      "avg_rs": 26.9,
+      "tickers": [
+        {
+          "ticker": "FUN",
+          "rs": 26.9,
+          "price": 19.32,
+          "float": "99.3",
+          "eps": "97",
+          "sales": "12",
+          "inst": "+2.4",
+          "short": 19.0
+        },
+        {
+          "ticker": "PRKS",
+          "rs": 26.9,
+          "price": 35.86,
+          "float": "47.3",
+          "eps": "15",
+          "sales": "-3",
+          "inst": "-9.7",
+          "short": 16.7
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "name": "AI - Data Center - Components",
+      "score": 64.9,
+      "avg_rs": 79.3,
+      "tickers": [
+        {
+          "ticker": "PENG",
+          "rs": 100.0,
+          "price": 48.27,
+          "float": "48.5",
+          "eps": "15",
+          "sales": "-6",
+          "inst": "-4.4",
+          "short": 18.0
+        },
+        {
+          "ticker": "ALAB",
+          "rs": 100.0,
+          "price": 224.09,
+          "float": "138.3",
+          "eps": "61",
+          "sales": "93",
+          "inst": "+0.7",
+          "short": 9.5
+        },
+        {
+          "ticker": "VSH",
+          "rs": 100.0,
+          "price": 38.5,
+          "float": "122.8",
+          "eps": "1350",
+          "sales": "12",
+          "inst": "-2.0",
+          "short": 9.0
+        },
+        {
+          "ticker": "OSS",
+          "rs": 96.2,
+          "price": 15.86,
+          "float": "21.0",
+          "eps": "118",
+          "sales": "-34",
+          "inst": "-3.0",
+          "short": 8.2
+        },
+        {
+          "ticker": "NVT",
+          "rs": 88.5,
+          "price": 172.91,
+          "float": "160.2",
+          "eps": "36",
+          "sales": "53",
+          "inst": "-2.8",
+          "short": 1.6
+        },
+        {
+          "ticker": "SMCI",
+          "rs": 80.8,
+          "price": 32.0,
+          "float": "515.3",
+          "eps": "25",
+          "sales": "123",
+          "inst": "+2.2",
+          "short": 15.6,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "CRDO",
+          "rs": 57.7,
+          "price": 189.36,
+          "float": "165.7",
+          "eps": "372",
+          "sales": "201",
+          "inst": "+4.3",
+          "short": 5.7,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "CLS",
+          "rs": 11.5,
+          "price": 372.55,
+          "float": "113.7",
+          "eps": "70",
+          "sales": "53",
+          "inst": "+4.0",
+          "short": 1.9
         }
       ]
     },
     {
       "rank": 22,
-      "name": "Agriculture",
-      "score": 67.1,
-      "avg_rs": 50.0,
+      "name": "Logistics",
+      "score": 64.4,
+      "avg_rs": 40.1,
       "tickers": [
         {
-          "ticker": "LXU",
-          "rs": 76.9,
-          "price": 15.44,
-          "float": "54.4",
-          "eps": "282",
-          "sales": "18",
-          "inst": "-4.4",
-          "short": 2.6
+          "ticker": "CMBT",
+          "rs": 92.3,
+          "price": 14.98,
+          "float": "85.6",
+          "eps": "134",
+          "sales": "161",
+          "inst": "+0.3",
+          "short": 1.1
         },
         {
-          "ticker": "CF",
-          "rs": 65.4,
-          "price": 130.39,
-          "float": "152.8",
-          "eps": "60",
-          "sales": "19",
-          "inst": "+0.1",
-          "short": 5.1
+          "ticker": "VG",
+          "rs": 46.2,
+          "price": 13.0,
+          "float": "497.9",
+          "eps": "64",
+          "sales": "59",
+          "inst": "+0.6",
+          "short": 8.0
         },
         {
-          "ticker": "CALY",
-          "rs": 53.8,
-          "price": 15.73,
-          "float": "137.9",
-          "eps": "206",
-          "sales": "-37",
-          "inst": "-3.0",
-          "short": 4.2,
+          "ticker": "RXO",
+          "rs": 42.3,
+          "price": 19.81,
+          "float": "163.6",
+          "eps": "184",
+          "sales": "-1",
+          "inst": "-2.9",
+          "short": 8.4,
           "ticker_color": "green"
         },
         {
-          "ticker": "AGRO",
-          "rs": 3.8,
-          "price": 13.07,
-          "float": "31.6",
-          "eps": "1175",
-          "sales": "26",
-          "inst": "-0.4",
-          "short": 4.3
+          "ticker": "PBI",
+          "rs": 42.3,
+          "price": 15.34,
+          "float": "134.7",
+          "eps": "20",
+          "sales": "-3",
+          "inst": "-7.5",
+          "short": 14.7,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "STNG",
+          "rs": 38.5,
+          "price": 82.13,
+          "float": "44.9",
+          "eps": "130",
+          "sales": "46",
+          "inst": "-2.7",
+          "short": 4.0
+        },
+        {
+          "ticker": "FRO",
+          "rs": 19.2,
+          "price": 37.19,
+          "float": "143.2",
+          "eps": "288",
+          "sales": "47",
+          "inst": "-1.2",
+          "short": 4.4
+        },
+        {
+          "ticker": "DHT",
+          "rs": 0.0,
+          "price": 17.81,
+          "float": "142.8",
+          "eps": "124",
+          "sales": "58",
+          "inst": "+3.5",
+          "short": 5.7
         }
       ]
     },
     {
       "rank": 23,
-      "name": "Industrial",
-      "score": 65.6,
-      "avg_rs": 91.9,
-      "tickers": [
-        {
-          "ticker": "DDD",
-          "rs": 100.0,
-          "price": 3.11,
-          "float": "140.3",
-          "eps": "26",
-          "sales": "1",
-          "inst": "+2.1",
-          "short": 29.4
-        },
-        {
-          "ticker": "XMTR",
-          "rs": 100.0,
-          "price": 83.92,
-          "float": "43.3",
-          "eps": "83",
-          "sales": "36",
-          "inst": "+4.0",
-          "short": 10.0
-        },
-        {
-          "ticker": "FPS",
-          "rs": 100.0,
-          "price": 43.01,
-          "float": "92.1",
-          "eps": "N/A",
-          "sales": "N/A",
-          "inst": "+230.0",
-          "short": 7.0
-        },
-        {
-          "ticker": "VPG",
-          "rs": 100.0,
-          "price": 85.57,
-          "float": "11.8",
-          "eps": "61",
-          "sales": "11",
-          "inst": "+4.5",
-          "short": 8.3
-        },
-        {
-          "ticker": "WSC",
-          "rs": 96.2,
-          "price": 27.02,
-          "float": "175.7",
-          "eps": "-9",
-          "sales": "-2",
-          "inst": "+2.5",
-          "short": 14.1
-        },
-        {
-          "ticker": "TH",
-          "rs": 96.2,
-          "price": 17.48,
-          "float": "40.6",
-          "eps": "61",
-          "sales": "4",
-          "inst": "+2.4",
-          "short": 6.7
-        },
-        {
-          "ticker": "EQPT",
-          "rs": 92.3,
-          "price": 24.55,
-          "float": "113.7",
-          "eps": "4642",
-          "sales": "N/A",
-          "inst": "+15.3",
-          "short": 10.2
-        },
-        {
-          "ticker": "NN",
-          "rs": 80.8,
-          "price": 20.08,
-          "float": "77.0",
-          "eps": "59",
-          "sales": "-51",
-          "inst": "+11.7",
-          "short": 24.1
-        },
-        {
-          "ticker": "CSTM",
-          "rs": 80.8,
-          "price": 33.31,
-          "float": "119.7",
-          "eps": "169",
-          "sales": "24",
-          "inst": "-3.9",
-          "short": 5.5
-        },
-        {
-          "ticker": "TIC",
-          "rs": 73.1,
-          "price": 9.4,
-          "float": "108.1",
-          "eps": "112",
-          "sales": "108",
-          "inst": "-6.5",
-          "short": 13.9
-        }
-      ]
-    },
-    {
-      "rank": 24,
-      "name": "Energy",
-      "score": 64.8,
-      "avg_rs": 99.2,
-      "tickers": [
-        {
-          "ticker": "FCEL",
-          "rs": 100.0,
-          "price": 17.09,
-          "float": "52.8",
-          "eps": "72",
-          "sales": "61",
-          "inst": "+18.6",
-          "short": 8.7
-        },
-        {
-          "ticker": "NRGV",
-          "rs": 100.0,
-          "price": 5.32,
-          "float": "140.5",
-          "eps": "-36",
-          "sales": "156",
-          "inst": "+11.4",
-          "short": 13.1
-        },
-        {
-          "ticker": "QS",
-          "rs": 100.0,
-          "price": 8.42,
-          "float": "472.9",
-          "eps": "10",
-          "sales": "N/A",
-          "inst": "+7.0",
-          "short": 20.8
-        },
-        {
-          "ticker": "PLUG",
-          "rs": 100.0,
-          "price": 3.56,
-          "float": "1330.0",
-          "eps": "76",
-          "sales": "22",
-          "inst": "+11.2",
-          "short": 25.8
-        },
-        {
-          "ticker": "HNRG",
-          "rs": 100.0,
-          "price": 19.75,
-          "float": "35.2",
-          "eps": "-63",
-          "sales": "-14",
-          "inst": "+3.2",
-          "short": 8.3
-        },
-        {
-          "ticker": "NESR",
-          "rs": 100.0,
-          "price": 26.84,
-          "float": "83.7",
-          "eps": "85",
-          "sales": "33",
-          "inst": "+4.8",
-          "short": 4.9
-        },
-        {
-          "ticker": "TTI",
-          "rs": 100.0,
-          "price": 10.26,
-          "float": "127.0",
-          "eps": "-1",
-          "sales": "-1",
-          "inst": "+2.2",
-          "short": 4.9
-        },
-        {
-          "ticker": "WTTR",
-          "rs": 100.0,
-          "price": 18.05,
-          "float": "107.9",
-          "eps": "19",
-          "sales": "-2",
-          "inst": "+3.9",
-          "short": 3.7
-        },
-        {
-          "ticker": "EOSE",
-          "rs": 96.2,
-          "price": 8.1,
-          "float": "333.1",
-          "eps": "90",
-          "sales": "700",
-          "inst": "-0.1",
-          "short": 30.6
-        },
-        {
-          "ticker": "KGS",
-          "rs": 96.2,
-          "price": 75.14,
-          "float": "87.4",
-          "eps": "180",
-          "sales": "5",
-          "inst": "-11.4",
-          "short": 6.2
-        }
-      ]
-    },
-    {
-      "rank": 25,
       "name": "Private Credit",
-      "score": 62.5,
-      "avg_rs": 55.8,
+      "score": 60.9,
+      "avg_rs": 46.2,
       "tickers": [
         {
           "ticker": "ARES",
-          "rs": 65.4,
-          "price": 123.66,
+          "rs": 57.7,
+          "price": 123.18,
           "float": "207.6",
           "eps": "26",
           "sales": "30",
@@ -2342,8 +2113,8 @@
         },
         {
           "ticker": "OWL",
-          "rs": 46.2,
-          "price": 10.0,
+          "rs": 34.6,
+          "price": 9.77,
           "float": "632.2",
           "eps": "6",
           "sales": "10",
@@ -2354,15 +2125,123 @@
       ]
     },
     {
-      "rank": 26,
-      "name": "Automotive",
-      "score": 55.7,
+      "rank": 24,
+      "name": "Industrial",
+      "score": 59.4,
       "avg_rs": 96.5,
       "tickers": [
         {
-          "ticker": "SOBR",
+          "ticker": "EQPT",
           "rs": 100.0,
-          "price": 1.84,
+          "price": 25.95,
+          "float": "113.7",
+          "eps": "4642",
+          "sales": "N/A",
+          "inst": "+15.3",
+          "short": 10.2
+        },
+        {
+          "ticker": "DDD",
+          "rs": 100.0,
+          "price": 3.2,
+          "float": "140.3",
+          "eps": "51",
+          "sales": "1",
+          "inst": "+2.1",
+          "short": 29.4
+        },
+        {
+          "ticker": "XMTR",
+          "rs": 100.0,
+          "price": 86.19,
+          "float": "43.3",
+          "eps": "87",
+          "sales": "36",
+          "inst": "+4.0",
+          "short": 10.0
+        },
+        {
+          "ticker": "FPS",
+          "rs": 100.0,
+          "price": 45.52,
+          "float": "92.1",
+          "eps": "N/A",
+          "sales": "N/A",
+          "inst": "+230.0",
+          "short": 7.0
+        },
+        {
+          "ticker": "VPG",
+          "rs": 100.0,
+          "price": 99.6,
+          "float": "11.8",
+          "eps": "106",
+          "sales": "18",
+          "inst": "+4.5",
+          "short": 8.3
+        },
+        {
+          "ticker": "CSTM",
+          "rs": 100.0,
+          "price": 34.56,
+          "float": "119.7",
+          "eps": "169",
+          "sales": "24",
+          "inst": "-3.9",
+          "short": 5.5
+        },
+        {
+          "ticker": "AVT",
+          "rs": 100.0,
+          "price": 86.22,
+          "float": "81.2",
+          "eps": "49",
+          "sales": "34",
+          "inst": "-0.2",
+          "short": 8.2
+        },
+        {
+          "ticker": "TH",
+          "rs": 92.3,
+          "price": 17.5,
+          "float": "40.6",
+          "eps": "59",
+          "sales": "4",
+          "inst": "+2.4",
+          "short": 6.7
+        },
+        {
+          "ticker": "WSC",
+          "rs": 88.5,
+          "price": 25.89,
+          "float": "175.7",
+          "eps": "-9",
+          "sales": "-2",
+          "inst": "+2.5",
+          "short": 14.1
+        },
+        {
+          "ticker": "NN",
+          "rs": 84.6,
+          "price": 21.03,
+          "float": "77.0",
+          "eps": "59",
+          "sales": "-51",
+          "inst": "+11.7",
+          "short": 24.1
+        }
+      ]
+    },
+    {
+      "rank": 25,
+      "name": "Security & Surveillance",
+      "score": 56.4,
+      "avg_rs": 34.6,
+      "tickers": [
+        {
+          "ticker": "SOBR",
+          "rs": 92.3,
+          "price": 1.79,
           "float": "2.0",
           "eps": "N/A",
           "sales": "-9",
@@ -2370,127 +2249,155 @@
           "short": 5.7
         },
         {
-          "ticker": "AIIO",
-          "rs": 100.0,
-          "price": 1.28,
-          "float": "13.5",
-          "eps": "N/A",
-          "sales": "N/A",
-          "inst": "-22.4",
-          "short": 2.6
+          "ticker": "YOU",
+          "rs": 34.6,
+          "price": 55.54,
+          "float": "92.7",
+          "eps": "50",
+          "sales": "20",
+          "inst": "-3.7",
+          "short": 10.2
         },
         {
-          "ticker": "AEVA",
-          "rs": 100.0,
-          "price": 19.09,
-          "float": "40.4",
-          "eps": "4",
-          "sales": "86",
-          "inst": "+0.5",
-          "short": 19.9
-        },
-        {
-          "ticker": "GTX",
-          "rs": 100.0,
-          "price": 29.57,
-          "float": "169.8",
-          "eps": "16",
-          "sales": "12",
-          "inst": "+6.5",
-          "short": 5.2
-        },
-        {
-          "ticker": "BWA",
-          "rs": 100.0,
-          "price": 63.74,
-          "float": "203.5",
-          "eps": "6",
-          "sales": "1",
-          "inst": "+1.8",
-          "short": 3.2
-        },
-        {
-          "ticker": "BB",
-          "rs": 96.2,
-          "price": 6.22,
-          "float": "585.9",
-          "eps": "12",
-          "sales": "10",
-          "inst": "+0.3",
-          "short": 5.4
-        },
-        {
-          "ticker": "TSLA",
-          "rs": 96.2,
-          "price": 433.45,
-          "float": "2910.0",
-          "eps": "16",
-          "sales": "16",
-          "inst": "+0.6",
-          "short": 2.6
-        },
-        {
-          "ticker": "TXN",
-          "rs": 96.2,
-          "price": 295.17,
-          "float": "907.8",
-          "eps": "39",
-          "sales": "19",
-          "inst": "+0.2",
+          "ticker": "ALM",
+          "rs": 11.5,
+          "price": 19.53,
+          "float": "187.0",
+          "eps": "201",
+          "sales": "39",
+          "inst": "+26.2",
           "short": 1.7
         },
         {
-          "ticker": "MOD",
-          "rs": 88.5,
-          "price": 276.27,
-          "float": "51.8",
-          "eps": "28",
-          "sales": "31",
-          "inst": "+0.2",
-          "short": 6.7
+          "ticker": "EVLV",
+          "rs": 0.0,
+          "price": 6.02,
+          "float": "165.7",
+          "eps": "-30",
+          "sales": "45",
+          "inst": "+0.5",
+          "short": 4.2
+        }
+      ]
+    },
+    {
+      "rank": 26,
+      "name": "Energy",
+      "score": 46.3,
+      "avg_rs": 98.8,
+      "tickers": [
+        {
+          "ticker": "FCEL",
+          "rs": 100.0,
+          "price": 19.92,
+          "float": "52.8",
+          "eps": "72",
+          "sales": "61",
+          "inst": "+18.6",
+          "short": 8.7
         },
         {
-          "ticker": "MBLY",
-          "rs": 88.5,
-          "price": 9.23,
-          "float": "211.6",
-          "eps": "-24",
-          "sales": "27",
-          "inst": "-1.8",
-          "short": 13.9
+          "ticker": "NRGV",
+          "rs": 100.0,
+          "price": 5.94,
+          "float": "140.5",
+          "eps": "-36",
+          "sales": "156",
+          "inst": "+11.4",
+          "short": 13.1
+        },
+        {
+          "ticker": "QS",
+          "rs": 100.0,
+          "price": 8.66,
+          "float": "472.9",
+          "eps": "10",
+          "sales": "N/A",
+          "inst": "+7.0",
+          "short": 20.8
+        },
+        {
+          "ticker": "PLUG",
+          "rs": 100.0,
+          "price": 3.96,
+          "float": "1330.0",
+          "eps": "76",
+          "sales": "22",
+          "inst": "+11.2",
+          "short": 25.8
+        },
+        {
+          "ticker": "TTI",
+          "rs": 100.0,
+          "price": 10.65,
+          "float": "127.0",
+          "eps": "-1",
+          "sales": "-1",
+          "inst": "+2.2",
+          "short": 4.9
+        },
+        {
+          "ticker": "WTTR",
+          "rs": 100.0,
+          "price": 18.34,
+          "float": "107.9",
+          "eps": "19",
+          "sales": "-2",
+          "inst": "+3.9",
+          "short": 3.7
+        },
+        {
+          "ticker": "SXC",
+          "rs": 100.0,
+          "price": 7.78,
+          "float": "83.9",
+          "eps": "141",
+          "sales": "4",
+          "inst": "-11.7",
+          "short": 3.6
+        },
+        {
+          "ticker": "EOSE",
+          "rs": 96.2,
+          "price": 8.28,
+          "float": "333.1",
+          "eps": "91",
+          "sales": "700",
+          "inst": "-0.1",
+          "short": 30.6
+        },
+        {
+          "ticker": "HNRG",
+          "rs": 96.2,
+          "price": 19.42,
+          "float": "35.2",
+          "eps": "-63",
+          "sales": "-14",
+          "inst": "+3.2",
+          "short": 8.3
+        },
+        {
+          "ticker": "ENVX",
+          "rs": 96.2,
+          "price": 7.29,
+          "float": "188.2",
+          "eps": "-9",
+          "sales": "16",
+          "inst": "+1.0",
+          "short": 28.1
         }
       ]
     },
     {
       "rank": 27,
       "name": "Semiconductor Manufacturing",
-      "score": 52.2,
-      "avg_rs": 94.6,
+      "score": 44.7,
+      "avg_rs": 97.3,
       "tickers": [
         {
-          "ticker": "UMC",
-          "rs": 100.0,
-          "price": 16.06,
-          "float": "2520.0",
-          "eps": "32",
-          "sales": "10",
-          "inst": "+4.6",
-          "short": 1.1
-        },
-        {
-          "ticker": "HIMX",
-          "rs": 96.2,
-          "price": 19.11,
-          "float": "170.5",
-          "eps": "59",
-          "sales": "-15",
-          "inst": "-5.6",
-          "short": 4.3
-        },
-        {
           "ticker": "TTMI",
-          "rs": 96.2,
-          "price": 163.36,
+          "rs": 100.0,
+          "price": 168.82,
           "float": "101.4",
           "eps": "44",
           "sales": "30",
@@ -2498,39 +2405,19 @@
           "short": 3.5
         },
         {
-          "ticker": "ACMR",
-          "rs": 96.2,
-          "price": 62.99,
-          "float": "55.0",
-          "eps": "23",
-          "sales": "34",
-          "inst": "+8.0",
-          "short": 5.0
-        },
-        {
-          "ticker": "VECO",
-          "rs": 96.2,
-          "price": 61.46,
-          "float": "59.4",
-          "eps": "24",
-          "sales": "-5",
-          "inst": "-0.4",
-          "short": 10.6
-        },
-        {
-          "ticker": "SKYT",
-          "rs": 96.2,
-          "price": 35.59,
-          "float": "36.0",
-          "eps": "-3367",
-          "sales": "162",
-          "inst": "+6.4",
-          "short": 8.3
+          "ticker": "TSEM",
+          "rs": 100.0,
+          "price": 270.77,
+          "float": "104.8",
+          "eps": "31",
+          "sales": "14",
+          "inst": "+3.0",
+          "short": 2.8
         },
         {
           "ticker": "SYNA",
-          "rs": 92.3,
-          "price": 119.59,
+          "rs": 100.0,
+          "price": 131.06,
           "float": "37.6",
           "eps": "27",
           "sales": "10",
@@ -2538,9 +2425,49 @@
           "short": 12.7
         },
         {
+          "ticker": "ASX",
+          "rs": 100.0,
+          "price": 35.47,
+          "float": "2190.0",
+          "eps": "85",
+          "sales": "22",
+          "inst": "-0.6",
+          "short": 0.4
+        },
+        {
+          "ticker": "AEHR",
+          "rs": 96.2,
+          "price": 103.25,
+          "float": "29.7",
+          "eps": "-189",
+          "sales": "-44",
+          "inst": "-0.4",
+          "short": 15.9
+        },
+        {
+          "ticker": "HIMX",
+          "rs": 96.2,
+          "price": 20.58,
+          "float": "170.5",
+          "eps": "59",
+          "sales": "-15",
+          "inst": "-5.6",
+          "short": 4.3
+        },
+        {
+          "ticker": "ACMR",
+          "rs": 96.2,
+          "price": 64.75,
+          "float": "55.0",
+          "eps": "23",
+          "sales": "34",
+          "inst": "+8.0",
+          "short": 5.0
+        },
+        {
           "ticker": "MKSI",
-          "rs": 92.3,
-          "price": 311.72,
+          "rs": 96.2,
+          "price": 317.31,
           "float": "67.2",
           "eps": "48",
           "sales": "15",
@@ -2548,48 +2475,123 @@
           "short": 5.3
         },
         {
-          "ticker": "ASX",
-          "rs": 92.3,
-          "price": 34.28,
-          "float": "2190.0",
-          "eps": "83",
-          "sales": "22",
-          "inst": "-0.6",
-          "short": 0.4
+          "ticker": "UMC",
+          "rs": 96.2,
+          "price": 15.92,
+          "float": "2520.0",
+          "eps": "32",
+          "sales": "10",
+          "inst": "+4.6",
+          "short": 1.1
         },
         {
           "ticker": "ICHR",
-          "rs": 88.5,
-          "price": 73.28,
+          "rs": 92.3,
+          "price": 74.32,
           "float": "34.2",
           "eps": "499",
           "sales": "5",
           "inst": "-4.4",
-          "short": 3.8,
-          "ticker_color": "green"
+          "short": 3.8
         }
       ]
     },
     {
       "rank": 28,
-      "name": "Cryptocurrency",
-      "score": 48.1,
-      "avg_rs": 94.6,
+      "name": "Business Process Outsourcing (BPO)",
+      "score": 41.8,
+      "avg_rs": 77.9,
       "tickers": [
         {
-          "ticker": "BTSG",
+          "ticker": "ARMK",
           "rs": 100.0,
-          "price": 55.5,
-          "float": "149.0",
-          "eps": "68",
-          "sales": "26",
-          "inst": "+1.6",
-          "short": 9.4
+          "price": 50.75,
+          "float": "260.7",
+          "eps": "22",
+          "sales": "15",
+          "inst": "+1.5",
+          "short": 3.7
         },
         {
-          "ticker": "SLNH",
+          "ticker": "XRX",
+          "rs": 73.1,
+          "price": 2.54,
+          "float": "118.8",
+          "eps": "61",
+          "sales": "27",
+          "inst": "-4.5",
+          "short": 26.3
+        },
+        {
+          "ticker": "PMAX",
+          "rs": 69.2,
+          "price": 3.41,
+          "float": "0.5",
+          "eps": "N/A",
+          "sales": "72",
+          "inst": "N/A",
+          "short": 1.0
+        },
+        {
+          "ticker": "ALIT",
+          "rs": 69.2,
+          "price": 0.79,
+          "float": "448.4",
+          "eps": "-44",
+          "sales": "-3",
+          "inst": "-9.9",
+          "short": 12.3
+        }
+      ]
+    },
+    {
+      "rank": 29,
+      "name": "Electronic Manufacturing Services (EMS)",
+      "score": 39.3,
+      "avg_rs": 89.7,
+      "tickers": [
+        {
+          "ticker": "FLEX",
           "rs": 96.2,
-          "price": 1.78,
+          "price": 143.8,
+          "float": "365.6",
+          "eps": "33",
+          "sales": "17",
+          "inst": "+3.1",
+          "short": 2.1
+        },
+        {
+          "ticker": "JBL",
+          "rs": 88.5,
+          "price": 355.43,
+          "float": "103.5",
+          "eps": "26",
+          "sales": "23",
+          "inst": "-2.4",
+          "short": 2.3
+        },
+        {
+          "ticker": "SANM",
+          "rs": 84.6,
+          "price": 238.62,
+          "float": "52.1",
+          "eps": "85",
+          "sales": "102",
+          "inst": "+0.5",
+          "short": 5.3
+        }
+      ]
+    },
+    {
+      "rank": 30,
+      "name": "Cryptocurrency",
+      "score": 37.7,
+      "avg_rs": 95.8,
+      "tickers": [
+        {
+          "ticker": "SLNH",
+          "rs": 100.0,
+          "price": 2.16,
           "float": "78.0",
           "eps": "N/A",
           "sales": "11",
@@ -2597,11 +2599,31 @@
           "short": 27.6
         },
         {
+          "ticker": "APLD",
+          "rs": 100.0,
+          "price": 45.48,
+          "float": "258.1",
+          "eps": "-919",
+          "sales": "139",
+          "inst": "+1.8",
+          "short": 31.0
+        },
+        {
+          "ticker": "BTSG",
+          "rs": 100.0,
+          "price": 56.5,
+          "float": "149.0",
+          "eps": "68",
+          "sales": "26",
+          "inst": "+1.6",
+          "short": 9.4
+        },
+        {
           "ticker": "CRCL",
           "rs": 96.2,
-          "price": 123.65,
+          "price": 126.57,
           "float": "181.1",
-          "eps": "304",
+          "eps": "305",
           "sales": "20",
           "inst": "-9.3",
           "short": 12.6
@@ -2609,7 +2631,7 @@
         {
           "ticker": "BTBT",
           "rs": 96.2,
-          "price": 1.96,
+          "price": 2.03,
           "float": "320.4",
           "eps": "61",
           "sales": "24",
@@ -2619,7 +2641,7 @@
         {
           "ticker": "HUT",
           "rs": 96.2,
-          "price": 107.31,
+          "price": 108.32,
           "float": "101.7",
           "eps": "-35",
           "sales": "226",
@@ -2627,19 +2649,9 @@
           "short": 16.9
         },
         {
-          "ticker": "GLXY",
-          "rs": 96.2,
-          "price": 31.38,
-          "float": "187.2",
-          "eps": "53",
-          "sales": "-21",
-          "inst": "+7.6",
-          "short": 12.8
-        },
-        {
           "ticker": "RIOT",
           "rs": 96.2,
-          "price": 24.51,
+          "price": 24.92,
           "float": "348.3",
           "eps": "5",
           "sales": "4",
@@ -2647,131 +2659,34 @@
           "short": 17.7
         },
         {
-          "ticker": "APLD",
-          "rs": 92.3,
-          "price": 43.93,
-          "float": "258.1",
-          "eps": "-919",
-          "sales": "139",
-          "inst": "+1.8",
-          "short": 31.0
-        },
-        {
-          "ticker": "IREN",
-          "rs": 88.5,
-          "price": 56.56,
-          "float": "301.4",
-          "eps": "-235",
-          "sales": "13",
-          "inst": "+1.8",
-          "short": 19.4,
-          "ticker_color": "green"
-        },
-        {
           "ticker": "CORZ",
-          "rs": 88.5,
-          "price": 22.79,
+          "rs": 96.2,
+          "price": 24.0,
           "float": "300.9",
-          "eps": "35",
+          "eps": "27",
           "sales": "45",
           "inst": "+16.3",
           "short": 21.8
-        }
-      ]
-    },
-    {
-      "rank": 29,
-      "name": "AI - Data Center - Connectivity / Networking",
-      "score": 44.8,
-      "avg_rs": 86.5,
-      "tickers": [
-        {
-          "ticker": "CSCO",
-          "rs": 100.0,
-          "price": 99.29,
-          "float": "3940.0",
-          "eps": "9",
-          "sales": "10",
-          "inst": "+0.8",
-          "short": 1.6
         },
         {
-          "ticker": "SMTC",
-          "rs": 96.2,
-          "price": 132.08,
-          "float": "92.6",
-          "eps": "29",
-          "sales": "9",
-          "inst": "-2.2",
-          "short": 6.8
-        },
-        {
-          "ticker": "MXL",
+          "ticker": "CIFR",
           "rs": 92.3,
-          "price": 91.93,
-          "float": "84.2",
-          "eps": "331",
-          "sales": "43",
-          "inst": "+1.0",
-          "short": 4.6
+          "price": 21.24,
+          "float": "332.7",
+          "eps": "60",
+          "sales": "-29",
+          "inst": "+7.8",
+          "short": 16.8
         },
         {
-          "ticker": "ALMU",
-          "rs": 88.5,
-          "price": 27.11,
-          "float": "12.4",
-          "eps": "-1400",
+          "ticker": "GLXY",
+          "rs": 84.6,
+          "price": 30.81,
+          "float": "187.2",
+          "eps": "53",
           "sales": "-21",
-          "inst": "+5.0",
-          "short": 29.0
-        },
-        {
-          "ticker": "EXTR",
-          "rs": 73.1,
-          "price": 22.79,
-          "float": "126.7",
-          "eps": "23",
-          "sales": "11",
-          "inst": "+2.2",
-          "short": 6.7
-        },
-        {
-          "ticker": "JBL",
-          "rs": 69.2,
-          "price": 350.8,
-          "float": "103.5",
-          "eps": "26",
-          "sales": "23",
-          "inst": "-2.4",
-          "short": 2.3
-        }
-      ]
-    },
-    {
-      "rank": 30,
-      "name": "Transportation / Car Rental",
-      "score": 35.1,
-      "avg_rs": 1.9,
-      "tickers": [
-        {
-          "ticker": "CAR",
-          "rs": 3.8,
-          "price": 150.54,
-          "float": "34.8",
-          "eps": "12",
-          "sales": "4",
-          "inst": "+4.7",
-          "short": 17.5
-        },
-        {
-          "ticker": "HTZ",
-          "rs": 0.0,
-          "price": 5.75,
-          "float": "296.6",
-          "eps": "59",
-          "sales": "11",
-          "inst": "+0.5",
-          "short": 18.6
+          "inst": "+7.6",
+          "short": 12.8
         }
       ]
     }

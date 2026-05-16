@@ -1,15 +1,15 @@
-"""Decide whether a scheduled workflow should continue.
+"""Decide whether a dual-cron scheduled workflow should continue.
 
-GitHub Actions schedules are expressed in UTC, so each workflow keeps two cron
-entries — one for PDT and one for PST.  This guard validates the cron
-expression that actually triggered the run against the current Pacific UTC
-offset.  That keeps the workflow correct even if GitHub starts the job late.
+Legacy workflows can keep two UTC cron entries, one for PDT and one for PST.
+This guard validates the cron expression that actually triggered the run
+against the current Pacific UTC offset. That keeps those workflows correct
+even if GitHub starts the job late.
 
-The expected cron pair is read from environment variables so that every
-workflow can re-use the same guard:
+The expected cron pair is read from environment variables so that workflows can
+re-use the same guard:
 
-    SCHEDULE_GUARD_PDT_CRON   (default: "15 20 * * 1-5" → 1:15 PM PDT)
-    SCHEDULE_GUARD_PST_CRON   (default: "15 21 * * 1-5" → 1:15 PM PST)
+    SCHEDULE_GUARD_PDT_CRON   (default: "30 20 * * 1-5" -> 1:30 PM PDT)
+    SCHEDULE_GUARD_PST_CRON   (default: "30 21 * * 1-5" -> 1:30 PM PST)
 """
 
 from __future__ import annotations
@@ -24,8 +24,8 @@ from zoneinfo import ZoneInfo
 
 
 PACIFIC_TZ = ZoneInfo("America/Los_Angeles")
-PDT_CRON = os.environ.get("SCHEDULE_GUARD_PDT_CRON", "15 20 * * 1-5")
-PST_CRON = os.environ.get("SCHEDULE_GUARD_PST_CRON", "15 21 * * 1-5")
+PDT_CRON = os.environ.get("SCHEDULE_GUARD_PDT_CRON", "30 20 * * 1-5")
+PST_CRON = os.environ.get("SCHEDULE_GUARD_PST_CRON", "30 21 * * 1-5")
 
 
 def parse_utc_datetime(raw_value: str | None) -> datetime:

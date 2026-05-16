@@ -146,15 +146,15 @@ Environment variables (`.env`): `GOOGLE_API_KEY` (Gemini), `GOOGLE_SHEET_ID` (th
 
 ## CI/CD
 
-Three GitHub Actions workflows, all DST-agnostic via dual-cron + schedule guard (`src/ci/daily_screening_schedule_guard.py`):
+Three GitHub Actions workflows:
 
 | Workflow | Schedule (Pacific) | What it does |
 |----------|-------------------|--------------|
-| `daily-screening.yml` | 1:15 PM | Full 10-step theme pipeline + Pages deploy |
+| `daily-screening.yml` | 1:30 PM | Full 10-step theme pipeline + Pages deploy |
 | `ep-scan-afternoon.yml` | 2:00 PM | AMC earnings scan → JSON + Discord alert + Pages deploy |
 | `ep-scan-morning.yml` | 5:45 AM | BMO earnings scan → JSON + Discord alert + Pages deploy |
 
-Each workflow uses two UTC cron entries (PDT + PST) and passes the expected cron pair to the schedule guard via `SCHEDULE_GUARD_PDT_CRON` / `SCHEDULE_GUARD_PST_CRON` env vars. The guard skips the run if the triggering cron doesn't match the current Pacific offset. All workflows support `workflow_dispatch` for manual trigger.
+`daily-screening.yml` intentionally uses one timezone-aware cron entry (`America/Los_Angeles`) so GitHub creates only one scheduled workflow run at 1:30 PM Pacific. The EP scan workflows still use two UTC cron entries (PDT + PST) and pass the expected cron pair to the schedule guard via `SCHEDULE_GUARD_PDT_CRON` / `SCHEDULE_GUARD_PST_CRON` env vars. The guard skips EP scan runs whose triggering cron doesn't match the current Pacific offset. All workflows support `workflow_dispatch` for manual trigger.
 
 ## Tech Stack
 

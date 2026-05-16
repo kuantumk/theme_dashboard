@@ -132,15 +132,15 @@ Key data stores:
 
 ## CI/CD
 
-Three GitHub Actions workflows, all DST-agnostic via dual-cron + a Pacific-time schedule guard (`src/ci/daily_screening_schedule_guard.py`):
+Three GitHub Actions workflows:
 
 | Workflow | Pacific schedule | Action |
 |----------|------------------|--------|
-| `daily-screening.yml` | 1:15 PM | Full 10-step theme pipeline + Pages deploy |
+| `daily-screening.yml` | 1:30 PM | Full 10-step theme pipeline + Pages deploy |
 | `ep-scan-afternoon.yml` | 2:00 PM | AMC earnings scan + Discord alert + Pages deploy |
 | `ep-scan-morning.yml` | 5:45 AM | BMO earnings scan + Discord alert + Pages deploy |
 
-Each workflow declares two UTC cron entries (PDT + PST) and passes the expected pair to the schedule guard via `SCHEDULE_GUARD_PDT_CRON` / `SCHEDULE_GUARD_PST_CRON`. The guard skips runs whose triggering cron doesn't match the current Pacific offset, so exactly one cron fires per day across DST boundaries. All workflows accept `workflow_dispatch` for manual trigger.
+`daily-screening.yml` intentionally uses one timezone-aware cron entry (`America/Los_Angeles`) so GitHub creates only one scheduled workflow run at 1:30 PM Pacific. The EP scan workflows still declare two UTC cron entries (PDT + PST) and pass the expected pair to the schedule guard via `SCHEDULE_GUARD_PDT_CRON` / `SCHEDULE_GUARD_PST_CRON`. The guard skips EP scan runs whose triggering cron doesn't match the current Pacific offset. All workflows accept `workflow_dispatch` for manual trigger.
 
 ## Configuration
 

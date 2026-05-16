@@ -2,11 +2,9 @@ name: Daily Stock Screening and Dashboard Deployment
 
 on:
   schedule:
-    # Dual-cron for DST-aware 1:15 PM Pacific (Mon-Fri)
-    # 8:15 PM UTC = 1:15 PM PDT (Mar-Nov)
-    - cron: '15 20 * * 1-5'
-    # 9:15 PM UTC = 1:15 PM PST (Nov-Mar)
-    - cron: '15 21 * * 1-5'
+    # Single timezone-aware cron to avoid duplicate scheduled workflow runs.
+    - cron: '30 13 * * 1-5'
+      timezone: "America/Los_Angeles"
   workflow_dispatch: # Allow manual triggering (always runs)
 
 permissions:
@@ -29,28 +27,13 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      # Keep both UTC crons, then allow only the one that matches the current
-      # Pacific offset. This is more reliable than checking the runner clock
-      # because scheduled workflows can start late.
-      - name: Schedule guard - verify Pacific DST mapping
-        id: schedule-guard
-        env:
-          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
-          WORKFLOW_EVENT_SCHEDULE: ${{ github.event.schedule }}
-          SCHEDULE_GUARD_PDT_CRON: "15 20 * * 1-5"
-          SCHEDULE_GUARD_PST_CRON: "15 21 * * 1-5"
-        run: |
-          python3 -m src.ci.daily_screening_schedule_guard
-
       - name: Set up Python
-        if: steps.schedule-guard.outputs.should_run == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install Python dependencies
-        if: steps.schedule-guard.outputs.should_run == 'true'
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -58,7 +41,6 @@ jobs:
           playwright install --with-deps chromium
 
       - name: Run daily workflow
-        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
@@ -66,7 +48,6 @@ jobs:
           python run_daily_workflow.py
 
       - name: Export dashboard data
-        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           PYTHONPATH: .
@@ -74,7 +55,6 @@ jobs:
           python src/reporting/export_dashboard_data.py
 
       - name: Commit and push results
-        if: steps.schedule-guard.outputs.should_run == 'true'
         env:
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
@@ -116,7 +96,7 @@ jobs:
           fi
 
       - name: Upload report as artifact
-        if: always() && steps.schedule-guard.outputs.should_run == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: daily-report-${{ github.run_number }}
@@ -124,7 +104,7 @@ jobs:
           retention-days: 30
 
       - name: Upload screening outputs as artifact
-        if: always() && steps.schedule-guard.outputs.should_run == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screening-outputs-${{ github.run_number }}
@@ -132,7 +112,7 @@ jobs:
           retention-days: 30
 
       - name: Upload VARS tab JSON as artifact
-        if: always() && steps.schedule-guard.outputs.should_run == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vars-tab-json-${{ github.run_number }}
@@ -141,7 +121,7 @@ jobs:
           retention-days: 30
 
       - name: Notify on failure
-        if: failure() && steps.schedule-guard.outputs.should_run == 'true'
+        if: failure()
         run: |
           echo "::error::Daily workflow failed! Check logs for details."
 

@@ -1,0 +1,284 @@
+# Canonical Theme Taxonomy
+# ─────────────────────────
+# Three-level hierarchy: L1 / L2 / L3
+#   - L1 is the trading narrative (e.g. "AI", "Clean Energy", "Oil & Gas").
+#     Tickers sharing an L1 share an investing thesis.
+#   - L2 is the application or sub-segment within that narrative.
+#   - L3 is the specialty (optional, only where it adds investor-relevant detail).
+#
+# A ticker's theme is stored as a slash-delimited path:
+#   "AI / Data Center / Memory"  (3 levels)
+#   "Space / Launch"             (2 levels)
+#   "Quantum Computing"          (1 level — leaf at L1)
+#
+# Naming rule: NO slashes inside a level name. Use " & ", "—", or single words.
+# The slash " / " is reserved as the level separator in paths.
+#
+# Rules:
+#   - L1 must come from this file's top-level keys
+#   - L2 must be a key under L1's children
+#   - L3 must be a key/leaf under L2's children
+#   - Each L1 is one coherent narrative. Clean Energy and Oil & Gas are SIBLINGS,
+#     not children of a generic "Energy" node — BE and PUMP must never share L1.
+#
+# Children syntax (both shapes supported by the loader):
+#   children: ["A", "B"]            # flat list of leaves
+#   children:                        # dict (allows nested L3)
+#     A: {}
+#     B:
+#       children: ["x", "y"]
+
+themes:
+
+  AI:
+    description: "Generative-AI capex cycle and AI-application revenue"
+    children:
+      Data Center:
+        children: ["Optics", "Memory", "Chips & Processors", "Power & Cooling",
+                   "Networking & Connectivity", "Cloud & Hyperscalers", "Components"]
+      Software & Analytics: {}
+      Drug Discovery: {}
+      Hardware:
+        children: ["AR Glasses", "Avatars"]
+      Semiconductor Equipment: {}
+      Robotics: {}
+      Security: {}
+
+  Semiconductors:
+    description: "Chip cycle independent of the AI narrative"
+    children: ["Manufacturing & Equipment", "IP Licensing", "Display Drivers",
+               "Specialty Foundry", "Materials", "RF & Connectivity",
+               "Memory (Non-AI)", "Power & Discrete"]
+
+  Software & Internet:
+    children: ["SaaS & Vertical", "DevOps & Data", "E-commerce", "Streaming",
+               "Ads & Marketing Tech", "Social & Communication", "iGaming",
+               "Gaming", "EdTech", "PropTech", "Dating", "BPO & IT Services",
+               "Travel Tech", "Data & Analytics"]
+
+  Cybersecurity:
+    children: ["Network", "Identity", "Endpoint", "Data Security",
+               "Surveillance & IoT", "Generalist"]
+
+  Fintech & Crypto:
+    children:
+      Payments: {}
+      Consumer Finance: {}
+      Wealth & Asset Management: {}
+      Insurance & Insurtech: {}
+      Investment Banking: {}
+      Mortgage Lending: {}
+      Specialty Lending: {}
+      Private Equity Proxy: {}
+      BNPL: {}
+      Private Credit: {}
+      SPAC: {}
+      Crypto:
+        children: ["Bitcoin Proxy", "Mining", "Infrastructure",
+                   "Exchanges & Brokers", "Generalist"]
+
+  Biotech:
+    description: "Drug discovery and therapeutics R&D"
+    children:
+      Oncology:
+        children: ["Immuno-Oncology", "Precision", "Antibodies", "RAS Inhibitors",
+                   "Oncolytic Viruses", "General"]
+      Rare Disease: {}
+      Immunology: {}
+      Neuroscience: {}
+      Metabolic & Obesity: {}
+      Cell & Gene Therapy: {}
+      Gene Editing: {}
+      RNAi & Antisense: {}
+      Infectious Disease & Vaccines: {}
+      Cardiovascular: {}
+      Respiratory: {}
+      Ophthalmology: {}
+      Dermatology: {}
+      GI Disorders: {}
+      Specialty Pharma: {}
+      Psychedelic Medicine: {}
+      Drug Delivery: {}
+      Genomics & Diagnostics Platforms: {}
+      Targeted Protein Degradation: {}
+      Complement System: {}
+      Anti-Infectives: {}
+      Nephrology: {}
+      CNS: {}
+      Drug Discovery Platform: {}
+
+  Healthcare:
+    description: "Services, payers, providers — NOT drug R&D"
+    children: ["Managed Care", "Diagnostics & Labs", "CRO & Clinical Services",
+               "Hospitals & Facilities", "Home & Behavioral Health",
+               "Pharmacy & E-commerce", "Staffing", "Data & Analytics",
+               "Skilled Nursing", "Women's Health", "Animal Health", "Imaging",
+               "Specialty Pharmaceuticals"]
+
+  MedTech:
+    children: ["Surgical & Devices", "Cardiovascular", "Diagnostics",
+               "Diabetes", "Aesthetics", "Spinal & Orthopedic", "Respiratory",
+               "Oncology Devices", "Wearables", "Dermatology Devices",
+               "Surgical Robotics"]
+
+  Clean Energy:
+    description: "Renewables, storage, electrification — green-capex narrative"
+    children:
+      Solar:
+        children: ["Modules", "Inverters", "C&I Install", "Thin-Film"]
+      Fuel Cell & Hydrogen: {}
+      Batteries & Storage: {}
+      Renewable Fuels: {}
+      Grid Infrastructure: {}
+      Decarbonization Tech: {}
+
+  Oil & Gas:
+    description: "Fossil fuel value chain"
+    children:
+      E&P: {}
+      Oilfield Services:
+        children: ["Pressure Pumping", "Drilling", "Proppants", "Completion Fluids"]
+      Refining: {}
+      Midstream & Pipelines: {}
+      LNG & Natural Gas: {}
+      Offshore Drilling: {}
+      Coal: {}
+
+  Nuclear:
+    description: "Uranium, SMR, fuel — distinct from Clean Energy"
+    children: ["Uranium Mining", "SMR & Reactors", "Fuel Technology", "Utilities"]
+
+  Power & Utilities:
+    description: "Generation, transmission, grid — fuel-agnostic"
+    children: ["Power Generation", "Transmission & Grid", "Renewable Utilities",
+               "Diversified Utilities"]
+
+  Metals & Mining:
+    children:
+      Gold: {}
+      Silver: {}
+      Copper: {}
+      Lithium:
+        children: ["Hard Rock", "Brine & DLE"]
+      Rare Earth & Strategic: {}
+      Platinum Group: {}
+      Steel: {}
+      Aluminum: {}
+      Magnesium: {}
+      Diversified: {}
+      Gold Royalty: {}
+
+  Space:
+    children: ["Launch", "Satellites & Communication",
+               "Imaging & Earth Observation", "Tourism", "Infrastructure"]
+
+  Defense & Aerospace:
+    children:
+      Defense Primes: {}
+      Defense Components: {}
+      Electronic Warfare: {}
+      Ammunition: {}
+      Drones: {}
+      Optical Systems: {}
+      Commercial Aerospace:
+        children: ["Manufacturing", "MRO", "Engines", "In-Flight Connectivity"]
+      Regional & Electric Aviation: {}
+
+  EV & Autonomous:
+    children: ["EV Manufacturers", "Autonomous Vehicles",
+               "Charging Infrastructure", "EV Components", "ADAS & LiDAR",
+               "Micromobility", "V2G Infrastructure"]
+
+  Automotive (Legacy):
+    description: "Traditional auto value chain not driven by EV/AV narrative"
+    children: ["Components", "Aftermarket & MRO", "Driveline", "Semiconductors",
+               "Manufacturers"]
+
+  Consumer:
+    children:
+      Restaurants:
+        children: ["Fast Casual", "Casual Dining", "QSR"]
+      Apparel & Footwear:
+        children: ["Athletic", "Specialty", "Premium & Luxury", "Children's"]
+      Cosmetics & Personal Care: {}
+      Food & Beverage: {}
+      Health & Wellness: {}
+      Home Goods & Furnishings: {}
+      Outdoor & Recreation: {}
+      Cannabinoids: {}
+      Eyewear: {}
+      Protein & Nutrition: {}
+      RV & Outdoor Lifestyle: {}
+
+  Retail (Multi-Category):
+    description: "Department stores, big-box, multi-category retailers"
+    children: ["Off-Price", "Big-Box", "Discount Grocery", "Specialty Apparel",
+               "Sporting Goods", "Home Goods", "Children's Apparel",
+               "Footwear Retail", "Discount Specialty",
+               "E-commerce Marketplace", "Auto Marketplace",
+               "Event Ticketing", "Luxury Resale", "Personal Styling",
+               "Southeast Asia"]
+
+  Real Estate:
+    children: ["Diversified REIT", "Residential REIT", "Office & Commercial REIT",
+               "Tech-Enabled Brokerage", "iBuying & PropTech",
+               "Home Services Marketplace"]
+
+  Industrials:
+    children: ["Heavy Machinery & Components", "Building Materials",
+               "Engineering & Construction", "Additive Manufacturing",
+               "Testing & Certification", "Workplace Services & Uniforms",
+               "Modular Space", "Distribution Technology",
+               "Electronic Manufacturing", "Flooring", "Wood Products", "PVC"]
+
+  Logistics:
+    children: ["Maritime Shipping", "Freight Brokerage & Trucking",
+               "Container Leasing", "Air Cargo", "Rail", "Supply Chain Tech"]
+
+  Travel & Leisure:
+    children:
+      Airlines:
+        children: ["Major", "Low-Cost", "Ultra-Low-Cost"]
+      Cruise Lines: {}
+      Theme Parks: {}
+      Themed Attractions: {}
+      Online Travel: {}
+      Short-term Rentals: {}
+      Car Rental: {}
+      Live Events: {}
+
+  Telecom:
+    children: ["5G Infrastructure", "Fiber", "Satellite Services",
+               "Wireless Carriers", "Argentina", "Latin America",
+               "High-Speed Video & Data", "RF Filters"]
+
+  Quantum Computing: {}
+
+  Robotics:
+    children: ["Industrial Automation", "Surgical Robotics", "Service Robots",
+               "Computer Vision"]
+
+  Agriculture:
+    children: ["Crop Protection", "Fertilizers", "Processing & Trading",
+               "Alternative Protein", "Genomics & Traceability"]
+
+  Cannabis:
+    children: ["Cultivation", "Multi-State Operators & Brands"]
+
+  Specialty Chemicals:
+    children: ["Specialty Materials", "Chlor-Alkali", "Titanium Dioxide",
+               "Recycling & Sustainability"]
+
+  Education:
+    children: ["Higher Education", "EdTech & Online Learning"]
+
+  Gig Economy:
+    children: ["Ride-Hailing", "Delivery", "Freelance Platforms"]
+
+  Geographic:
+    description: "L1 when geography IS the thesis (emerging-market exposure)"
+    children: ["Argentina", "China", "Latin America", "Southeast Asia"]
+
+  Singleton:
+    description: "Idiosyncratic — earnings pivot, special situation, no peer group"
+    children: []

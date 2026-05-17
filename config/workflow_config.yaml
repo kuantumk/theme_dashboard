@@ -41,6 +41,13 @@ themes:
   validation_stale_days: 30
   validation_confirmation_threshold: 2
 
+  # When true, the 30-day Gemini auto-validation loop is skipped — existing
+  # tickers in data/ticker_themes.json are treated as ground truth. Only the
+  # new-ticker pipeline (sync_screened_ticker_themes) and the explicit
+  # `python -m src.themes.retag` CLI can mutate tags. Flip to false to
+  # re-enable periodic auto-validation.
+  git_locked_themes: true
+
   # Periodic Claude Opus audit (src/themes/prepare_theme_audit.py +
   # apply_theme_audit.py). Runs as a /schedule routine separate from the
   # daily Gemini pipeline; targets stale tickers not in today's screened pool.
@@ -75,7 +82,7 @@ themes:
       min_si: 0.03
       coeff: 2.5
       max_bonus: 0.45
-    theme_groups_file: "config/theme_groups.yaml"
+    theme_taxonomy_file: "config/theme_taxonomy.yaml"
 
   # 4-tier regime from master table pct_above_50sma
   regime:

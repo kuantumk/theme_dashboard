@@ -181,9 +181,16 @@ def format_profiles_for_prompt(
     return "\n".join(lines)
 
 
+def _format_taxonomy_for_prompt() -> str:
+    """Render the canonical taxonomy as a numbered list of every valid path."""
+    from src.themes.theme_taxonomy import list_all_paths
+    paths = list_all_paths()
+    return "\n".join(f"- {p}" for p in sorted(paths))
+
+
 def build_classification_prompt(
     tickers: List[str],
-    existing_themes: List[str],
+    existing_themes: List[str],  # noqa: ARG001 — replaced by full taxonomy
     profiles: Mapping[str, Mapping[str, str]],
 ) -> str:
     return f"""<role>
@@ -191,59 +198,68 @@ Act as a Momentum & Sector Analysis Specialist.
 </role>
 
 <task>
-Classify the provided stocks into tightly defined Level 3 narrative themes.
+Classify the provided stocks into the canonical hierarchical theme taxonomy.
 Use the cached company metadata below instead of guessing from ticker symbols.
-Prefer reusing an existing theme when it fits cleanly.
-If a stock is clearly idiosyncratic, use "Individual Episodic Pivots / Singletons".
+Pick the MOST SPECIFIC path available (prefer L3 over L2 when applicable).
+If a stock is genuinely idiosyncratic with no peer group, use "Singleton".
 </task>
 
 <rules>
-1. SECTOR CONSISTENCY: Each theme MUST align with the company's sector and industry.
-   Do NOT assign themes from an unrelated sector. Examples:
-   - An Energy-sector company must NOT get themes starting with "Financials", "Software", "Healthcare", etc.
-   - A Consumer Cyclical / Internet Retail company is retail/e-commerce, NOT logistics or freight.
+1. PATH FORMAT: Each theme is a slash-delimited path with " / " separators:
+   - "AI / Data Center / Memory"  (L1 / L2 / L3 — most specific)
+   - "Space / Launch"             (L1 / L2)
+   - "Quantum Computing"          (L1 only, when the L1 has no children)
+   ONLY use paths from <taxonomy> below. Do NOT invent new paths.
 
-2. CORE BUSINESS ONLY: Classify by the company's primary revenue source and products/services.
-   Do NOT classify by:
-   - Where it is headquartered (no "Financials / Argentina" for an oil company).
-   - What industry it serves as a platform (a grocery delivery app is e-commerce, not logistics;
-     a ride-sharing app is transportation tech, not automotive).
-   - Tangential attributes or customer segments.
+2. L1 = NARRATIVE: L1 is the dominant investing narrative. Tickers sharing L1 share a
+   trading thesis. Clean Energy and Oil & Gas are SEPARATE L1s — a fuel-cell company
+   (BE) must NEVER share L1 with an oilfield-services company (PUMP).
 
-3. GEOGRAPHIC QUALIFIERS: Only use a geographic qualifier when geography IS the investment
-   thesis — e.g. "Financials / Argentina" is valid ONLY for actual Argentine banks or financial
-   companies, never for an Argentine energy or industrial company.
+3. SECTOR CONSISTENCY: The chosen L1 must align with the company's sector/industry.
+   - An Energy (oil/gas) sector company belongs under "Oil & Gas", not "Clean Energy".
+   - A Consumer Cyclical / Internet Retail company is "Software & Internet / E-commerce"
+     or "Retail (Multi-Category) / ...", NOT "Logistics".
 
-4. SECOND THEME: A second theme must reflect a distinct core business line (e.g. a company
-   with both cloud software and cybersecurity products). If no second core business exists,
-   assign only one theme. Do NOT add a second theme for country, customer type, or other
-   secondary attributes.
+4. CORE BUSINESS ONLY: Classify by primary revenue source. Do NOT classify by:
+   - Headquarters location (use "Geographic / ..." ONLY when geography IS the thesis).
+   - Customer segment served (a grocery-delivery app is "Gig Economy / Delivery",
+     not "Logistics").
+
+5. MULTI-THEME (max 3 paths): A second/third path is only justified when the company
+   has DISTINCT material revenue lines under different L1s (e.g. AMZN has E-commerce
+   AND Cloud, so it gets both Software & Internet / E-commerce and AI / Data Center /
+   Cloud & Hyperscalers). Do NOT add extra paths for country or customer type.
 </rules>
 
 <negative_examples>
-WRONG: CART (Maplebear/Instacart, sector=Consumer Cyclical, industry=Internet Retail)
-       -> ["E-commerce and Digital Retail", "Logistics / Freight Brokerage"]
-       Instacart is a retail marketplace, not a freight broker.
-       CORRECT: ["E-commerce and Digital Retail"]
+WRONG: BE (sector=Industrials, industry=Specialty Industrial Machinery, fuel cells)
+       -> ["Oil & Gas / E&P"]
+       Fuel cell systems are CLEAN ENERGY (hydrogen), NOT fossil-fuel oil & gas.
+       CORRECT: ["Clean Energy / Fuel Cell & Hydrogen"]
 
-WRONG: YPF (sector=Energy, industry=Oil & Gas Integrated)
-       -> ["Energy / Oil & Gas Exploration & Production", "Financials / Argentina"]
-       YPF is an energy company. Being Argentine does not make it financial services.
-       CORRECT: ["Energy / Oil & Gas Exploration & Production"]
+WRONG: CART (Maplebear/Instacart, sector=Consumer Cyclical, industry=Internet Retail)
+       -> ["Software & Internet / E-commerce", "Logistics / Freight Brokerage & Trucking"]
+       Instacart is a retail marketplace, not a freight broker.
+       CORRECT: ["Software & Internet / E-commerce"]
+
+WRONG: YPF (sector=Energy, industry=Oil & Gas Integrated, Argentine)
+       -> ["Oil & Gas / E&P", "Geographic / Argentina"]
+       YPF is an energy company. Being Argentine doesn't make geography the thesis.
+       CORRECT: ["Oil & Gas / E&P"]
 </negative_examples>
 
-<existing_themes>
-{chr(10).join(f"- {theme}" for theme in existing_themes)}
-</existing_themes>
+<taxonomy>
+{_format_taxonomy_for_prompt()}
+</taxonomy>
 
 <ticker_profiles>
 {format_profiles_for_prompt(tickers, profiles)}
 </ticker_profiles>
 
 <output_format>
-Return ONLY valid JSON:
+Return ONLY valid JSON, max 3 paths per ticker:
 {{
-  "TICKER": ["Theme Name", "Optional Second Theme"]
+  "TICKER": ["L1 / L2 / L3", "L1 / L2 (optional second path)"]
 }}
 </output_format>"""
 
@@ -259,12 +275,20 @@ def classify_tickers_with_gemini(
     print(f"Classifying {len(tickers)} new/unclassified ticker(s) with Gemini...")
     raw_tags = _call_gemini_json(build_classification_prompt(tickers, existing_themes, profiles))
 
+    from src.themes.theme_taxonomy import validate_path, load_taxonomy
+    taxonomy = load_taxonomy()
+
     normalized_tags: Dict[str, List[str]] = {}
     for ticker, themes in raw_tags.items():
         clean_ticker = str(ticker).strip().upper()
         if not clean_ticker:
             continue
-        normalized_tags[clean_ticker] = _coerce_theme_list(themes)
+        candidate_paths = _coerce_theme_list(themes)[:3]
+        valid_paths = [p for p in candidate_paths if validate_path(p, taxonomy)]
+        invalid = [p for p in candidate_paths if p not in valid_paths]
+        if invalid:
+            print(f"  Taxonomy guard: dropped invalid paths for {clean_ticker}: {invalid}")
+        normalized_tags[clean_ticker] = valid_paths or ["Singleton"]
 
     missing = sorted(set(tickers) - set(normalized_tags.keys()))
     if missing:
@@ -273,18 +297,18 @@ def classify_tickers_with_gemini(
     return normalized_tags
 
 
-# Sector → theme-prefix pairs that are clearly incompatible.
+# Sector → blocked L1 narratives. L1 names from config/theme_taxonomy.yaml.
 # Conservative: only blocks obviously wrong cross-sector assignments.
 SECTOR_THEME_BLOCKLIST: Dict[str, Set[str]] = {
-    "Energy": {"Financials", "Financial Services", "Fintech", "Software", "Healthcare", "Biotech"},
-    "Consumer Cyclical": {"Financials", "Financial Services", "Logistics"},
-    "Consumer Defensive": {"Financials", "Financial Services", "Logistics"},
-    "Healthcare": {"Financials", "Financial Services", "Energy", "Logistics"},
-    "Industrials": {"Financials", "Financial Services", "Healthcare", "Biotech"},
-    "Basic Materials": {"Financials", "Financial Services", "Software", "Healthcare"},
-    "Financial Services": {"Energy", "Healthcare", "Biotech", "Logistics"},
-    "Real Estate": {"Energy", "Logistics", "Biotech"},
-    "Utilities": {"Financials", "Financial Services", "Logistics", "Biotech"},
+    "Energy": {"Fintech & Crypto", "Software & Internet", "Healthcare", "Biotech"},
+    "Consumer Cyclical": {"Fintech & Crypto", "Logistics"},
+    "Consumer Defensive": {"Fintech & Crypto", "Logistics"},
+    "Healthcare": {"Fintech & Crypto", "Oil & Gas", "Clean Energy", "Logistics"},
+    "Industrials": {"Fintech & Crypto", "Healthcare", "Biotech"},
+    "Basic Materials": {"Fintech & Crypto", "Software & Internet", "Healthcare"},
+    "Financial Services": {"Oil & Gas", "Clean Energy", "Healthcare", "Biotech", "Logistics"},
+    "Real Estate": {"Oil & Gas", "Clean Energy", "Logistics", "Biotech"},
+    "Utilities": {"Fintech & Crypto", "Logistics", "Biotech"},
 }
 
 
@@ -791,6 +815,24 @@ def write_validation_audit(
 
 
 def validate_dashboard_ticker_themes(dashboard_tickers: Iterable[str]) -> ThemeValidationResult:
+    # Git-locked mode: skip the auto-revalidation loop. Existing tickers stay
+    # frozen at their committed paths; only `src.themes.retag` (explicit user
+    # command) or `sync_screened_ticker_themes` (new tickers) can mutate them.
+    git_locked = CONFIG.get("themes", {}).get("git_locked_themes", True)
+    if git_locked:
+        ticker_themes = load_existing_themes()
+        return ThemeValidationResult(
+            ticker_themes=ticker_themes,
+            google_sheet_tickers=[],
+            google_sheet_updates=[],
+            validated_tickers=[],
+            confirmed_keeps=[],
+            pending_mismatches=[],
+            applied_retags=[],
+            unresolved_tickers=[],
+            review_state_path=str(THEME_REVIEW_STATE_FILE),
+        )
+
     ticker_themes = load_existing_themes()
     review_state = load_theme_review_state()
     validation_tickers = select_validation_tickers(dashboard_tickers, review_state)

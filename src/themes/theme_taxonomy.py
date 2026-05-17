@@ -71,6 +71,57 @@ def get_l1(path: str) -> str:
     return split_path(path)[0]
 
 
+def resolve_l1(name: str, taxonomy: Optional[Dict[str, dict]] = None) -> str:
+    """Return the best-guess L1 narrative for *any* theme label.
+
+    Defense-in-depth helper for the display layer. Recognises three shapes:
+
+    1. **Canonical taxonomy path** — ``"AI / Data Center / Memory"`` →
+       ``"AI"`` (just the first slash segment).
+    2. **Legacy alias** — ``"AI - Memory & Storage"``, ``"Drones"``,
+       ``"Solar"`` → routed through :mod:`src.themes.legacy_aliases`. The
+       canonical path's L1 is returned (e.g. ``"AI"``, ``"Defense & Aerospace"``,
+       ``"Clean Energy"``).
+    3. **Old "L1 - rest" prefix** — ``"AI - Some New Thing"`` → if the segment
+       before the first ``" - "`` matches a taxonomy L1, that's used.
+
+    Falls back to the raw first slash segment when nothing else matches, so
+    the function is total. Callers should still validate via
+    :func:`validate_path` when they need strict semantics.
+    """
+    if not name:
+        return ""
+    if taxonomy is None:
+        taxonomy = load_taxonomy()
+
+    # 1. Canonical path: first segment is a known L1.
+    head = name.split(PATH_SEP, 1)[0].strip()
+    if head in taxonomy:
+        return head
+
+    # 2. Legacy alias table — covers every label the migration script knew.
+    try:
+        from src.themes.legacy_aliases import normalize_legacy_theme  # local to avoid cycles
+        canonical = normalize_legacy_theme(name)
+    except Exception:  # pragma: no cover — keep helper total even if aliases unavailable
+        canonical = None
+    if canonical:
+        canon_head = canonical.split(PATH_SEP, 1)[0].strip()
+        if canon_head:
+            return canon_head
+
+    # 3. "L1 - rest" pattern — recognise dash-separated legacy labels whose
+    #    prefix is still a real taxonomy L1 (e.g. a label not in the alias
+    #    table but starting with "AI - ").
+    if " - " in name:
+        prefix = name.split(" - ", 1)[0].strip()
+        if prefix in taxonomy:
+            return prefix
+
+    # 4. Last resort — return whatever the first slash segment was.
+    return head
+
+
 def get_leaf(path: str) -> str:
     """Return the most specific component of the path."""
     parts = path.split(PATH_SEP)

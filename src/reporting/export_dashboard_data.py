@@ -22,7 +22,7 @@ from config.settings import (
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
-from src.themes.theme_taxonomy import PATH_SEP, split_path
+from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
@@ -30,12 +30,16 @@ OUTPUT_DIR = DOCS_DATA_DIR
 def _attach_hierarchy(themes_list):
     """Attach l1/l2/l3 fields to each theme entry by splitting the path name.
 
-    Mutates the list in place and returns it. Safe to call on entries that
-    already have hierarchy fields (will overwrite).
+    Uses the strict :func:`split_path` for L2/L3 (these only make sense for
+    canonical hierarchical paths) but falls back to :func:`resolve_l1` for L1
+    so legacy labels like ``"AI - Memory & Storage"`` or bare ``"Drones"``
+    still bucket into the right narrative hub. Mutates the list in place and
+    returns it.
     """
     for entry in themes_list:
-        l1, l2, l3 = split_path(entry.get('name', ''))
-        entry['l1'] = l1
+        name = entry.get('name', '')
+        _, l2, l3 = split_path(name)
+        entry['l1'] = resolve_l1(name) or split_path(name)[0]
         entry['l2'] = l2
         entry['l3'] = l3
     return themes_list
@@ -48,14 +52,16 @@ def _build_network(themes_list):
     - One ``leaf`` node per theme path (the existing theme nodes).
     - One ``is_a`` edge from each leaf to its L1 hub.
 
-    Shared-ticker edges between leaves are still computed in the frontend.
+    L1 attribution uses the defensive :func:`resolve_l1` resolver so that
+    legacy or partially-corrupted theme labels still connect to the correct
+    hub. Shared-ticker edges between leaves are still computed in the frontend.
     """
     l1_seen = set()
     nodes = []
     edges = []
     for entry in themes_list:
         name = entry.get('name')
-        l1 = entry.get('l1') or split_path(name)[0]
+        l1 = entry.get('l1') or resolve_l1(name) or split_path(name)[0]
         if l1 not in l1_seen:
             l1_seen.add(l1)
             nodes.append({'id': l1, 'kind': 'l1'})

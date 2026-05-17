@@ -1,112 +1,167 @@
-"""Theme taxonomy — loads ticker-to-theme mappings and applies theme grouping.
+"""Hierarchical theme taxonomy.
 
-Supports three grouping modes:
-  keep    — score both super-theme and sub-themes
-  consume — merge sub-themes into super-theme only
-  remove  — delete listed themes without creating a super-theme
+Reads ``config/theme_taxonomy.yaml`` and exposes lookups for the L1/L2/L3
+narrative hierarchy. Theme strings are slash-delimited paths (separator
+``" / "``), e.g. ``"AI / Data Center / Memory"``.
 
-Consolidation is applied as a view layer: ticker_themes.json is never modified.
+The taxonomy is the single source of truth for what themes exist. Every path
+in ``data/ticker_themes.json`` must validate against it.
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
 from config.settings import CONFIG
 
+PATH_SEP = " / "
 
-def load_theme_groups(path: str = None) -> Dict[str, dict]:
-    """Load theme grouping configuration from YAML."""
-    if path is None:
-        path = CONFIG["themes"].get("scoring", {}).get(
-            "theme_groups_file", "config/theme_groups.yaml"
-        )
-    p = Path(path)
+
+def _config_path() -> Path:
+    rel = CONFIG.get("themes", {}).get("scoring", {}).get(
+        "theme_taxonomy_file", "config/theme_taxonomy.yaml"
+    )
+    return Path(rel)
+
+
+@lru_cache(maxsize=1)
+def load_taxonomy(path: Optional[str] = None) -> Dict[str, dict]:
+    """Load the taxonomy YAML and return the top-level ``themes`` mapping."""
+    p = Path(path) if path else _config_path()
     if not p.exists():
         return {}
-    with open(p) as f:
-        config = yaml.safe_load(f)
-    groups = {}
-    for super_theme, info in config.get("theme_groups", {}).items():
-        groups[super_theme] = {
-            "members": info.get("members", []),
-            "prefix": info.get("prefix", []),
-            "exclude": info.get("exclude", []),
-            "mode": info.get("mode", "keep"),
-        }
-    return groups
+    with open(p, encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    return data.get("themes", {})
 
 
-def _matches_group(theme_name: str, group_config: dict) -> bool:
-    """Check if a theme name matches a group's prefix or member list.
+def _children(node) -> Dict[str, dict]:
+    """Normalize a node's ``children`` to a dict ``{name: subtree}``.
 
-    Themes in the ``exclude`` list are never matched, even if they
-    would otherwise match a prefix or member entry.
+    YAML supports both shapes: ``children: ["A", "B"]`` (flat leaves) and
+    ``children: {A: {}, B: {children: [...]}}`` (nested).
     """
-    if theme_name in group_config.get("exclude", []):
+    if not isinstance(node, dict):
+        return {}
+    raw = node.get("children")
+    if raw is None:
+        return {}
+    if isinstance(raw, list):
+        return {name: {} for name in raw}
+    if isinstance(raw, dict):
+        return raw
+    return {}
+
+
+def split_path(path: str) -> Tuple[str, Optional[str], Optional[str]]:
+    """Split a theme path into (L1, L2, L3). L2 and L3 may be ``None``."""
+    parts = [p.strip() for p in path.split(PATH_SEP)]
+    l1 = parts[0] if parts else ""
+    l2 = parts[1] if len(parts) > 1 else None
+    l3 = parts[2] if len(parts) > 2 else None
+    return l1, l2, l3
+
+
+def get_l1(path: str) -> str:
+    return split_path(path)[0]
+
+
+def get_leaf(path: str) -> str:
+    """Return the most specific component of the path."""
+    parts = path.split(PATH_SEP)
+    return parts[-1].strip() if parts else path
+
+
+def validate_path(path: str, taxonomy: Optional[Dict[str, dict]] = None) -> bool:
+    """Validate a slash-delimited theme path against the taxonomy."""
+    if taxonomy is None:
+        taxonomy = load_taxonomy()
+    if not taxonomy:
         return False
-    for prefix in group_config.get("prefix", []):
-        if theme_name.startswith(prefix):
-            return True
-    return theme_name in group_config.get("members", [])
+    l1, l2, l3 = split_path(path)
+    if l1 not in taxonomy:
+        return False
+    if l2 is None:
+        return True
+    l2_children = _children(taxonomy[l1])
+    if l2 not in l2_children:
+        return False
+    if l3 is None:
+        return True
+    l3_children = _children(l2_children[l2])
+    return l3 in l3_children
+
+
+def list_all_paths(taxonomy: Optional[Dict[str, dict]] = None) -> List[str]:
+    """Return every valid leaf path in the taxonomy (deepest available level)."""
+    if taxonomy is None:
+        taxonomy = load_taxonomy()
+    out: List[str] = []
+    for l1, l1_node in taxonomy.items():
+        l2_children = _children(l1_node)
+        if not l2_children:
+            out.append(l1)
+            continue
+        for l2, l2_node in l2_children.items():
+            l3_children = _children(l2_node)
+            if not l3_children:
+                out.append(f"{l1}{PATH_SEP}{l2}")
+                continue
+            for l3 in l3_children:
+                out.append(f"{l1}{PATH_SEP}{l2}{PATH_SEP}{l3}")
+    return out
 
 
 def build_theme_to_tickers(
     ticker_themes: Dict[str, List[str]],
-    theme_groups: Dict[str, dict] = None,
+    taxonomy: Optional[Dict[str, dict]] = None,  # noqa: ARG001 — kept for API parity
 ) -> Dict[str, List[str]]:
-    """Build theme -> [tickers] mapping, applying grouping.
+    """Build ``{theme_path: [tickers]}`` from ``{ticker: [theme_paths]}``.
 
-    Args:
-        ticker_themes: {ticker: [theme1, theme2, ...]} from ticker_themes.json
-        theme_groups: grouping config (loaded from theme_groups.yaml).
-                      If None, loads from the default config path.
-
-    Returns:
-        {theme: [ticker1, ticker2, ...]} with consolidation applied.
+    Groups by leaf path (the most specific tag). No prefix-based consolidation —
+    the taxonomy IS the consolidation. Singleton stays as its own bucket but
+    will typically be filtered out by downstream code.
     """
-    # Reverse mapping: ticker -> themes  →  theme -> tickers
-    raw = defaultdict(list)
-    for ticker, themes in ticker_themes.items():
-        for theme in themes:
-            raw[theme].append(ticker)
+    out: Dict[str, List[str]] = defaultdict(list)
+    for ticker, paths in ticker_themes.items():
+        for path in paths:
+            out[path].append(ticker)
+    return {k: sorted(v) for k, v in out.items()}
 
-    result = dict(raw)
 
-    if theme_groups is None:
-        theme_groups = load_theme_groups()
+def build_l1_to_tickers(
+    ticker_themes: Dict[str, List[str]],
+) -> Dict[str, List[str]]:
+    """Build ``{L1: [tickers]}`` for hub-node rendering. Tickers appear once
+    per distinct L1 they touch."""
+    out: Dict[str, set] = defaultdict(set)
+    for ticker, paths in ticker_themes.items():
+        for path in paths:
+            out[get_l1(path)].add(ticker)
+    return {k: sorted(v) for k, v in out.items()}
 
-    if not theme_groups:
-        return result
 
-    consumed = set()
+def build_l1_to_leaf_themes(
+    ticker_themes: Dict[str, List[str]],
+) -> Dict[str, List[str]]:
+    """Build ``{L1: [leaf_paths sorted]}`` — used to render is-a edges between
+    leaf nodes and their L1 hub in the network visualization."""
+    out: Dict[str, set] = defaultdict(set)
+    for paths in ticker_themes.values():
+        for path in paths:
+            out[get_l1(path)].add(path)
+    return {k: sorted(v) for k, v in out.items()}
 
-    for super_theme, config in theme_groups.items():
-        mode = config.get("mode", "keep")
 
-        if mode == "remove":
-            for theme_name in list(raw.keys()):
-                if _matches_group(theme_name, config):
-                    consumed.add(theme_name)
-            continue
-
-        # keep or consume mode: build super-theme
-        tickers = set()
-        for theme_name in list(raw.keys()):
-            if _matches_group(theme_name, config):
-                tickers.update(raw[theme_name])
-                if mode == "consume":
-                    consumed.add(theme_name)
-
-        if tickers:
-            result[super_theme] = sorted(tickers)
-
-    # Remove consumed/removed sub-themes, but NEVER remove a super-theme
-    super_names = set(theme_groups.keys())
-    for theme in consumed:
-        if theme not in super_names:
-            result.pop(theme, None)
-
-    return result
+# ─────────────────────────────────────────────────────────────────────────────
+# Backward-compatibility shims for code that still calls the old API
+# ─────────────────────────────────────────────────────────────────────────────
+def load_theme_groups(path: Optional[str] = None) -> Dict[str, dict]:
+    """Deprecated — returns an empty dict. Old prefix/consume rules are gone;
+    the taxonomy file is the consolidation."""
+    return {}

@@ -1018,6 +1018,12 @@
 
   function buildVizTooltip(node, mode) {
     const d = node.data();
+    if (d.kind === 'l1') {
+      return (
+        `<div class="tip-title">${d.label}</div>` +
+        `<div class="tip-sub">Narrative hub · ${d.themes} sub-themes</div>`
+      );
+    }
     if (d.kind === 'theme') {
       const strengthLabel = mode === 'themes' ? 'Score' : 'Strength';
       const avgLabel = mode === 'vars' ? 'Avg VARS' : 'Avg RS';
@@ -1165,13 +1171,52 @@
 
     const elements = [];
     const seen = new Set();
+    const l1Seen = new Set();
+    const l1Of = (name) => {
+      const parts = (name || '').split(' / ');
+      return parts[0] || name;
+    };
+    // Strength aggregates per L1 — used to size the hub bubbles
+    const l1Stats = {};
+    for (const theme of hot) {
+      const l1 = theme.l1 || l1Of(theme.name);
+      const s = l1Stats[l1] = l1Stats[l1] || { strength: 0, themes: 0 };
+      s.strength += theme._strength || 0;
+      s.themes += 1;
+    }
     for (const theme of hot) {
       const themeId = `theme::${theme.name}`;
       const action = actionabilityScore(theme, mode);
+      const l1 = theme.l1 || l1Of(theme.name);
+      const l1Id = `l1::${l1}`;
+      // Emit L1 hub node once
+      if (!l1Seen.has(l1) && l1 !== theme.name) {
+        l1Seen.add(l1);
+        const stats = l1Stats[l1] || { strength: 0, themes: 1 };
+        elements.push({
+          data: {
+            id: l1Id, kind: 'l1',
+            label: l1,
+            strength: Math.min(140, stats.strength / Math.max(1, stats.themes) + 10 * stats.themes),
+            themes: stats.themes,
+          },
+        });
+      }
+      // is-a edge: theme -> L1 hub (only when there's a real hierarchy)
+      if (l1 !== theme.name) {
+        elements.push({
+          data: {
+            id: `is_a::${themeId}::${l1Id}`,
+            source: themeId, target: l1Id,
+            kind: 'is_a',
+          },
+        });
+      }
       elements.push({
         data: {
           id: themeId, kind: 'theme',
           label: theme.name,
+          l1,
           strength: theme._strength,
           avg_rs:   theme._avg_rs,
           breadth: (theme.tickers || []).length,
@@ -1233,14 +1278,40 @@
         name: 'cose',
         animate: false,
         randomize: false,
-        nodeRepulsion: function (n) { return n.data('kind') === 'theme' ? 22000 : 4500; },
-        idealEdgeLength: function () { return 130; },
+        nodeRepulsion: function (n) {
+          const k = n.data('kind');
+          if (k === 'l1')    return 55000;
+          if (k === 'theme') return 22000;
+          return 4500;
+        },
+        idealEdgeLength: function (e) {
+          return e.data('kind') === 'is_a' ? 90 : 130;
+        },
         gravity: 0.18,
         numIter: 1500,
         padding: 30,
         fit: true,
       },
       style: [
+        { selector: 'node[kind = "l1"]', style: {
+            'background-color': '#1a2434',
+            'background-opacity': 0.65,
+            'label': 'data(label)',
+            'color': '#fde68a',
+            'font-size': 18,
+            'font-weight': 'bold',
+            'font-family': 'DM Sans, system-ui, sans-serif',
+            'width':  'mapData(strength, 30, 160, 70, 160)',
+            'height': 'mapData(strength, 30, 160, 70, 160)',
+            'shape': 'round-hexagon',
+            'border-width': 3,
+            'border-color': '#fde68a',
+            'border-opacity': 0.75,
+            'text-valign': 'center', 'text-halign': 'center',
+            'text-outline-color': '#000000', 'text-outline-width': 3,
+            'text-wrap': 'wrap', 'text-max-width': 140,
+            'z-index': 1,
+        }},
         { selector: 'node[kind = "theme"]', style: {
             'background-color': 'data(fill)',
             'label': 'data(label)',
@@ -1314,6 +1385,15 @@
         { selector: 'edge[?isLeader]', style: {
             'line-color': '#7292b0',
             'opacity': 0.85,
+        }},
+        { selector: 'edge[kind = "is_a"]', style: {
+            'width': 2,
+            'line-color': '#fde68a',
+            'line-style': 'dashed',
+            'line-dash-pattern': [6, 4],
+            'opacity': 0.35,
+            'curve-style': 'straight',
+            'target-arrow-shape': 'none',
         }},
       ],
       wheelSensitivity: 0.25,

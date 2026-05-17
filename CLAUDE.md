@@ -117,11 +117,15 @@ Scoring depends on market regime (bull when MMFI > 50%):
 - **Actionability** = extension penalty × volume bonus
 - **Hot threshold**: avg RS_STS% > 70% and breadth ≥ 3 stocks
 
-### Theme Consolidation
+### Theme Taxonomy (hierarchical)
 
-`config/theme_groups.yaml` consolidates raw LLM-emitted sub-themes into canonical groups (e.g. `AI - Optics` + `AI - Optoelectronics` + `AI - Infra / Optics` → `AI - Data Center - Optics`). The AI Data Center family is split into 6 third-level themes (`Optics`, `Cloud / Hyperscalers`, `Chips / Processors`, `Power & Cooling`, `Connectivity / Networking`, `Components`) so that semantically distinct names like INTC and FSLY don't share a single bucket.
+`config/theme_taxonomy.yaml` is the canonical taxonomy — a 3-level hierarchy (`L1 / L2 / L3`) where L1 is the trading narrative (e.g. `AI`, `Clean Energy`, `Oil & Gas`). Each ticker in `data/ticker_themes.json` stores 1–3 slash-delimited paths like `"AI / Data Center / Memory"` or `"Space / Launch"`. L2 must be a child of L1; L3 a child of L2.
 
-The Themes / Theme Viz / VARS / VARS Viz tabs apply this consolidation. The Momentum 1/3/6 / Momentum Viz tabs preserve singletons by deliberately passing `{}` to `build_theme_to_tickers()`.
+**Trading-narrative separation**: `Clean Energy` and `Oil & Gas` are sibling L1s, never children of a generic `Energy` node — fuel-cell stocks (BE, FCEL) never share L1 with oilfield-services stocks (PUMP, HAL). The Theme Viz / VARS Viz networks render each L1 as a yellow hexagonal hub; leaf themes connect to their L1 via dashed `is_a` edges.
+
+**Git-locked tags**: `git_locked_themes: true` in `workflow_config.yaml` disables the 30-day Gemini auto-revalidation loop. Existing tickers stay frozen at their committed paths. Use `python -m src.themes.retag --ticker NVDA --reason "..."` to explicitly re-classify a single ticker when its narrative shifts. New tickers entering the screener still get auto-tagged on first appearance via `sync_screened_ticker_themes` (Gemini prompt now constrains output to the taxonomy enum).
+
+The old `config/theme_groups.yaml` consolidator is archived as `theme_groups.legacy.yaml` and no longer loaded.
 
 ### Day-pattern Ticker Coloring
 

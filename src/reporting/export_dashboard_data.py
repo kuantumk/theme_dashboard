@@ -22,8 +22,52 @@ from config.settings import (
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
+from src.themes.theme_taxonomy import PATH_SEP, split_path
 
 OUTPUT_DIR = DOCS_DATA_DIR
+
+
+def _attach_hierarchy(themes_list):
+    """Attach l1/l2/l3 fields to each theme entry by splitting the path name.
+
+    Mutates the list in place and returns it. Safe to call on entries that
+    already have hierarchy fields (will overwrite).
+    """
+    for entry in themes_list:
+        l1, l2, l3 = split_path(entry.get('name', ''))
+        entry['l1'] = l1
+        entry['l2'] = l2
+        entry['l3'] = l3
+    return themes_list
+
+
+def _build_network(themes_list):
+    """Build {nodes, edges} for the Cytoscape network visualization.
+
+    - One ``l1`` node per distinct L1 narrative (hub).
+    - One ``leaf`` node per theme path (the existing theme nodes).
+    - One ``is_a`` edge from each leaf to its L1 hub.
+
+    Shared-ticker edges between leaves are still computed in the frontend.
+    """
+    l1_seen = set()
+    nodes = []
+    edges = []
+    for entry in themes_list:
+        name = entry.get('name')
+        l1 = entry.get('l1') or split_path(name)[0]
+        if l1 not in l1_seen:
+            l1_seen.add(l1)
+            nodes.append({'id': l1, 'kind': 'l1'})
+        nodes.append({
+            'id': name,
+            'kind': 'leaf',
+            'parent': l1,
+            'ticker_count': len(entry.get('tickers', [])),
+        })
+        if name != l1:
+            edges.append({'source': name, 'target': l1, 'kind': 'is_a'})
+    return {'nodes': nodes, 'edges': edges}
 VARS_ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "vars"
 
 # Google Sheets
@@ -919,11 +963,14 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         for th in themes_out:
             enrich_with_ticker_color(th['tickers'], day_flags)
 
+    _attach_hierarchy(themes_out)
+
     return {
         'report_date': csv_date,
         'ncfd': None,  # historical breadth not stored — dashboard shows "—"
         'mmfi': None,
         'themes': themes_out,
+        'network': _build_network(themes_out),
     }
 
 
@@ -1099,13 +1146,9 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
         ticker_dicts.sort(key=lambda x: -x['rs'])
         themes_list.append({'name': theme_name, 'tickers': ticker_dicts})
 
-    # Catch-all buckets (mirrors _remove_noise in config/theme_groups.yaml) sort to the
-    # bottom regardless of count — they're overflow, not thematic concentration.
-    catchall_themes = {
-        'Uncategorized',
-        'Individual Episodic Pivots / Singletons',
-        'Meme Stocks',
-    }
+    # Catch-all buckets sort to the bottom regardless of count — they're
+    # overflow, not thematic concentration.
+    catchall_themes = {'Uncategorized', 'Singleton'}
     themes_list.sort(key=lambda th: (
         th['name'] in catchall_themes,
         -len(th['tickers']),
@@ -1117,9 +1160,12 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
         for th in themes_list:
             enrich_with_ticker_color(th['tickers'], day_flags)
 
+    _attach_hierarchy(themes_list)
+
     return {
         'report_date': csv_date,
         'themes': themes_list,
+        'network': _build_network(themes_list),
     }
 
 
@@ -1240,8 +1286,8 @@ def _build_vars_snapshot(csv_file, day_flags):
             'short': round(float(short_val), 1) if short_val is not None else None,
         }
 
-    # Build theme list — drop Uncategorized + themes with < 3 tickers; sort by avg vars desc
-    HIDDEN_THEMES = {'Uncategorized'}
+    # Build theme list — drop Uncategorized/Singleton + themes with < 3 tickers; sort by avg vars desc
+    HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
     MIN_TICKERS_PER_THEME = 3
     themes_list = []
     for theme_name, tickers in theme_to_tickers.items():
@@ -1258,11 +1304,8 @@ def _build_vars_snapshot(csv_file, day_flags):
             'tickers': ticker_dicts,
         })
 
-    # Catch-all bucket (Singletons) sorts to the bottom regardless of avg_vars
-    catchall_themes = {
-        'Individual Episodic Pivots / Singletons',
-        'Meme Stocks',
-    }
+    # Catch-all bucket sorts to the bottom regardless of avg_vars
+    catchall_themes = {'Singleton'}
     themes_list.sort(key=lambda th: (
         th['name'] in catchall_themes,
         -th['avg_vars'],
@@ -1273,9 +1316,12 @@ def _build_vars_snapshot(csv_file, day_flags):
         for th in themes_list:
             enrich_with_ticker_color(th['tickers'], day_flags)
 
+    _attach_hierarchy(themes_list)
+
     return {
         'report_date': csv_date,
         'themes': themes_list,
+        'network': _build_network(themes_list),
     }
 
 
@@ -1621,6 +1667,10 @@ def export_all():
         for theme in theme_data.get('themes', []):
             theme_pattern_count += enrich_with_ticker_color(theme.get('tickers', []), day_flags)
         print(f"   Enriched {theme_pattern_count} theme tickers with ticker color flags")
+
+        # Attach l1/l2/l3 hierarchy fields + network for the Theme Viz tab
+        _attach_hierarchy(theme_data.get('themes', []))
+        theme_data['network'] = _build_network(theme_data.get('themes', []))
 
         theme_output = OUTPUT_DIR / "themes.json"
         with open(theme_output, 'w', encoding='utf-8') as f:

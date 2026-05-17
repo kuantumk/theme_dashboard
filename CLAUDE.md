@@ -123,7 +123,27 @@ Scoring depends on market regime (bull when MMFI > 50%):
 
 **Trading-narrative separation**: `Clean Energy` and `Oil & Gas` are sibling L1s, never children of a generic `Energy` node — fuel-cell stocks (BE, FCEL) never share L1 with oilfield-services stocks (PUMP, HAL). The Theme Viz / VARS Viz networks render each L1 as a yellow hexagonal hub; leaf themes connect to their L1 via dashed `is_a` edges.
 
-**Git-locked tags**: `git_locked_themes: true` in `workflow_config.yaml` disables the 30-day Gemini auto-revalidation loop. Existing tickers stay frozen at their committed paths. Use `python -m src.themes.retag --ticker NVDA --reason "..."` to explicitly re-classify a single ticker when its narrative shifts. New tickers entering the screener still get auto-tagged on first appearance via `sync_screened_ticker_themes` (Gemini prompt now constrains output to the taxonomy enum).
+**Three sources, one canonical form** — and which one wins matters:
+
+| Source | Format today | Authority |
+|--------|--------------|-----------|
+| `config/theme_taxonomy.yaml` | Tree of `L1 → L2 → L3` | **Schema** — `validate_path` rejects anything not here |
+| `data/ticker_themes.json` | `{ticker: ["L1 / L2 / L3"]}` slash-delimited | **Ground truth** for tags |
+| Google Sheet (`google_sheet_gid`) | Free-form labels, often legacy (`"AI - Memory & Storage"`, `"Drones"`, `"Solar"`) | **Human curation input only** — never overrides existing canonical tags |
+
+The Sheet is *not* synced to the new taxonomy. Live code translates its labels through `src/themes/legacy_aliases.py` (which re-exports the migration's `OLD_TO_NEW` map) on every import, then validates each result against the taxonomy. Anything that fails to resolve to a valid path is dropped with a `Sheet alias guard dropped` log line. When you spot one of those, add the new alias to `OLD_TO_NEW` in `tools/migrate_themes.py` — don't edit the Sheet to match.
+
+**`apply_google_sheet_ground_truth` defences** (`src/themes/tag_new_tickers.py`):
+1. Alias-remap every incoming label via `legacy_aliases.normalize_legacy_theme`.
+2. Validate the result against `theme_taxonomy.validate_path`; drop on failure.
+3. Honour `git_locked_themes: true` — never overwrite a ticker that already has canonical tags. Brand-new tickers and ones whose only existing tag is `Uncategorized`/`Singleton` *do* accept the sheet's value (so onboarding still works). To re-tag an existing canonical ticker, use the explicit CLI:
+   ```bash
+   python -m src.themes.retag --ticker NVDA --reason "Announced AI infra pivot"
+   ```
+
+**Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy` / `_build_network` and mirrored in `docs/app.js`'s `l1Of`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI hub instead of becoming an orphan node. Strict callers (Gemini validation, retag CLI) should still use `validate_path`; `resolve_l1` is for rendering only.
+
+**Auto-tagging vs locking** — `git_locked_themes: true` originally only short-circuited the 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock now also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass.
 
 The old `config/theme_groups.yaml` consolidator is archived as `theme_groups.legacy.yaml` and no longer loaded.
 

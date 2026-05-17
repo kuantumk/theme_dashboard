@@ -884,27 +884,21 @@
   const VIZ_MODES = {
     themes: {
       containerId: 'theme-network',
-      metaId: 'themeviz-meta',
       tooltipId: 'themeviz-tooltip',
       overlayId: 'themeviz-overlay',
       tabBtnId: 'tab-themeviz',
-      hotLabel: 'hot themes',
     },
     momentum: {
       containerId: 'momentum-network',
-      metaId: 'momentumviz-meta',
       tooltipId: 'momentumviz-tooltip',
       overlayId: 'momentumviz-overlay',
       tabBtnId: 'tab-momentumviz',
-      hotLabel: 'momentum themes',
     },
     vars: {
       containerId: 'vars-network',
-      metaId: 'varsviz-meta',
       tooltipId: 'varsviz-tooltip',
       overlayId: 'varsviz-overlay',
       tabBtnId: 'tab-varsviz',
-      hotLabel: 'VARS themes',
     },
   };
 
@@ -1078,19 +1072,6 @@
     });
   }
 
-  function buildVizMetaHtml(snap, hot, mode) {
-    const date = `<span class="meta-date">${snap.report_date ?? '—'}</span>`;
-    const count = `<span class="meta-pill">${hot.length} ${VIZ_MODES[mode].hotLabel}</span>`;
-    if (mode === 'themes') {
-      return date +
-        `<span class="meta-pill">NCFD ${snap.ncfd != null ? snap.ncfd.toFixed(1) + '%' : '—'}</span>` +
-        `<span class="meta-pill">MMFI ${snap.mmfi != null ? snap.mmfi.toFixed(1) + '%' : '—'}</span>` +
-        count;
-    }
-    // Momentum / VARS snapshots don't carry NCFD/MMFI; just date + count
-    return date + count;
-  }
-
   function filterAndRankThemes(snap, mode) {
     const HOT_RS = 70, HOT_BREADTH = 3, HOT_VARS = 2, HOT_VARS_BREADTH = 1;
     if (mode === 'vars') {
@@ -1123,16 +1104,6 @@
   // Public entry — defers heavy work until the target tab is visible so that
   // cose layout and fit() see real container dimensions.
   function renderNetwork(snap, mode, date) {
-    const cfg = VIZ_MODES[mode];
-    const meta = document.getElementById(cfg.metaId);
-    if (meta) {
-      if (snap) {
-        const hot = filterAndRankThemes(snap, mode);
-        meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
-      } else if (date) {
-        meta.innerHTML = `<span class="meta-date">${date}</span>`;
-      }
-    }
     installVizTabHandler(mode);
     if (isVizVisible(mode)) {
       actuallyRenderNetwork(snap, mode, date);
@@ -1149,10 +1120,9 @@
     const cfg = VIZ_MODES[mode];
     const state = vizState[mode];
     const container = document.getElementById(cfg.containerId);
-    const meta = document.getElementById(cfg.metaId);
     const tooltip = document.getElementById(cfg.tooltipId);
     const overlay = document.getElementById(cfg.overlayId);
-    if (!container || !meta) return;
+    if (!container) return;
     if (typeof cytoscape === 'undefined') {
       container.innerHTML = '<div class="no-data">Cytoscape library failed to load.</div>';
       return;
@@ -1165,14 +1135,12 @@
     if (tooltip) tooltip.style.display = 'none';
 
     if (!snap) {
-      if (date) meta.innerHTML = `<span class="meta-date">${date}</span>`;
       const dateLabel = date ? ` for ${date}` : ' for this session';
       container.innerHTML = `<div class="no-data" style="margin:60px auto;text-align:center">No data${dateLabel}.</div>`;
       return;
     }
 
     const hot = filterAndRankThemes(snap, mode);
-    meta.innerHTML = buildVizMetaHtml(snap, hot, mode);
 
     if (hot.length === 0) {
       container.innerHTML = '<div class="no-data" style="margin:60px auto;text-align:center">No qualifying themes for this date.</div>';

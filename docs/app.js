@@ -1172,9 +1172,27 @@
     const elements = [];
     const seen = new Set();
     const l1Seen = new Set();
+    // L1 narratives we know about — used to recognise legacy "AI - Memory"
+    // labels whose prefix is still a real hub. Populated from any theme's
+    // server-side `l1` field, plus what's discovered while parsing names.
+    const knownL1s = new Set();
+    for (const theme of hot) {
+      if (theme.l1) knownL1s.add(theme.l1);
+    }
     const l1Of = (name) => {
-      const parts = (name || '').split(' / ');
-      return parts[0] || name;
+      if (!name) return '';
+      // 1. Canonical " / " path.
+      if (name.includes(' / ')) {
+        return name.split(' / ', 1)[0].trim();
+      }
+      // 2. Legacy " - " labels (e.g. "AI - Memory & Storage") — only when the
+      //    prefix matches an L1 we already know about, so we don't accidentally
+      //    bucket "Metals - Gold, Silver, Copper" under "Metals".
+      if (name.includes(' - ')) {
+        const prefix = name.split(' - ', 1)[0].trim();
+        if (knownL1s.has(prefix)) return prefix;
+      }
+      return name;
     };
     // Strength aggregates per L1 — used to size the hub bubbles
     const l1Stats = {};

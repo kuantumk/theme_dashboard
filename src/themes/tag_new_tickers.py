@@ -125,11 +125,70 @@ def filter_real_sheet_themes(themes: Iterable[str] | None) -> List[str]:
     return [theme for theme in normalize_theme_list(themes) if theme not in GENERIC_SHEET_THEMES]
 
 
+def _canonicalize_sheet_themes(raw_themes: Iterable[str]) -> tuple[List[str], List[str]]:
+    """Translate sheet labels into canonical taxonomy paths.
+
+    Returns ``(canonical_paths, dropped_labels)``.
+
+    Each raw label is normalised through the legacy alias table; the result is
+    then validated against the canonical taxonomy. Labels that resolve to a
+    valid taxonomy path are kept (deduplicated, preserving order). Labels that
+    are already canonical paths are kept as-is. Everything else is dropped and
+    reported back to the caller for logging.
+    """
+    from src.themes.legacy_aliases import normalize_legacy_theme
+    from src.themes.theme_taxonomy import load_taxonomy, validate_path
+
+    taxonomy = load_taxonomy()
+    canonical: List[str] = []
+    dropped: List[str] = []
+    seen: Set[str] = set()
+
+    for raw in normalize_theme_list(raw_themes):
+        if raw in GENERIC_SHEET_THEMES:
+            continue
+        # First try: is the sheet label already a canonical taxonomy path?
+        candidate = raw if validate_path(raw, taxonomy) else None
+        # Second try: is it a known legacy label?
+        if candidate is None:
+            mapped = normalize_legacy_theme(raw)
+            if mapped and validate_path(mapped, taxonomy):
+                candidate = mapped
+        if candidate is None:
+            dropped.append(raw)
+            continue
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        canonical.append(candidate)
+
+    return canonical, dropped
+
+
 def apply_google_sheet_ground_truth(
     ticker_themes: Mapping[str, List[str]],
     tickers: Iterable[str],
     google_sheet_themes: Mapping[str, List[str]],
 ) -> tuple[Dict[str, List[str]], Set[str], List[Dict[str, object]]]:
+    """Apply Google Sheet ground truth, with three layers of defence:
+
+    1. **Legacy alias remap** — stale sheet labels like ``"AI - Memory & Storage"``
+       are translated to their canonical taxonomy path before anything else
+       happens. The mapping table is sourced from the migration script via
+       :mod:`src.themes.legacy_aliases`.
+    2. **Taxonomy validation** — any label that does not resolve to a valid
+       path in ``config/theme_taxonomy.yaml`` is dropped. If *all* of a
+       ticker's sheet labels fail validation the ticker keeps its existing
+       canonical tags (no destructive overwrite from bad data).
+    3. **Git-locked tags** — when ``themes.git_locked_themes`` is ``true`` in
+       ``workflow_config.yaml``, existing tickers whose stored tags are already
+       canonical are *never* overwritten by the sheet. Only brand-new tickers
+       (no existing tags, or only ``Uncategorized``/``Singleton``) inherit
+       from the sheet. Use ``python -m src.themes.retag`` for explicit
+       re-classification of an existing ticker.
+    """
+    git_locked = bool(CONFIG.get("themes", {}).get("git_locked_themes", True))
+
     merged = {ticker: list(themes) for ticker, themes in ticker_themes.items()}
     ground_truth_tickers: Set[str] = set()
     updates: List[Dict[str, object]] = []
@@ -138,18 +197,36 @@ def apply_google_sheet_ground_truth(
         if ticker not in google_sheet_themes:
             continue
 
-        sheet_themes = filter_real_sheet_themes(google_sheet_themes[ticker])
-        if not sheet_themes:
+        canonical, dropped = _canonicalize_sheet_themes(google_sheet_themes[ticker])
+        if dropped:
+            print(f"  Sheet alias guard dropped non-canonical labels for {ticker}: {dropped}")
+        if not canonical:
+            continue
+
+        previous = normalize_theme_list(merged.get(ticker))
+        previous_is_canonical = bool(previous) and all(
+            theme not in GENERIC_SHEET_THEMES for theme in previous
+        )
+
+        if git_locked and previous_is_canonical:
+            # Existing canonical tags are frozen. Treat the ticker as ground
+            # truth (so it doesn't fall back into Gemini classification) but
+            # don't mutate its tags. To re-tag, use ``python -m src.themes.retag``.
+            ground_truth_tickers.add(ticker)
+            if not themes_match(previous, canonical):
+                print(
+                    f"  Sheet sync skipped for {ticker} (git-locked): "
+                    f"keeping {previous} (sheet wanted {canonical})"
+                )
             continue
 
         ground_truth_tickers.add(ticker)
-        previous = normalize_theme_list(merged.get(ticker))
-        if themes_match(previous, sheet_themes):
+        if themes_match(previous, canonical):
             continue
 
-        print(f"  Google Sheet update {ticker}: {previous} -> {sheet_themes}")
-        merged[ticker] = sheet_themes
-        updates.append({"ticker": ticker, "previous": previous, "updated": sheet_themes})
+        print(f"  Google Sheet update {ticker}: {previous} -> {canonical}")
+        merged[ticker] = canonical
+        updates.append({"ticker": ticker, "previous": previous, "updated": canonical})
 
     return merged, ground_truth_tickers, updates
 

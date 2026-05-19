@@ -1,85 +1,42 @@
 {
-  "report_date": "2026-05-18",
+  "report_date": "2026-05-19",
   "themes": [
     {
-      "name": "Automotive (Legacy) / Semiconductors",
-      "avg_vars": 12.98,
-      "tickers": [
-        {
-          "ticker": "STM",
-          "vars": 16.63,
-          "vars_20ema": 15.81,
-          "rs": 88.5,
-          "price": 60.96,
-          "float": "888.8",
-          "eps": "126",
-          "sales": "23",
-          "inst": "+2.9",
-          "short": 1.2
-        },
-        {
-          "ticker": "TXN",
-          "vars": 11.83,
-          "vars_20ema": 11.29,
-          "rs": 88.5,
-          "price": 300.6,
-          "float": "907.8",
-          "eps": "39",
-          "sales": "19",
-          "inst": "-0.3",
-          "short": 1.7
-        },
-        {
-          "ticker": "ON",
-          "vars": 10.47,
-          "vars_20ema": 10.67,
-          "rs": 88.5,
-          "price": 109.43,
-          "float": "389.4",
-          "eps": "31",
-          "sales": "5",
-          "inst": "-2.8",
-          "short": 7.5
-        }
-      ],
-      "l1": "Automotive (Legacy)",
-      "l2": "Semiconductors",
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Memory",
-      "avg_vars": 11.83,
+      "avg_vars": 11.37,
       "tickers": [
         {
           "ticker": "SNDK",
-          "vars": 18.04,
-          "vars_20ema": 18.55,
-          "rs": 65.4,
-          "price": 1333.01,
-          "float": "139.2",
-          "eps": "2057",
+          "vars": 19.41,
+          "vars_20ema": 18.63,
+          "rs": 73.1,
+          "price": 1383.29,
+          "float": "145.7",
+          "eps": "2062",
           "sales": "251",
           "inst": "-8.1",
-          "short": 7.8
+          "short": 7.4,
+          "ticker_color": "green"
         },
         {
           "ticker": "MRAM",
-          "vars": 14.38,
-          "vars_20ema": 11.97,
-          "rs": 80.8,
-          "price": 33.35,
+          "vars": 14.88,
+          "vars_20ema": 12.25,
+          "rs": 76.9,
+          "price": 31.72,
           "float": "18.9",
           "eps": "183",
           "sales": "13",
           "inst": "+5.2",
-          "short": 4.8
+          "short": 4.8,
+          "ticker_color": "green"
         },
         {
           "ticker": "MU",
-          "vars": 11.24,
-          "vars_20ema": 12.13,
+          "vars": 12.7,
+          "vars_20ema": 12.18,
           "rs": 76.9,
-          "price": 681.54,
+          "price": 698.74,
           "float": "1120.0",
           "eps": "605",
           "sales": "196",
@@ -88,10 +45,10 @@
         },
         {
           "ticker": "STX",
-          "vars": 11.08,
-          "vars_20ema": 11.03,
-          "rs": 57.7,
-          "price": 740.84,
+          "vars": 12.09,
+          "vars_20ema": 11.13,
+          "rs": 53.8,
+          "price": 733.35,
           "float": "223.4",
           "eps": "84",
           "sales": "44",
@@ -100,10 +57,10 @@
         },
         {
           "ticker": "WDC",
-          "vars": 9.65,
-          "vars_20ema": 10.47,
+          "vars": 10.58,
+          "vars_20ema": 10.48,
           "rs": 65.4,
-          "price": 458.68,
+          "price": 455.8,
           "float": "341.3",
           "eps": "102",
           "sales": "45",
@@ -112,15 +69,29 @@
         },
         {
           "ticker": "DELL",
-          "vars": 6.57,
-          "vars_20ema": 4.97,
-          "rs": 73.1,
-          "price": 238.03,
+          "vars": 7.33,
+          "vars_20ema": 5.2,
+          "rs": 69.2,
+          "price": 235.26,
           "float": "301.2",
           "eps": "24",
           "sales": "40",
           "inst": "+4.7",
-          "short": 7.3
+          "short": 7.3,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "RMBS",
+          "vars": 2.58,
+          "vars_20ema": 1.97,
+          "rs": 26.9,
+          "price": 122.03,
+          "float": "107.2",
+          "eps": "19",
+          "sales": "8",
+          "inst": "-0.3",
+          "short": 6.4,
+          "ticker_color": "green"
         }
       ],
       "l1": "AI",
@@ -128,72 +99,85 @@
       "l3": "Memory"
     },
     {
-      "name": "AI / Data Center / Components",
-      "avg_vars": 10.29,
+      "name": "Automotive (Legacy) / Semiconductors",
+      "avg_vars": 11.36,
       "tickers": [
         {
-          "ticker": "VSH",
-          "vars": 15.6,
-          "vars_20ema": 13.55,
-          "rs": 88.5,
-          "price": 36.95,
-          "float": "122.8",
-          "eps": "1411",
-          "sales": "17",
-          "inst": "-1.7",
-          "short": 9.0
+          "ticker": "STM",
+          "vars": 17.64,
+          "vars_20ema": 15.99,
+          "rs": 92.3,
+          "price": 61.23,
+          "float": "888.8",
+          "eps": "127",
+          "sales": "23",
+          "inst": "+2.9",
+          "short": 1.2
         },
         {
-          "ticker": "PENG",
-          "vars": 9.66,
-          "vars_20ema": 6.27,
-          "rs": 88.5,
-          "price": 45.71,
-          "float": "48.5",
-          "eps": "15",
-          "sales": "-6",
-          "inst": "-0.9",
-          "short": 18.0
+          "ticker": "TXN",
+          "vars": 13.59,
+          "vars_20ema": 11.51,
+          "rs": 96.2,
+          "price": 302.31,
+          "float": "907.8",
+          "eps": "39",
+          "sales": "19",
+          "inst": "-0.3",
+          "short": 1.7
         },
         {
-          "ticker": "NVT",
-          "vars": 5.61,
-          "vars_20ema": 5.35,
-          "rs": 57.7,
-          "price": 160.69,
-          "float": "160.2",
-          "eps": "36",
-          "sales": "53",
-          "inst": "-2.3",
-          "short": 1.6
+          "ticker": "ON",
+          "vars": 11.49,
+          "vars_20ema": 10.75,
+          "rs": 80.8,
+          "price": 106.02,
+          "float": "389.4",
+          "eps": "31",
+          "sales": "5",
+          "inst": "-2.8",
+          "short": 7.5,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "NXPI",
+          "vars": 2.72,
+          "vars_20ema": 1.6,
+          "rs": 69.2,
+          "price": 294.28,
+          "float": "252.1",
+          "eps": "24",
+          "sales": "12",
+          "inst": "+0.9",
+          "short": 2.6
         }
       ],
-      "l1": "AI",
-      "l2": "Data Center",
-      "l3": "Components"
+      "l1": "Automotive (Legacy)",
+      "l2": "Semiconductors",
+      "l3": null
     },
     {
       "name": "Semiconductors / Specialty Foundry",
-      "avg_vars": 9.17,
+      "avg_vars": 10.77,
       "tickers": [
         {
           "ticker": "UMC",
-          "vars": 12.8,
-          "vars_20ema": 11.86,
-          "rs": 96.2,
-          "price": 17.12,
+          "vars": 15.64,
+          "vars_20ema": 12.22,
+          "rs": 100.0,
+          "price": 17.58,
           "float": "2520.0",
-          "eps": "32",
+          "eps": "33",
           "sales": "10",
           "inst": "+7.4",
           "short": 1.1
         },
         {
           "ticker": "POWI",
-          "vars": 9.95,
-          "vars_20ema": 11.55,
-          "rs": 26.9,
-          "price": 67.62,
+          "vars": 11.22,
+          "vars_20ema": 11.52,
+          "rs": 30.8,
+          "price": 68.28,
           "float": "54.4",
           "eps": "6",
           "sales": "3",
@@ -202,22 +186,23 @@
         },
         {
           "ticker": "GFS",
-          "vars": 9.24,
-          "vars_20ema": 8.86,
-          "rs": 61.5,
-          "price": 67.84,
+          "vars": 10.63,
+          "vars_20ema": 9.03,
+          "rs": 57.7,
+          "price": 66.68,
           "float": "132.7",
           "eps": "10",
           "sales": "3",
           "inst": "+1.5",
-          "short": 7.5
+          "short": 7.5,
+          "ticker_color": "green"
         },
         {
           "ticker": "TSEM",
-          "vars": 4.68,
-          "vars_20ema": 5.2,
+          "vars": 5.58,
+          "vars_20ema": 5.23,
           "rs": 88.5,
-          "price": 248.07,
+          "price": 251.28,
           "float": "104.9",
           "eps": "46",
           "sales": "15",
@@ -231,14 +216,14 @@
     },
     {
       "name": "Biotech / Oncology / Immuno-Oncology",
-      "avg_vars": 9.03,
+      "avg_vars": 10.44,
       "tickers": [
         {
           "ticker": "IBRX",
-          "vars": 15.12,
-          "vars_20ema": 16.4,
-          "rs": 50.0,
-          "price": 8.0,
+          "vars": 16.98,
+          "vars_20ema": 16.46,
+          "rs": 34.6,
+          "price": 7.76,
           "float": "376.1",
           "eps": "-88",
           "sales": "168",
@@ -247,10 +232,10 @@
         },
         {
           "ticker": "SLS",
-          "vars": 8.78,
-          "vars_20ema": 9.43,
-          "rs": 96.2,
-          "price": 7.29,
+          "vars": 9.89,
+          "vars_20ema": 9.48,
+          "rs": 100.0,
+          "price": 7.59,
           "float": "183.7",
           "eps": "16",
           "sales": null,
@@ -259,12 +244,12 @@
         },
         {
           "ticker": "CGON",
-          "vars": 3.18,
-          "vars_20ema": 5.46,
-          "rs": 0.0,
-          "price": 62.93,
+          "vars": 4.46,
+          "vars_20ema": 5.36,
+          "rs": 3.8,
+          "price": 63.3,
           "float": "58.5",
-          "eps": "-31",
+          "eps": "-32",
           "sales": "1983",
           "inst": "+5.8",
           "short": 15.8
@@ -275,238 +260,73 @@
       "l3": "Immuno-Oncology"
     },
     {
-      "name": "Semiconductors / Manufacturing & Equipment",
-      "avg_vars": 8.63,
+      "name": "Specialty Chemicals / Specialty Materials",
+      "avg_vars": 9.49,
       "tickers": [
         {
-          "ticker": "ASX",
-          "vars": 16.08,
-          "vars_20ema": 17.36,
-          "rs": 42.3,
-          "price": 31.65,
-          "float": "2190.0",
-          "eps": "87",
-          "sales": "22",
-          "inst": "+0.0",
-          "short": 0.4
-        },
-        {
-          "ticker": "UCTT",
-          "vars": 14.73,
-          "vars_20ema": 16.18,
-          "rs": 11.5,
-          "price": 77.65,
-          "float": "43.6",
-          "eps": "145",
-          "sales": "3",
-          "inst": "-1.2",
-          "short": 5.5
-        },
-        {
-          "ticker": "MKSI",
-          "vars": 8.31,
-          "vars_20ema": 9.63,
-          "rs": 69.2,
-          "price": 295.7,
-          "float": "67.1",
-          "eps": "48",
-          "sales": "15",
-          "inst": "-6.3",
-          "short": 5.3
-        },
-        {
-          "ticker": "VECO",
-          "vars": 7.66,
-          "vars_20ema": 7.05,
-          "rs": 69.2,
-          "price": 55.65,
-          "float": "59.6",
-          "eps": "24",
-          "sales": "-5",
-          "inst": "-2.3",
-          "short": 10.6
-        },
-        {
-          "ticker": "ASML",
-          "vars": 4.71,
-          "vars_20ema": 5.47,
-          "rs": 15.4,
-          "price": 1472.39,
-          "float": "385.2",
-          "eps": "26",
-          "sales": "26",
-          "inst": "-1.7",
-          "short": 0.2
-        },
-        {
-          "ticker": "ENTG",
-          "vars": 4.52,
-          "vars_20ema": 6.97,
+          "ticker": "CC",
+          "vars": 10.36,
+          "vars_20ema": 10.75,
           "rs": 0.0,
-          "price": 127.21,
-          "float": "151.3",
-          "eps": "32",
-          "sales": "5",
-          "inst": "-3.2",
-          "short": 7.7
+          "price": 21.75,
+          "float": "148.9",
+          "eps": "48",
+          "sales": "1",
+          "inst": "-8.6",
+          "short": 5.7
         },
         {
-          "ticker": "LSCC",
-          "vars": 4.4,
-          "vars_20ema": 5.63,
-          "rs": 53.8,
-          "price": 123.15,
-          "float": "135.8",
-          "eps": "73",
-          "sales": "42",
-          "inst": "-3.7",
+          "ticker": "LYB",
+          "vars": 9.83,
+          "vars_20ema": 9.07,
+          "rs": 34.6,
+          "price": 73.04,
+          "float": "257.2",
+          "eps": "465",
+          "sales": "-6",
+          "inst": "+5.9",
+          "short": 4.4
+        },
+        {
+          "ticker": "DOW",
+          "vars": 9.66,
+          "vars_20ema": 9.71,
+          "rs": 11.5,
+          "price": 37.74,
+          "float": "718.7",
+          "eps": "431",
+          "sales": "-6",
+          "inst": "+3.0",
           "short": 3.5
+        },
+        {
+          "ticker": "MEOH",
+          "vars": 8.11,
+          "vars_20ema": 9.62,
+          "rs": 46.2,
+          "price": 62.07,
+          "float": "71.7",
+          "eps": "355",
+          "sales": "9",
+          "inst": "+8.3",
+          "short": 1.1,
+          "ticker_color": "green"
         }
       ],
-      "l1": "Semiconductors",
-      "l2": "Manufacturing & Equipment",
+      "l1": "Specialty Chemicals",
+      "l2": "Specialty Materials",
       "l3": null
     },
     {
-      "name": "AI / Data Center / Optics",
-      "avg_vars": 8.39,
-      "tickers": [
-        {
-          "ticker": "MXL",
-          "vars": 16.96,
-          "vars_20ema": 15.57,
-          "rs": 80.8,
-          "price": 87.46,
-          "float": "84.4",
-          "eps": "331",
-          "sales": "43",
-          "inst": "+0.9",
-          "short": 4.6,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "VIAV",
-          "vars": 10.98,
-          "vars_20ema": 12.69,
-          "rs": 53.8,
-          "price": 49.75,
-          "float": "231.5",
-          "eps": "99",
-          "sales": "43",
-          "inst": "+0.3",
-          "short": 6.2
-        },
-        {
-          "ticker": "LWLG",
-          "vars": 9.58,
-          "vars_20ema": 9.9,
-          "rs": 3.8,
-          "price": 11.59,
-          "float": "148.8",
-          "eps": null,
-          "sales": "27",
-          "inst": "+9.2",
-          "short": 9.2
-        },
-        {
-          "ticker": "MTSI",
-          "vars": 9.48,
-          "vars_20ema": 8.25,
-          "rs": 76.9,
-          "price": 356.25,
-          "float": "68.5",
-          "eps": "45",
-          "sales": "22",
-          "inst": "+5.1",
-          "short": 4.2
-        },
-        {
-          "ticker": "AXTI",
-          "vars": 9.42,
-          "vars_20ema": 11.33,
-          "rs": 65.4,
-          "price": 105.88,
-          "float": "52.7",
-          "eps": "161",
-          "sales": "39",
-          "inst": "+57.3",
-          "short": 14.3
-        },
-        {
-          "ticker": "AAOI",
-          "vars": 8.88,
-          "vars_20ema": 12.83,
-          "rs": 65.4,
-          "price": 173.26,
-          "float": "76.5",
-          "eps": "497",
-          "sales": "51",
-          "inst": "-2.9",
-          "short": 13.2
-        },
-        {
-          "ticker": "GLW",
-          "vars": 7.92,
-          "vars_20ema": 9.23,
-          "rs": 53.8,
-          "price": 178.55,
-          "float": "789.8",
-          "eps": "27",
-          "sales": "20",
-          "inst": "-1.5",
-          "short": 1.9
-        },
-        {
-          "ticker": "CIEN",
-          "vars": 5.28,
-          "vars_20ema": 8.46,
-          "rs": 34.6,
-          "price": 524.53,
-          "float": "139.2",
-          "eps": "133",
-          "sales": "27",
-          "inst": "-7.4",
-          "short": 3.1
-        },
-        {
-          "ticker": "LITE",
-          "vars": 3.14,
-          "vars_20ema": 6.96,
-          "rs": 15.4,
-          "price": 884.98,
-          "float": "75.0",
-          "eps": "298",
-          "sales": "90",
-          "inst": "-9.5",
-          "short": 12.6
-        },
-        {
-          "ticker": "COHR",
-          "vars": 2.24,
-          "vars_20ema": 3.94,
-          "rs": 76.9,
-          "price": 362.83,
-          "float": "185.1",
-          "eps": "55",
-          "sales": "21",
-          "inst": "-9.2",
-          "short": 4.1
-        }
-      ],
-      "l1": "AI",
-      "l2": "Data Center",
-      "l3": "Optics"
-    },
-    {
       "name": "AI / Data Center / Chips & Processors",
-      "avg_vars": 8.26,
+      "avg_vars": 9.48,
       "tickers": [
         {
           "ticker": "INTC",
-          "vars": 15.22,
-          "vars_20ema": 13.5,
-          "rs": 65.4,
-          "price": 108.17,
+          "vars": 16.65,
+          "vars_20ema": 13.8,
+          "rs": 76.9,
+          "price": 110.8,
           "float": "4250.0",
           "eps": "156",
           "sales": "7",
@@ -515,10 +335,10 @@
         },
         {
           "ticker": "TXN",
-          "vars": 11.83,
-          "vars_20ema": 11.29,
-          "rs": 88.5,
-          "price": 300.6,
+          "vars": 13.59,
+          "vars_20ema": 11.51,
+          "rs": 96.2,
+          "price": 302.31,
           "float": "907.8",
           "eps": "39",
           "sales": "19",
@@ -527,22 +347,23 @@
         },
         {
           "ticker": "AMD",
-          "vars": 10.12,
-          "vars_20ema": 8.73,
-          "rs": 73.1,
-          "price": 420.99,
+          "vars": 11.04,
+          "vars_20ema": 8.95,
+          "rs": 69.2,
+          "price": 414.05,
           "float": "1620.0",
           "eps": "77",
           "sales": "38",
           "inst": "+1.9",
-          "short": 2.2
+          "short": 2.2,
+          "ticker_color": "green"
         },
         {
           "ticker": "PENG",
-          "vars": 9.66,
-          "vars_20ema": 6.27,
+          "vars": 10.51,
+          "vars_20ema": 6.67,
           "rs": 88.5,
-          "price": 45.71,
+          "price": 46.27,
           "float": "48.5",
           "eps": "15",
           "sales": "-6",
@@ -551,23 +372,24 @@
         },
         {
           "ticker": "Q",
-          "vars": 7.81,
-          "vars_20ema": 8.57,
-          "rs": 69.2,
-          "price": 149.03,
+          "vars": 8.13,
+          "vars_20ema": 8.53,
+          "rs": 50.0,
+          "price": 145.24,
           "float": "209.1",
           "eps": "22",
           "sales": "18",
           "inst": "+166.3",
-          "short": 1.9
+          "short": 1.9,
+          "ticker_color": "green"
         },
         {
           "ticker": "MRVL",
-          "vars": 6.27,
-          "vars_20ema": 5.87,
-          "rs": 57.7,
-          "price": 168.93,
-          "float": "868.3",
+          "vars": 7.39,
+          "vars_20ema": 6.02,
+          "rs": 96.2,
+          "price": 176.27,
+          "float": "868.5",
           "eps": "35",
           "sales": "22",
           "inst": "+1.2",
@@ -575,10 +397,10 @@
         },
         {
           "ticker": "ARM",
-          "vars": 4.68,
-          "vars_20ema": 1.46,
-          "rs": 69.2,
-          "price": 215.12,
+          "vars": 6.57,
+          "vars_20ema": 1.95,
+          "rs": 88.5,
+          "price": 223.15,
           "float": "1060.0",
           "eps": "23",
           "sales": "20",
@@ -586,28 +408,28 @@
           "short": 1.5
         },
         {
-          "ticker": "LSCC",
-          "vars": 4.4,
-          "vars_20ema": 5.63,
-          "rs": 53.8,
-          "price": 123.15,
-          "float": "135.8",
-          "eps": "73",
-          "sales": "42",
-          "inst": "-3.7",
-          "short": 3.5
-        },
-        {
           "ticker": "MCHP",
-          "vars": 4.39,
-          "vars_20ema": 6.06,
-          "rs": 46.2,
-          "price": 92.76,
+          "vars": 5.73,
+          "vars_20ema": 6.03,
+          "rs": 38.5,
+          "price": 91.81,
           "float": "530.6",
           "eps": "92",
           "sales": "35",
           "inst": "+3.2",
           "short": 5.6
+        },
+        {
+          "ticker": "LSCC",
+          "vars": 5.71,
+          "vars_20ema": 5.64,
+          "rs": 73.1,
+          "price": 124.24,
+          "float": "135.8",
+          "eps": "73",
+          "sales": "42",
+          "inst": "-3.7",
+          "short": 3.5
         }
       ],
       "l1": "AI",
@@ -615,52 +437,146 @@
       "l3": "Chips & Processors"
     },
     {
+      "name": "Semiconductors / Manufacturing & Equipment",
+      "avg_vars": 9.44,
+      "tickers": [
+        {
+          "ticker": "ASX",
+          "vars": 16.29,
+          "vars_20ema": 17.25,
+          "rs": 30.8,
+          "price": 30.89,
+          "float": "2190.0",
+          "eps": "87",
+          "sales": "22",
+          "inst": "+0.0",
+          "short": 0.4
+        },
+        {
+          "ticker": "UCTT",
+          "vars": 15.63,
+          "vars_20ema": 16.13,
+          "rs": 11.5,
+          "price": 76.98,
+          "float": "43.6",
+          "eps": "145",
+          "sales": "3",
+          "inst": "-1.2",
+          "short": 5.5
+        },
+        {
+          "ticker": "MKSI",
+          "vars": 9.21,
+          "vars_20ema": 9.59,
+          "rs": 69.2,
+          "price": 294.04,
+          "float": "67.2",
+          "eps": "48",
+          "sales": "15",
+          "inst": "-6.3",
+          "short": 5.3
+        },
+        {
+          "ticker": "VECO",
+          "vars": 8.4,
+          "vars_20ema": 7.18,
+          "rs": 65.4,
+          "price": 54.69,
+          "float": "59.6",
+          "eps": "23",
+          "sales": "-5",
+          "inst": "-2.3",
+          "short": 10.6,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "LSCC",
+          "vars": 5.71,
+          "vars_20ema": 5.64,
+          "rs": 73.1,
+          "price": 124.24,
+          "float": "135.8",
+          "eps": "73",
+          "sales": "42",
+          "inst": "-3.7",
+          "short": 3.5
+        },
+        {
+          "ticker": "ASML",
+          "vars": 5.51,
+          "vars_20ema": 5.48,
+          "rs": 15.4,
+          "price": 1459.44,
+          "float": "385.3",
+          "eps": "26",
+          "sales": "26",
+          "inst": "-1.7",
+          "short": 0.2,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "ENTG",
+          "vars": 5.35,
+          "vars_20ema": 6.81,
+          "rs": 0.0,
+          "price": 124.22,
+          "float": "151.3",
+          "eps": "32",
+          "sales": "5",
+          "inst": "-3.2",
+          "short": 7.7
+        }
+      ],
+      "l1": "Semiconductors",
+      "l2": "Manufacturing & Equipment",
+      "l3": null
+    },
+    {
       "name": "Logistics / Maritime Shipping",
-      "avg_vars": 8.25,
+      "avg_vars": 9.33,
       "tickers": [
         {
           "ticker": "FRO",
-          "vars": 11.12,
-          "vars_20ema": 10.07,
-          "rs": 61.5,
-          "price": 37.74,
+          "vars": 12.64,
+          "vars_20ema": 10.31,
+          "rs": 57.7,
+          "price": 37.44,
           "float": "143.2",
-          "eps": "288",
+          "eps": "306",
           "sales": "47",
           "inst": "-1.1",
           "short": 4.4
         },
         {
           "ticker": "DHT",
-          "vars": 8.39,
-          "vars_20ema": 8.44,
-          "rs": 11.5,
-          "price": 17.91,
+          "vars": 9.47,
+          "vars_20ema": 8.54,
+          "rs": 7.7,
+          "price": 17.6,
           "float": "142.9",
-          "eps": "124",
+          "eps": "126",
           "sales": "58",
           "inst": "+3.6",
           "short": 5.7
         },
         {
           "ticker": "STNG",
-          "vars": 7.23,
-          "vars_20ema": 6.4,
-          "rs": 46.2,
-          "price": 81.87,
+          "vars": 8.27,
+          "vars_20ema": 6.58,
+          "rs": 30.8,
+          "price": 80.47,
           "float": "44.9",
           "eps": "130",
           "sales": "46",
           "inst": "-1.6",
-          "short": 4.0,
-          "ticker_color": "green"
+          "short": 4.0
         },
         {
           "ticker": "VG",
-          "vars": 6.27,
-          "vars_20ema": 6.2,
-          "rs": 96.2,
-          "price": 14.17,
+          "vars": 6.93,
+          "vars_20ema": 6.27,
+          "rs": 100.0,
+          "price": 14.78,
           "float": "500.5",
           "eps": "70",
           "sales": "59",
@@ -673,15 +589,61 @@
       "l3": null
     },
     {
+      "name": "AI / Data Center / Networking & Connectivity",
+      "avg_vars": 9.25,
+      "tickers": [
+        {
+          "ticker": "MXL",
+          "vars": 19.24,
+          "vars_20ema": 15.92,
+          "rs": 92.3,
+          "price": 94.86,
+          "float": "84.4",
+          "eps": "331",
+          "sales": "43",
+          "inst": "+0.9",
+          "short": 4.6
+        },
+        {
+          "ticker": "SMTC",
+          "vars": 4.26,
+          "vars_20ema": 2.77,
+          "rs": 84.6,
+          "price": 134.79,
+          "float": "92.6",
+          "eps": "30",
+          "sales": "9",
+          "inst": "-2.2",
+          "short": 6.8
+        },
+        {
+          "ticker": "JBL",
+          "vars": 4.24,
+          "vars_20ema": 5.65,
+          "rs": 19.2,
+          "price": 332.88,
+          "float": "103.5",
+          "eps": "26",
+          "sales": "23",
+          "inst": "-3.6",
+          "short": 2.3,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "AI",
+      "l2": "Data Center",
+      "l3": "Networking & Connectivity"
+    },
+    {
       "name": "Oil & Gas / Oilfield Services / Pressure Pumping",
-      "avg_vars": 8.21,
+      "avg_vars": 9.14,
       "tickers": [
         {
           "ticker": "PTEN",
-          "vars": 12.55,
-          "vars_20ema": 11.1,
-          "rs": 100.0,
-          "price": 12.85,
+          "vars": 13.44,
+          "vars_20ema": 11.32,
+          "rs": 92.3,
+          "price": 12.73,
           "float": "364.2",
           "eps": "6",
           "sales": "-13",
@@ -690,10 +652,10 @@
         },
         {
           "ticker": "PUMP",
-          "vars": 6.15,
-          "vars_20ema": 4.58,
-          "rs": 92.3,
-          "price": 18.03,
+          "vars": 7.11,
+          "vars_20ema": 4.82,
+          "rs": 88.5,
+          "price": 17.89,
           "float": "96.7",
           "eps": "-99",
           "sales": "-25",
@@ -702,10 +664,10 @@
         },
         {
           "ticker": "LBRT",
-          "vars": 5.92,
-          "vars_20ema": 6.41,
-          "rs": 50.0,
-          "price": 33.07,
+          "vars": 6.87,
+          "vars_20ema": 6.46,
+          "rs": 61.5,
+          "price": 33.11,
           "float": "159.7",
           "eps": "17",
           "sales": "4",
@@ -719,223 +681,228 @@
       "l3": "Pressure Pumping"
     },
     {
-      "name": "Specialty Chemicals / Specialty Materials",
-      "avg_vars": 8.2,
-      "tickers": [
-        {
-          "ticker": "CC",
-          "vars": 9.52,
-          "vars_20ema": 10.79,
-          "rs": 3.8,
-          "price": 22.94,
-          "float": "148.9",
-          "eps": "48",
-          "sales": "1",
-          "inst": "-8.6",
-          "short": 5.7
-        },
-        {
-          "ticker": "LYB",
-          "vars": 8.5,
-          "vars_20ema": 8.99,
-          "rs": 42.3,
-          "price": 74.13,
-          "float": "257.2",
-          "eps": "452",
-          "sales": "-6",
-          "inst": "+5.9",
-          "short": 4.4,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "DOW",
-          "vars": 8.42,
-          "vars_20ema": 9.72,
-          "rs": 19.2,
-          "price": 38.56,
-          "float": "718.7",
-          "eps": "431",
-          "sales": "-6",
-          "inst": "+3.0",
-          "short": 3.5,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "MEOH",
-          "vars": 6.36,
-          "vars_20ema": 9.78,
-          "rs": 38.5,
-          "price": 62.09,
-          "float": "71.7",
-          "eps": "355",
-          "sales": "9",
-          "inst": "+8.3",
-          "short": 1.1
-        }
-      ],
-      "l1": "Specialty Chemicals",
-      "l2": "Specialty Materials",
-      "l3": null
-    },
-    {
-      "name": "Oil & Gas / Offshore Drilling",
-      "avg_vars": 8.02,
-      "tickers": [
-        {
-          "ticker": "NE",
-          "vars": 11.72,
-          "vars_20ema": 9.7,
-          "rs": 96.2,
-          "price": 54.37,
-          "float": "127.4",
-          "eps": "64",
-          "sales": "-10",
-          "inst": "-0.6",
-          "short": 7.3
-        },
-        {
-          "ticker": "RIG",
-          "vars": 7.98,
-          "vars_20ema": 5.57,
-          "rs": 100.0,
-          "price": 7.58,
-          "float": "1010.0",
-          "eps": "313",
-          "sales": "19",
-          "inst": "+2.3",
-          "short": 20.8
-        },
-        {
-          "ticker": "OII",
-          "vars": 4.36,
-          "vars_20ema": 4.44,
-          "rs": 50.0,
-          "price": 38.54,
-          "float": "98.3",
-          "eps": "-7",
-          "sales": "3",
-          "inst": "+5.4",
-          "short": 5.6
-        }
-      ],
-      "l1": "Oil & Gas",
-      "l2": "Offshore Drilling",
-      "l3": null
-    },
-    {
-      "name": "AI / Data Center / Networking & Connectivity",
-      "avg_vars": 7.98,
+      "name": "AI / Data Center / Optics",
+      "avg_vars": 9.06,
       "tickers": [
         {
           "ticker": "MXL",
-          "vars": 16.96,
-          "vars_20ema": 15.57,
-          "rs": 80.8,
-          "price": 87.46,
+          "vars": 19.24,
+          "vars_20ema": 15.92,
+          "rs": 92.3,
+          "price": 94.86,
           "float": "84.4",
           "eps": "331",
           "sales": "43",
           "inst": "+0.9",
-          "short": 4.6,
+          "short": 4.6
+        },
+        {
+          "ticker": "VIAV",
+          "vars": 12.17,
+          "vars_20ema": 12.64,
+          "rs": 50.0,
+          "price": 49.28,
+          "float": "231.5",
+          "eps": "99",
+          "sales": "43",
+          "inst": "+0.3",
+          "short": 6.2
+        },
+        {
+          "ticker": "AXTI",
+          "vars": 11.32,
+          "vars_20ema": 11.33,
+          "rs": 80.8,
+          "price": 112.88,
+          "float": "52.7",
+          "eps": "161",
+          "sales": "39",
+          "inst": "+57.3",
+          "short": 14.3
+        },
+        {
+          "ticker": "LWLG",
+          "vars": 10.9,
+          "vars_20ema": 10.0,
+          "rs": 3.8,
+          "price": 11.59,
+          "float": "148.8",
+          "eps": null,
+          "sales": "27",
+          "inst": "+9.2",
+          "short": 9.2
+        },
+        {
+          "ticker": "MTSI",
+          "vars": 10.61,
+          "vars_20ema": 8.47,
+          "rs": 80.8,
+          "price": 358.98,
+          "float": "68.5",
+          "eps": "45",
+          "sales": "22",
+          "inst": "+5.1",
+          "short": 4.2
+        },
+        {
+          "ticker": "AAOI",
+          "vars": 9.53,
+          "vars_20ema": 12.51,
+          "rs": 61.5,
+          "price": 171.33,
+          "float": "76.5",
+          "eps": "497",
+          "sales": "51",
+          "inst": "-2.9",
+          "short": 13.2,
           "ticker_color": "green"
         },
         {
-          "ticker": "JBL",
-          "vars": 3.95,
-          "vars_20ema": 5.8,
-          "rs": 23.1,
-          "price": 338.73,
-          "float": "103.5",
-          "eps": "26",
-          "sales": "23",
-          "inst": "-3.6",
-          "short": 2.3,
+          "ticker": "GLW",
+          "vars": 8.64,
+          "vars_20ema": 9.17,
+          "rs": 50.0,
+          "price": 175.83,
+          "float": "789.8",
+          "eps": "27",
+          "sales": "20",
+          "inst": "-1.5",
+          "short": 1.9,
           "ticker_color": "green"
         },
         {
-          "ticker": "SMTC",
-          "vars": 3.02,
-          "vars_20ema": 2.62,
-          "rs": 84.6,
-          "price": 132.39,
-          "float": "92.6",
-          "eps": "30",
-          "sales": "9",
-          "inst": "-2.2",
-          "short": 6.8
+          "ticker": "CIEN",
+          "vars": 6.62,
+          "vars_20ema": 8.29,
+          "rs": 61.5,
+          "price": 541.92,
+          "float": "139.2",
+          "eps": "133",
+          "sales": "27",
+          "inst": "-7.4",
+          "short": 3.1
+        },
+        {
+          "ticker": "LITE",
+          "vars": 4.45,
+          "vars_20ema": 6.72,
+          "rs": 26.9,
+          "price": 890.09,
+          "float": "75.0",
+          "eps": "299",
+          "sales": "90",
+          "inst": "-9.5",
+          "short": 12.6
+        },
+        {
+          "ticker": "POET",
+          "vars": 3.14,
+          "vars_20ema": 3.53,
+          "rs": 69.2,
+          "price": 13.07,
+          "float": "90.5",
+          "eps": "-12",
+          "sales": "202",
+          "inst": "+1.6",
+          "short": 16.2
+        },
+        {
+          "ticker": "COHR",
+          "vars": 3.01,
+          "vars_20ema": 3.85,
+          "rs": 61.5,
+          "price": 353.63,
+          "float": "185.1",
+          "eps": "55",
+          "sales": "21",
+          "inst": "-9.2",
+          "short": 4.1,
+          "ticker_color": "green"
         }
       ],
       "l1": "AI",
       "l2": "Data Center",
-      "l3": "Networking & Connectivity"
+      "l3": "Optics"
     },
     {
-      "name": "Oil & Gas / Oilfield Services",
-      "avg_vars": 7.54,
+      "name": "AI / Data Center / Components",
+      "avg_vars": 9.01,
       "tickers": [
         {
-          "ticker": "KGS",
-          "vars": 17.06,
-          "vars_20ema": 16.15,
+          "ticker": "VSH",
+          "vars": 16.73,
+          "vars_20ema": 13.85,
+          "rs": 92.3,
+          "price": 37.04,
+          "float": "122.8",
+          "eps": "1411",
+          "sales": "17",
+          "inst": "-1.7",
+          "short": 9.0
+        },
+        {
+          "ticker": "PENG",
+          "vars": 10.51,
+          "vars_20ema": 6.67,
+          "rs": 88.5,
+          "price": 46.27,
+          "float": "48.5",
+          "eps": "15",
+          "sales": "-6",
+          "inst": "-0.9",
+          "short": 18.0
+        },
+        {
+          "ticker": "NVT",
+          "vars": 6.19,
+          "vars_20ema": 5.43,
+          "rs": 53.8,
+          "price": 158.23,
+          "float": "160.2",
+          "eps": "36",
+          "sales": "53",
+          "inst": "-2.3",
+          "short": 1.6
+        },
+        {
+          "ticker": "ALAB",
+          "vars": 2.6,
+          "vars_20ema": 1.0,
           "rs": 100.0,
-          "price": 75.78,
-          "float": "87.8",
-          "eps": "166",
-          "sales": "5",
-          "inst": "-10.8",
-          "short": 6.1
-        },
-        {
-          "ticker": "ESI",
-          "vars": 6.0,
-          "vars_20ema": 7.52,
-          "rs": 15.4,
-          "price": 39.88,
-          "float": "227.9",
-          "eps": "19",
-          "sales": "41",
-          "inst": "+1.4",
-          "short": 5.8
-        },
-        {
-          "ticker": "OII",
-          "vars": 4.36,
-          "vars_20ema": 4.44,
-          "rs": 50.0,
-          "price": 38.54,
-          "float": "98.3",
-          "eps": "-7",
-          "sales": "3",
-          "inst": "+5.4",
-          "short": 5.6
-        },
-        {
-          "ticker": "WFRD",
-          "vars": 2.75,
-          "vars_20ema": 3.62,
-          "rs": 73.1,
-          "price": 111.42,
-          "float": "70.4",
-          "eps": "-10",
-          "sales": "-3",
-          "inst": "-4.3",
-          "short": 6.9
+          "price": 244.26,
+          "float": "138.6",
+          "eps": "61",
+          "sales": "93",
+          "inst": "+0.4",
+          "short": 9.5
         }
       ],
-      "l1": "Oil & Gas",
-      "l2": "Oilfield Services",
-      "l3": null
+      "l1": "AI",
+      "l2": "Data Center",
+      "l3": "Components"
     },
     {
       "name": "Oil & Gas / E&P",
-      "avg_vars": 7.23,
+      "avg_vars": 8.61,
       "tickers": [
         {
+          "ticker": "APA",
+          "vars": 9.6,
+          "vars_20ema": 7.32,
+          "rs": 80.8,
+          "price": 40.91,
+          "float": "351.6",
+          "eps": "58",
+          "sales": "-12",
+          "inst": "-0.7",
+          "short": 6.9
+        },
+        {
           "ticker": "VIST",
-          "vars": 8.08,
-          "vars_20ema": 5.55,
+          "vars": 9.16,
+          "vars_20ema": 5.9,
           "rs": 100.0,
-          "price": 78.51,
+          "price": 79.25,
           "float": "94.2",
           "eps": "63",
           "sales": "99",
@@ -943,35 +910,23 @@
           "short": 2.6
         },
         {
-          "ticker": "APA",
-          "vars": 7.94,
-          "vars_20ema": 7.08,
-          "rs": 69.2,
-          "price": 40.15,
-          "float": "351.6",
-          "eps": "57",
-          "sales": "-12",
-          "inst": "-0.7",
-          "short": 6.9
-        },
-        {
           "ticker": "KOS",
-          "vars": 7.84,
-          "vars_20ema": 6.4,
-          "rs": 88.5,
-          "price": 3.21,
+          "vars": 9.06,
+          "vars_20ema": 6.65,
+          "rs": 84.6,
+          "price": 3.18,
           "float": "571.2",
-          "eps": "111",
+          "eps": "113",
           "sales": "45",
           "inst": "-7.8",
           "short": 5.5
         },
         {
           "ticker": "SM",
-          "vars": 6.59,
-          "vars_20ema": 5.13,
+          "vars": 8.7,
+          "vars_20ema": 5.47,
           "rs": 100.0,
-          "price": 33.17,
+          "price": 34.32,
           "float": "237.8",
           "eps": "31",
           "sales": "75",
@@ -980,10 +935,10 @@
         },
         {
           "ticker": "CRC",
-          "vars": 5.68,
-          "vars_20ema": 4.83,
-          "rs": 30.8,
-          "price": 62.5,
+          "vars": 6.51,
+          "vars_20ema": 4.99,
+          "rs": 34.6,
+          "price": 62.47,
           "float": "81.1",
           "eps": "36",
           "sales": "7",
@@ -997,38 +952,40 @@
     },
     {
       "name": "Automotive (Legacy) / Components",
-      "avg_vars": 7.15,
+      "avg_vars": 8.29,
       "tickers": [
         {
           "ticker": "GTX",
-          "vars": 10.17,
-          "vars_20ema": 9.45,
-          "rs": 88.5,
-          "price": 30.38,
+          "vars": 11.66,
+          "vars_20ema": 9.66,
+          "rs": 84.6,
+          "price": 29.86,
           "float": "169.6",
           "eps": "16",
           "sales": "12",
           "inst": "+6.0",
-          "short": 5.2
+          "short": 5.2,
+          "ticker_color": "green"
         },
         {
           "ticker": "BWA",
-          "vars": 7.87,
-          "vars_20ema": 8.82,
-          "rs": 80.8,
-          "price": 61.82,
+          "vars": 9.03,
+          "vars_20ema": 8.84,
+          "rs": 76.9,
+          "price": 61.13,
           "float": "203.6",
           "eps": "6",
           "sales": "1",
           "inst": "+2.1",
-          "short": 3.2
+          "short": 3.2,
+          "ticker_color": "green"
         },
         {
           "ticker": "ST",
-          "vars": 3.41,
-          "vars_20ema": 2.95,
-          "rs": 88.5,
-          "price": 47.82,
+          "vars": 4.18,
+          "vars_20ema": 3.07,
+          "rs": 84.6,
+          "price": 46.41,
           "float": "143.9",
           "eps": "8",
           "sales": "1",
@@ -1041,15 +998,73 @@
       "l3": null
     },
     {
+      "name": "Oil & Gas / Offshore Drilling",
+      "avg_vars": 7.87,
+      "tickers": [
+        {
+          "ticker": "NE",
+          "vars": 12.94,
+          "vars_20ema": 10.01,
+          "rs": 96.2,
+          "price": 54.26,
+          "float": "127.4",
+          "eps": "64",
+          "sales": "-10",
+          "inst": "-0.6",
+          "short": 7.3
+        },
+        {
+          "ticker": "RIG",
+          "vars": 8.63,
+          "vars_20ema": 5.86,
+          "rs": 96.2,
+          "price": 7.45,
+          "float": "1010.0",
+          "eps": "313",
+          "sales": "19",
+          "inst": "+2.3",
+          "short": 20.8
+        },
+        {
+          "ticker": "OII",
+          "vars": 5.58,
+          "vars_20ema": 4.55,
+          "rs": 42.3,
+          "price": 38.01,
+          "float": "98.3",
+          "eps": "-7",
+          "sales": "3",
+          "inst": "+5.4",
+          "short": 5.6,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "BORR",
+          "vars": 4.34,
+          "vars_20ema": 4.85,
+          "rs": 69.2,
+          "price": 6.16,
+          "float": "270.6",
+          "eps": "-152",
+          "sales": "-1",
+          "inst": "+16.9",
+          "short": 7.5
+        }
+      ],
+      "l1": "Oil & Gas",
+      "l2": "Offshore Drilling",
+      "l3": null
+    },
+    {
       "name": "AI / Semiconductor Equipment",
-      "avg_vars": 6.97,
+      "avg_vars": 7.86,
       "tickers": [
         {
           "ticker": "ASX",
-          "vars": 16.08,
-          "vars_20ema": 17.36,
-          "rs": 42.3,
-          "price": 31.65,
+          "vars": 16.29,
+          "vars_20ema": 17.25,
+          "rs": 30.8,
+          "price": 30.89,
           "float": "2190.0",
           "eps": "87",
           "sales": "22",
@@ -1058,10 +1073,10 @@
         },
         {
           "ticker": "UCTT",
-          "vars": 14.73,
-          "vars_20ema": 16.18,
+          "vars": 15.63,
+          "vars_20ema": 16.13,
           "rs": 11.5,
-          "price": 77.65,
+          "price": 76.98,
           "float": "43.6",
           "eps": "145",
           "sales": "3",
@@ -1070,10 +1085,10 @@
         },
         {
           "ticker": "COHU",
-          "vars": 9.91,
-          "vars_20ema": 10.7,
-          "rs": 23.1,
-          "price": 44.2,
+          "vars": 10.32,
+          "vars_20ema": 10.66,
+          "rs": 19.2,
+          "price": 42.77,
           "float": "45.7",
           "eps": "365",
           "sales": "29",
@@ -1082,10 +1097,10 @@
         },
         {
           "ticker": "FORM",
-          "vars": 8.77,
-          "vars_20ema": 11.75,
-          "rs": 0.0,
-          "price": 117.42,
+          "vars": 9.8,
+          "vars_20ema": 11.56,
+          "rs": 3.8,
+          "price": 117.2,
           "float": "77.3",
           "eps": "89",
           "sales": "32",
@@ -1094,10 +1109,10 @@
         },
         {
           "ticker": "AEHR",
-          "vars": 8.61,
-          "vars_20ema": 9.64,
-          "rs": 15.4,
-          "price": 83.57,
+          "vars": 9.45,
+          "vars_20ema": 9.62,
+          "rs": 11.5,
+          "price": 81.14,
           "float": "29.7",
           "eps": "-189",
           "sales": "-44",
@@ -1105,23 +1120,11 @@
           "short": 15.9
         },
         {
-          "ticker": "AMAT",
-          "vars": 6.4,
-          "vars_20ema": 7.39,
-          "rs": 30.8,
-          "price": 413.57,
-          "float": "790.1",
-          "eps": "28",
-          "sales": "11",
-          "inst": "+0.3",
-          "short": 2.0
-        },
-        {
           "ticker": "TTMI",
-          "vars": 6.16,
-          "vars_20ema": 6.49,
-          "rs": 61.5,
-          "price": 158.86,
+          "vars": 7.35,
+          "vars_20ema": 6.57,
+          "rs": 65.4,
+          "price": 161.41,
           "float": "101.4",
           "eps": "44",
           "sales": "30",
@@ -1129,11 +1132,24 @@
           "short": 3.5
         },
         {
+          "ticker": "AMAT",
+          "vars": 7.08,
+          "vars_20ema": 7.36,
+          "rs": 23.1,
+          "price": 406.91,
+          "float": "790.1",
+          "eps": "29",
+          "sales": "11",
+          "inst": "+0.3",
+          "short": 2.0,
+          "ticker_color": "green"
+        },
+        {
           "ticker": "TER",
-          "vars": 5.83,
-          "vars_20ema": 8.86,
-          "rs": 3.8,
-          "price": 321.05,
+          "vars": 6.82,
+          "vars_20ema": 8.67,
+          "rs": 7.7,
+          "price": 321.52,
           "float": "155.1",
           "eps": "84",
           "sales": "87",
@@ -1142,22 +1158,47 @@
         },
         {
           "ticker": "ASML",
-          "vars": 4.71,
-          "vars_20ema": 5.47,
+          "vars": 5.51,
+          "vars_20ema": 5.48,
           "rs": 15.4,
-          "price": 1472.39,
-          "float": "385.2",
+          "price": 1459.44,
+          "float": "385.3",
           "eps": "26",
           "sales": "26",
           "inst": "-1.7",
-          "short": 0.2
+          "short": 0.2,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "SKYT",
+          "vars": 5.51,
+          "vars_20ema": 5.06,
+          "rs": 61.5,
+          "price": 34.25,
+          "float": "36.4",
+          "eps": "-3367",
+          "sales": "162",
+          "inst": "-3.6",
+          "short": 8.2
+        },
+        {
+          "ticker": "ACMR",
+          "vars": 5.39,
+          "vars_20ema": 4.72,
+          "rs": 100.0,
+          "price": 66.45,
+          "float": "55.5",
+          "eps": "23",
+          "sales": "34",
+          "inst": "+10.3",
+          "short": 4.9
         },
         {
           "ticker": "LRCX",
-          "vars": 4.24,
-          "vars_20ema": 6.66,
-          "rs": 46.2,
-          "price": 277.96,
+          "vars": 5.1,
+          "vars_20ema": 6.51,
+          "rs": 38.5,
+          "price": 273.38,
           "float": "1250.0",
           "eps": "37",
           "sales": "24",
@@ -1165,47 +1206,11 @@
           "short": 2.3
         },
         {
-          "ticker": "TRT",
-          "vars": 4.15,
-          "vars_20ema": 7.62,
-          "rs": 92.3,
-          "price": 15.32,
-          "float": "6.8",
-          "eps": null,
-          "sales": "124",
-          "inst": "-9.3",
-          "short": 7.0
-        },
-        {
-          "ticker": "TSM",
-          "vars": 4.08,
-          "vars_20ema": 5.18,
-          "rs": 19.2,
-          "price": 395.95,
-          "float": "5180.0",
-          "eps": "49",
-          "sales": "40",
-          "inst": "+0.7",
-          "short": 0.5
-        },
-        {
-          "ticker": "SKYT",
-          "vars": 4.02,
-          "vars_20ema": 5.01,
-          "rs": 57.7,
-          "price": 34.29,
-          "float": "36.3",
-          "eps": "-3367",
-          "sales": "162",
-          "inst": "-3.6",
-          "short": 8.2
-        },
-        {
           "ticker": "AMKR",
-          "vars": 3.71,
-          "vars_20ema": 5.85,
-          "rs": 15.4,
-          "price": 66.04,
+          "vars": 4.72,
+          "vars_20ema": 5.75,
+          "rs": 11.5,
+          "price": 65.54,
           "float": "60.5",
           "eps": "39",
           "sales": "27",
@@ -1213,16 +1218,28 @@
           "short": 12.2
         },
         {
-          "ticker": "ACMR",
-          "vars": 3.16,
-          "vars_20ema": 4.65,
-          "rs": 88.5,
-          "price": 63.25,
-          "float": "55.5",
-          "eps": "23",
-          "sales": "34",
-          "inst": "+10.3",
-          "short": 4.9
+          "ticker": "TSM",
+          "vars": 4.59,
+          "vars_20ema": 5.12,
+          "rs": 15.4,
+          "price": 392.61,
+          "float": "5180.0",
+          "eps": "49",
+          "sales": "40",
+          "inst": "+0.7",
+          "short": 0.5
+        },
+        {
+          "ticker": "TRT",
+          "vars": 4.28,
+          "vars_20ema": 7.3,
+          "rs": 65.4,
+          "price": 13.62,
+          "float": "6.8",
+          "eps": null,
+          "sales": "124",
+          "inst": "-9.3",
+          "short": 7.0
         }
       ],
       "l1": "AI",
@@ -1230,60 +1247,15 @@
       "l3": null
     },
     {
-      "name": "Space",
-      "avg_vars": 6.54,
-      "tickers": [
-        {
-          "ticker": "SATL",
-          "vars": 11.84,
-          "vars_20ema": 12.4,
-          "rs": 96.2,
-          "price": 9.54,
-          "float": "101.6",
-          "eps": "-270",
-          "sales": "80",
-          "inst": "+6.6",
-          "short": 10.4
-        },
-        {
-          "ticker": "VSAT",
-          "vars": 4.71,
-          "vars_20ema": 5.13,
-          "rs": 92.3,
-          "price": 71.52,
-          "float": "128.4",
-          "eps": "77",
-          "sales": "3",
-          "inst": "-1.1",
-          "short": 7.8
-        },
-        {
-          "ticker": "PL",
-          "vars": 3.08,
-          "vars_20ema": 7.63,
-          "rs": 88.5,
-          "price": 41.61,
-          "float": "263.0",
-          "eps": "-211",
-          "sales": "41",
-          "inst": "+2.6",
-          "short": 12.2
-        }
-      ],
-      "l1": "Space",
-      "l2": null,
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Power & Cooling",
-      "avg_vars": 6.06,
+      "avg_vars": 6.93,
       "tickers": [
         {
           "ticker": "POWI",
-          "vars": 9.95,
-          "vars_20ema": 11.55,
-          "rs": 26.9,
-          "price": 67.62,
+          "vars": 11.22,
+          "vars_20ema": 11.52,
+          "rs": 30.8,
+          "price": 68.28,
           "float": "54.4",
           "eps": "6",
           "sales": "3",
@@ -1291,11 +1263,24 @@
           "short": 8.0
         },
         {
+          "ticker": "NVTS",
+          "vars": 8.1,
+          "vars_20ema": 5.96,
+          "rs": 80.8,
+          "price": 19.43,
+          "float": "210.9",
+          "eps": "14",
+          "sales": "-39",
+          "inst": "+10.7",
+          "short": 19.9,
+          "ticker_color": "green"
+        },
+        {
           "ticker": "VRT",
-          "vars": 7.28,
-          "vars_20ema": 7.75,
-          "rs": 61.5,
-          "price": 339.73,
+          "vars": 7.57,
+          "vars_20ema": 7.74,
+          "rs": 26.9,
+          "price": 322.63,
           "float": "377.2",
           "eps": "53",
           "sales": "30",
@@ -1303,35 +1288,24 @@
           "short": 3.1
         },
         {
-          "ticker": "NVTS",
-          "vars": 6.66,
-          "vars_20ema": 5.74,
-          "rs": 84.6,
-          "price": 19.67,
-          "float": "210.9",
-          "eps": "14",
-          "sales": "-39",
-          "inst": "+10.7",
-          "short": 19.9
-        },
-        {
           "ticker": "WOLF",
-          "vars": 6.14,
-          "vars_20ema": 3.36,
-          "rs": 88.5,
-          "price": 59.35,
+          "vars": 7.27,
+          "vars_20ema": 3.73,
+          "rs": 84.6,
+          "price": 58.83,
           "float": "27.8",
           "eps": "-273",
           "sales": "-19",
           "inst": "+28.6",
-          "short": 58.0
+          "short": 58.0,
+          "ticker_color": "green"
         },
         {
           "ticker": "NVT",
-          "vars": 5.61,
-          "vars_20ema": 5.35,
-          "rs": 57.7,
-          "price": 160.69,
+          "vars": 6.19,
+          "vars_20ema": 5.43,
+          "rs": 53.8,
+          "price": 158.23,
           "float": "160.2",
           "eps": "36",
           "sales": "53",
@@ -1340,10 +1314,10 @@
         },
         {
           "ticker": "ALGM",
-          "vars": 5.08,
-          "vars_20ema": 6.37,
-          "rs": 19.2,
-          "price": 41.35,
+          "vars": 5.67,
+          "vars_20ema": 6.3,
+          "rs": 23.1,
+          "price": 41.65,
           "float": "123.7",
           "eps": "82",
           "sales": "26",
@@ -1352,22 +1326,23 @@
         },
         {
           "ticker": "AAON",
-          "vars": 4.86,
-          "vars_20ema": 1.76,
-          "rs": 80.8,
-          "price": 133.94,
+          "vars": 5.65,
+          "vars_20ema": 2.13,
+          "rs": 73.1,
+          "price": 130.27,
           "float": "68.0",
           "eps": "63",
           "sales": "54",
           "inst": "-2.4",
-          "short": 10.0
+          "short": 10.0,
+          "ticker_color": "green"
         },
         {
           "ticker": "RRX",
-          "vars": 2.94,
-          "vars_20ema": 5.34,
+          "vars": 3.77,
+          "vars_20ema": 5.19,
           "rs": 0.0,
-          "price": 188.22,
+          "price": 186.49,
           "float": "66.2",
           "eps": "10",
           "sales": "4",
@@ -1381,14 +1356,14 @@
     },
     {
       "name": "AI / Data Center / Cloud & Hyperscalers",
-      "avg_vars": 5.79,
+      "avg_vars": 6.25,
       "tickers": [
         {
           "ticker": "DOCN",
-          "vars": 10.11,
-          "vars_20ema": 10.43,
+          "vars": 11.59,
+          "vars_20ema": 10.54,
           "rs": 65.4,
-          "price": 147.43,
+          "price": 150.02,
           "float": "79.4",
           "eps": "-43",
           "sales": "22",
@@ -1396,76 +1371,91 @@
           "short": 14.8
         },
         {
-          "ticker": "AKAM",
-          "vars": 6.62,
-          "vars_20ema": 5.23,
-          "rs": 84.6,
-          "price": 150.77,
-          "float": "142.1",
-          "eps": "-6",
-          "sales": "6",
-          "inst": "+3.8",
-          "short": 11.1
-        },
-        {
-          "ticker": "DELL",
-          "vars": 6.57,
-          "vars_20ema": 4.97,
-          "rs": 73.1,
-          "price": 238.03,
-          "float": "301.2",
-          "eps": "24",
-          "sales": "40",
-          "inst": "+4.7",
-          "short": 7.3
-        },
-        {
           "ticker": "MRVL",
-          "vars": 6.27,
-          "vars_20ema": 5.87,
-          "rs": 57.7,
-          "price": 168.93,
-          "float": "868.3",
+          "vars": 7.39,
+          "vars_20ema": 6.02,
+          "rs": 96.2,
+          "price": 176.27,
+          "float": "868.5",
           "eps": "35",
           "sales": "22",
           "inst": "+1.2",
           "short": 3.3
         },
         {
+          "ticker": "DELL",
+          "vars": 7.33,
+          "vars_20ema": 5.2,
+          "rs": 69.2,
+          "price": 235.26,
+          "float": "301.2",
+          "eps": "24",
+          "sales": "40",
+          "inst": "+4.7",
+          "short": 7.3,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "AKAM",
+          "vars": 7.2,
+          "vars_20ema": 5.42,
+          "rs": 73.1,
+          "price": 141.34,
+          "float": "142.1",
+          "eps": "-6",
+          "sales": "6",
+          "inst": "+3.8",
+          "short": 11.1,
+          "ticker_color": "green"
+        },
+        {
           "ticker": "NBIS",
-          "vars": 4.79,
-          "vars_20ema": 4.45,
-          "rs": 88.5,
-          "price": 199.86,
-          "float": "201.3",
-          "eps": "-24",
+          "vars": 6.31,
+          "vars_20ema": 4.62,
+          "rs": 84.6,
+          "price": 197.73,
+          "float": "201.2",
+          "eps": "-13",
           "sales": "622",
           "inst": "-0.1",
           "short": 21.4
         },
         {
           "ticker": "BTSG",
-          "vars": 3.74,
-          "vars_20ema": 4.73,
-          "rs": 88.5,
-          "price": 56.18,
+          "vars": 5.29,
+          "vars_20ema": 4.78,
+          "rs": 92.3,
+          "price": 56.72,
           "float": "149.0",
           "eps": "68",
           "sales": "26",
           "inst": "+1.7",
-          "short": 9.4
+          "short": 9.4,
+          "ticker_color": "green"
         },
         {
           "ticker": "HUT",
-          "vars": 2.41,
-          "vars_20ema": 3.66,
-          "rs": 69.2,
-          "price": 96.2,
+          "vars": 2.86,
+          "vars_20ema": 3.58,
+          "rs": 65.4,
+          "price": 93.31,
           "float": "101.7",
           "eps": "-36",
           "sales": "226",
           "inst": "+7.3",
           "short": 16.9
+        },
+        {
+          "ticker": "WULF",
+          "vars": 2.05,
+          "vars_20ema": 1.35,
+          "rs": 42.3,
+          "price": 21.34,
+          "float": "341.1",
+          "eps": "21",
+          "sales": "-1",
+          "inst": "+23.1",
+          "short": 30.9
         }
       ],
       "l1": "AI",
@@ -1474,27 +1464,26 @@
     },
     {
       "name": "Oil & Gas / Refining",
-      "avg_vars": 4.64,
+      "avg_vars": 6.24,
       "tickers": [
         {
           "ticker": "DINO",
-          "vars": 6.69,
-          "vars_20ema": 4.5,
-          "rs": 69.2,
-          "price": 70.3,
+          "vars": 8.07,
+          "vars_20ema": 4.84,
+          "rs": 88.5,
+          "price": 71.82,
           "float": "166.5",
           "eps": "44",
           "sales": "12",
           "inst": "+3.4",
-          "short": 3.8,
-          "ticker_color": "green"
+          "short": 3.8
         },
         {
           "ticker": "PARR",
-          "vars": 3.93,
-          "vars_20ema": 3.17,
-          "rs": 3.8,
-          "price": 58.79,
+          "vars": 6.3,
+          "vars_20ema": 3.47,
+          "rs": 23.1,
+          "price": 61.63,
           "float": "48.5",
           "eps": "55",
           "sales": "5",
@@ -1503,10 +1492,10 @@
         },
         {
           "ticker": "PBF",
-          "vars": 3.29,
-          "vars_20ema": 1.61,
-          "rs": 42.3,
-          "price": 42.14,
+          "vars": 4.35,
+          "vars_20ema": 1.87,
+          "rs": 73.1,
+          "price": 42.76,
           "float": "97.0",
           "eps": "249",
           "sales": "12",
@@ -1520,15 +1509,62 @@
       "l3": null
     },
     {
+      "name": "Oil & Gas / Oilfield Services",
+      "avg_vars": 5.45,
+      "tickers": [
+        {
+          "ticker": "ESI",
+          "vars": 7.19,
+          "vars_20ema": 7.49,
+          "rs": 15.4,
+          "price": 39.48,
+          "float": "227.9",
+          "eps": "19",
+          "sales": "41",
+          "inst": "+1.4",
+          "short": 5.8
+        },
+        {
+          "ticker": "OII",
+          "vars": 5.58,
+          "vars_20ema": 4.55,
+          "rs": 42.3,
+          "price": 38.01,
+          "float": "98.3",
+          "eps": "-7",
+          "sales": "3",
+          "inst": "+5.4",
+          "short": 5.6,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "WFRD",
+          "vars": 3.59,
+          "vars_20ema": 3.61,
+          "rs": 61.5,
+          "price": 109.27,
+          "float": "70.4",
+          "eps": "-10",
+          "sales": "-3",
+          "inst": "-4.3",
+          "short": 6.9,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Oil & Gas",
+      "l2": "Oilfield Services",
+      "l3": null
+    },
+    {
       "name": "Logistics / Freight Brokerage & Trucking",
-      "avg_vars": 4.0,
+      "avg_vars": 5.29,
       "tickers": [
         {
           "ticker": "PBI",
-          "vars": 8.52,
-          "vars_20ema": 8.57,
-          "rs": 100.0,
-          "price": 16.46,
+          "vars": 8.61,
+          "vars_20ema": 8.58,
+          "rs": 61.5,
+          "price": 15.61,
           "float": "134.6",
           "eps": "20",
           "sales": "-3",
@@ -1536,11 +1572,35 @@
           "short": 14.7
         },
         {
+          "ticker": "RXO",
+          "vars": 5.45,
+          "vars_20ema": 2.48,
+          "rs": 92.3,
+          "price": 21.13,
+          "float": "163.7",
+          "eps": "212",
+          "sales": "-1",
+          "inst": "-1.2",
+          "short": 8.4
+        },
+        {
+          "ticker": "XPO",
+          "vars": 5.28,
+          "vars_20ema": 5.33,
+          "rs": 19.2,
+          "price": 202.3,
+          "float": "113.7",
+          "eps": "30",
+          "sales": "7",
+          "inst": "-2.7",
+          "short": 5.5
+        },
+        {
           "ticker": "ODFL",
-          "vars": 3.76,
-          "vars_20ema": 6.14,
-          "rs": 38.5,
-          "price": 204.13,
+          "vars": 5.1,
+          "vars_20ema": 6.04,
+          "rs": 42.3,
+          "price": 204.46,
           "float": "183.3",
           "eps": "10",
           "sales": "-3",
@@ -1549,72 +1609,213 @@
           "ticker_color": "green"
         },
         {
-          "ticker": "XPO",
-          "vars": 3.67,
-          "vars_20ema": 5.33,
-          "rs": 7.7,
-          "price": 200.46,
-          "float": "113.7",
-          "eps": "30",
-          "sales": "7",
-          "inst": "-2.7",
-          "short": 5.5,
-          "ticker_color": "green"
-        },
-        {
           "ticker": "WERN",
-          "vars": 2.78,
-          "vars_20ema": 3.59,
-          "rs": 96.2,
-          "price": 37.86,
+          "vars": 3.89,
+          "vars_20ema": 3.62,
+          "rs": 100.0,
+          "price": 37.77,
           "float": "58.9",
-          "eps": "4671",
+          "eps": "4691",
           "sales": "14",
           "inst": "+4.2",
           "short": 3.5
         },
         {
           "ticker": "KNX",
-          "vars": 2.7,
-          "vars_20ema": 3.86,
-          "rs": 100.0,
-          "price": 69.27,
+          "vars": 3.43,
+          "vars_20ema": 3.82,
+          "rs": 92.3,
+          "price": 68.37,
           "float": "157.7",
-          "eps": "47",
+          "eps": "49",
           "sales": "1",
           "inst": "+3.2",
           "short": 4.3
-        },
-        {
-          "ticker": "RXO",
-          "vars": 2.6,
-          "vars_20ema": 2.17,
-          "rs": 34.6,
-          "price": 19.1,
-          "float": "163.7",
-          "eps": "206",
-          "sales": "-1",
-          "inst": "-1.2",
-          "short": 8.4
         }
       ],
       "l1": "Logistics",
       "l2": "Freight Brokerage & Trucking",
       "l3": null
+    },
+    {
+      "name": "Clean Energy / Fuel Cell & Hydrogen",
+      "avg_vars": 5.2,
+      "tickers": [
+        {
+          "ticker": "BE",
+          "vars": 8.81,
+          "vars_20ema": 7.79,
+          "rs": 57.7,
+          "price": 261.34,
+          "float": "266.3",
+          "eps": "181",
+          "sales": "130",
+          "inst": "+3.5",
+          "short": 9.8
+        },
+        {
+          "ticker": "FCEL",
+          "vars": 4.39,
+          "vars_20ema": 2.97,
+          "rs": 84.6,
+          "price": 17.36,
+          "float": "52.8",
+          "eps": "72",
+          "sales": "61",
+          "inst": "+16.9",
+          "short": 8.7,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "PLUG",
+          "vars": 2.41,
+          "vars_20ema": 1.23,
+          "rs": 65.4,
+          "price": 3.31,
+          "float": "1330.0",
+          "eps": "76",
+          "sales": "22",
+          "inst": "+11.2",
+          "short": 25.8
+        }
+      ],
+      "l1": "Clean Energy",
+      "l2": "Fuel Cell & Hydrogen",
+      "l3": null
+    },
+    {
+      "name": "Space",
+      "avg_vars": 5.19,
+      "tickers": [
+        {
+          "ticker": "SATL",
+          "vars": 13.75,
+          "vars_20ema": 12.53,
+          "rs": 96.2,
+          "price": 9.66,
+          "float": "101.6",
+          "eps": "-414",
+          "sales": "80",
+          "inst": "+6.6",
+          "short": 10.4
+        },
+        {
+          "ticker": "VSAT",
+          "vars": 6.23,
+          "vars_20ema": 5.23,
+          "rs": 88.5,
+          "price": 70.95,
+          "float": "128.4",
+          "eps": "77",
+          "sales": "3",
+          "inst": "-1.1",
+          "short": 7.8,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "PL",
+          "vars": 4.15,
+          "vars_20ema": 7.3,
+          "rs": 92.3,
+          "price": 41.59,
+          "float": "263.0",
+          "eps": "-211",
+          "sales": "41",
+          "inst": "+2.6",
+          "short": 12.2,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "BKSY",
+          "vars": 2.64,
+          "vars_20ema": 2.92,
+          "rs": 100.0,
+          "price": 45.17,
+          "float": "30.8",
+          "eps": "29",
+          "sales": "-30",
+          "inst": "-4.0",
+          "short": 22.7
+        },
+        {
+          "ticker": "RKLB",
+          "vars": 2.22,
+          "vars_20ema": 3.21,
+          "rs": 92.3,
+          "price": 127.31,
+          "float": "571.0",
+          "eps": "37",
+          "sales": "63",
+          "inst": "+1.5",
+          "short": 5.8
+        },
+        {
+          "ticker": "LUNR",
+          "vars": 2.12,
+          "vars_20ema": 4.57,
+          "rs": 84.6,
+          "price": 32.46,
+          "float": "127.9",
+          "eps": "54",
+          "sales": "199",
+          "inst": "+7.4",
+          "short": 21.9,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Space",
+      "l2": null,
+      "l3": null
+    },
+    {
+      "name": "Fintech & Crypto / Crypto / Generalist",
+      "avg_vars": 3.71,
+      "tickers": [
+        {
+          "ticker": "PURR",
+          "vars": 5.68,
+          "vars_20ema": 2.97,
+          "rs": 100.0,
+          "price": 7.79,
+          "float": "111.0",
+          "eps": null,
+          "sales": null,
+          "inst": "+26.8",
+          "short": 7.5
+        },
+        {
+          "ticker": "RIOT",
+          "vars": 3.39,
+          "vars_20ema": 1.48,
+          "rs": 65.4,
+          "price": 22.65,
+          "float": "348.4",
+          "eps": "6",
+          "sales": "4",
+          "inst": "+19.6",
+          "short": 17.7,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "WULF",
+          "vars": 2.05,
+          "vars_20ema": 1.35,
+          "rs": 42.3,
+          "price": 21.34,
+          "float": "341.1",
+          "eps": "21",
+          "sales": "-1",
+          "inst": "+23.1",
+          "short": 30.9
+        }
+      ],
+      "l1": "Fintech & Crypto",
+      "l2": "Crypto",
+      "l3": "Generalist"
     }
   ],
   "network": {
     "nodes": [
-      {
-        "id": "Automotive (Legacy)",
-        "kind": "l1"
-      },
-      {
-        "id": "Automotive (Legacy) / Semiconductors",
-        "kind": "leaf",
-        "parent": "Automotive (Legacy)",
-        "ticker_count": 3
-      },
       {
         "id": "AI",
         "kind": "l1"
@@ -1623,13 +1824,17 @@
         "id": "AI / Data Center / Memory",
         "kind": "leaf",
         "parent": "AI",
-        "ticker_count": 6
+        "ticker_count": 7
       },
       {
-        "id": "AI / Data Center / Components",
+        "id": "Automotive (Legacy)",
+        "kind": "l1"
+      },
+      {
+        "id": "Automotive (Legacy) / Semiconductors",
         "kind": "leaf",
-        "parent": "AI",
-        "ticker_count": 3
+        "parent": "Automotive (Legacy)",
+        "ticker_count": 4
       },
       {
         "id": "Semiconductors",
@@ -1652,22 +1857,26 @@
         "ticker_count": 3
       },
       {
-        "id": "Semiconductors / Manufacturing & Equipment",
-        "kind": "leaf",
-        "parent": "Semiconductors",
-        "ticker_count": 7
+        "id": "Specialty Chemicals",
+        "kind": "l1"
       },
       {
-        "id": "AI / Data Center / Optics",
+        "id": "Specialty Chemicals / Specialty Materials",
         "kind": "leaf",
-        "parent": "AI",
-        "ticker_count": 10
+        "parent": "Specialty Chemicals",
+        "ticker_count": 4
       },
       {
         "id": "AI / Data Center / Chips & Processors",
         "kind": "leaf",
         "parent": "AI",
         "ticker_count": 9
+      },
+      {
+        "id": "Semiconductors / Manufacturing & Equipment",
+        "kind": "leaf",
+        "parent": "Semiconductors",
+        "ticker_count": 7
       },
       {
         "id": "Logistics",
@@ -1680,6 +1889,12 @@
         "ticker_count": 4
       },
       {
+        "id": "AI / Data Center / Networking & Connectivity",
+        "kind": "leaf",
+        "parent": "AI",
+        "ticker_count": 3
+      },
+      {
         "id": "Oil & Gas",
         "kind": "l1"
       },
@@ -1690,31 +1905,15 @@
         "ticker_count": 3
       },
       {
-        "id": "Specialty Chemicals",
-        "kind": "l1"
-      },
-      {
-        "id": "Specialty Chemicals / Specialty Materials",
-        "kind": "leaf",
-        "parent": "Specialty Chemicals",
-        "ticker_count": 4
-      },
-      {
-        "id": "Oil & Gas / Offshore Drilling",
-        "kind": "leaf",
-        "parent": "Oil & Gas",
-        "ticker_count": 3
-      },
-      {
-        "id": "AI / Data Center / Networking & Connectivity",
+        "id": "AI / Data Center / Optics",
         "kind": "leaf",
         "parent": "AI",
-        "ticker_count": 3
+        "ticker_count": 11
       },
       {
-        "id": "Oil & Gas / Oilfield Services",
+        "id": "AI / Data Center / Components",
         "kind": "leaf",
-        "parent": "Oil & Gas",
+        "parent": "AI",
         "ticker_count": 4
       },
       {
@@ -1730,20 +1929,16 @@
         "ticker_count": 3
       },
       {
+        "id": "Oil & Gas / Offshore Drilling",
+        "kind": "leaf",
+        "parent": "Oil & Gas",
+        "ticker_count": 4
+      },
+      {
         "id": "AI / Semiconductor Equipment",
         "kind": "leaf",
         "parent": "AI",
         "ticker_count": 15
-      },
-      {
-        "id": "Space",
-        "kind": "l1"
-      },
-      {
-        "id": "Space",
-        "kind": "leaf",
-        "parent": "Space",
-        "ticker_count": 3
       },
       {
         "id": "AI / Data Center / Power & Cooling",
@@ -1755,10 +1950,16 @@
         "id": "AI / Data Center / Cloud & Hyperscalers",
         "kind": "leaf",
         "parent": "AI",
-        "ticker_count": 7
+        "ticker_count": 8
       },
       {
         "id": "Oil & Gas / Refining",
+        "kind": "leaf",
+        "parent": "Oil & Gas",
+        "ticker_count": 3
+      },
+      {
+        "id": "Oil & Gas / Oilfield Services",
         "kind": "leaf",
         "parent": "Oil & Gas",
         "ticker_count": 3
@@ -1768,22 +1969,47 @@
         "kind": "leaf",
         "parent": "Logistics",
         "ticker_count": 6
+      },
+      {
+        "id": "Clean Energy",
+        "kind": "l1"
+      },
+      {
+        "id": "Clean Energy / Fuel Cell & Hydrogen",
+        "kind": "leaf",
+        "parent": "Clean Energy",
+        "ticker_count": 3
+      },
+      {
+        "id": "Space",
+        "kind": "l1"
+      },
+      {
+        "id": "Space",
+        "kind": "leaf",
+        "parent": "Space",
+        "ticker_count": 6
+      },
+      {
+        "id": "Fintech & Crypto",
+        "kind": "l1"
+      },
+      {
+        "id": "Fintech & Crypto / Crypto / Generalist",
+        "kind": "leaf",
+        "parent": "Fintech & Crypto",
+        "ticker_count": 3
       }
     ],
     "edges": [
-      {
-        "source": "Automotive (Legacy) / Semiconductors",
-        "target": "Automotive (Legacy)",
-        "kind": "is_a"
-      },
       {
         "source": "AI / Data Center / Memory",
         "target": "AI",
         "kind": "is_a"
       },
       {
-        "source": "AI / Data Center / Components",
-        "target": "AI",
+        "source": "Automotive (Legacy) / Semiconductors",
+        "target": "Automotive (Legacy)",
         "kind": "is_a"
       },
       {
@@ -1797,13 +2023,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Semiconductors / Manufacturing & Equipment",
-        "target": "Semiconductors",
-        "kind": "is_a"
-      },
-      {
-        "source": "AI / Data Center / Optics",
-        "target": "AI",
+        "source": "Specialty Chemicals / Specialty Materials",
+        "target": "Specialty Chemicals",
         "kind": "is_a"
       },
       {
@@ -1812,23 +2033,13 @@
         "kind": "is_a"
       },
       {
+        "source": "Semiconductors / Manufacturing & Equipment",
+        "target": "Semiconductors",
+        "kind": "is_a"
+      },
+      {
         "source": "Logistics / Maritime Shipping",
         "target": "Logistics",
-        "kind": "is_a"
-      },
-      {
-        "source": "Oil & Gas / Oilfield Services / Pressure Pumping",
-        "target": "Oil & Gas",
-        "kind": "is_a"
-      },
-      {
-        "source": "Specialty Chemicals / Specialty Materials",
-        "target": "Specialty Chemicals",
-        "kind": "is_a"
-      },
-      {
-        "source": "Oil & Gas / Offshore Drilling",
-        "target": "Oil & Gas",
         "kind": "is_a"
       },
       {
@@ -1837,8 +2048,18 @@
         "kind": "is_a"
       },
       {
-        "source": "Oil & Gas / Oilfield Services",
+        "source": "Oil & Gas / Oilfield Services / Pressure Pumping",
         "target": "Oil & Gas",
+        "kind": "is_a"
+      },
+      {
+        "source": "AI / Data Center / Optics",
+        "target": "AI",
+        "kind": "is_a"
+      },
+      {
+        "source": "AI / Data Center / Components",
+        "target": "AI",
         "kind": "is_a"
       },
       {
@@ -1849,6 +2070,11 @@
       {
         "source": "Automotive (Legacy) / Components",
         "target": "Automotive (Legacy)",
+        "kind": "is_a"
+      },
+      {
+        "source": "Oil & Gas / Offshore Drilling",
+        "target": "Oil & Gas",
         "kind": "is_a"
       },
       {
@@ -1872,8 +2098,23 @@
         "kind": "is_a"
       },
       {
+        "source": "Oil & Gas / Oilfield Services",
+        "target": "Oil & Gas",
+        "kind": "is_a"
+      },
+      {
         "source": "Logistics / Freight Brokerage & Trucking",
         "target": "Logistics",
+        "kind": "is_a"
+      },
+      {
+        "source": "Clean Energy / Fuel Cell & Hydrogen",
+        "target": "Clean Energy",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Crypto / Generalist",
+        "target": "Fintech & Crypto",
         "kind": "is_a"
       }
     ]

@@ -1,30 +1,25 @@
 """
-Analyze theme strength based on RS_STS% scores.
+Equal-weighted theme scoring on four per-ticker signals.
 
-Scores themes along two dimensions for momentum trading:
-- Strength (0-100): RS quality, leader concentration (RS >= 80), participation
-- Confirmation (0-100): structural uptrend health, proximity to highs, breadth
+Composite (per ticker) = mean of:
+- rs_score:    rs_sts_pct from master table (0-100)
+- vars_score:  raw VARS from master table (volatility-adjusted, used as-is)
+- si_score:    short_interest from fundamentals.db, mapped via si_anchors
+- float_score: shares_float from fundamentals.db, mapped via float_anchors
 
-Four multipliers refine the final score:
-- Extension penalty: sigmoid penalizing overextended themes
-- Breadth penalty: 0.75x discount for breadth == 2
-- Enrichment ratio: boosts focused themes vs market baseline
-- Short interest / squeeze potential (breadth <= 6 only)
-
-Backtested formula — validated 6/6 contract test cases passing.
+Theme score = mean of top-N (max_scoring_tickers) ticker composites
+among the theme's screened, in-master members.
 """
 
 import sqlite3
-from math import exp
-from pathlib import Path
+from glob import glob
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional
-from collections import defaultdict
-from glob import glob
 
 import src.stock_utils as su
+from collections import defaultdict
 from config.settings import CONFIG, SCREENING_OUTPUT_DIR, DATA_DIR, FUNDAMENTALS_DB
 from src.themes.theme_registry import load_ticker_themes
 from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
@@ -36,106 +31,24 @@ MIN_BREADTH = CONFIG["themes"].get("min_scored_breadth", 2)
 
 SCORING_CFG = CONFIG["themes"].get("scoring", {})
 MAX_SCORING_TICKERS = SCORING_CFG.get("max_scoring_tickers", 10)
-LEADER_RS_THRESHOLD = SCORING_CFG.get("leader_rs_threshold", 80)
-NEAR_HIGHS_COL = SCORING_CFG.get("near_highs_column", "max60")
-STRENGTH_COMPONENTS = SCORING_CFG.get("strength_components", {"median_rs": 0.40, "leader_pct": 0.35, "participation": 0.25})
-EXT_SIGMOID = SCORING_CFG.get("extension_sigmoid", {"midpoint": 15, "steepness": 5})
-BREADTH_PENALTY_TWO = SCORING_CFG.get("breadth_penalty_two", 0.75)
-ENRICHMENT_CFG = SCORING_CFG.get("enrichment", {"coeff": 0.08, "max": 1.35})
-SI_CFG = SCORING_CFG.get("short_interest", {"max_breadth": 6, "min_si": 0.07, "coeff": 2.5, "max_bonus": 0.45})
+SI_ANCHORS = SCORING_CFG.get("si_anchors", [[0, 0], [5, 25], [10, 50], [20, 100]])
+FLOAT_ANCHORS = SCORING_CFG.get("float_anchors", [[100, 100], [150, 75], [500, 50]])
+MISSING_DEFAULT = float(SCORING_CFG.get("missing_default", 50))
 
-REGIME_CFG = CONFIG["themes"].get("regime", {})
-REGIME_SOURCE = REGIME_CFG.get("source", "master_table")
-REGIME_THRESHOLDS = REGIME_CFG.get("thresholds", {"strong_bull": 60, "bull": 40, "choppy": 25})
-REGIME_WEIGHTS = REGIME_CFG.get("weights", {
-    "strong_bull": {"strength": 0.50, "confirmation": 0.50},
-    "bull": {"strength": 0.50, "confirmation": 0.50},
-    "choppy": {"strength": 0.70, "confirmation": 0.30},
-    "bear": {"strength": 0.80, "confirmation": 0.20},
-})
-
-# Legacy weights (used only as fallback)
-LEGACY_WEIGHTS = CONFIG["themes"].get("strength_weights", {})
+# Pre-split anchor arrays for np.interp
+_SI_X = np.array([a[0] for a in SI_ANCHORS], dtype=float)
+_SI_Y = np.array([a[1] for a in SI_ANCHORS], dtype=float)
+_FL_X = np.array([a[0] for a in FLOAT_ANCHORS], dtype=float)
+_FL_Y = np.array([a[1] for a in FLOAT_ANCHORS], dtype=float)
 
 
-# ── History persistence ─────────────────────────────────────────────────
+# ── Fundamentals fetch ──────────────────────────────────────────────────
 
-def _load_score_history() -> Dict:
-    """Load theme score history from disk (last 10 days)."""
-    if HISTORY_FILE.exists():
-        try:
-            with open(HISTORY_FILE) as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            return {}
-    return {}
+def _get_fundamentals_data(tickers: List[str]) -> Dict[str, Dict[str, Optional[float]]]:
+    """Bulk-load short_interest and shares_float for the given tickers.
 
-
-def _save_score_history(history: Dict, today_key: str, today_data: Dict) -> None:
-    """Save today's metrics and prune entries older than 10 days."""
-    history[today_key] = today_data
-    sorted_dates = sorted(history.keys(), reverse=True)[:10]
-    pruned = {d: history[d] for d in sorted_dates}
-    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(pruned, f, indent=2)
-
-
-def _get_historical_value(history: Dict, theme: str, field: str, lookback: int = 5) -> Optional[float]:
-    """Look up a theme's metric from ~lookback trading days ago."""
-    sorted_dates = sorted(history.keys(), reverse=True)
-    # Skip today (index 0), look for the entry at position `lookback`
-    # If exact offset missing (weekends), use nearest available
-    for date_key in sorted_dates[1:]:  # skip most recent
-        if len(sorted_dates) - sorted_dates.index(date_key) >= lookback:
-            theme_data = history.get(date_key, {}).get(theme)
-            if theme_data and field in theme_data:
-                return theme_data[field]
-    # Fallback: use the oldest available entry if we have at least 2 days
-    if len(sorted_dates) > 1:
-        oldest = sorted_dates[-1]
-        theme_data = history.get(oldest, {}).get(theme)
-        if theme_data and field in theme_data:
-            return theme_data[field]
-    return None
-
-
-# ── Market regime ───────────────────────────────────────────────────────
-
-def compute_market_regime(master_df: pd.DataFrame, market_breadth: Dict = None) -> tuple:
-    """Compute 4-tier market regime.
-
-    Returns (regime_name, weights_dict, pct_above_50sma).
+    Returns {ticker: {"si": pct_or_None, "fl": raw_count_or_None}}.
     """
-    if REGIME_SOURCE == "master_table":
-        pct = 50.0  # default
-        if 'close' in master_df.columns and 'sma50' in master_df.columns:
-            valid = master_df[~master_df['sma50'].isna()]
-            if len(valid) > 0:
-                pct = (np.sum(valid['close'] > valid['sma50']) / len(valid)) * 100
-    else:
-        # MMFI fallback
-        pct = 50.0
-        if market_breadth and 'mmfi' in market_breadth and market_breadth['mmfi'] is not None:
-            pct = market_breadth['mmfi']
-
-    if pct > REGIME_THRESHOLDS["strong_bull"]:
-        regime = "strong_bull"
-    elif pct > REGIME_THRESHOLDS["bull"]:
-        regime = "bull"
-    elif pct > REGIME_THRESHOLDS["choppy"]:
-        regime = "choppy"
-    else:
-        regime = "bear"
-
-    weights = REGIME_WEIGHTS.get(regime, {"strength": 0.50, "confirmation": 0.50})
-    return regime, weights, pct
-
-
-# ── Short interest ──────────────────────────────────────────────────────
-
-def _get_short_interest_data(tickers: List[str]) -> Dict[str, float]:
-    """Load short interest from fundamentals DB for the given tickers."""
     if not tickers:
         return {}
     if not FUNDAMENTALS_DB.exists():
@@ -143,44 +56,56 @@ def _get_short_interest_data(tickers: List[str]) -> Dict[str, float]:
     try:
         conn = sqlite3.connect(str(FUNDAMENTALS_DB))
         placeholders = ",".join(["?"] * len(tickers))
-        cursor = conn.execute(
-            f"SELECT ticker, short_interest FROM fundamentals WHERE ticker IN ({placeholders})",
+        rows = conn.execute(
+            f"SELECT ticker, short_interest, shares_float FROM fundamentals WHERE ticker IN ({placeholders})",
             tickers,
-        )
-        result = {}
-        for row in cursor.fetchall():
-            if row[1] is not None:
-                result[row[0]] = row[1]
+        ).fetchall()
         conn.close()
-        return result
-    except Exception:
+    except sqlite3.Error:
         return {}
+    return {r[0]: {"si": r[1], "fl": r[2]} for r in rows}
 
 
-def _compute_si_multiplier(scoring_tickers: List[str], breadth: int) -> tuple:
-    """Compute short interest squeeze multiplier.
+# ── Signal scoring ──────────────────────────────────────────────────────
 
-    Only applies for themes with breadth <= max_breadth (default 6).
-    Returns (si_mult, median_si).
+def _is_missing(v) -> bool:
+    return v is None or (isinstance(v, float) and np.isnan(v))
+
+
+def _rs_score(rs) -> float:
+    if _is_missing(rs):
+        return MISSING_DEFAULT
+    return float(np.clip(rs, 0, 100))
+
+
+def _vars_score(vars_raw) -> float:
+    """Raw VARS — volatility-adjusted, comparable across tickers, used as-is."""
+    if _is_missing(vars_raw):
+        return MISSING_DEFAULT
+    return float(vars_raw)
+
+
+def _si_score(si_pct) -> float:
+    """Short interest (%) → 0-100 via piecewise anchors. Missing → 50."""
+    if _is_missing(si_pct):
+        return MISSING_DEFAULT
+    return float(np.clip(np.interp(si_pct, _SI_X, _SI_Y), 0, 100))
+
+
+def _float_score(shares_float) -> float:
+    """Shares float (raw count) → 0-100 via piecewise anchors on millions.
+
+    Below the smallest anchor (100M) clamps to anchor's score (100) — low float bonus.
+    Above the largest anchor (500M) clamps to anchor's score (50) — no penalty.
     """
-    if breadth > SI_CFG["max_breadth"]:
-        return 1.0, 0.0
+    if _is_missing(shares_float):
+        return MISSING_DEFAULT
+    fl_m = float(shares_float) / 1e6
+    return float(np.clip(np.interp(fl_m, _FL_X, _FL_Y), _FL_Y.min(), _FL_Y.max()))
 
-    si_data = _get_short_interest_data(scoring_tickers)
-    if not si_data:
-        return 1.0, 0.0
 
-    # Finviz stores as percentage (12.5 = 12.5%), convert to fraction
-    si_values = [v / 100.0 for v in si_data.values() if v > 0]
-    if not si_values:
-        return 1.0, 0.0
-
-    median_si = float(np.median(si_values))
-    if median_si <= SI_CFG["min_si"]:
-        return 1.0, median_si
-
-    boost = min(SI_CFG["max_bonus"], (median_si - SI_CFG["min_si"]) * SI_CFG["coeff"])
-    return 1.0 + boost, median_si
+def _ticker_composite(rs, vars_raw, si, fl) -> float:
+    return (_rs_score(rs) + _vars_score(vars_raw) + _si_score(si) + _float_score(fl)) / 4.0
 
 
 # ── Theme grouping (legacy helper kept for backward compat) ─────────────
@@ -200,215 +125,131 @@ def calculate_theme_metrics(
     theme: str,
     tickers: List[str],
     master_df: pd.DataFrame,
-    active_weights: Dict[str, float],
-    screened_tickers: set = None,
-    total_screened: int = 0,
-    total_universe: int = 0,
+    fundamentals: Dict[str, Dict[str, Optional[float]]],
+    screened_tickers: Optional[set] = None,
 ) -> Optional[Dict]:
-    """
-    Calculate aggregate metrics for a single theme — backtested formula.
-
-    FINAL = (w_s * strength + w_c * confirmation) *
-            extension_penalty * breadth_penalty * enrichment_mult * si_mult
-    """
-    scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else tickers
+    """Per-ticker equal-weighted composite, theme score = mean of top-N composites."""
+    scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else list(tickers)
     theme_df = master_df[master_df['ticker'].isin(scoring_tickers)]
 
-    if len(theme_df) == 0:
-        return None
-
     total_breadth = len(tickers)
-    breadth = len(theme_df)
+    full_breadth = len(theme_df)
 
-    if breadth < MIN_BREADTH:
+    if full_breadth < MIN_BREADTH:
         return None
 
-    # Cap large themes to prevent dilution — top N by RS
-    if breadth > MAX_SCORING_TICKERS:
-        theme_df = theme_df.nlargest(MAX_SCORING_TICKERS, 'rs_sts_pct')
+    # Per-ticker composite for every surviving member
+    rs_col = theme_df['rs_sts_pct'].values
+    vars_col = theme_df['vars'].values if 'vars' in theme_df.columns else np.full(full_breadth, np.nan)
+    tickers_arr = theme_df['ticker'].values
 
-    rs_values = theme_df['rs_sts_pct'].values
+    composites = []
+    for i, tk in enumerate(tickers_arr):
+        f = fundamentals.get(tk, {})
+        composites.append(_ticker_composite(
+            rs_col[i], vars_col[i], f.get('si'), f.get('fl'),
+        ))
 
-    # Base RS metrics (kept for reporting compatibility)
+    ticker_scores = {tk: float(c) for tk, c in zip(tickers_arr, composites)}
+
+    # Sort by composite desc; theme score = mean of top-N
+    ranked = sorted(ticker_scores.items(), key=lambda kv: -kv[1])
+    top_n = ranked[:MAX_SCORING_TICKERS]
+    breadth = len(top_n)
+    theme_score = float(np.mean([c for _, c in top_n]))
+
+    # Reporting fields kept for daily report + downstream compat
+    rs_values = rs_col
     avg_rs = float(np.mean(rs_values))
     median_rs = float(np.median(rs_values))
     high_momentum_count = int(np.sum(rs_values > MOMENTUM_THRESHOLD))
     high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
 
-    # ── STRENGTH (0-100) ─────────────────────────────────────────────
-    leader_count = int(np.sum(rs_values >= LEADER_RS_THRESHOLD))
-    leader_pct = (leader_count / len(rs_values)) * 100
-    participation = min((breadth / max(total_breadth, 1)) * 100, 100)
-
-    strength = (
-        STRENGTH_COMPONENTS["median_rs"] * median_rs +
-        STRENGTH_COMPONENTS["leader_pct"] * leader_pct +
-        STRENGTH_COMPONENTS["participation"] * participation
-    )
-
-    # ── CONFIRMATION (0-100) ─────────────────────────────────────────
-    pct_above_50sma = 0.0
-    if 'close' in theme_df.columns and 'sma50' in theme_df.columns:
-        valid = theme_df[~theme_df['sma50'].isna()]
-        if len(valid) > 0:
-            pct_above_50sma = (np.sum(valid['close'] > valid['sma50']) / len(valid)) * 100
-
-    pct_near_highs = 0.0
-    near_highs_col = NEAR_HIGHS_COL if NEAR_HIGHS_COL in theme_df.columns else 'max252'
-    if 'close' in theme_df.columns and near_highs_col in theme_df.columns:
-        valid = theme_df[~theme_df[near_highs_col].isna()]
-        if len(valid) > 0:
-            pct_near_highs = (np.sum(valid['close'] >= 0.85 * valid[near_highs_col]) / len(valid)) * 100
-
-    breadth_score = min(breadth / 5.0, 1.0) * 100
-
-    confirmation = 0.35 * pct_above_50sma + 0.35 * pct_near_highs + 0.30 * breadth_score
-
-    # ── EXTENSION PENALTY (0-1) ──────────────────────────────────────
-    dist_25sma = np.nan
-    if 'close' in theme_df.columns and 'sma25' in theme_df.columns:
-        valid = theme_df[theme_df['sma25'] > 0]
-        if not valid.empty:
-            pct_from_25sma = ((valid['close'] - valid['sma25']) / valid['sma25']) * 100
-            dist_25sma = float(np.nanmedian(pct_from_25sma))
-
-    extension_penalty = 1.0
-    if not np.isnan(dist_25sma):
-        extension_penalty = 1.0 / (1.0 + exp((dist_25sma - EXT_SIGMOID["midpoint"]) / EXT_SIGMOID["steepness"]))
-
-    # ── BREADTH PENALTY ──────────────────────────────────────────────
-    if breadth >= 3:
-        breadth_penalty = 1.0
-    elif breadth == 2:
-        breadth_penalty = BREADTH_PENALTY_TWO
-    else:
-        return None
-
-    # ── ENRICHMENT RATIO ─────────────────────────────────────────────
-    enrichment_mult = 1.0
-    if total_screened > 0 and total_universe > 0:
-        screening_rate = total_screened / total_universe
-        theme_rate = breadth / max(total_breadth, 1)
-        enrichment = theme_rate / max(screening_rate, 0.001)
-        enrichment_mult = min(ENRICHMENT_CFG["max"], 1.0 + max(0, enrichment - 1.0) * ENRICHMENT_CFG["coeff"])
-
-    # ── SHORT INTEREST / SQUEEZE POTENTIAL ───────────────────────────
-    si_mult, si_median = _compute_si_multiplier(scoring_tickers, breadth)
-
-    # ── FINAL SCORE ──────────────────────────────────────────────────
-    base_score = (
-        active_weights["strength"] * strength +
-        active_weights["confirmation"] * confirmation
-    )
-    final_score = (base_score * extension_penalty * breadth_penalty
-                   * enrichment_mult * si_mult)
-
-    top_stocks = theme_df.nlargest(min(3, len(theme_df)), 'rs_sts_pct')[['ticker', 'rs_sts_pct']].to_dict('records')
+    top_stocks = []
+    rs_lookup = dict(zip(tickers_arr, rs_col))
+    for tk, c in top_n[:3]:
+        top_stocks.append({
+            'ticker': tk,
+            'score': round(c, 2),
+            'rs_sts_pct': float(rs_lookup.get(tk, 0)),
+        })
 
     return {
         'theme': theme,
-        # Reporting-compatible fields
+        'score': theme_score,
+        'strength_score': theme_score,  # alias for legacy consumers
+        'final_score': theme_score,     # alias for legacy consumers
         'avg_rs_sts': avg_rs,
         'median_rs_sts': median_rs,
-        'high_momentum_count': high_momentum_count,
-        'high_momentum_pct': high_momentum_pct,
-        'leader_count': leader_count,
-        'leader_pct': leader_pct,
         'breadth': breadth,
         'total_breadth': total_breadth,
-        'pct_above_50sma': pct_above_50sma,
-        'pct_near_highs': pct_near_highs,
-        'avg_dist_25sma': dist_25sma,
-        # Scoring components
-        'strength': strength,
-        'confirmation': confirmation,
-        'participation': participation,
-        'extension_penalty': extension_penalty,
-        'breadth_penalty': breadth_penalty,
-        'enrichment_mult': enrichment_mult,
-        'si_median': si_median,
-        'si_mult': si_mult,
-        # Final scores
-        'final_score': final_score,
-        'strength_score': final_score,  # backward compat alias
-        'top_stocks': top_stocks,
         'tickers': tickers,
+        'ticker_scores': ticker_scores,
+        'top_stocks': top_stocks,
+        'high_momentum_count': high_momentum_count,
+        'high_momentum_pct': high_momentum_pct,
     }
 
 
-def analyze_theme_strength(master_df: pd.DataFrame, market_breadth: Dict = None, screened_tickers: set = None) -> pd.DataFrame:
-    """Analyze all themes and return ranked DataFrame using backtested scoring formula."""
+def analyze_theme_strength(
+    master_df: pd.DataFrame,
+    market_breadth: Dict = None,
+    screened_tickers: set = None,
+) -> pd.DataFrame:
+    """Score every theme and return a ranked DataFrame (highest score first)."""
     ticker_themes = load_ticker_themes()
-
     if not ticker_themes:
         print("No ticker themes found")
         return pd.DataFrame()
 
-    # Apply theme consolidation (consume/remove groups)
     theme_groups = load_theme_groups()
     theme_tickers = build_theme_to_tickers(ticker_themes, theme_groups)
 
     print(f"Analyzing {len(theme_tickers)} themes (after consolidation)...")
 
-    # Determine market regime (4-tier from pct_above_50sma)
-    regime, active_weights, regime_pct = compute_market_regime(master_df, market_breadth)
-    print(f"Regime: {regime} (pct_above_50sma: {regime_pct:.1f}%, weights: S={active_weights['strength']:.0%}/C={active_weights['confirmation']:.0%})")
-
-    total_screened = len(screened_tickers) if screened_tickers else 0
-    total_universe = len(master_df)
+    # Bulk fundamentals fetch — one DB query covering every candidate ticker.
+    all_candidates = set()
+    for tks in theme_tickers.values():
+        all_candidates.update(tks)
+    if screened_tickers is not None:
+        all_candidates &= set(screened_tickers)
+    fundamentals = _get_fundamentals_data(sorted(all_candidates))
 
     theme_metrics = []
-
     for theme, tickers in theme_tickers.items():
-        metrics = calculate_theme_metrics(
-            theme, tickers, master_df, active_weights, screened_tickers,
-            total_screened=total_screened,
-            total_universe=total_universe,
-        )
-        if metrics:
-            theme_metrics.append(metrics)
+        m = calculate_theme_metrics(theme, tickers, master_df, fundamentals, screened_tickers)
+        if m:
+            theme_metrics.append(m)
 
     theme_df = pd.DataFrame(theme_metrics)
-
     if theme_df.empty:
         return theme_df
 
-    theme_df = theme_df.sort_values('strength_score', ascending=False).reset_index(drop=True)
-
+    theme_df = theme_df.sort_values('score', ascending=False).reset_index(drop=True)
     theme_df['is_hot'] = (theme_df['avg_rs_sts'] > HOT_THRESHOLD) & (theme_df['breadth'] >= 3)
-    theme_df['regime'] = regime
-
     return theme_df
 
 
 def get_hot_themes(theme_df: pd.DataFrame) -> pd.DataFrame:
-    """Filter to only hot themes."""
     return theme_df[theme_df['is_hot']]
 
 
 if __name__ == '__main__':
     master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.csv')))
-    if master_files:
+    if not master_files:
+        print("No master tables found. Run create_master_table.py first.")
+    else:
         latest_master = master_files[-1]
         print(f"Loading {latest_master}")
-
         master_df = pd.read_csv(latest_master)
         theme_df = analyze_theme_strength(master_df)
 
         print(f"\n{'='*80}")
         print("THEME STRENGTH ANALYSIS")
         print(f"{'='*80}\n")
-
         print(f"Total themes: {len(theme_df)}")
-        print(f"Hot themes (RS > {HOT_THRESHOLD}%): {theme_df['is_hot'].sum()}\n")
-
-        print("Top 15 Themes by Final Score:")
-        pd.options.display.float_format = '{:.1f}'.format
-        cols = ['theme', 'median_rs_sts', 'leader_pct', 'participation',
-                'pct_above_50sma', 'pct_near_highs', 'avg_dist_25sma',
-                'breadth', 'extension_penalty', 'enrichment_mult', 'si_mult',
-                'strength_score']
-        available = [c for c in cols if c in theme_df.columns]
-        print(theme_df[available].head(15).to_string())
-    else:
-        print("No master tables found. Run create_master_table.py first.")
+        if not theme_df.empty:
+            print(f"Hot themes (RS > {HOT_THRESHOLD}%): {theme_df['is_hot'].sum()}\n")
+            pd.options.display.float_format = '{:.1f}'.format
+            print("Top 15 themes by score:")
+            print(theme_df[['theme', 'score', 'avg_rs_sts', 'breadth']].head(15).to_string())

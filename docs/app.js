@@ -974,20 +974,28 @@
       const scoreQuality = Math.min(computeAvgVars(theme) / 6, 1.2);
       return scoreQuality * (0.55 + 0.45 * leaderDensity);
     }
+    if (mode === 'themes') {
+      // Theme mode uses per-ticker composite (with RS fallback for entries
+      // that lack a server-emitted score). Leader threshold sits on the new
+      // composite scale (typical 30-80) rather than the RS scale (0-100).
+      const leaderDensity = tk.filter(t => (t.score ?? t.rs ?? 0) >= 60).length / tk.length;
+      const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
+      const scoreQuality = Math.min((theme.score ?? 0) / 70, 1.2);
+      return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
+    }
     const leaderDensity = tk.filter(t => (t.rs ?? 0) >= 90).length / tk.length;
     const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
-    const scoreQuality = mode === 'themes'
-      ? Math.min((theme.score ?? 0) / 100, 1.2)
-      : Math.min(computeAvgRs(theme) / 90, 1.2);
+    const scoreQuality = Math.min(computeAvgRs(theme) / 90, 1.2);
     return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
   }
 
   function themeFill(strength, action) {
-    // Warm-scale by strength; saturation modulated by actionability
+    // Warm-scale by strength; saturation modulated by actionability.
+    // Strength bands tuned for the new theme-score range (~30-80 typical).
     let hue, baseSat, light;
-    if (strength >= 100)      { hue = 14;  baseSat = 92; light = 56; }   // scarlet — blazing
-    else if (strength >= 80)  { hue = 35;  baseSat = 88; light = 53; }   // orange — strong
-    else if (strength >= 60)  { hue = 50;  baseSat = 70; light = 48; }   // gold   — solid
+    if (strength >= 65)       { hue = 14;  baseSat = 92; light = 56; }   // scarlet — blazing
+    else if (strength >= 55)  { hue = 35;  baseSat = 88; light = 53; }   // orange — strong
+    else if (strength >= 45)  { hue = 50;  baseSat = 70; light = 48; }   // gold   — solid
     else                      { hue = 215; baseSat = 14; light = 40; }   // slate  — faded
     const sat = Math.round(baseSat * Math.max(0.45, Math.min(1.0, action)));
     return `hsl(${hue}, ${sat}%, ${light}%)`;
@@ -1337,8 +1345,8 @@
             'font-size': 13,
             'font-weight': 'bold',
             'font-family': 'DM Sans, system-ui, sans-serif',
-            'width':  'mapData(strength, 30, 130, 32, 110)',
-            'height': 'mapData(strength, 30, 130, 32, 110)',
+            'width':  'mapData(strength, 30, 80, 32, 110)',
+            'height': 'mapData(strength, 30, 80, 32, 110)',
             'border-width': 'data(ringWidth)',
             'border-color': '#0c0f15',
             'border-opacity': 0.95,

@@ -61,41 +61,20 @@ themes:
   high_momentum_threshold: 80.0
   min_scored_breadth: 2
 
-  # Scoring formula (backtested & validated)
+  # Equal-weighted 4-signal composite (RS + VARS + SI + Float)
   scoring:
     max_scoring_tickers: 10
-    leader_rs_threshold: 80
-    near_highs_column: "max60"
-    strength_components:
-      median_rs: 0.45
-      leader_pct: 0.35
-      participation: 0.20
-    extension_sigmoid:
-      midpoint: 18
-      steepness: 4
-    breadth_penalty_two: 0.75
-    enrichment:
-      coeff: 0.12
-      max: 1.35
-    short_interest:
-      max_breadth: 6
-      min_si: 0.03
-      coeff: 2.5
-      max_bonus: 0.45
     theme_taxonomy_file: "config/theme_taxonomy.yaml"
-
-  # 4-tier regime from master table pct_above_50sma
-  regime:
-    source: "master_table"
-    thresholds:
-      strong_bull: 60
-      bull: 40
-      choppy: 25
-    weights:
-      strong_bull: {strength: 0.50, confirmation: 0.50}
-      bull: {strength: 0.50, confirmation: 0.50}
-      choppy: {strength: 0.70, confirmation: 0.30}
-      bear: {strength: 0.80, confirmation: 0.20}
+    missing_default: 50          # neutral score for missing SI / float / VARS
+    si_anchors:                  # short_interest pct -> score (linear interp, clamped 0-100)
+      - [0, 0]
+      - [5, 25]
+      - [10, 50]
+      - [20, 100]
+    float_anchors:               # shares_float (millions) -> score (clamped at endpoints)
+      - [100, 100]
+      - [150, 75]
+      - [500, 50]
 
 
 # Dashboard data sources (Google Sheets)

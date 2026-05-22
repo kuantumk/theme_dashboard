@@ -906,8 +906,11 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         }.intersection(screened_set)
         if not active:
             continue
-        theme_master = master_df[master_df['ticker'].isin(active)].sort_values(
-            ['rs_sts_pct', 'adr_pct'], ascending=[False, False]
+        score_map = theme_row.get('ticker_scores', {}) or {}
+        sub = master_df[master_df['ticker'].isin(active)].copy()
+        sub['composite'] = sub['ticker'].map(score_map).fillna(0.0)
+        theme_master = sub.sort_values(
+            ['composite', 'rs_sts_pct'], ascending=[False, False]
         ).head(DASHBOARD_TICKERS_PER_THEME)
         if theme_master.empty:
             continue
@@ -949,6 +952,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
             short_val = f.get('short_interest')
             ticker_dicts.append({
                 'ticker': t,
+                'score': round(float(m_row.get('composite', 0) or 0), 1),
                 'rs': round(float(m_row.get('rs_sts_pct', 0) or 0), 1),
                 'price': round(float(m_row.get('close', 0) or 0), 2),
                 'float': _fmt_float_m(f.get('shares_float')),
@@ -960,7 +964,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         themes_out.append({
             'rank': rank,
             'name': str(theme_row.get('theme', '')).strip(),
-            'score': round(float(theme_row.get('strength_score', 0) or 0), 1),
+            'score': round(float(theme_row.get('score', theme_row.get('strength_score', 0)) or 0), 1),
             'avg_rs': round(float(theme_row.get('avg_rs_sts', 0) or 0), 1),
             'tickers': ticker_dicts,
         })

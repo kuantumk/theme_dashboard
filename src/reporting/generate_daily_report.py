@@ -173,7 +173,7 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
     if hot_themes.empty:
         return "## 🔥 Hot Themes\n\n*No hot themes identified.*\n"
 
-    section = "## 🔥 Hot Themes (Ranked by Strength Score)\n\n"
+    section = "## 🔥 Hot Themes (Ranked by Theme Score)\n\n"
 
     # Load fundamentals for all tickers in hot themes
     all_tickers = []
@@ -193,7 +193,7 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
         # Emoji based on rank
         rank_emoji = '🚀' if idx <= 3 else '⭐' if idx <= 5 else '💫'
 
-        section += f"### {idx}. {theme_name} - Strength Score: {score:.1f} {rank_emoji}\n\n"
+        section += f"### {idx}. {theme_name} - Theme Score: {score:.1f} {rank_emoji}\n\n"
         section += f"**Theme Metrics**:\n"
         section += f"- Avg RS_STS%: {avg_rs:.1f}% | Median: {median_rs:.1f}%\n"
         section += f"- Stocks: {breadth} | High Momentum (RS>{CONFIG['themes']['high_momentum_threshold']}%): {momentum_count} ({momentum_pct:.0f}%)\n\n"
@@ -220,8 +220,12 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
                 lambda t: fundamentals.get(t, {}).get('inst_trans')
             )
 
-            # Sort by RS_STS%
-            theme_stocks_df = theme_stocks_df.sort_values('rs_sts_pct', ascending=False)
+            # Sort by per-ticker composite (theme score driver), RS as tiebreaker
+            score_map = theme_row.get('ticker_scores', {}) or {}
+            theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
+            theme_stocks_df = theme_stocks_df.sort_values(
+                ['_composite', 'rs_sts_pct'], ascending=[False, False]
+            )
 
             section += "**Top Stocks**:\n\n"
             section += "| Ticker | RS_STS% | Float (M) | EPS Growth | Sales Growth | Short % | Inst Trans |\n"
@@ -263,7 +267,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
     if screened_df.empty:
         return "## Theme Analysis\n\n*No screened stocks found in master table.*\n"
 
-    section = "## 🌍 Market Themes (Ranked by Strength)\n\n"
+    section = "## 🌍 Market Themes (Ranked by Theme Score)\n\n"
 
     # Load fundamentals
     fundamentals = load_fundamentals(screened_df['ticker'].tolist())
@@ -312,10 +316,12 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_stocks_df['inst_trans'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('inst_trans'))
         theme_stocks_df['short_interest'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('short_interest'))
 
-        # Sort by RS%, then ADR% as tiebreaker — show only top tickers
+        # Sort by per-ticker composite (theme score driver), RS as tiebreaker
         MAX_TICKERS_PER_THEME = DASHBOARD_TICKERS_PER_THEME
+        score_map = theme_row.get('ticker_scores', {}) or {}
+        theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
         theme_stocks_df = theme_stocks_df.sort_values(
-            ['rs_sts_pct', 'adr_pct'], ascending=[False, False]
+            ['_composite', 'rs_sts_pct'], ascending=[False, False]
         )
         total_in_theme = len(theme_stocks_df)
         theme_stocks_display = theme_stocks_df.head(MAX_TICKERS_PER_THEME)

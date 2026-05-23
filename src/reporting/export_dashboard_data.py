@@ -787,7 +787,7 @@ def fetch_etf_ticker_colors(tickers):
     return flags
 
 
-THEMES_HISTORY_MAX = 40  # Keep last N trading sessions (5 visible as buttons, rest in dropdown)
+THEMES_HISTORY_MAX = 60  # Keep last N trading sessions (5 visible as buttons, rest in dropdown)
 
 
 def _update_history_file(history_file, report_date, entry):
@@ -835,7 +835,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
     screened tickers into the same JSON structure the dashboard expects.
 
     Used by `export_themes_history` so every workflow run produces a full
-    40-session themes_history.json (matching what momentum/vars/parabolic
+    60-session themes_history.json (matching what momentum/vars/parabolic
     already do via per-day CSVs). Returns None if the master CSV is empty
     or there are no screened tickers for that day.
 
@@ -1694,7 +1694,7 @@ def export_all():
     else:
         print("\n1. No report found, skipping themes export")
 
-    # 1a-bis. Backfill 40-session themes_history.json from master CSVs.
+    # 1a-bis. Backfill 60-session themes_history.json from master CSVs.
     # Mirrors the momentum/vars/parabolic flow: every workflow run produces a
     # complete dropdown history rather than letting it accumulate one entry
     # per run. Today's report-parsed entry (if present) is preserved in the

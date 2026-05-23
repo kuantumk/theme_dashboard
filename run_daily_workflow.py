@@ -174,23 +174,23 @@ def run_daily_workflow():
         logger.info(f"OK Market breadth saved\n")
 
         # Step 4: Create master table (includes RS_STS% calculation).
-        # `--days 40` so historical master CSVs always carry today's full
+        # `--days 60` so historical master CSVs always carry today's full
         # indicator schema (e.g. when a new column like `vars` is added,
-        # all 40 dropdown sessions get backfilled in one workflow run
-        # rather than waiting 40 days to accumulate naturally).
+        # all 60 dropdown sessions get backfilled in one workflow run
+        # rather than waiting 60 days to accumulate naturally).
         run_script(
             'src/screening/create_master_table.py',
-            args=['--days', '40'],
-            description="Create master table with RS_STS% (40 sessions for time-travel history)"
+            args=['--days', '60'],
+            description="Create master table with RS_STS% (60 sessions for time-travel history)"
         )
 
-        # Step 5: Run all screeners (`--days 40` so dashboard time-travel
-        # has a full 40-session history per screener every run, not just today).
+        # Step 5: Run all screeners (`--days 60` so dashboard time-travel
+        # has a full 60-session history per screener every run, not just today).
         for screener in CONFIG['screeners']:
             run_script(
                 'src/screening/run_screener.py',
-                args=['--screener', screener, '--days', '40'],
-                description=f"Run {screener} screener (40 sessions)"
+                args=['--screener', screener, '--days', '60'],
+                description=f"Run {screener} screener (60 sessions)"
             )
 
         # Step 6: Consolidate screener results

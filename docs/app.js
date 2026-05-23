@@ -799,7 +799,7 @@
 
   /**
    * Render a time-travel date-selector bar.
-   * Shows the last 5 sessions as clickable buttons and the rest (up to 40 total)
+   * Shows the last 5 sessions as clickable buttons and the rest (up to 60 total)
    * in a dropdown to the right so users can jump farther back without clutter.
    *
    * @param {string} containerId  - DOM id of the .time-travel-dates element

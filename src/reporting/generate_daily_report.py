@@ -220,11 +220,13 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
                 lambda t: fundamentals.get(t, {}).get('inst_trans')
             )
 
-            # Sort by per-ticker composite (theme score driver), RS as tiebreaker
+            # Sort by per-ticker demand (within-theme display order), composite as tiebreaker
             score_map = theme_row.get('ticker_scores', {}) or {}
+            demand_map = theme_row.get('ticker_demands', {}) or {}
             theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
+            theme_stocks_df['_demand'] = theme_stocks_df['ticker'].map(demand_map).fillna(0.0)
             theme_stocks_df = theme_stocks_df.sort_values(
-                ['_composite', 'rs_sts_pct'], ascending=[False, False]
+                ['_demand', '_composite'], ascending=[False, False]
             )
 
             section += "**Top Stocks**:\n\n"
@@ -316,22 +318,27 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_stocks_df['inst_trans'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('inst_trans'))
         theme_stocks_df['short_interest'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('short_interest'))
 
-        # Sort by per-ticker composite (theme score driver), RS as tiebreaker
+        # Sort by per-ticker demand (within-theme display order), composite as tiebreaker
         MAX_TICKERS_PER_THEME = DASHBOARD_TICKERS_PER_THEME
         score_map = theme_row.get('ticker_scores', {}) or {}
+        demand_map = theme_row.get('ticker_demands', {}) or {}
         theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
+        theme_stocks_df['_demand'] = theme_stocks_df['ticker'].map(demand_map).fillna(0.0)
         theme_stocks_df = theme_stocks_df.sort_values(
-            ['_composite', 'rs_sts_pct'], ascending=[False, False]
+            ['_demand', '_composite'], ascending=[False, False]
         )
         total_in_theme = len(theme_stocks_df)
         theme_stocks_display = theme_stocks_df.head(MAX_TICKERS_PER_THEME)
 
-        section += "| Ticker |  RS% |   Price | Vol(M) | Float(M) | EPS% | Sales% | Inst% | Short% |\n"
-        section += "|:-------|-----:|--------:|-------:|---------:|-----:|-------:|------:|-------:|\n"
+        section += "| Ticker |  VARS |  RS% |   Price | Vol(M) | Float(M) | EPS% | Sales% | Inst% | Short% |\n"
+        section += "|:-------|------:|-----:|--------:|-------:|---------:|-----:|-------:|------:|-------:|\n"
 
         for _, stock in theme_stocks_display.iterrows():
             t = stock['ticker']
             displayed_tickers.add(t)
+
+            vars_val = stock.get('vars')
+            vars_str = f"{vars_val:5.2f}" if pd.notna(vars_val) else "    -"
 
             rs_val = stock['rs_sts_pct']
             rs = f"{rs_val:4.1f}" if pd.notna(rs_val) else "   -"
@@ -355,7 +362,7 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
             sales_pad = f"{sales:>6}"
             inst_pad = f"{inst:>5}"
 
-            section += f"| {t_pad} | {rs} | {price} | {vol} | {flt_pad} | {eps_pad} | {sales_pad} | {inst_pad} | {short_pad} |\n"
+            section += f"| {t_pad} | {vars_str} | {rs} | {price} | {vol} | {flt_pad} | {eps_pad} | {sales_pad} | {inst_pad} | {short_pad} |\n"
 
         section += "\n"
 

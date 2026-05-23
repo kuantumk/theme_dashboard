@@ -1508,12 +1508,13 @@
           <div class="theme-header">
             <span class="theme-rank">#${idx + 1}</span>
             <span class="theme-name">${escHtml(theme.name)}</span>
-            <span class="theme-score">Score: ${theme.score?.toFixed(1) || '—'} · Avg RS: ${theme.avg_rs?.toFixed(1) || '—'}%</span>
+            <span class="theme-score">Score: ${theme.score?.toFixed(1) || '—'}</span>
           </div>
           <div class="theme-body">
             <table>
               <thead><tr>
                 <th class="l">Ticker</th>
+                <th>VARS</th>
                 <th>RS%</th>
                 <th>Float(M)</th>
                 <th>EPS%</th>
@@ -1530,6 +1531,8 @@
         const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
         const shortVal = parseFloat(t.short);
         const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+        const varsDisplay = (typeof t.vars === 'number') ? t.vars.toFixed(2) : '—';
+        const varsClass = (typeof t.vars === 'number') ? (t.vars >= 2 ? 'up' : t.vars <= -2 ? 'dn' : '') : '';
         html += `
                 <tr>
                   <td class="l">
@@ -1537,6 +1540,7 @@
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
+                  <td class="${varsClass}">${varsDisplay}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
                   <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>

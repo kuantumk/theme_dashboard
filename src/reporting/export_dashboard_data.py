@@ -246,15 +246,17 @@ def parse_ticker_table(section):
             if all(c.replace('-', '').replace(':', '') == '' for c in cells):
                 continue
             if len(cells) >= 7 and headers:
+                # Table columns: Ticker | VARS | RS% | Price | Vol(M) | Float(M) | EPS% | Sales% | Inst% | Short%
                 ticker_data = {
                     'ticker': cells[0].strip(),
-                    'rs': safe_float(cells[1]),
-                    'price': safe_float(cells[2]),
-                    'float': cells[4].strip() if len(cells) > 4 else None,
-                    'eps': cells[5].strip() if len(cells) > 5 else None,
-                    'sales': cells[6].strip() if len(cells) > 6 else None,
-                    'inst': cells[7].strip() if len(cells) > 7 else None,
-                    'short': safe_float(cells[8]) if len(cells) > 8 else None,
+                    'vars': safe_float(cells[1]) if len(cells) > 1 else None,
+                    'rs': safe_float(cells[2]) if len(cells) > 2 else None,
+                    'price': safe_float(cells[3]) if len(cells) > 3 else None,
+                    'float': cells[5].strip() if len(cells) > 5 else None,
+                    'eps': cells[6].strip() if len(cells) > 6 else None,
+                    'sales': cells[7].strip() if len(cells) > 7 else None,
+                    'inst': cells[8].strip() if len(cells) > 8 else None,
+                    'short': safe_float(cells[9]) if len(cells) > 9 else None,
                 }
                 tickers.append(ticker_data)
     return tickers
@@ -907,10 +909,12 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         if not active:
             continue
         score_map = theme_row.get('ticker_scores', {}) or {}
+        demand_map = theme_row.get('ticker_demands', {}) or {}
         sub = master_df[master_df['ticker'].isin(active)].copy()
         sub['composite'] = sub['ticker'].map(score_map).fillna(0.0)
+        sub['demand'] = sub['ticker'].map(demand_map).fillna(0.0)
         theme_master = sub.sort_values(
-            ['composite', 'rs_sts_pct'], ascending=[False, False]
+            ['demand', 'composite'], ascending=[False, False]
         ).head(DASHBOARD_TICKERS_PER_THEME)
         if theme_master.empty:
             continue
@@ -950,10 +954,13 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
             t = str(m_row['ticker']).upper()
             f = fundamentals.get(t, {})
             short_val = f.get('short_interest')
+            vars_val = m_row.get('vars')
             ticker_dicts.append({
                 'ticker': t,
                 'score': round(float(m_row.get('composite', 0) or 0), 1),
+                'demand': round(float(m_row.get('demand', 0) or 0), 1),
                 'rs': round(float(m_row.get('rs_sts_pct', 0) or 0), 1),
+                'vars': round(float(vars_val), 2) if vars_val is not None and not pd.isna(vars_val) else None,
                 'price': round(float(m_row.get('close', 0) or 0), 2),
                 'float': _fmt_float_m(f.get('shares_float')),
                 'eps': _fmt_growth(f.get('eps_growth_yoy')),

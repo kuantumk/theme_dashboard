@@ -1187,6 +1187,17 @@
     for (const theme of hot) {
       if (theme.l1) knownL1s.add(theme.l1);
     }
+    // L1s with proper L2/L3 children present in this view. A theme named
+    // just "Space" (bare L1) while "Space / Launch" etc. also exist would
+    // otherwise render as an orphan circle next to the L1 hexagon hub —
+    // skip the bare entry so future tagging regressions don't reintroduce
+    // the duplicate-node bug.
+    const l1sWithChildren = new Set();
+    for (const theme of hot) {
+      if (theme.name && theme.name.includes(' / ')) {
+        l1sWithChildren.add(theme.name.split(' / ', 1)[0].trim());
+      }
+    }
     const l1Of = (name) => {
       if (!name) return '';
       // 1. Canonical " / " path.
@@ -1215,6 +1226,12 @@
       const action = actionabilityScore(theme, mode);
       const l1 = theme.l1 || l1Of(theme.name);
       const l1Id = `l1::${l1}`;
+      // Defensive: skip a degenerate bare-L1 entry when proper L2 children
+      // for the same L1 are present in this view. The hub will still be
+      // emitted from one of those child iterations.
+      if (theme.name === l1 && l1sWithChildren.has(l1)) {
+        continue;
+      }
       // Emit L1 hub node once
       if (!l1Seen.has(l1) && l1 !== theme.name) {
         l1Seen.add(l1);

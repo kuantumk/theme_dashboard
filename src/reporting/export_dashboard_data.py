@@ -55,7 +55,17 @@ def _build_network(themes_list):
     L1 attribution uses the defensive :func:`resolve_l1` resolver so that
     legacy or partially-corrupted theme labels still connect to the correct
     hub. Shared-ticker edges between leaves are still computed in the frontend.
+
+    Degenerate bare-L1 entries — a theme named just ``"Space"`` while proper
+    L2 children like ``"Space / Launch"`` also exist in the list — are
+    collapsed into the hub instead of being emitted as a duplicate leaf next
+    to the L1 hexagon. Matching guard in ``docs/app.js``.
     """
+    l1s_with_children = {
+        split_path(e.get('name') or '')[0]
+        for e in themes_list
+        if PATH_SEP in (e.get('name') or '')
+    }
     l1_seen = set()
     nodes = []
     edges = []
@@ -65,6 +75,8 @@ def _build_network(themes_list):
         if l1 not in l1_seen:
             l1_seen.add(l1)
             nodes.append({'id': l1, 'kind': 'l1'})
+        if name == l1 and l1 in l1s_with_children:
+            continue
         nodes.append({
             'id': name,
             'kind': 'leaf',

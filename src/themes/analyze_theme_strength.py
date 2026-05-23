@@ -1,14 +1,19 @@
 """
-Equal-weighted theme scoring on four per-ticker signals.
+Two-track theme scoring.
 
-Composite (per ticker) = mean of:
+Composite score (per ticker) — pure trend strength, equal-weighted:
 - rs_score:    rs_sts_pct from master table (0-100)
 - vars_score:  raw VARS from master table (volatility-adjusted, used as-is)
+Composite = mean(rs_score, vars_score).
+
+Demand score (per ticker) — equal-weighted supply pressure:
 - si_score:    short_interest from fundamentals.db, mapped via si_anchors
 - float_score: shares_float from fundamentals.db, mapped via float_anchors
+Demand = mean(si_score, float_score).
 
-Theme score = mean of top-N (max_scoring_tickers) ticker composites
-among the theme's screened, in-master members.
+Theme score = mean of top-N (max_scoring_tickers) composites among the
+theme's screened, in-master members (top by composite desc). Within-theme
+ticker display order is sorted by demand score desc.
 """
 
 import sqlite3
@@ -104,8 +109,14 @@ def _float_score(shares_float) -> float:
     return float(np.clip(np.interp(fl_m, _FL_X, _FL_Y), _FL_Y.min(), _FL_Y.max()))
 
 
-def _ticker_composite(rs, vars_raw, si, fl) -> float:
-    return (_rs_score(rs) + _vars_score(vars_raw) + _si_score(si) + _float_score(fl)) / 4.0
+def _ticker_composite(rs, vars_raw) -> float:
+    """Strength composite — equal-weighted RS and VARS."""
+    return (_rs_score(rs) + _vars_score(vars_raw)) / 2.0
+
+
+def _ticker_demand(si, fl) -> float:
+    """Demand composite — equal-weighted short interest and float."""
+    return (_si_score(si) + _float_score(fl)) / 2.0
 
 
 # ── Theme grouping (legacy helper kept for backward compat) ─────────────
@@ -144,17 +155,18 @@ def calculate_theme_metrics(
     tickers_arr = theme_df['ticker'].values
 
     composites = []
+    demands = []
     for i, tk in enumerate(tickers_arr):
         f = fundamentals.get(tk, {})
-        composites.append(_ticker_composite(
-            rs_col[i], vars_col[i], f.get('si'), f.get('fl'),
-        ))
+        composites.append(_ticker_composite(rs_col[i], vars_col[i]))
+        demands.append(_ticker_demand(f.get('si'), f.get('fl')))
 
     ticker_scores = {tk: float(c) for tk, c in zip(tickers_arr, composites)}
+    ticker_demands = {tk: float(d) for tk, d in zip(tickers_arr, demands)}
 
-    # Sort by composite desc; theme score = mean of top-N
-    ranked = sorted(ticker_scores.items(), key=lambda kv: -kv[1])
-    top_n = ranked[:MAX_SCORING_TICKERS]
+    # Theme score = mean of top-N composites (strongest tickers).
+    ranked_by_composite = sorted(ticker_scores.items(), key=lambda kv: -kv[1])
+    top_n = ranked_by_composite[:MAX_SCORING_TICKERS]
     breadth = len(top_n)
     theme_score = float(np.mean([c for _, c in top_n]))
 
@@ -165,12 +177,15 @@ def calculate_theme_metrics(
     high_momentum_count = int(np.sum(rs_values > MOMENTUM_THRESHOLD))
     high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
 
-    top_stocks = []
+    # Daily-report top_stocks: top 3 by demand desc (within-theme display order).
     rs_lookup = dict(zip(tickers_arr, rs_col))
-    for tk, c in top_n[:3]:
+    ranked_by_demand = sorted(ticker_demands.items(), key=lambda kv: -kv[1])
+    top_stocks = []
+    for tk, d in ranked_by_demand[:3]:
         top_stocks.append({
             'ticker': tk,
-            'score': round(c, 2),
+            'score': round(ticker_scores.get(tk, 0.0), 2),
+            'demand': round(d, 2),
             'rs_sts_pct': float(rs_lookup.get(tk, 0)),
         })
 
@@ -185,6 +200,7 @@ def calculate_theme_metrics(
         'total_breadth': total_breadth,
         'tickers': tickers,
         'ticker_scores': ticker_scores,
+        'ticker_demands': ticker_demands,
         'top_stocks': top_stocks,
         'high_momentum_count': high_momentum_count,
         'high_momentum_pct': high_momentum_pct,

@@ -62,6 +62,7 @@ Separate from the daily theme pipeline, two workflows scan for earnings-driven s
 Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **RVol at time**: uses Alpaca Market Data API (SIP feed) for 5-min extended-hours bars. Treats 4 AM–8 PM ET as one continuous session, computes cumulative volume ratio vs 10-session historical average. yfinance does NOT provide usable extended-hours volume at 5m intervals.
 - **Discord notification**: sends webhook alert with ticker summaries on scan completion.
+- **Local diagnostic runs**: both scan scripts accept `--out-dir <path>` (defaults to `docs/data/`) and `--no-discord`. The Windows Task Scheduler launcher `scripts/ep_scan_morning_local.bat` passes `--out-dir scripts/local_runs --no-discord` so local runs write to a gitignored sandbox and never dirty the CI-published `docs/data/ep_scan_*.json` files.
 
 ### Key Data Stores
 

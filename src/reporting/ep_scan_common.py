@@ -475,10 +475,11 @@ SCAN_HISTORY_MAX = 60  # Match dashboard time-travel dropdown (5 buttons + 55 in
 # the dropdown fills out in ~6 weeks of business days.
 
 
-def _scan_history_path(output_filename: str) -> Path:
-    """Return docs/data/<scan_name>_history.json for a scan output filename."""
+def _scan_history_path(output_filename: str, out_dir: Optional[Path] = None) -> Path:
+    """Return <out_dir>/<scan_name>_history.json for a scan output filename."""
     output_path = Path(output_filename)
-    return DOCS_DATA_DIR / f"{output_path.stem}_history.json"
+    base = out_dir if out_dir is not None else DOCS_DATA_DIR
+    return base / f"{output_path.stem}_history.json"
 
 
 def _normalize_scan_history_entry(entry: Dict) -> Optional[Dict]:
@@ -491,9 +492,13 @@ def _normalize_scan_history_entry(entry: Dict) -> Optional[Dict]:
     return normalized
 
 
-def update_scan_history(output: Dict, output_filename: str) -> Path:
-    """Append an EP scan snapshot to its last-five-session history file."""
-    history_path = _scan_history_path(output_filename)
+def update_scan_history(
+    output: Dict,
+    output_filename: str,
+    out_dir: Optional[Path] = None,
+) -> Path:
+    """Append an EP scan snapshot to its last-N-session history file."""
+    history_path = _scan_history_path(output_filename, out_dir=out_dir)
     history: List[Dict] = []
 
     if history_path.exists():
@@ -529,9 +534,16 @@ def export_scan_results(
     results: List[Dict],
     scan_type: str,
     output_filename: str,
+    out_dir: Optional[Path] = None,
 ) -> Path:
-    """Write scan results to docs/data/<output_filename>."""
-    DOCS_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    """Write scan results JSON + history JSON.
+
+    out_dir defaults to docs/data/ (the CI-published path). Local diagnostic
+    runs should pass a gitignored directory (e.g. scripts/local_runs/) so they
+    don't dirty the tracked dashboard files.
+    """
+    target_dir = Path(out_dir) if out_dir is not None else DOCS_DATA_DIR
+    target_dir.mkdir(parents=True, exist_ok=True)
     now = datetime.now(ET)
     scan_date = now.strftime('%Y-%m-%d')
 
@@ -544,10 +556,10 @@ def export_scan_results(
         'tickers': results,
     }
 
-    out_path = DOCS_DATA_DIR / output_filename
+    out_path = target_dir / output_filename
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, indent=2)
 
     print(f"\n-> Exported {len(results)} tickers to {out_path}")
-    update_scan_history(output, output_filename)
+    update_scan_history(output, output_filename, out_dir=target_dir)
     return out_path

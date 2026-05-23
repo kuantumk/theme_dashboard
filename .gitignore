@@ -39,6 +39,11 @@ reports/*.md
 logs/*.log
 !logs/.gitkeep
 
+# Local diagnostic EP scan runs — outputs go here via --out-dir so they
+# never overwrite the CI-published tracked files in docs/data/.
+scripts/local_runs/
+scripts/*_local.log
+
 # =============================================
 # Environment
 # =============================================

@@ -9,6 +9,7 @@ Scans for stocks reporting earnings Today After Market Close that meet:
 Schedule: 2:00 PM Pacific daily (5:00 PM ET — 1 hour into after-hours).
 """
 
+import argparse
 import sys
 import time
 from datetime import datetime
@@ -115,11 +116,28 @@ def run_afternoon_scan() -> list:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Afternoon (AMC) EP scan")
+    parser.add_argument(
+        '--out-dir',
+        type=Path,
+        default=None,
+        help="Where to write ep_scan_afternoon.json and its history. "
+             "Defaults to docs/data/ (the CI-published path). Pass a gitignored "
+             "directory like scripts/local_runs for diagnostic local runs.",
+    )
+    parser.add_argument(
+        '--no-discord',
+        action='store_true',
+        help="Skip the Discord webhook notification (useful for local diagnostics).",
+    )
+    args = parser.parse_args()
+
     results = run_afternoon_scan()
     scan_date = datetime.now(ET).strftime('%Y-%m-%d')
 
-    export_scan_results(results, 'afternoon', 'ep_scan_afternoon.json')
-    send_discord_notification('Afternoon Earnings', scan_date, results)
+    export_scan_results(results, 'afternoon', 'ep_scan_afternoon.json', out_dir=args.out_dir)
+    if not args.no_discord:
+        send_discord_notification('Afternoon Earnings', scan_date, results)
 
     print(f"\nDone. {len(results)} tickers exported.")
 

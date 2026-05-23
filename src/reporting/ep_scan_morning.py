@@ -9,6 +9,7 @@ Scans for stocks reporting earnings Today Before Market Open that meet:
 Schedule: 5:45 AM Pacific daily (8:45 AM ET — near end of pre-market).
 """
 
+import argparse
 import sys
 import time
 from datetime import datetime
@@ -114,11 +115,28 @@ def run_morning_scan() -> list:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Morning (BMO) EP scan")
+    parser.add_argument(
+        '--out-dir',
+        type=Path,
+        default=None,
+        help="Where to write ep_scan_morning.json and its history. "
+             "Defaults to docs/data/ (the CI-published path). Pass a gitignored "
+             "directory like scripts/local_runs for diagnostic local runs.",
+    )
+    parser.add_argument(
+        '--no-discord',
+        action='store_true',
+        help="Skip the Discord webhook notification (useful for local diagnostics).",
+    )
+    args = parser.parse_args()
+
     results = run_morning_scan()
     scan_date = datetime.now(ET).strftime('%Y-%m-%d')
 
-    export_scan_results(results, 'morning', 'ep_scan_morning.json')
-    send_discord_notification('Morning Earnings', scan_date, results)
+    export_scan_results(results, 'morning', 'ep_scan_morning.json', out_dir=args.out_dir)
+    if not args.no_discord:
+        send_discord_notification('Morning Earnings', scan_date, results)
 
     print(f"\nDone. {len(results)} tickers exported.")
 

@@ -35,6 +35,8 @@ python src/screening/run_screener.py --screener steady_trend --test --ticker AAP
 cd tests && python backtest_theme_scoring.py
 ```
 
+**PR convention** — code-fix PRs do NOT include regenerated `docs/data/*.json` files (the daily workflow rewrites them). After running `python -m src.reporting.export_dashboard_data` locally to verify a fix, reset the noise with `git checkout -- docs/data/` before committing.
+
 ## Architecture
 
 ### Data Flow (10-Step Daily Pipeline)
@@ -142,6 +144,24 @@ The Sheet is *not* synced to the new taxonomy. Live code translates its labels t
    ```
 
 **Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy` / `_build_network` and mirrored in `docs/app.js`'s `l1Of`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI hub instead of becoming an orphan node. Strict callers (Gemini validation, retag CLI) should still use `validate_path`; `resolve_l1` is for rendering only.
+
+**Bare-L1 paths: when valid** — A one-segment path like `"Quantum Computing"` is valid *only* for L1s with no children in `theme_taxonomy.yaml` (currently `Quantum Computing` and `Singleton`). For any L1 with children — `Space`, `Cybersecurity`, `Nuclear`, `AI`, etc. — a bare-L1 path is a **tagging bug**, even though `validate_path` accepts it (the validator returns True whenever L2 is `None`, regardless of whether the L1 has children). Symptom: the network viz renders an orphan L2 circle with the same label as the L1 hexagon hub (two "Space" nodes). Cytoscape doesn't error because front-end IDs are prefixed (`l1::Space` vs `theme::Space`).
+
+When auto-tagging, retagging, or hand-editing an L1-with-children ticker, the classifier MUST pick an L2. If no existing L2 fits, add one to `theme_taxonomy.yaml` or fall back to `Singleton`. **Never write a bare-L1 path for an L1 with children.** Audit existing tags with:
+
+```python
+from src.themes.theme_taxonomy import load_taxonomy, _children, split_path
+tax = load_taxonomy()
+for ticker, paths in ticker_themes.items():
+    for p in paths:
+        l1, l2, _ = split_path(p)
+        if l2 is None and _children(tax.get(l1, {})):
+            print(f"BUG: {ticker} bare-L1 {p!r} but {l1} has children")
+```
+
+`_build_network` (`src/reporting/export_dashboard_data.py`) and the matching loop in `docs/app.js` drop the duplicate leaf as a defensive backstop — but it's just rendering hygiene. Fix the tag, don't rely on the guard.
+
+**Periodic audit** — run `python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings, suitable for CI) for mechanical checks; invoke the `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) for the full workflow including AI-judgment passes for narrative shifts and business pivots.
 
 **Auto-tagging vs locking** — `git_locked_themes: true` originally only short-circuited the 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock now also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass.
 

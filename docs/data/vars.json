@@ -141,7 +141,7 @@
           "rs": 88.5,
           "price": 34.81,
           "float": "2190.0",
-          "eps": "87",
+          "eps": "86",
           "sales": "22",
           "inst": "+0.2",
           "short": 0.4
@@ -532,7 +532,7 @@
           "rs": 88.5,
           "price": 34.81,
           "float": "2190.0",
-          "eps": "87",
+          "eps": "86",
           "sales": "22",
           "inst": "+0.2",
           "short": 0.4
@@ -924,7 +924,7 @@
           "rs": 15.4,
           "price": 37.12,
           "float": "143.2",
-          "eps": "302",
+          "eps": "308",
           "sales": "67",
           "inst": "+18.8",
           "short": 4.4
@@ -1314,51 +1314,6 @@
       "l3": null
     },
     {
-      "name": "Clean Energy / Fuel Cell & Hydrogen",
-      "avg_vars": 5.87,
-      "tickers": [
-        {
-          "ticker": "BE",
-          "vars": 9.08,
-          "vars_20ema": 8.17,
-          "rs": 92.3,
-          "price": 302.49,
-          "float": "266.3",
-          "eps": "181",
-          "sales": "130",
-          "inst": "+5.7",
-          "short": 9.8
-        },
-        {
-          "ticker": "FCEL",
-          "vars": 6.0,
-          "vars_20ema": 3.73,
-          "rs": 96.2,
-          "price": 25.01,
-          "float": "52.8",
-          "eps": "72",
-          "sales": "61",
-          "inst": "+6.8",
-          "short": 8.7
-        },
-        {
-          "ticker": "PLUG",
-          "vars": 2.52,
-          "vars_20ema": 1.5,
-          "rs": 88.5,
-          "price": 3.78,
-          "float": "1330.0",
-          "eps": "76",
-          "sales": "22",
-          "inst": "+8.1",
-          "short": 25.8
-        }
-      ],
-      "l1": "Clean Energy",
-      "l2": "Fuel Cell & Hydrogen",
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Cloud & Hyperscalers",
       "avg_vars": 5.73,
       "tickers": [
@@ -1575,6 +1530,51 @@
       "l3": null
     },
     {
+      "name": "Healthcare / Managed Care",
+      "avg_vars": 5.54,
+      "tickers": [
+        {
+          "ticker": "CNC",
+          "vars": 6.72,
+          "vars_20ema": 6.62,
+          "rs": 92.3,
+          "price": 59.14,
+          "float": "483.0",
+          "eps": "67",
+          "sales": "7",
+          "inst": "+1.7",
+          "short": 3.1
+        },
+        {
+          "ticker": "PIII",
+          "vars": 5.52,
+          "vars_20ema": -2.68,
+          "rs": 96.2,
+          "price": 13.2,
+          "float": "1.8",
+          "eps": "81",
+          "sales": "4",
+          "inst": "-0.6",
+          "short": 4.0
+        },
+        {
+          "ticker": "OSCR",
+          "vars": 4.38,
+          "vars_20ema": 2.56,
+          "rs": 73.1,
+          "price": 22.64,
+          "float": "247.2",
+          "eps": "150",
+          "sales": "53",
+          "inst": "+2.2",
+          "short": 9.9
+        }
+      ],
+      "l1": "Healthcare",
+      "l2": "Managed Care",
+      "l3": null
+    },
+    {
       "name": "Power & Utilities / Power Generation",
       "avg_vars": 5.22,
       "tickers": [
@@ -1618,6 +1618,63 @@
       ],
       "l1": "Power & Utilities",
       "l2": "Power Generation",
+      "l3": null
+    },
+    {
+      "name": "Clean Energy / Fuel Cell & Hydrogen",
+      "avg_vars": 5.09,
+      "tickers": [
+        {
+          "ticker": "BE",
+          "vars": 9.08,
+          "vars_20ema": 8.17,
+          "rs": 92.3,
+          "price": 302.49,
+          "float": "266.3",
+          "eps": "181",
+          "sales": "130",
+          "inst": "+5.7",
+          "short": 9.8
+        },
+        {
+          "ticker": "FCEL",
+          "vars": 6.0,
+          "vars_20ema": 3.73,
+          "rs": 96.2,
+          "price": 25.01,
+          "float": "52.8",
+          "eps": "72",
+          "sales": "61",
+          "inst": "+6.8",
+          "short": 8.7
+        },
+        {
+          "ticker": "BLDP",
+          "vars": 2.76,
+          "vars_20ema": 0.13,
+          "rs": 100.0,
+          "price": 5.54,
+          "float": "266.2",
+          "eps": "48",
+          "sales": "26",
+          "inst": "+0.9",
+          "short": 7.9
+        },
+        {
+          "ticker": "PLUG",
+          "vars": 2.52,
+          "vars_20ema": 1.5,
+          "rs": 88.5,
+          "price": 3.78,
+          "float": "1330.0",
+          "eps": "76",
+          "sales": "22",
+          "inst": "+8.1",
+          "short": 25.8
+        }
+      ],
+      "l1": "Clean Energy",
+      "l2": "Fuel Cell & Hydrogen",
       "l3": null
     },
     {
@@ -1926,16 +1983,6 @@
         "ticker_count": 5
       },
       {
-        "id": "Clean Energy",
-        "kind": "l1"
-      },
-      {
-        "id": "Clean Energy / Fuel Cell & Hydrogen",
-        "kind": "leaf",
-        "parent": "Clean Energy",
-        "ticker_count": 3
-      },
-      {
         "id": "AI / Data Center / Cloud & Hyperscalers",
         "kind": "leaf",
         "parent": "AI",
@@ -1948,6 +1995,16 @@
         "ticker_count": 7
       },
       {
+        "id": "Healthcare",
+        "kind": "l1"
+      },
+      {
+        "id": "Healthcare / Managed Care",
+        "kind": "leaf",
+        "parent": "Healthcare",
+        "ticker_count": 3
+      },
+      {
         "id": "Power & Utilities",
         "kind": "l1"
       },
@@ -1956,6 +2013,16 @@
         "kind": "leaf",
         "parent": "Power & Utilities",
         "ticker_count": 3
+      },
+      {
+        "id": "Clean Energy",
+        "kind": "l1"
+      },
+      {
+        "id": "Clean Energy / Fuel Cell & Hydrogen",
+        "kind": "leaf",
+        "parent": "Clean Energy",
+        "ticker_count": 4
       },
       {
         "id": "Defense & Aerospace",
@@ -2076,11 +2143,6 @@
         "kind": "is_a"
       },
       {
-        "source": "Clean Energy / Fuel Cell & Hydrogen",
-        "target": "Clean Energy",
-        "kind": "is_a"
-      },
-      {
         "source": "AI / Data Center / Cloud & Hyperscalers",
         "target": "AI",
         "kind": "is_a"
@@ -2091,8 +2153,18 @@
         "kind": "is_a"
       },
       {
+        "source": "Healthcare / Managed Care",
+        "target": "Healthcare",
+        "kind": "is_a"
+      },
+      {
         "source": "Power & Utilities / Power Generation",
         "target": "Power & Utilities",
+        "kind": "is_a"
+      },
+      {
+        "source": "Clean Energy / Fuel Cell & Hydrogen",
+        "target": "Clean Energy",
         "kind": "is_a"
       },
       {

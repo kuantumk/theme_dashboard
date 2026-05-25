@@ -25,13 +25,17 @@ Periodic quality review of `data/ticker_themes.json`. Triggers:
 
 ## Workflow
 
-### Phase 1 — Mechanical checks (deterministic)
+> **Hard precondition — always run Phase 1 first.** Do NOT skip ahead to AI-judgment phases, even when the user's request sounds narrow ("just check ASTS for a pivot"). Mechanical defects corrupt the inputs that AI judgments depend on: a bare-`Cybersecurity` tag will mislead "is this still a cybersecurity company?" because the LLM sees a generic tag and infers generic relevance. If Phase 1 reports any `[BUG]`, you MUST fix every BUG via the printed retag commands before moving to Phase 3. WARN/INFO findings can be triaged in parallel with later phases.
+
+### Phase 1 — Mechanical checks (deterministic, MANDATORY FIRST)
 
 Run the audit script:
 
 ```bash
 python tools/audit_theme_tags.py
 ```
+
+The script is the canonical source of mechanical-check definitions. Treat its `[BUG]` exit (code 1) as a hard gate. Re-run after each retag batch until exit code is 0 before proceeding to Phase 3.
 
 Severity levels:
 

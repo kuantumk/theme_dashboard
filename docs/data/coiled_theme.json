@@ -541,6 +541,65 @@
       "l3": null
     },
     {
+      "name": "Industrials / Engineering & Construction",
+      "theme_score": 100.0,
+      "avg_setup_score": 93.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "LGIH",
+          "score": 93.0,
+          "flags": "inside; tight; NR20; volDry=0.87; 50SMA=+9.1%; 252H=0.66x; prior=2.1x; blind=1m/RS/VARS",
+          "rs": 34.6,
+          "vars": -4.01,
+          "price": 46.11,
+          "vol_dry": 0.87,
+          "dist50": 9.1,
+          "high252": 0.66,
+          "range10": 18.7,
+          "float": "19.6",
+          "eps": "-16",
+          "sales": "-9",
+          "inst": "+4.9",
+          "short": 15.2
+        }
+      ],
+      "l1": "Industrials",
+      "l2": "Engineering & Construction",
+      "l3": null
+    },
+    {
+      "name": "Industrials / Heavy Machinery & Components",
+      "theme_score": 100.0,
+      "avg_setup_score": 98.0,
+      "coiled_count": 1,
+      "other_screened_count": 3,
+      "tickers": [
+        {
+          "ticker": "HRI",
+          "score": 98.0,
+          "flags": "inside; tight; NR20; volDry=0.82; 50SMA=+11.6%; 252H=0.69x; prior=2.1x; blind=1m/RS/VARS",
+          "rs": 30.8,
+          "vars": -8.03,
+          "price": 129.0,
+          "vol_dry": 0.82,
+          "dist50": 11.6,
+          "high252": 0.69,
+          "range10": 13.0,
+          "float": "32.7",
+          "eps": "-23",
+          "sales": "32",
+          "inst": "-3.3",
+          "short": 6.4,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Industrials",
+      "l2": "Heavy Machinery & Components",
+      "l3": null
+    },
+    {
       "name": "Industrials / Wood Products",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
@@ -985,6 +1044,18 @@
         "kind": "l1"
       },
       {
+        "id": "Industrials / Engineering & Construction",
+        "kind": "leaf",
+        "parent": "Industrials",
+        "ticker_count": 1
+      },
+      {
+        "id": "Industrials / Heavy Machinery & Components",
+        "kind": "leaf",
+        "parent": "Industrials",
+        "ticker_count": 1
+      },
+      {
         "id": "Industrials / Wood Products",
         "kind": "leaf",
         "parent": "Industrials",
@@ -1136,6 +1207,16 @@
       {
         "source": "Fintech & Crypto / Wealth & Asset Management",
         "target": "Fintech & Crypto",
+        "kind": "is_a"
+      },
+      {
+        "source": "Industrials / Engineering & Construction",
+        "target": "Industrials",
+        "kind": "is_a"
+      },
+      {
+        "source": "Industrials / Heavy Machinery & Components",
+        "target": "Industrials",
         "kind": "is_a"
       },
       {

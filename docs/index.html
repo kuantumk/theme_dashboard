@@ -46,6 +46,8 @@
       <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">▸ Theme Viz</button>
       <button class="tab-btn" data-tab="momentum" id="tab-momentum">▸ Momentum</button>
       <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">▸ Momentum Viz</button>
+      <button class="tab-btn" data-tab="coiled" id="tab-coiled">▸ Coiled</button>
+      <button class="tab-btn" data-tab="coiledviz" id="tab-coiledviz">▸ Coiled Viz</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Lev ETF</button>
       <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP</button>
@@ -448,6 +450,34 @@
       </div>
     </div>
 
+    <!-- ══ TAB: COILED THEME SETUPS ══════════════════════ -->
+    <div class="tab-content" id="content-coiled">
+      <div class="left-panel" id="coiled-left">
+        <div class="time-travel-bar">
+          <span class="time-travel-label">SESSION:</span>
+          <div class="time-travel-dates" id="coiled-tt-dates"></div>
+        </div>
+        <div id="coiled-container">
+          <div class="loading">Loading coiled-theme data...</div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="coiled"></div>
+      <div class="right-panel" id="coiled-right">
+        <div class="chart-header" id="coiled-chart-header" style="display:none">
+          <span class="chart-symbol" id="coiled-chart-sym"></span>
+          <span class="chart-name" id="coiled-chart-name"></span>
+          <a class="chart-alert-btn" id="coiled-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="coiled-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ TAB: MOMENTUM VIZ ═════════════════════════════ -->
     <div class="tab-content" id="content-momentumviz">
       <div class="left-panel viz-left" id="momentumviz-left">
@@ -487,6 +517,54 @@
           <a class="chart-alert-btn" id="momentumviz-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
         </div>
         <div class="chart-area" id="momentumviz-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker node to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: COILED VIZ ═══════════════════════════════ -->
+    <div class="tab-content" id="content-coiledviz">
+      <div class="left-panel viz-left" id="coiledviz-left">
+        <div class="time-travel-bar">
+          <span class="time-travel-label">SESSION:</span>
+          <div class="time-travel-dates" id="coiledviz-tt-dates"></div>
+        </div>
+        <div class="card themeviz-card">
+          <div class="card-lbl">▸ Coiled Network — pre-breakout setup clusters</div>
+          <div class="theme-network-wrap">
+            <div id="coiled-network" class="theme-network"></div>
+            <div id="coiledviz-overlay" class="themeviz-overlay"></div>
+            <div id="coiledviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
+          </div>
+          <div class="themeviz-legend">
+            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing (strength ≥ 100)</span>
+            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
+            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
+            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
+            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
+            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
+            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
+            <span class="lg-sep">|</span>
+            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
+            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
+            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
+          </div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="coiledviz"></div>
+      <div class="right-panel" id="coiledviz-right">
+        <div class="chart-header" id="coiledviz-chart-header" style="display:none">
+          <span class="chart-symbol" id="coiledviz-chart-sym"></span>
+          <span class="chart-name" id="coiledviz-chart-name"></span>
+          <a class="chart-alert-btn" id="coiledviz-alert-link" href="#" target="_blank">🔔 Set Alert on TradingView</a>
+        </div>
+        <div class="chart-area" id="coiledviz-chart-area">
           <div class="chart-placeholder">
             <div class="placeholder-icon">📈</div>
             <div>Click any ticker node to open chart</div>

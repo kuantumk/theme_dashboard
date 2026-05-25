@@ -10,6 +10,8 @@
   const THEME_HISTORY_URL = 'data/themes_history.json';
   const MOMENTUM_DATA_URL = 'data/momentum_136.json';
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
+  const COILED_DATA_URL = 'data/coiled_theme.json';
+  const COILED_HISTORY_URL = 'data/coiled_theme_history.json';
   const VARS_DATA_URL = 'data/vars.json';
   const VARS_HISTORY_URL = 'data/vars_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
@@ -41,7 +43,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, coiled: null, coiledviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -60,6 +62,7 @@
   let epAfternoonEmptyMessage = 'No afternoon EP results.';
   let epMorningEmptyMessage = 'No morning EP results.';
   let parabolicData = [];
+  let coiledHistory = [];
   let parabolicEmptyMessage = 'No parabolic results for this date.';
   let industryEmptyMessage = 'No industry ETF data available.';
   let etfEmptyMessage = 'No ETF data available.';
@@ -84,6 +87,7 @@
     loadBreadthData();
     loadThemeData();
     loadMomentumData();
+    loadCoiledData();
     loadVARSData();
     loadIndustryETFData();
     loadETFData();
@@ -208,6 +212,8 @@
       if (tabContent.id === 'content-macro') tabId = 'macro';
       else if (tabContent.id === 'content-themes') tabId = 'themes';
       else if (tabContent.id === 'content-momentum') tabId = 'momentum';
+      else if (tabContent.id === 'content-coiled') tabId = 'coiled';
+      else if (tabContent.id === 'content-coiledviz') tabId = 'coiledviz';
       else if (tabContent.id === 'content-vars') tabId = 'vars';
       else if (tabContent.id === 'content-industry') tabId = 'industry';
       else if (tabContent.id === 'content-etf') tabId = 'etf';
@@ -310,7 +316,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, vars: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, coiled: -1, coiledviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -662,6 +668,32 @@
       });
   }
 
+  function loadCoiledData() {
+    Promise.all([
+      fetch(withCacheBust(COILED_DATA_URL)).then(r => r.json()),
+      fetch(withCacheBust(COILED_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        coiledHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderCoiled(current);
+        renderCoiledNetwork(current);
+      })
+      .catch(err => {
+        console.warn('Coiled-theme data not available:', err);
+        const c = document.getElementById('coiled-container');
+        if (c) c.innerHTML = '<div class="no-data">Coiled-theme data not available.<br>Run the daily workflow to generate data.</div>';
+        const cn = document.getElementById('coiled-network');
+        if (cn) cn.innerHTML = '<div class="no-data">Coiled-theme data not available.</div>';
+      });
+  }
+
   function loadVARSData() {
     Promise.all([
       fetch(withCacheBust(VARS_DATA_URL)).then(r => r.json()),
@@ -723,6 +755,7 @@
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
+    coiledHistory.forEach(h => dates.add(h.report_date));
     varsHistory.forEach(h => dates.add(h.report_date));
     parabolicHistory.forEach(h => dates.add(h.report_date));
     epAfternoonHistory.forEach(h => dates.add(h.report_date));
@@ -748,6 +781,10 @@
     const momSnap = momentumHistory.find(h => h.report_date === date);
     renderMomentum(momSnap, date);
     renderMomentumNetwork(momSnap, date);
+    // Coiled setups
+    const coiledSnap = coiledHistory.find(h => h.report_date === date);
+    renderCoiled(coiledSnap, date);
+    renderCoiledNetwork(coiledSnap, date);
     // VARS
     const varsSnap = varsHistory.find(h => h.report_date === date);
     renderVARS(varsSnap, date);
@@ -788,12 +825,14 @@
     const dates = getSessionDates();
     renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('coiled-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('ep-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('parabolic-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('coiledviz-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('vars-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('varsviz-tt-dates', dates, onTimeTravelSelect);
   }
@@ -876,11 +915,11 @@
     onSelect(date);
   }
 
-  // ── NETWORK VIZ — Theme Viz + Momentum Viz ─────────────
+  // ── NETWORK VIZ — Theme, Momentum, Coiled, and VARS Viz ─────────────
   // Both tabs share one Cytoscape force-directed renderer. They differ only
-  // in (a) where strength comes from — themes carry a server-computed `score`,
-  // momentum derives strength client-side from avg RS + breadth — and
-  // (b) which DOM containers they target.
+  // in (a) where strength comes from — server-computed theme/setup scores,
+  // client-derived momentum strength, or avg VARS — and (b) which DOM
+  // containers they target.
 
   const VIZ_MODES = {
     themes: {
@@ -895,6 +934,12 @@
       overlayId: 'momentumviz-overlay',
       tabBtnId: 'tab-momentumviz',
     },
+    coiled: {
+      containerId: 'coiled-network',
+      tooltipId: 'coiledviz-tooltip',
+      overlayId: 'coiledviz-overlay',
+      tabBtnId: 'tab-coiledviz',
+    },
     vars: {
       containerId: 'vars-network',
       tooltipId: 'varsviz-tooltip',
@@ -907,6 +952,7 @@
   const vizState = {
     themes:   { cy: null, pending: null, tabHandlerInstalled: false },
     momentum: { cy: null, pending: null, tabHandlerInstalled: false },
+    coiled:   { cy: null, pending: null, tabHandlerInstalled: false },
     vars:     { cy: null, pending: null, tabHandlerInstalled: false },
   };
 
@@ -953,9 +999,17 @@
     return tk.reduce((s, t) => s + (t.vars ?? 0), 0) / tk.length;
   }
 
+  function computeAvgSetup(theme) {
+    if (typeof theme.avg_setup_score === 'number') return theme.avg_setup_score;
+    const tk = theme.tickers || [];
+    if (tk.length === 0) return 0;
+    return tk.reduce((s, t) => s + (t.score ?? 0), 0) / tk.length;
+  }
+
   // Theme strength signal — server `score` for themes, derived for momentum/vars.
   function computeStrength(theme, mode) {
     if (mode === 'themes') return theme.score ?? 0;
+    if (mode === 'coiled') return theme.theme_score ?? computeAvgSetup(theme);
     const tk = theme.tickers || [];
     if (tk.length === 0) return 0;
     const breadthFactor = Math.min(tk.length / 8, 1.5); // saturates around 8-12 tickers
@@ -982,6 +1036,15 @@
       const leaderDensity = tk.filter(t => (t.score ?? t.rs ?? 0) >= 60).length / tk.length;
       const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
       const scoreQuality = Math.min((theme.score ?? 0) / 70, 1.2);
+      return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
+    }
+    if (mode === 'coiled') {
+      const leaderDensity = tk.filter(t => (t.score ?? 0) >= 85).length / tk.length;
+      const tightDensity = tk.filter(t => {
+        const flags = String(t.flags || '').toLowerCase();
+        return t.ticker_color === 'green' || flags.includes('inside') || flags.includes('tight') || flags.includes('nr7') || flags.includes('nr20');
+      }).length / tk.length;
+      const scoreQuality = Math.min(computeAvgSetup(theme) / 85, 1.2);
       return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
     }
     const leaderDensity = tk.filter(t => (t.rs ?? 0) >= 90).length / tk.length;
@@ -1034,10 +1097,12 @@
       );
     }
     if (d.kind === 'theme') {
-      const strengthLabel = mode === 'themes' ? 'Score' : 'Strength';
-      const avgLabel = mode === 'vars' ? 'Avg VARS' : 'Avg RS';
+      const strengthLabel = mode === 'themes' ? 'Score' : mode === 'coiled' ? 'Setup' : 'Strength';
+      const avgLabel = mode === 'vars' ? 'Avg VARS' : mode === 'coiled' ? 'Avg Setup' : 'Avg RS';
       const avgFmt = mode === 'vars'
         ? (d.avg_rs?.toFixed?.(2) ?? '—')
+        : mode === 'coiled'
+          ? (d.avg_rs?.toFixed?.(1) ?? '—')
         : ((d.avg_rs?.toFixed?.(1) ?? '—') + '%');
       return (
         `<div class="tip-title">${d.label}</div>` +
@@ -1056,7 +1121,12 @@
     if (d.isTight)  tags.push('<span class="tip-tag tag-tight">TIGHT</span>');
     const headLine = mode === 'vars'
       ? `VARS ${d.vars?.toFixed?.(2) ?? '—'} · 20EMA ${d.vars_20ema?.toFixed?.(2) ?? '—'}`
+      : mode === 'coiled'
+        ? `Setup ${d.setup_score?.toFixed?.(1) ?? '—'} · RS ${d.rs?.toFixed?.(1) ?? '—'}%`
       : `RS ${d.rs?.toFixed?.(1) ?? '—'}%`;
+    const coiledRows = mode === 'coiled' && d.flags
+      ? `<span class="tip-k">Why</span><span class="tip-v">${escHtml(d.flags)}</span>`
+      : '';
     return (
       `<div class="tip-title">${d.label} ${tags.join(' ')}</div>` +
       `<div class="tip-sub">${headLine}</div>` +
@@ -1066,6 +1136,7 @@
       `<span class="tip-k">EPS</span><span class="tip-v">${d.eps ?? '—'}</span>` +
       `<span class="tip-k">Sales</span><span class="tip-v">${d.sales ?? '—'}</span>` +
       `<span class="tip-k">Short</span><span class="tip-v">${d.short ?? '—'}%</span>` +
+      coiledRows +
       `</div>`
     );
   }
@@ -1101,6 +1172,18 @@
         .sort((a, b) => b._strength - a._strength)
         .map((t, i) => Object.assign(t, { _rank: i + 1 }));
     }
+    if (mode === 'coiled') {
+      // Coiled export is already a focused pre-breakout list; keep singletons
+      // so a lone high-quality setup can still make its theme visible.
+      return (snap.themes || [])
+        .filter(t => (t.tickers || []).length >= 1)
+        .map(t => Object.assign({}, t, {
+          _strength: computeStrength(t, mode),
+          _avg_rs:   computeAvgSetup(t),  // reused as primary metric in tooltip/meta
+        }))
+        .sort((a, b) => b._strength - a._strength)
+        .map((t, i) => Object.assign(t, { _rank: i + 1 }));
+    }
     let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_BREADTH);
     if (mode === 'themes') {
       hot = hot.filter(t => (t.avg_rs ?? 0) >= HOT_RS);
@@ -1129,6 +1212,7 @@
 
   function renderThemeNetwork(snap, date)    { renderNetwork(snap, 'themes', date); }
   function renderMomentumNetwork(snap, date) { renderNetwork(snap, 'momentum', date); }
+  function renderCoiledNetwork(snap, date)   { renderNetwork(snap, 'coiled', date); }
   function renderVARSNetwork(snap, date)     { renderNetwork(snap, 'vars', date); }
 
   function actuallyRenderNetwork(snap, mode, date) {
@@ -1170,10 +1254,10 @@
         (tickerThemes[tk.ticker] = tickerThemes[tk.ticker] || []).push(theme.name);
       }
     }
-    // Per-theme leader (highest RS within theme; highest VARS for vars mode)
+    // Per-theme leader (highest RS within theme; highest VARS/setup score for specialized modes)
     const leaderByTheme = {};
     for (const theme of hot) {
-      const sortKey = mode === 'vars' ? 'vars' : 'rs';
+      const sortKey = mode === 'vars' ? 'vars' : mode === 'coiled' ? 'score' : 'rs';
       const top = [...(theme.tickers || [])].sort((a, b) => (b[sortKey] ?? 0) - (a[sortKey] ?? 0))[0];
       if (top) leaderByTheme[theme.name] = top.ticker;
     }
@@ -1275,7 +1359,10 @@
           seen.add(tk.ticker);
           const isLeader = leaderByTheme[theme.name] === tk.ticker;
           const isBridge = (tickerThemes[tk.ticker] || []).length >= 2;
-          const isTight  = tk.ticker_color === 'green';
+          const flags = String(tk.flags || '').toLowerCase();
+          const isTight  = tk.ticker_color === 'green' || (mode === 'coiled' && (
+            flags.includes('inside') || flags.includes('tight') || flags.includes('nr7') || flags.includes('nr20')
+          ));
           const cls = [
             isLeader ? 'leader' : '',
             isBridge ? 'bridge' : '',
@@ -1288,6 +1375,7 @@
               rs: tk.rs ?? 0, price: tk.price, float: tk.float,
               eps: tk.eps, sales: tk.sales, short: tk.short,
               vars: tk.vars ?? 0, vars_20ema: tk.vars_20ema ?? 0,
+              setup_score: tk.score ?? 0, flags: tk.flags || '',
               fill: mode === 'vars' ? varsFill(tk.vars ?? 0) : rsFill(tk.rs ?? 0),
               isLeader, isBridge, isTight,
             },
@@ -1297,7 +1385,7 @@
         elements.push({
           data: {
             source: themeId, target: tk.ticker,
-            weight: mode === 'vars' ? (tk.vars ?? 0) * 10 : (tk.rs ?? 0),
+            weight: mode === 'vars' ? (tk.vars ?? 0) * 10 : mode === 'coiled' ? (tk.score ?? 0) : (tk.rs ?? 0),
             isLeader: leaderByTheme[theme.name] === tk.ticker,
           },
         });
@@ -1503,7 +1591,7 @@
       // Highlight selected ticker
       state.cy.nodes('node[kind = "ticker"]').removeClass('active-ticker');
       evt.target.addClass('active-ticker');
-      const tabIdMap = { themes: 'themeviz', momentum: 'momentumviz', vars: 'varsviz' };
+      const tabIdMap = { themes: 'themeviz', momentum: 'momentumviz', coiled: 'coiledviz', vars: 'varsviz' };
       const tabId = tabIdMap[mode] || 'momentumviz';
       if (typeof openChart === 'function') openChart(tabId, ticker, ticker);
     });
@@ -1633,6 +1721,76 @@
                   <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
                   <td class="${instClass}">${t.inst ?? '—'}</td>
                   <td class="${shortClass}">${t.short ?? '—'}</td>
+                </tr>
+        `;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function renderCoiled(data, date) {
+    const container = document.getElementById('coiled-container');
+    if (!container) return;
+
+    if (!data || !data.themes || data.themes.length === 0) {
+      const msg = (date && !data) ? `No coiled-theme data for ${date}.` : 'No coiled setups found for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
+      return;
+    }
+
+    let html = '';
+    data.themes.forEach((theme, idx) => {
+      const tickers = theme.tickers || [];
+      const count = tickers.length;
+      const score = typeof theme.theme_score === 'number' ? theme.theme_score.toFixed(1) : '—';
+      html += `
+        <div class="theme-block">
+          <div class="theme-header">
+            <span class="theme-rank">#${idx + 1}</span>
+            <span class="theme-name">${escHtml(theme.name)}</span>
+            <span class="theme-score">score ${score} · ${count} coiled · ${theme.other_screened_count ?? 0} active</span>
+          </div>
+          <div class="theme-body">
+            <table class="coiled-table">
+              <thead><tr>
+                <th class="l">Ticker</th>
+                <th>Setup</th>
+                <th>RS%</th>
+                <th>VARS</th>
+                <th>Dry</th>
+                <th>50SMA%</th>
+                <th>252H</th>
+                <th class="l">Why</th>
+              </tr></thead>
+              <tbody>
+      `;
+
+      tickers.forEach(t => {
+        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+        const varsClass = t.vars >= 2 ? 'up' : t.vars <= -2 ? 'dn' : '';
+        const distClass = Math.abs(t.dist50 ?? 0) <= 5 ? 'up' : (t.dist50 ?? 0) > 20 ? 'dn' : '';
+        html += `
+                <tr>
+                  <td class="l">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                      ${escHtml(t.ticker)}
+                    </span>
+                  </td>
+                  <td class="up">${t.score?.toFixed?.(1) ?? t.score ?? '—'}</td>
+                  <td class="${rsClass}">${t.rs ?? '—'}</td>
+                  <td class="${varsClass}">${typeof t.vars === 'number' ? t.vars.toFixed(2) : '—'}</td>
+                  <td>${typeof t.vol_dry === 'number' ? t.vol_dry.toFixed(2) : '—'}</td>
+                  <td class="${distClass}">${typeof t.dist50 === 'number' ? t.dist50.toFixed(1) : '—'}</td>
+                  <td>${typeof t.high252 === 'number' ? t.high252.toFixed(2) : '—'}</td>
+                  <td class="l flags-cell">${escHtml(t.flags || '')}</td>
                 </tr>
         `;
       });

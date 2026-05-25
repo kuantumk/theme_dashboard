@@ -44,8 +44,8 @@
 
   // Sort state per table
   let sortState = {
-    etf: { column: 'rs_sts', dir: 'desc' },
-    industry: { column: 'rs_sts', dir: 'desc' },
+    etf: { column: 'vars', dir: 'desc' },
+    industry: { column: 'vars', dir: 'desc' },
     ep_afternoon: { column: 'float', dir: 'asc' },
     ep_morning: { column: 'float', dir: 'asc' },
     parabolic: { column: 'atr_multi_50sma', dir: 'desc' },
@@ -1676,7 +1676,6 @@
               <thead><tr>
                 <th class="l">Ticker</th>
                 <th>VARS</th>
-                <th>VARS 20EMA</th>
                 <th>RS%</th>
                 <th>Price</th>
                 <th>Float(M)</th>
@@ -1690,7 +1689,6 @@
 
       tickers.forEach(t => {
         const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
-        const ema20Class = t.vars_20ema >= 6 ? 'up' : t.vars_20ema < 2 ? 'dn' : '';
         const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
         const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
         const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
@@ -1704,7 +1702,6 @@
                     </span>
                   </td>
                   <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}</td>
-                  <td class="${ema20Class}">${(t.vars_20ema ?? 0).toFixed(2)}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
                   <td>${t.price ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
@@ -1846,6 +1843,7 @@
         monthly: parsePercent(r['Monthly %']),
         lev_long: (r['Leveraged Long'] || '').trim(),
         lev_short: (r['Leveraged Short'] || '').trim(),
+        vars: null,
       });
     });
     return result;
@@ -1870,13 +1868,15 @@
 
     let html = '';
     industryData.forEach(row => {
+      const varsClass = row.vars == null ? '' : (row.vars >= 6 ? 'up' : row.vars < 2 ? 'dn' : '');
+      const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
       html += `
         <tr>
           <td class="l">
             <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
-          <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>
+          <td class="${varsClass}"><strong>${varsText}</strong></td>
           <td class="${pctClass(row.intraday)}">${fmtPct(row.intraday)}</td>
           <td class="${pctClass(row.daily)}">${fmtPct(row.daily)}</td>
           <td class="${pctClass(row.monthly)}">${fmtPct(row.monthly)}</td>
@@ -1949,7 +1949,8 @@
         rs_sts: parsePercent(r['RS_STS%']),
         intraday: parsePercent(r['Intraday %']),
         daily: parsePercent(r['Daily %']),
-        monthly: parsePercent(r['Monthly %'])
+        monthly: parsePercent(r['Monthly %']),
+        vars: null
       }))
       .filter((item, idx, arr) => arr.findIndex(x => x.ticker === item.ticker) === idx);
   }
@@ -1978,13 +1979,15 @@
 
     let html = '';
     etfData.forEach(row => {
+      const varsClass = row.vars == null ? '' : (row.vars >= 6 ? 'up' : row.vars < 2 ? 'dn' : '');
+      const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
       html += `
         <tr>
           <td class="l">
             <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
-          <td class="${rsStsPctClass(row.rs_sts)}"><strong>${fmtPct(row.rs_sts)}</strong></td>
+          <td class="${varsClass}"><strong>${varsText}</strong></td>
           <td class="${pctClass(row.intraday)}">${fmtPct(row.intraday)}</td>
           <td class="${pctClass(row.daily)}">${fmtPct(row.daily)}</td>
           <td class="${pctClass(row.monthly)}">${fmtPct(row.monthly)}</td>

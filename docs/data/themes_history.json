@@ -1859,69 +1859,91 @@
       },
       {
         "rank": 30,
-        "name": "Fintech & Crypto / Wealth & Asset Management",
-        "score": 43.6,
-        "avg_rs": 87.7,
+        "name": "Quantum Computing",
+        "score": 43.5,
+        "avg_rs": 90.7,
         "tickers": [
           {
-            "ticker": "ASST",
-            "vars": -0.93,
-            "rs": 96.2,
-            "price": 18.21,
-            "float": "58.1",
-            "eps": "63",
-            "sales": "1516",
-            "inst": "+85.6",
-            "short": 21.9
+            "ticker": "QUBT",
+            "vars": -4.04,
+            "rs": 100.0,
+            "price": 12.31,
+            "float": "197.9",
+            "eps": "-47",
+            "sales": "9364",
+            "inst": "-2.9",
+            "short": 30.1
           },
           {
-            "ticker": "WT",
-            "vars": 6.26,
-            "rs": 57.7,
-            "price": 19.08,
-            "float": "131.9",
-            "eps": "34",
-            "sales": "48",
-            "inst": "+2.4",
-            "short": 13.9
+            "ticker": "IONQ",
+            "vars": -1.41,
+            "rs": 100.0,
+            "price": 63.64,
+            "float": "363.9",
+            "eps": "81",
+            "sales": "755",
+            "inst": "+3.4",
+            "short": 23.0
           },
           {
-            "ticker": "WLTH",
-            "vars": -6.89,
-            "rs": 88.5,
-            "price": 11.76,
-            "float": "84.9",
-            "eps": "175",
-            "sales": "20",
-            "inst": "+10.0",
-            "short": 6.7,
+            "ticker": "RGTI",
+            "vars": -4.13,
+            "rs": 100.0,
+            "price": 26.42,
+            "float": "325.1",
+            "eps": "-19",
+            "sales": "199",
+            "inst": "+15.0",
+            "short": 15.5
+          },
+          {
+            "ticker": "QBTS",
+            "vars": -5.61,
+            "rs": 100.0,
+            "price": 29.4,
+            "float": "356.4",
+            "eps": "-17",
+            "sales": "-81",
+            "inst": "+2.1",
+            "short": 14.7
+          },
+          {
+            "ticker": "LAES",
+            "vars": -8.05,
+            "rs": 100.0,
+            "price": 3.38,
+            "float": "215.4",
+            "eps": "29",
+            "sales": "138",
+            "inst": "+0.5",
+            "short": 8.3
+          },
+          {
+            "ticker": "XNDU",
+            "vars": 2.09,
+            "rs": 46.2,
+            "price": 15.18,
+            "float": "N/A",
+            "eps": "4",
+            "sales": "N/A",
+            "inst": "+91.0",
+            "short": null,
             "ticker_color": "green"
           },
           {
-            "ticker": "GS",
-            "vars": -0.33,
-            "rs": 100.0,
-            "price": 996.73,
-            "float": "293.3",
-            "eps": "16",
-            "sales": "9",
-            "inst": "-1.4",
-            "short": 2.4
-          },
-          {
-            "ticker": "MS",
-            "vars": -0.62,
-            "rs": 96.2,
-            "price": 201.03,
-            "float": "1200.0",
-            "eps": "16",
-            "sales": "14",
-            "inst": "-0.3",
-            "short": 1.2
+            "ticker": "INFQ",
+            "vars": -4.06,
+            "rs": 88.5,
+            "price": 16.35,
+            "float": "189.3",
+            "eps": "-47",
+            "sales": "N/A",
+            "inst": "-6.1",
+            "short": 2.2
           }
         ],
-        "l1": "Fintech & Crypto",
-        "l2": "Wealth & Asset Management",
+        "l1": "Quantum Computing",
+        "l2": null,
         "l3": null
       }
     ],
@@ -2150,14 +2172,14 @@
           "ticker_count": 10
         },
         {
-          "id": "Fintech & Crypto",
+          "id": "Quantum Computing",
           "kind": "l1"
         },
         {
-          "id": "Fintech & Crypto / Wealth & Asset Management",
+          "id": "Quantum Computing",
           "kind": "leaf",
-          "parent": "Fintech & Crypto",
-          "ticker_count": 5
+          "parent": "Quantum Computing",
+          "ticker_count": 7
         }
       ],
       "edges": [
@@ -2304,11 +2326,6 @@
         {
           "source": "AI / Software & Analytics",
           "target": "AI",
-          "kind": "is_a"
-        },
-        {
-          "source": "Fintech & Crypto / Wealth & Asset Management",
-          "target": "Fintech & Crypto",
           "kind": "is_a"
         }
       ]
@@ -31599,6 +31616,20 @@
             "ticker_color": "green"
           },
           {
+            "ticker": "CRNX",
+            "score": 46.4,
+            "demand": 86.3,
+            "rs": 100.0,
+            "vars": -7.24,
+            "price": 43.49,
+            "float": "97.7",
+            "eps": "3",
+            "sales": "2873",
+            "inst": "+10.3",
+            "short": 14.5,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "EWTX",
             "score": 33.6,
             "demand": 82.3,
@@ -31685,20 +31716,6 @@
             "rs": 100.0,
             "vars": 0.03,
             "price": 1.76,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRNX",
-            "score": 46.4,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": -7.24,
-            "price": 43.49,
             "float": null,
             "eps": null,
             "sales": null,
@@ -34837,6 +34854,20 @@
             "short": 40.0
           },
           {
+            "ticker": "UAMY",
+            "score": 51.5,
+            "demand": 91.9,
+            "rs": 100.0,
+            "vars": 2.98,
+            "price": 12.61,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 50.3,
             "demand": 85.4,
@@ -34900,20 +34931,6 @@
             "sales": "20",
             "inst": "+55.5",
             "short": 4.8
-          },
-          {
-            "ticker": "UAMY",
-            "score": 51.5,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 2.98,
-            "price": 12.61,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "TMQ",
@@ -40072,6 +40089,19 @@
         "avg_rs": 90.8,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 32.8,
+            "demand": 100.0,
+            "rs": 57.7,
+            "vars": 8.0,
+            "price": 27.69,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 47.3,
             "demand": 93.4,
@@ -40124,19 +40154,6 @@
             "sales": "23",
             "inst": "-2.2",
             "short": 5.2
-          },
-          {
-            "ticker": "ACHC",
-            "score": 32.8,
-            "demand": 50.0,
-            "rs": 57.7,
-            "vars": 8.0,
-            "price": 27.69,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           }
         ],
         "l1": "Healthcare",
@@ -43163,6 +43180,19 @@
         "avg_rs": 90.0,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 36.0,
+            "demand": 100.0,
+            "rs": 65.4,
+            "vars": 6.63,
+            "price": 27.85,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "TDOC",
             "score": 46.4,
             "demand": 78.4,
@@ -43201,19 +43231,6 @@
             "sales": "23",
             "inst": "-2.2",
             "short": 5.2
-          },
-          {
-            "ticker": "ACHC",
-            "score": 36.0,
-            "demand": 50.0,
-            "rs": 65.4,
-            "vars": 6.63,
-            "price": 27.85,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           },
           {
             "ticker": "LFST",
@@ -43465,6 +43482,20 @@
             "short": 40.0
           },
           {
+            "ticker": "UAMY",
+            "score": 51.8,
+            "demand": 91.9,
+            "rs": 100.0,
+            "vars": 3.55,
+            "price": 12.15,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 44.1,
             "demand": 85.4,
@@ -43528,20 +43559,6 @@
             "sales": "20",
             "inst": "+55.5",
             "short": 4.8
-          },
-          {
-            "ticker": "UAMY",
-            "score": 51.8,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 3.55,
-            "price": 12.15,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "TMQ",
@@ -46260,6 +46277,20 @@
             "short": 40.0
           },
           {
+            "ticker": "UAMY",
+            "score": 52.0,
+            "demand": 91.9,
+            "rs": 100.0,
+            "vars": 4.0,
+            "price": 12.01,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 44.2,
             "demand": 85.4,
@@ -46310,20 +46341,6 @@
             "sales": null,
             "inst": "+37.0",
             "short": 12.0
-          },
-          {
-            "ticker": "UAMY",
-            "score": 52.0,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 4.0,
-            "price": 12.01,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "TMQ",
@@ -47658,6 +47675,19 @@
         "avg_rs": 91.0,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 52.5,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": 8.86,
+            "price": 28.26,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "TDOC",
             "score": 34.7,
             "demand": 78.4,
@@ -47683,19 +47713,6 @@
             "sales": "23",
             "inst": "-2.2",
             "short": 5.2
-          },
-          {
-            "ticker": "ACHC",
-            "score": 52.5,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": 8.86,
-            "price": 28.26,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           }
         ],
         "l1": "Healthcare",
@@ -47711,15 +47728,15 @@
           {
             "ticker": "INDV",
             "score": 47.0,
-            "demand": 50.0,
+            "demand": 75.3,
             "rs": 96.2,
             "vars": -2.08,
             "price": 34.15,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "112.7",
+            "eps": "40",
+            "sales": "19",
+            "inst": "+2.9",
+            "short": 11.4,
             "ticker_color": "green"
           },
           {
@@ -51085,15 +51102,15 @@
           {
             "ticker": "INDV",
             "score": 49.0,
-            "demand": 50.0,
+            "demand": 75.3,
             "rs": 100.0,
             "vars": -2.09,
             "price": 34.43,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "112.7",
+            "eps": "40",
+            "sales": "19",
+            "inst": "+2.9",
+            "short": 11.4,
             "ticker_color": "green"
           },
           {
@@ -51158,6 +51175,19 @@
         "avg_rs": 80.8,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 41.6,
+            "demand": 100.0,
+            "rs": 76.9,
+            "vars": 6.24,
+            "price": 27.58,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "TDOC",
             "score": 38.6,
             "demand": 78.4,
@@ -51170,19 +51200,6 @@
             "inst": "+6.2",
             "short": 16.7,
             "ticker_color": "green"
-          },
-          {
-            "ticker": "ACHC",
-            "score": 41.6,
-            "demand": 50.0,
-            "rs": 76.9,
-            "vars": 6.24,
-            "price": 27.58,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           }
         ],
         "l1": "Healthcare",
@@ -53816,6 +53833,20 @@
             "short": 40.0
           },
           {
+            "ticker": "UAMY",
+            "score": 52.2,
+            "demand": 91.9,
+            "rs": 100.0,
+            "vars": 4.48,
+            "price": 11.18,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 44.5,
             "demand": 85.4,
@@ -53866,20 +53897,6 @@
             "sales": null,
             "inst": "+37.0",
             "short": 12.0
-          },
-          {
-            "ticker": "UAMY",
-            "score": 52.2,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 4.48,
-            "price": 11.18,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "NB",
@@ -58965,19 +58982,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "CCJ",
-            "score": 51.7,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": 7.21,
-            "price": 123.85,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "UUUU",
             "score": 50.5,
             "demand": 50.0,
@@ -59055,6 +59059,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "CCJ",
+            "score": 51.7,
+            "demand": 30.7,
+            "rs": 96.2,
+            "vars": 7.21,
+            "price": 123.85,
+            "float": "434.4",
+            "eps": "13",
+            "sales": "12",
+            "inst": "-1.0",
+            "short": 1.3
           }
         ],
         "l1": "Nuclear",
@@ -61709,26 +61726,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 38.3,
+            "demand": 100.0,
+            "rs": 76.9,
+            "vars": -0.35,
+            "price": 56.42,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 54.7,
             "demand": 50.0,
             "rs": 100.0,
             "vars": 9.43,
             "price": 16.57,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 38.3,
-            "demand": 50.0,
-            "rs": 76.9,
-            "vars": -0.35,
-            "price": 56.42,
             "float": null,
             "eps": null,
             "sales": null,
@@ -66843,26 +66860,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 46.1,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": -0.13,
+            "price": 57.69,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 53.5,
             "demand": 50.0,
             "rs": 100.0,
             "vars": 7.01,
             "price": 15.21,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 46.1,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": -0.13,
-            "price": 57.69,
             "float": null,
             "eps": null,
             "sales": null,
@@ -66958,6 +66975,20 @@
             "short": 40.0
           },
           {
+            "ticker": "UAMY",
+            "score": 43.5,
+            "demand": 91.9,
+            "rs": 84.6,
+            "vars": 2.33,
+            "price": 10.64,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 50.1,
             "demand": 85.4,
@@ -67042,20 +67073,6 @@
             "rs": 100.0,
             "vars": -0.26,
             "price": 6.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "UAMY",
-            "score": 43.5,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": 2.33,
-            "price": 10.64,
             "float": null,
             "eps": null,
             "sales": null,
@@ -69488,26 +69505,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 47.8,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": -0.58,
+            "price": 57.99,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 49.2,
             "demand": 50.0,
             "rs": 92.3,
             "vars": 6.07,
             "price": 14.95,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 47.8,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": -0.58,
-            "price": 57.99,
             "float": null,
             "eps": null,
             "sales": null,
@@ -70138,19 +70155,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 49.7,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": 7.16,
-            "price": 7.73,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "TECK",
             "score": 49.7,
             "demand": 50.0,
@@ -70203,6 +70207,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 49.7,
+            "demand": 34.2,
+            "rs": 92.3,
+            "vars": 7.16,
+            "price": 7.73,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -74037,26 +74054,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 46.0,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": -0.22,
+            "price": 56.76,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 53.8,
             "demand": 50.0,
             "rs": 100.0,
             "vars": 7.52,
             "price": 14.94,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 46.0,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": -0.22,
-            "price": 56.76,
             "float": null,
             "eps": null,
             "sales": null,
@@ -75346,19 +75363,6 @@
             "short": null
           },
           {
-            "ticker": "TGB",
-            "score": 46.5,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": 8.33,
-            "price": 7.51,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "ERO",
             "score": 36.0,
             "demand": 50.0,
@@ -75398,6 +75402,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 46.5,
+            "demand": 34.2,
+            "rs": 84.6,
+            "vars": 8.33,
+            "price": 7.51,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -76596,19 +76613,6 @@
             "short": 8.7
           },
           {
-            "ticker": "TGB",
-            "score": 54.8,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 9.7,
-            "price": 7.79,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "TECK",
             "score": 54.3,
             "demand": 50.0,
@@ -76675,6 +76679,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 54.8,
+            "demand": 34.2,
+            "rs": 100.0,
+            "vars": 9.7,
+            "price": 7.79,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -77038,26 +77055,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 46.4,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": 0.55,
+            "price": 56.86,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 54.3,
             "demand": 50.0,
             "rs": 100.0,
             "vars": 8.52,
             "price": 14.78,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 46.4,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": 0.55,
-            "price": 56.86,
             "float": null,
             "eps": null,
             "sales": null,
@@ -77962,19 +77979,6 @@
             "short": null
           },
           {
-            "ticker": "CGAU",
-            "score": 50.0,
-            "demand": 50.0,
-            "rs": 88.5,
-            "vars": 11.49,
-            "price": 19.73,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "AU",
             "score": 44.3,
             "demand": 50.0,
@@ -78046,6 +78050,19 @@
             "rs": 65.4,
             "vars": 7.07,
             "price": 48.78,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "ORLA",
+            "score": 30.0,
+            "demand": 50.0,
+            "rs": 53.8,
+            "vars": 6.06,
+            "price": 17.79,
             "float": null,
             "eps": null,
             "sales": null,
@@ -79014,19 +79031,6 @@
             "short": null
           },
           {
-            "ticker": "TGB",
-            "score": 49.6,
-            "demand": 50.0,
-            "rs": 88.5,
-            "vars": 10.77,
-            "price": 7.39,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "NAK",
             "score": 52.1,
             "demand": 36.6,
@@ -79052,6 +79056,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 49.6,
+            "demand": 34.2,
+            "rs": 88.5,
+            "vars": 10.77,
+            "price": 7.39,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -80114,26 +80131,26 @@
             "short": 22.3
           },
           {
+            "ticker": "CRSP",
+            "score": 45.2,
+            "demand": 100.0,
+            "rs": 88.5,
+            "vars": 1.97,
+            "price": 54.83,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 54.6,
             "demand": 50.0,
             "rs": 100.0,
             "vars": 9.28,
             "price": 14.26,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 45.2,
-            "demand": 50.0,
-            "rs": 88.5,
-            "vars": 1.97,
-            "price": 54.83,
             "float": null,
             "eps": null,
             "sales": null,
@@ -82163,19 +82180,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 46.2,
-            "demand": 50.0,
-            "rs": 80.8,
-            "vars": 11.71,
-            "price": 7.29,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "NAK",
             "score": 51.8,
             "demand": 36.6,
@@ -82201,6 +82205,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 46.2,
+            "demand": 34.2,
+            "rs": 80.8,
+            "vars": 11.71,
+            "price": 7.29,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -82951,19 +82968,6 @@
             "short": null
           },
           {
-            "ticker": "CGAU",
-            "score": 54.5,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": 12.76,
-            "price": 19.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "KGC",
             "score": 54.4,
             "demand": 50.0,
@@ -83035,6 +83039,19 @@
             "rs": 73.1,
             "vars": 6.12,
             "price": 49.34,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "MUX",
+            "score": 36.2,
+            "demand": 50.0,
+            "rs": 65.4,
+            "vars": 7.01,
+            "price": 23.04,
             "float": null,
             "eps": null,
             "sales": null,
@@ -86100,19 +86117,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 37.9,
-            "demand": 50.0,
-            "rs": 65.4,
-            "vars": 10.36,
-            "price": 7.11,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "NAK",
             "score": 52.0,
             "demand": 36.6,
@@ -86138,6 +86142,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 37.9,
+            "demand": 34.2,
+            "rs": 65.4,
+            "vars": 10.36,
+            "price": 7.11,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -86264,6 +86281,19 @@
         "avg_rs": 89.7,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 54.6,
+            "demand": 100.0,
+            "rs": 100.0,
+            "vars": 9.14,
+            "price": 27.2,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "BTSG",
             "score": 50.7,
             "demand": 61.3,
@@ -86275,19 +86305,6 @@
             "sales": "26",
             "inst": "+32.3",
             "short": 9.4
-          },
-          {
-            "ticker": "ACHC",
-            "score": 54.6,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 9.14,
-            "price": 27.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           },
           {
             "ticker": "AHCO",
@@ -88596,19 +88613,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 42.5,
-            "demand": 50.0,
-            "rs": 73.1,
-            "vars": 11.89,
-            "price": 7.23,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "NAK",
             "score": 50.0,
             "demand": 36.6,
@@ -88634,6 +88638,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 42.5,
+            "demand": 34.2,
+            "rs": 73.1,
+            "vars": 11.89,
+            "price": 7.23,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -89278,19 +89295,6 @@
             "short": null
           },
           {
-            "ticker": "CGAU",
-            "score": 45.5,
-            "demand": 50.0,
-            "rs": 76.9,
-            "vars": 14.06,
-            "price": 18.93,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "ORLA",
             "score": 37.0,
             "demand": 50.0,
@@ -89336,6 +89340,19 @@
             "rs": 61.5,
             "vars": 7.08,
             "price": 48.67,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "HMY",
+            "score": 32.7,
+            "demand": 50.0,
+            "rs": 61.5,
+            "vars": 3.8,
+            "price": 16.26,
             "float": null,
             "eps": null,
             "sales": null,
@@ -91117,6 +91134,20 @@
             "ticker_color": "green"
           },
           {
+            "ticker": "CRNX",
+            "score": 44.8,
+            "demand": 86.3,
+            "rs": 88.5,
+            "vars": 1.09,
+            "price": 38.41,
+            "float": "97.7",
+            "eps": "3",
+            "sales": "2873",
+            "inst": "+10.3",
+            "short": 14.5,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "PTCT",
             "score": 51.3,
             "demand": 80.5,
@@ -91216,19 +91247,6 @@
             "rs": 92.3,
             "vars": 7.65,
             "price": 23.08,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "RARE",
-            "score": 49.5,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": -0.91,
-            "price": 23.15,
             "float": null,
             "eps": null,
             "sales": null,
@@ -93800,6 +93818,20 @@
             "ticker_color": "green"
           },
           {
+            "ticker": "CRNX",
+            "score": 38.5,
+            "demand": 86.3,
+            "rs": 76.9,
+            "vars": 0.03,
+            "price": 37.7,
+            "float": "97.7",
+            "eps": "3",
+            "sales": "2873",
+            "inst": "+10.3",
+            "short": 14.5,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "CORT",
             "score": 45.6,
             "demand": 78.5,
@@ -93903,20 +93935,6 @@
             "sales": null,
             "inst": null,
             "short": null
-          },
-          {
-            "ticker": "SVRA",
-            "score": 46.2,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": 7.8,
-            "price": 5.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -111837,6 +111855,19 @@
         "avg_rs": 97.1,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 47.9,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": 3.42,
+            "price": 24.31,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "TDOC",
             "score": 48.6,
             "demand": 78.4,
@@ -111870,19 +111901,6 @@
             "rs": 96.2,
             "vars": 8.88,
             "price": 11.39,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 47.9,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": 3.42,
-            "price": 24.31,
             "float": null,
             "eps": null,
             "sales": null,
@@ -124954,6 +124972,19 @@
         "avg_rs": 87.8,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 32.5,
+            "demand": 100.0,
+            "rs": 65.4,
+            "vars": -0.41,
+            "price": 23.2,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 37.7,
             "demand": 93.4,
@@ -125014,19 +125045,6 @@
             "rs": 96.2,
             "vars": 3.84,
             "price": 10.47,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 32.5,
-            "demand": 50.0,
-            "rs": 65.4,
-            "vars": -0.41,
-            "price": 23.2,
             "float": null,
             "eps": null,
             "sales": null,
@@ -127614,6 +127632,19 @@
         "avg_rs": 87.8,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 38.2,
+            "demand": 100.0,
+            "rs": 76.9,
+            "vars": -0.56,
+            "price": 23.73,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 33.3,
             "demand": 93.4,
@@ -127674,19 +127705,6 @@
             "rs": 84.6,
             "vars": 12.98,
             "price": 5.14,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 38.2,
-            "demand": 50.0,
-            "rs": 76.9,
-            "vars": -0.56,
-            "price": 23.73,
             "float": null,
             "eps": null,
             "sales": null,
@@ -132058,6 +132076,19 @@
         "avg_rs": 94.6,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 39.7,
+            "demand": 100.0,
+            "rs": 80.8,
+            "vars": -1.39,
+            "price": 23.52,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 47.1,
             "demand": 93.4,
@@ -132105,19 +132136,6 @@
             "rs": 100.0,
             "vars": 4.51,
             "price": 10.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 39.7,
-            "demand": 50.0,
-            "rs": 80.8,
-            "vars": -1.39,
-            "price": 23.52,
             "float": null,
             "eps": null,
             "sales": null,
@@ -137630,6 +137648,19 @@
         "avg_rs": 89.2,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 40.8,
+            "demand": 100.0,
+            "rs": 84.6,
+            "vars": -2.94,
+            "price": 23.89,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 40.6,
             "demand": 93.4,
@@ -137677,19 +137708,6 @@
             "rs": 96.2,
             "vars": 10.07,
             "price": 5.17,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 40.8,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": -2.94,
-            "price": 23.89,
             "float": null,
             "eps": null,
             "sales": null,
@@ -139133,19 +139151,6 @@
             "short": null
           },
           {
-            "ticker": "CCJ",
-            "score": 47.5,
-            "demand": 50.0,
-            "rs": 88.5,
-            "vars": 6.61,
-            "price": 120.08,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "DNN",
             "score": 37.2,
             "demand": 50.0,
@@ -139157,6 +139162,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "CCJ",
+            "score": 47.5,
+            "demand": 30.7,
+            "rs": 88.5,
+            "vars": 6.61,
+            "price": 120.08,
+            "float": "434.4",
+            "eps": "13",
+            "sales": "12",
+            "inst": "-1.0",
+            "short": 1.3
           }
         ],
         "l1": "Nuclear",
@@ -139169,6 +139187,20 @@
         "score": 45.2,
         "avg_rs": 88.5,
         "tickers": [
+          {
+            "ticker": "UAMY",
+            "score": 50.0,
+            "demand": 91.9,
+            "rs": 100.0,
+            "vars": -0.04,
+            "price": 11.23,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
           {
             "ticker": "MP",
             "score": 44.5,
@@ -139194,20 +139226,6 @@
             "sales": null,
             "inst": "+37.0",
             "short": 12.0
-          },
-          {
-            "ticker": "UAMY",
-            "score": 50.0,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": -0.04,
-            "price": 11.23,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "ALM",
@@ -139593,6 +139611,19 @@
         "avg_rs": 83.8,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 46.7,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": -2.81,
+            "price": 25.14,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "TDOC",
             "score": 45.7,
             "demand": 78.4,
@@ -139626,19 +139657,6 @@
             "rs": 100.0,
             "vars": 9.37,
             "price": 5.19,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 46.7,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": -2.81,
-            "price": 25.14,
             "float": null,
             "eps": null,
             "sales": null,
@@ -140884,6 +140902,19 @@
         "avg_rs": 96.9,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 46.8,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": -2.55,
+            "price": 24.71,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 46.2,
             "demand": 93.4,
@@ -140931,19 +140962,6 @@
             "rs": 100.0,
             "vars": 9.96,
             "price": 5.12,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "ACHC",
-            "score": 46.8,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": -2.55,
-            "price": 24.71,
             "float": null,
             "eps": null,
             "sales": null,
@@ -141778,6 +141796,20 @@
         "avg_rs": 85.6,
         "tickers": [
           {
+            "ticker": "UAMY",
+            "score": 45.6,
+            "demand": 91.9,
+            "rs": 92.3,
+            "vars": -1.2,
+            "price": 9.6,
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+10.4",
+            "short": 21.4,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "MP",
             "score": 34.9,
             "demand": 85.4,
@@ -141789,20 +141821,6 @@
             "sales": "119",
             "inst": "+5.1",
             "short": 18.6
-          },
-          {
-            "ticker": "UAMY",
-            "score": 45.6,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": -1.2,
-            "price": 9.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -142129,6 +142147,20 @@
         "avg_rs": 87.2,
         "tickers": [
           {
+            "ticker": "CRSP",
+            "score": 41.1,
+            "demand": 100.0,
+            "rs": 84.6,
+            "vars": -2.34,
+            "price": 58.78,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "NTLA",
             "score": 48.0,
             "demand": 50.0,
@@ -142149,20 +142181,6 @@
             "rs": 84.6,
             "vars": -1.18,
             "price": 4.11,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 41.1,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": -2.34,
-            "price": 58.78,
             "float": null,
             "eps": null,
             "sales": null,
@@ -144470,6 +144488,19 @@
         "avg_rs": 94.2,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 48.5,
+            "demand": 100.0,
+            "rs": 100.0,
+            "vars": -2.95,
+            "price": 25.62,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 47.8,
             "demand": 93.4,
@@ -144509,19 +144540,6 @@
             "sales": "26",
             "inst": "+32.3",
             "short": 9.4
-          },
-          {
-            "ticker": "ACHC",
-            "score": 48.5,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": -2.95,
-            "price": 25.62,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           }
         ],
         "l1": "Healthcare",
@@ -152928,6 +152946,19 @@
         "avg_rs": 93.3,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 43.5,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": -5.27,
+            "price": 22.99,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 46.2,
             "demand": 93.4,
@@ -152953,19 +152984,6 @@
             "sales": "26",
             "inst": "+32.3",
             "short": 9.4
-          },
-          {
-            "ticker": "ACHC",
-            "score": 43.5,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": -5.27,
-            "price": 22.99,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           },
           {
             "ticker": "LFST",
@@ -153025,19 +153043,6 @@
             "rs": 88.5,
             "vars": 12.76,
             "price": 20.08,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "CGAU",
-            "score": 49.4,
-            "demand": 50.0,
-            "rs": 84.6,
-            "vars": 14.11,
-            "price": 19.41,
             "float": null,
             "eps": null,
             "sales": null,
@@ -153110,12 +153115,25 @@
             "short": null
           },
           {
-            "ticker": "FSM",
-            "score": 42.3,
+            "ticker": "TRX",
+            "score": 39.1,
             "demand": 50.0,
-            "rs": 76.9,
-            "vars": 7.69,
-            "price": 12.26,
+            "rs": 61.5,
+            "vars": 16.67,
+            "price": 1.75,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "BTG",
+            "score": 34.7,
+            "demand": 50.0,
+            "rs": 65.4,
+            "vars": 4.04,
+            "price": 5.47,
             "float": null,
             "eps": null,
             "sales": null,
@@ -154329,19 +154347,6 @@
             "short": null
           },
           {
-            "ticker": "CGAU",
-            "score": 55.2,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": 14.33,
-            "price": 20.53,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "GAU",
             "score": 53.1,
             "demand": 50.0,
@@ -154361,6 +154366,19 @@
             "rs": 100.0,
             "vars": 5.9,
             "price": 4.78,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "MUX",
+            "score": 52.6,
+            "demand": 50.0,
+            "rs": 96.2,
+            "vars": 8.96,
+            "price": 28.41,
             "float": null,
             "eps": null,
             "sales": null,
@@ -154779,19 +154797,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 53.5,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": 14.76,
-            "price": 8.76,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "ERO",
             "score": 36.1,
             "demand": 50.0,
@@ -154818,6 +154823,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 53.5,
+            "demand": 34.2,
+            "rs": 92.3,
+            "vars": 14.76,
+            "price": 8.76,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -155072,19 +155090,6 @@
             "short": null
           },
           {
-            "ticker": "FSM",
-            "score": 48.5,
-            "demand": 50.0,
-            "rs": 88.5,
-            "vars": 8.48,
-            "price": 13.56,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "HL",
             "score": 42.6,
             "demand": 50.0,
@@ -155096,6 +155101,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "FSM",
+            "score": 48.5,
+            "demand": 47.1,
+            "rs": 88.5,
+            "vars": 8.48,
+            "price": 13.56,
+            "float": "301.6",
+            "eps": "120",
+            "sales": "18",
+            "inst": "-1.6",
+            "short": 6.0
           }
         ],
         "l1": "Metals & Mining",
@@ -155613,6 +155631,19 @@
         "avg_rs": 93.3,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 45.8,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": -4.52,
+            "price": 23.44,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 48.0,
             "demand": 93.4,
@@ -155638,19 +155669,6 @@
             "sales": "26",
             "inst": "+32.3",
             "short": 9.4
-          },
-          {
-            "ticker": "ACHC",
-            "score": 45.8,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": -4.52,
-            "price": 23.44,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           },
           {
             "ticker": "LFST",
@@ -155846,6 +155864,20 @@
         "avg_rs": 90.4,
         "tickers": [
           {
+            "ticker": "CRSP",
+            "score": 47.4,
+            "demand": 100.0,
+            "rs": 96.2,
+            "vars": -1.4,
+            "price": 60.77,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "BEAM",
             "score": 36.1,
             "demand": 100.0,
@@ -155879,20 +155911,6 @@
             "rs": 100.0,
             "vars": 0.56,
             "price": 4.66,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 47.4,
-            "demand": 50.0,
-            "rs": 96.2,
-            "vars": -1.4,
-            "price": 60.77,
             "float": null,
             "eps": null,
             "sales": null,
@@ -156665,19 +156683,6 @@
             "short": null
           },
           {
-            "ticker": "CGAU",
-            "score": 57.4,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 14.86,
-            "price": 20.91,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "ORLA",
             "score": 57.4,
             "demand": 50.0,
@@ -156730,19 +156735,6 @@
             "short": null
           },
           {
-            "ticker": "FSM",
-            "score": 54.1,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 8.26,
-            "price": 13.66,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "NEM",
             "score": 54.1,
             "demand": 50.0,
@@ -156762,6 +156754,32 @@
             "rs": 100.0,
             "vars": 6.59,
             "price": 4.76,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "GAU",
+            "score": 52.8,
+            "demand": 50.0,
+            "rs": 100.0,
+            "vars": 5.63,
+            "price": 3.52,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          },
+          {
+            "ticker": "MUX",
+            "score": 52.8,
+            "demand": 50.0,
+            "rs": 96.2,
+            "vars": 9.38,
+            "price": 28.35,
             "float": null,
             "eps": null,
             "sales": null,
@@ -157169,19 +157187,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "FSM",
-            "score": 54.1,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 8.26,
-            "price": 13.66,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "HL",
             "score": 42.9,
             "demand": 50.0,
@@ -157193,6 +157198,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "FSM",
+            "score": 54.1,
+            "demand": 47.1,
+            "rs": 100.0,
+            "vars": 8.26,
+            "price": 13.66,
+            "float": "301.6",
+            "eps": "120",
+            "sales": "18",
+            "inst": "-1.6",
+            "short": 6.0
           }
         ],
         "l1": "Metals & Mining",
@@ -157491,19 +157509,6 @@
             "ticker_color": "green"
           },
           {
-            "ticker": "TGB",
-            "score": 57.1,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 14.26,
-            "price": 8.88,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "FCX",
             "score": 55.8,
             "demand": 50.0,
@@ -157557,6 +157562,19 @@
             "inst": "-0.4",
             "short": 2.3,
             "ticker_color": "green"
+          },
+          {
+            "ticker": "TGB",
+            "score": 57.1,
+            "demand": 34.2,
+            "rs": 100.0,
+            "vars": 14.26,
+            "price": 8.88,
+            "float": "359.4",
+            "eps": "585",
+            "sales": "74",
+            "inst": "+10.9",
+            "short": 1.7
           }
         ],
         "l1": "Metals & Mining",
@@ -158226,26 +158244,26 @@
         "avg_rs": 88.5,
         "tickers": [
           {
+            "ticker": "CRSP",
+            "score": 45.5,
+            "demand": 100.0,
+            "rs": 92.3,
+            "vars": -1.39,
+            "price": 60.14,
+            "float": "89.5",
+            "eps": "25",
+            "sales": "69",
+            "inst": "+1.5",
+            "short": 25.1,
+            "ticker_color": "green"
+          },
+          {
             "ticker": "PRME",
             "score": 47.8,
             "demand": 50.0,
             "rs": 96.2,
             "vars": -0.5,
             "price": 4.62,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
-          },
-          {
-            "ticker": "CRSP",
-            "score": 45.5,
-            "demand": 50.0,
-            "rs": 92.3,
-            "vars": -1.39,
-            "price": 60.14,
             "float": null,
             "eps": null,
             "sales": null,
@@ -158677,6 +158695,19 @@
         "avg_rs": 89.2,
         "tickers": [
           {
+            "ticker": "ACHC",
+            "score": 47.2,
+            "demand": 100.0,
+            "rs": 100.0,
+            "vars": -5.53,
+            "price": 23.44,
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+15.8",
+            "short": 27.7
+          },
+          {
             "ticker": "HNGE",
             "score": 45.5,
             "demand": 93.4,
@@ -158716,19 +158747,6 @@
             "sales": "26",
             "inst": "+32.3",
             "short": 9.4
-          },
-          {
-            "ticker": "ACHC",
-            "score": 47.2,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": -5.53,
-            "price": 23.44,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
           },
           {
             "ticker": "LFST",

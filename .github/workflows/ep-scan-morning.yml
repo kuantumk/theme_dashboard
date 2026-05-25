@@ -69,7 +69,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add docs/data/ep_scan_morning.json
+          git add docs/data/ep_scan_morning.json docs/data/ep_scan_morning_history.json
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else

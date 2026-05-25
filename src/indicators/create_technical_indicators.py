@@ -39,8 +39,8 @@ def calculate_technical_indicators():
     daily_tickers = daily_price.keys()
 
     min_max_lookback = [30, 60, 90, 120, 150, 252]
-    dts = [21, 63, 126]
-    months = [1, 3, 6]
+    dts = [21, 63, 126, 252]
+    months = [1, 3, 6, 12]
 
     # SPX performance for relative performance calculation
     spx = daily_price['^GSPC'].copy(deep=True)
@@ -119,6 +119,23 @@ def calculate_technical_indicators():
                 ((daily['close'] - daily['ema10']).abs() < 0.5 * daily['atr14']) |
                 ((daily['close'] - daily['ema20']).abs() < 0.5 * daily['atr14'])
             )
+
+            # Coiled-theme reusable setup features.
+            daily['range_pct'] = (daily['high'] - daily['low']) / daily['close']
+            daily['range10_pct'] = (
+                daily['high'].rolling(window=10, min_periods=5).max()
+                - daily['low'].rolling(window=10, min_periods=5).min()
+            ) / daily['close']
+            daily['range20_pct'] = (
+                daily['high'].rolling(window=20, min_periods=10).max()
+                - daily['low'].rolling(window=20, min_periods=10).min()
+            ) / daily['close']
+            daily['range_contraction_10_20'] = daily['range10_pct'] / daily['range20_pct']
+            daily['vol_dry_10_50'] = daily['volume'].rolling(window=10, min_periods=5).mean() / daily['vol_sma50']
+            daily['dist_sma50_pct'] = daily['close'] / daily['sma50'] - 1
+            daily['close_vs_252h'] = daily['close'] / daily['max252']
+            daily['nr7'] = daily['range_pct'] <= daily['range_pct'].rolling(window=7, min_periods=7).min()
+            daily['nr20'] = daily['range_pct'] <= daily['range_pct'].rolling(window=20, min_periods=20).min()
 
             # Performance metrics
             for month, dt in zip(months, dts):

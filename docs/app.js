@@ -29,6 +29,7 @@
   const ETF_FALLBACK_URL = 'data/etf_data.json';
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
   const PAGE_LOAD_CACHE_KEY = Date.now();
+  const SESSION_HISTORY_LIMIT = 60;
 
   // Symbols that need a different symbol for TradingView widget vs data fetch.
   // NOTE: TVC/CAPITALCOM/CBOE treasury yield symbols are all restricted in the
@@ -2050,7 +2051,7 @@
 
     return Object.values(byDate)
       .sort((a, b) => b.report_date.localeCompare(a.report_date))
-      .slice(0, 5);
+      .slice(0, SESSION_HISTORY_LIMIT);
   }
 
   function refreshEPAllTickers() {

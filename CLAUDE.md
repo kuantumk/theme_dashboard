@@ -175,7 +175,7 @@ Per-ticker green highlighting in dashboard tables marks entry-ready setups. A ti
 - `tight_day` = `|close − open| / close < 0.2 × adr_pct` (fractional body smaller than 20% of ADR%)
 - `close_to_ma` = `|close − EMA10| < 0.5 × ATR14` OR `|close − EMA20| < 0.5 × ATR14`
 
-Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_ticker_colors` (ETF tabs, recomputes on-the-fly from yfinance OHLC).
+Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_metrics` (ETF tabs, recomputes color + VARS on-the-fly from yfinance OHLC).
 
 ### Dashboard Time Travel
 

@@ -21,6 +21,7 @@ from config.settings import (
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
+from src.indicators.create_technical_indicators import compute_spx_cum_norm_100
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
 
@@ -719,11 +720,32 @@ def enrich_with_ticker_color(data_list, flags, ticker_key='ticker'):
     return count
 
 
-def fetch_etf_ticker_colors(tickers):
-    """Download recent OHLC for ETF tickers and compute ticker colors.
+def enrich_etf_with_metrics(data_list, metrics, ticker_key='ticker'):
+    """Attach vars + ticker_color to ETF row dicts. Returns (vars_count, color_count)."""
+    vars_count = 0
+    color_count = 0
+    for item in data_list:
+        tk = item.get(ticker_key, '')
+        m = metrics.get(tk)
+        if not m:
+            continue
+        if m.get('vars') is not None:
+            item['vars'] = m['vars']
+            vars_count += 1
+        if m.get('color'):
+            item['ticker_color'] = m['color']
+            color_count += 1
+    return vars_count, color_count
 
-    This is a standalone fetch that does NOT pollute the main price data pipeline.
-    Returns a dict of {ticker: 'green'|'blue'} for tight/inside-day tickers.
+
+def fetch_etf_metrics(tickers, spx_cum_norm_100):
+    """Download recent OHLC for ETF tickers and compute VARS + ticker color.
+
+    Standalone fetch that does NOT pollute the main price data pipeline.
+    Returns ``{ticker: {'vars': float|None, 'color': 'green'|None}}``.
+    VARS uses the same formula as :mod:`create_technical_indicators` so values
+    are comparable to the stock VARS leaderboard; the SPX baseline series is
+    passed in by the caller (sourced from price_daily_ta.pkl's ^GSPC).
     """
     if not tickers:
         return {}
@@ -731,19 +753,19 @@ def fetch_etf_ticker_colors(tickers):
         import yfinance as yf
         import pandas as pd
     except ImportError:
-        print("   Warning: yfinance not installed, skipping ETF ticker colors")
+        print("   Warning: yfinance not installed, skipping ETF metrics")
         return {}
 
-    # Download 2 months to securely have enough for rolling windows
+    # 8 months covers the 100-session VARS lookback plus ATR14 warm-up with slack.
     unique_tickers = list(set(tickers))
     print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
     try:
-        data = yf.download(unique_tickers, period='2mo', progress=False, group_by='ticker')
+        data = yf.download(unique_tickers, period='8mo', progress=False, group_by='ticker')
     except Exception as e:
         print(f"   Warning: yfinance download failed: {e}")
         return {}
 
-    flags = {}
+    metrics = {}
     for ticker in unique_tickers:
         try:
             if len(unique_tickers) == 1:
@@ -772,33 +794,56 @@ def fetch_etf_ticker_colors(tickers):
             tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
             atr14 = tr.rolling(window=14, min_periods=1).mean()
 
+            # VARS — gated on ≥50 bars so recent IPOs don't produce garbage.
+            vars_value = None
+            if len(df) >= 50:
+                norm_change = (close - close.shift(1)) / atr14
+                cum_norm_100 = norm_change.rolling(window=100, min_periods=1).sum()
+                spx_aligned = spx_cum_norm_100.reindex(df.index)
+                vars_series = cum_norm_100 - spx_aligned
+                last_vars = vars_series.iloc[-1]
+                if pd.notna(last_vars):
+                    vars_value = float(last_vars)
+
+            # Day-pattern green flag (tight/inside-day on the EMA10/20).
+            color = None
             last = df.iloc[-1]
             prev = df.iloc[-2]
             last_close = float(last['Close'])
             last_open = float(last['Open'])
-
-            # Inside Day
             inside = float(last['High']) < float(prev['High']) and float(last['Low']) > float(prev['Low'])
-
-            # Tight Day: fractional body (vs close) < 0.2 of ADR%
             tight = abs(last_close - last_open) / last_close < 0.2 * float(adr_pct.iloc[-1])
+            if inside or tight:
+                close_to_ema10 = abs(last_close - float(ema10.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
+                close_to_ema20 = abs(last_close - float(ema20.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
+                if close_to_ema10 or close_to_ema20:
+                    color = 'green'
 
-            if not (inside or tight):
+            if vars_value is None and color is None:
                 continue
-
-            # Close to MAs
-            close_to_ema10 = abs(last_close - float(ema10.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
-            close_to_ema20 = abs(last_close - float(ema20.iloc[-1])) < 0.5 * float(atr14.iloc[-1])
-
-            if not (close_to_ema10 or close_to_ema20):
-                continue
-            flags[ticker] = 'green'
+            metrics[ticker] = {'vars': vars_value, 'color': color}
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")
             continue
 
-    print(f"   Found {len(flags)} ETFs with tight/inside day colors")
-    return flags
+    vars_n = sum(1 for m in metrics.values() if m.get('vars') is not None)
+    color_n = sum(1 for m in metrics.values() if m.get('color'))
+    print(f"   Computed VARS for {vars_n} ETFs; {color_n} have tight/inside-day color")
+    return metrics
+
+
+def load_spx_cum_norm_100():
+    """Load ^GSPC from price_daily_ta.pkl and compute the VARS baseline series."""
+    try:
+        daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
+    except Exception as e:
+        print(f"   Warning: Could not load price data for SPX VARS baseline: {e}")
+        return None
+    spx = daily_price.get('^GSPC')
+    if spx is None or spx.empty:
+        print("   Warning: ^GSPC not found in price_daily_ta.pkl; ETF VARS will be skipped")
+        return None
+    return compute_spx_cum_norm_100(spx)
 
 
 THEMES_HISTORY_MAX = 60  # Keep last N trading sessions (5 visible as buttons, rest in dropdown)
@@ -1757,24 +1802,25 @@ def export_all():
             json.dump(industry_data, f, indent=2)
         print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
 
-    # 4b. Enrich ETFs with inside_day / tight_day via standalone yfinance fetch
+    # 4b. Enrich ETFs with VARS + inside_day/tight_day color via standalone yfinance fetch
     all_etf_tickers = []
     if etf_data:
         all_etf_tickers += [e['ticker'] for e in etf_data]
     if industry_data:
         all_etf_tickers += [e['ticker'] for e in industry_data]
     if all_etf_tickers:
-        print("\n   Computing ticker colors for ETFs...")
-        etf_day_flags = fetch_etf_ticker_colors(all_etf_tickers)
-        if etf_day_flags:
+        print("\n   Computing VARS + ticker colors for ETFs...")
+        spx_baseline = load_spx_cum_norm_100()
+        etf_metrics = fetch_etf_metrics(all_etf_tickers, spx_baseline) if spx_baseline is not None else {}
+        if etf_metrics:
             if etf_data:
-                etf_pc = enrich_with_ticker_color(etf_data, etf_day_flags)
-                print(f"   Enriched {etf_pc} leverage ETFs with ticker color flags")
+                etf_v, etf_c = enrich_etf_with_metrics(etf_data, etf_metrics)
+                print(f"   Enriched leverage ETFs: {etf_v} with VARS, {etf_c} with ticker color")
                 with open(OUTPUT_DIR / "etf_data.json", 'w', encoding='utf-8') as f:
                     json.dump(etf_data, f, indent=2)
             if industry_data:
-                ind_pc = enrich_with_ticker_color(industry_data, etf_day_flags)
-                print(f"   Enriched {ind_pc} industry ETFs with ticker color flags")
+                ind_v, ind_c = enrich_etf_with_metrics(industry_data, etf_metrics)
+                print(f"   Enriched industry ETFs: {ind_v} with VARS, {ind_c} with ticker color")
                 with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
                     json.dump(industry_data, f, indent=2)
 

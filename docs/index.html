@@ -39,16 +39,16 @@
 
     <!-- ══ TAB BAR ═══════════════════════════════════════ -->
     <div class="tab-bar">
-      <button class="tab-btn active" data-tab="macro" id="tab-macro">▸ Macro Overview</button>
-      <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
-      <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">▸ Theme Viz</button>
-      <button class="tab-btn" data-tab="momentum" id="tab-momentum">▸ Momentum 1/3/6</button>
-      <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">▸ Momentum Viz</button>
-      <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry ETFs</button>
-      <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Leverage ETFs</button>
-      <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP Scanner</button>
+      <button class="tab-btn active" data-tab="macro" id="tab-macro">▸ Overview</button>
       <button class="tab-btn" data-tab="vars" id="tab-vars">▸ VARS</button>
       <button class="tab-btn" data-tab="varsviz" id="tab-varsviz">▸ VARS Viz</button>
+      <button class="tab-btn" data-tab="themes" id="tab-themes">▸ Themes</button>
+      <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">▸ Theme Viz</button>
+      <button class="tab-btn" data-tab="momentum" id="tab-momentum">▸ Momentum</button>
+      <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">▸ Momentum Viz</button>
+      <button class="tab-btn" data-tab="industry" id="tab-industry">▸ Industry</button>
+      <button class="tab-btn" data-tab="etf" id="tab-etf">▸ Lev ETF</button>
+      <button class="tab-btn" data-tab="ep" id="tab-ep">▸ EP</button>
       <button class="tab-btn" data-tab="parabolic" id="tab-parabolic">▸ Parabolic</button>
     </div>
 
@@ -504,13 +504,13 @@
           <div class="time-travel-dates" id="industry-tt-dates"></div>
         </div>
         <div class="card">
-          <div class="card-lbl">▸ Industry ETFs <span class="badge">sorted by RS_STS%</span></div>
+          <div class="card-lbl">▸ Industry ETFs <span class="badge">sorted by VARS</span></div>
           <table id="industry-table">
             <thead>
               <tr>
                 <th class="l">Ticker</th>
                 <th class="l">Name</th>
-                <th class="sortable sorted-desc" data-sort="rs_sts" data-tab="industry">RS_STS%</th>
+                <th class="sortable sorted-desc" data-sort="vars" data-tab="industry">VARS</th>
                 <th class="sortable" data-sort="intraday" data-tab="industry">Intra%</th>
                 <th class="sortable" data-sort="daily" data-tab="industry">Daily%</th>
                 <th class="sortable" data-sort="monthly" data-tab="industry">Monthly%</th>
@@ -549,13 +549,13 @@
           <div class="time-travel-dates" id="etf-tt-dates"></div>
         </div>
         <div class="card">
-          <div class="card-lbl">▸ Leveraged ETFs <span class="badge">sorted by RS_STS%</span></div>
+          <div class="card-lbl">▸ Leveraged ETFs <span class="badge">sorted by VARS</span></div>
           <table id="etf-table">
             <thead>
               <tr>
                 <th class="l">Ticker</th>
                 <th class="l">Name</th>
-                <th class="sortable sorted-desc" data-sort="rs_sts" data-tab="etf">RS_STS%</th>
+                <th class="sortable sorted-desc" data-sort="vars" data-tab="etf">VARS</th>
                 <th class="sortable" data-sort="intraday" data-tab="etf">Intra%</th>
                 <th class="sortable" data-sort="daily" data-tab="etf">Daily%</th>
                 <th class="sortable" data-sort="monthly" data-tab="etf">Monthly%</th>
@@ -709,9 +709,12 @@
           <div id="varsviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
         </div>
         <div class="themeviz-legend">
-          <span class="lg-item"><span class="lg-dot lg-blazing"></span>VARS ≥ 6</span>
-          <span class="lg-item"><span class="lg-dot lg-strong"></span>VARS ≥ 4</span>
-          <span class="lg-item"><span class="lg-dot lg-solid"></span>VARS ≥ 2</span>
+          <span class="lg-item"><span class="lg-dot lg-vars6"></span>VARS ≥ 6</span>
+          <span class="lg-item"><span class="lg-dot lg-vars4"></span>VARS ≥ 4</span>
+          <span class="lg-item"><span class="lg-dot lg-vars2"></span>VARS ≥ 2</span>
+          <span class="lg-item"><span class="lg-dot lg-varslow"></span>VARS &lt; 2</span>
+          <span class="lg-sep">·</span>
+          <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight / inside day on MA</span>
         </div>
       </div>
     </div>

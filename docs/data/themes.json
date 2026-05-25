@@ -1858,69 +1858,91 @@
     },
     {
       "rank": 30,
-      "name": "Fintech & Crypto / Wealth & Asset Management",
-      "score": 43.6,
-      "avg_rs": 87.7,
+      "name": "Quantum Computing",
+      "score": 43.5,
+      "avg_rs": 90.7,
       "tickers": [
         {
-          "ticker": "ASST",
-          "vars": -0.93,
-          "rs": 96.2,
-          "price": 18.21,
-          "float": "58.1",
-          "eps": "63",
-          "sales": "1516",
-          "inst": "+85.6",
-          "short": 21.9
+          "ticker": "QUBT",
+          "vars": -4.04,
+          "rs": 100.0,
+          "price": 12.31,
+          "float": "197.9",
+          "eps": "-47",
+          "sales": "9364",
+          "inst": "-2.9",
+          "short": 30.1
         },
         {
-          "ticker": "WT",
-          "vars": 6.26,
-          "rs": 57.7,
-          "price": 19.08,
-          "float": "131.9",
-          "eps": "34",
-          "sales": "48",
-          "inst": "+2.4",
-          "short": 13.9
+          "ticker": "IONQ",
+          "vars": -1.41,
+          "rs": 100.0,
+          "price": 63.64,
+          "float": "363.9",
+          "eps": "81",
+          "sales": "755",
+          "inst": "+3.4",
+          "short": 23.0
         },
         {
-          "ticker": "WLTH",
-          "vars": -6.89,
-          "rs": 88.5,
-          "price": 11.76,
-          "float": "84.9",
-          "eps": "175",
-          "sales": "20",
-          "inst": "+10.0",
-          "short": 6.7,
+          "ticker": "RGTI",
+          "vars": -4.13,
+          "rs": 100.0,
+          "price": 26.42,
+          "float": "325.1",
+          "eps": "-19",
+          "sales": "199",
+          "inst": "+15.0",
+          "short": 15.5
+        },
+        {
+          "ticker": "QBTS",
+          "vars": -5.61,
+          "rs": 100.0,
+          "price": 29.4,
+          "float": "356.4",
+          "eps": "-17",
+          "sales": "-81",
+          "inst": "+2.1",
+          "short": 14.7
+        },
+        {
+          "ticker": "LAES",
+          "vars": -8.05,
+          "rs": 100.0,
+          "price": 3.38,
+          "float": "215.4",
+          "eps": "29",
+          "sales": "138",
+          "inst": "+0.5",
+          "short": 8.3
+        },
+        {
+          "ticker": "XNDU",
+          "vars": 2.09,
+          "rs": 46.2,
+          "price": 15.18,
+          "float": "N/A",
+          "eps": "4",
+          "sales": "N/A",
+          "inst": "+91.0",
+          "short": null,
           "ticker_color": "green"
         },
         {
-          "ticker": "GS",
-          "vars": -0.33,
-          "rs": 100.0,
-          "price": 996.73,
-          "float": "293.3",
-          "eps": "16",
-          "sales": "9",
-          "inst": "-1.4",
-          "short": 2.4
-        },
-        {
-          "ticker": "MS",
-          "vars": -0.62,
-          "rs": 96.2,
-          "price": 201.03,
-          "float": "1200.0",
-          "eps": "16",
-          "sales": "14",
-          "inst": "-0.3",
-          "short": 1.2
+          "ticker": "INFQ",
+          "vars": -4.06,
+          "rs": 88.5,
+          "price": 16.35,
+          "float": "189.3",
+          "eps": "-47",
+          "sales": "N/A",
+          "inst": "-6.1",
+          "short": 2.2
         }
       ],
-      "l1": "Fintech & Crypto",
-      "l2": "Wealth & Asset Management",
+      "l1": "Quantum Computing",
+      "l2": null,
       "l3": null
     }
   ],
@@ -2149,14 +2171,14 @@
         "ticker_count": 10
       },
       {
-        "id": "Fintech & Crypto",
+        "id": "Quantum Computing",
         "kind": "l1"
       },
       {
-        "id": "Fintech & Crypto / Wealth & Asset Management",
+        "id": "Quantum Computing",
         "kind": "leaf",
-        "parent": "Fintech & Crypto",
-        "ticker_count": 5
+        "parent": "Quantum Computing",
+        "ticker_count": 7
       }
     ],
     "edges": [
@@ -2303,11 +2325,6 @@
       {
         "source": "AI / Software & Analytics",
         "target": "AI",
-        "kind": "is_a"
-      },
-      {
-        "source": "Fintech & Crypto / Wealth & Asset Management",
-        "target": "Fintech & Crypto",
         "kind": "is_a"
       }
     ]

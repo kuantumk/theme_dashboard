@@ -1,5 +1,5 @@
 # screener name: vars
-# description: Volatility-Adjusted Relative Strength leaders, both raw and EMA(20) > 2
+# description: Volatility-Adjusted Relative Strength leaders, VARS > 2
 
 
 def filter_master_table(master_df):
@@ -16,7 +16,6 @@ def filter_master_table(master_df):
         # ADR% >= 3.3%
         (master_df['adr_pct'] >= 0.033) &
 
-        # VARS > 2 and VARS 20EMA > 2
-        (master_df['vars'] > 2.0) &
-        (master_df['vars_20ema'] > 1.0)
+        # VARS > 2
+        (master_df['vars'] > 2.0)
     )

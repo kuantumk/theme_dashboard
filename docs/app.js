@@ -1762,13 +1762,11 @@
             <table class="coiled-table">
               <thead><tr>
                 <th class="l">Ticker</th>
-                <th>Setup</th>
                 <th>RS%</th>
                 <th>VARS</th>
                 <th>Dry</th>
                 <th>50SMA%</th>
                 <th>252H</th>
-                <th class="l">Why</th>
               </tr></thead>
               <tbody>
       `;
@@ -1784,13 +1782,11 @@
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
-                  <td class="up">${t.score?.toFixed?.(1) ?? t.score ?? '—'}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
                   <td class="${varsClass}">${typeof t.vars === 'number' ? t.vars.toFixed(2) : '—'}</td>
                   <td>${typeof t.vol_dry === 'number' ? t.vol_dry.toFixed(2) : '—'}</td>
                   <td class="${distClass}">${typeof t.dist50 === 'number' ? t.dist50.toFixed(1) : '—'}</td>
                   <td>${typeof t.high252 === 'number' ? t.high252.toFixed(2) : '—'}</td>
-                  <td class="l flags-cell">${escHtml(t.flags || '')}</td>
                 </tr>
         `;
       });

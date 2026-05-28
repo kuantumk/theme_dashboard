@@ -1,309 +1,410 @@
 {
-  "report_date": "2026-05-27",
+  "report_date": "2026-05-28",
   "themes": [
     {
-      "name": "Metals & Mining / Diversified",
+      "name": "Oil & Gas / E&P",
       "theme_score": 100.0,
-      "avg_setup_score": 100.0,
-      "coiled_count": 3,
-      "other_screened_count": 4,
-      "tickers": [
-        {
-          "ticker": "ASM",
-          "score": 100.0,
-          "flags": "inside; tight; NR20; volDry=0.93; 50SMA=-0.6%; 252H=0.56x; prior=4.0x; blind=1m/RS/VARS",
-          "rs": 19.2,
-          "vars": -4.3,
-          "price": 6.68,
-          "vol_dry": 0.93,
-          "dist50": -0.6,
-          "high252": 0.56,
-          "range10": 27.1,
-          "float": "156.5",
-          "eps": "124",
-          "sales": "166",
-          "inst": "+2.0",
-          "short": 2.2,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "EXK",
-          "score": 100.0,
-          "flags": "tight; NR20; volDry=0.75; 50SMA=-2.3%; 252H=0.62x; prior=4.3x; blind=1m/RS/VARS",
-          "rs": 11.5,
-          "vars": -7.34,
-          "price": 9.32,
-          "vol_dry": 0.75,
-          "dist50": -2.3,
-          "high252": 0.62,
-          "range10": 29.2,
-          "float": "295.1",
-          "eps": "4286",
-          "sales": "231",
-          "inst": "+5.0",
-          "short": 6.9,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "NG",
-          "score": 100.0,
-          "flags": "inside; tight; volDry=0.74; 50SMA=-7.7%; 252H=0.56x; prior=4.2x; blind=1m/RS/VARS",
-          "rs": 11.5,
-          "vars": -8.49,
-          "price": 8.06,
-          "vol_dry": 0.74,
-          "dist50": -7.7,
-          "high252": 0.56,
-          "range10": 20.1,
-          "float": "329.8",
-          "eps": "44",
-          "sales": null,
-          "inst": "-0.1",
-          "short": 4.4,
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Diversified",
-      "l3": null
-    },
-    {
-      "name": "Metals & Mining / Rare Earth & Strategic",
-      "theme_score": 100.0,
-      "avg_setup_score": 98.7,
+      "avg_setup_score": 97.3,
       "coiled_count": 3,
       "other_screened_count": 9,
       "tickers": [
         {
-          "ticker": "CRML",
+          "ticker": "KOS",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.70; 50SMA=+12.7%; 252H=0.36x; prior=24.4x; blind=1m/RS/VARS",
-          "rs": 30.8,
-          "vars": 0.31,
-          "price": 11.58,
-          "vol_dry": 0.7,
-          "dist50": 12.7,
-          "high252": 0.36,
-          "range10": 20.6,
-          "float": "57.7",
-          "eps": "-141",
-          "sales": null,
-          "inst": "+3.1",
-          "short": 40.0,
-          "ticker_color": "green"
+          "flags": "tight; NR20; volDry=0.59; 50SMA=-4.4%; 252H=0.82x; prior=4.0x; blind=1m/RS",
+          "rs": 3.8,
+          "vars": 3.71,
+          "price": 2.74,
+          "vol_dry": 0.59,
+          "dist50": -4.4,
+          "high252": 0.82,
+          "range10": 25.5,
+          "float": "571.2",
+          "eps": "129",
+          "sales": "45",
+          "inst": "+19.0",
+          "short": 4.9
         },
         {
-          "ticker": "NB",
+          "ticker": "OBE",
           "score": 100.0,
-          "flags": "inside; tight; NR20; volDry=0.94; 50SMA=+6.6%; 252H=0.46x; prior=5.8x; blind=1m/RS/VARS",
-          "rs": 23.1,
-          "vars": -5.46,
-          "price": 5.73,
-          "vol_dry": 0.94,
-          "dist50": 6.6,
-          "high252": 0.46,
-          "range10": 25.0,
-          "float": "142.2",
-          "eps": "-39",
-          "sales": null,
-          "inst": "+13.4",
-          "short": 5.1,
-          "ticker_color": "green"
+          "flags": "inside; tight; NR20; volDry=0.68; 50SMA=-0.7%; 252H=0.77x; prior=3.1x; blind=1m/RS",
+          "rs": 3.8,
+          "vars": 3.72,
+          "price": 11.17,
+          "vol_dry": 0.68,
+          "dist50": -0.7,
+          "high252": 0.77,
+          "range10": 25.7,
+          "float": "59.7",
+          "eps": "270",
+          "sales": "-23",
+          "inst": "+11.6",
+          "short": 11.9
         },
         {
-          "ticker": "IE",
-          "score": 96.0,
-          "flags": "tight; NR20; volDry=0.80; 50SMA=+0.8%; 252H=0.61x; prior=3.1x; blind=1m/RS/VARS",
-          "rs": 34.6,
-          "vars": -8.15,
-          "price": 13.04,
-          "vol_dry": 0.8,
-          "dist50": 0.8,
-          "high252": 0.61,
-          "range10": 29.3,
-          "float": "116.0",
-          "eps": "78",
-          "sales": "17",
-          "inst": "+7.6",
-          "short": 7.0,
-          "ticker_color": "green"
+          "ticker": "MUR",
+          "score": 92.0,
+          "flags": "tight; NR20; volDry=0.68; 50SMA=-7.1%; 252H=0.84x; prior=2.2x; blind=1m/RS/VARS",
+          "rs": 3.8,
+          "vars": -5.39,
+          "price": 36.19,
+          "vol_dry": 0.68,
+          "dist50": -7.1,
+          "high252": 0.84,
+          "range10": 16.0,
+          "float": "134.9",
+          "eps": "181",
+          "sales": "9",
+          "inst": "+0.3",
+          "short": 6.9
         }
       ],
-      "l1": "Metals & Mining",
-      "l2": "Rare Earth & Strategic",
+      "l1": "Oil & Gas",
+      "l2": "E&P",
       "l3": null
     },
     {
-      "name": "Biotech / Rare Disease",
+      "name": "Software & Internet / BPO & IT Services",
       "theme_score": 100.0,
-      "avg_setup_score": 100.0,
-      "coiled_count": 2,
-      "other_screened_count": 11,
+      "avg_setup_score": 96.7,
+      "coiled_count": 3,
+      "other_screened_count": 9,
       "tickers": [
         {
-          "ticker": "RYTM",
-          "score": 100.0,
-          "flags": "tight; NR20; volDry=0.73; 50SMA=+4.9%; 252H=0.75x; prior=2.1x; blind=1m/RS/VARS",
-          "rs": 61.5,
-          "vars": -10.97,
-          "price": 91.42,
-          "vol_dry": 0.73,
-          "dist50": 4.9,
-          "high252": 0.75,
-          "range10": 13.7,
-          "float": "66.4",
-          "eps": "-1",
-          "sales": "84",
-          "inst": "+1.2",
-          "short": 12.1,
-          "ticker_color": "green"
+          "ticker": "CNXC",
+          "score": 99.0,
+          "flags": "inside; tight; NR7; volDry=0.64; 50SMA=+0.4%; 252H=0.44x; prior=2.7x; blind=1m/VARS",
+          "rs": 76.9,
+          "vars": -13.52,
+          "price": 26.48,
+          "vol_dry": 0.64,
+          "dist50": 0.4,
+          "high252": 0.44,
+          "range10": 15.3,
+          "float": "47.4",
+          "eps": "4",
+          "sales": "5",
+          "inst": "+0.9",
+          "short": 22.2
         },
         {
-          "ticker": "VRDN",
+          "ticker": "CBZ",
+          "score": 97.0,
+          "flags": "tight; NR20; volDry=0.60; 50SMA=+9.8%; 252H=0.41x; prior=3.2x; blind=1m/RS/VARS",
+          "rs": 53.8,
+          "vars": -14.98,
+          "price": 32.32,
+          "vol_dry": 0.6,
+          "dist50": 9.8,
+          "high252": 0.41,
+          "range10": 14.7,
+          "float": "47.9",
+          "eps": "13",
+          "sales": "1",
+          "inst": "-5.0",
+          "short": 8.4
+        },
+        {
+          "ticker": "KD",
+          "score": 94.0,
+          "flags": "inside; tight; NR7; volDry=0.91; 50SMA=-8.5%; 252H=0.27x; prior=4.4x; blind=1m/RS/VARS",
+          "rs": 15.4,
+          "vars": -16.6,
+          "price": 11.78,
+          "vol_dry": 0.91,
+          "dist50": -8.5,
+          "high252": 0.27,
+          "range10": 13.2,
+          "float": "220.5",
+          "eps": "23",
+          "sales": "-1",
+          "inst": "-6.3",
+          "short": 10.8,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Software & Internet",
+      "l2": "BPO & IT Services",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Immunology",
+      "theme_score": 100.0,
+      "avg_setup_score": 98.5,
+      "coiled_count": 2,
+      "other_screened_count": 15,
+      "tickers": [
+        {
+          "ticker": "ALMS",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.64; 50SMA=-4.1%; 252H=0.50x; prior=2.6x; blind=RS/VARS",
-          "rs": 69.2,
-          "vars": -14.17,
-          "price": 17.26,
+          "flags": "tight; NR20; volDry=0.64; 50SMA=-9.7%; 252H=0.70x; prior=11.1x; blind=1m/RS/VARS",
+          "rs": 0.0,
+          "vars": -3.55,
+          "price": 21.4,
           "vol_dry": 0.64,
-          "dist50": -4.1,
-          "high252": 0.5,
-          "range10": 14.8,
-          "float": "95.7",
-          "eps": "-14",
-          "sales": "96",
-          "inst": "+9.9",
-          "short": 12.0,
+          "dist50": -9.7,
+          "high252": 0.7,
+          "range10": 19.6,
+          "float": "83.8",
+          "eps": "0",
+          "sales": "-90",
+          "inst": "+12.6",
+          "short": 13.6
+        },
+        {
+          "ticker": "AUPH",
+          "score": 97.0,
+          "flags": "inside; tight; NR7; volDry=0.93; 50SMA=-0.8%; 252H=0.91x; prior=2.3x; blind=1m/RS/VARS",
+          "rs": 3.8,
+          "vars": -8.8,
+          "price": 15.35,
+          "vol_dry": 0.93,
+          "dist50": -0.8,
+          "high252": 0.91,
+          "range10": 7.7,
+          "float": "113.5",
+          "eps": "-56",
+          "sales": "24",
+          "inst": "+1.7",
+          "short": 8.0,
           "ticker_color": "green"
         }
       ],
       "l1": "Biotech",
-      "l2": "Rare Disease",
+      "l2": "Immunology",
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Payments",
+      "name": "Metals & Mining / Lithium / Hard Rock",
       "theme_score": 100.0,
-      "avg_setup_score": 94.5,
+      "avg_setup_score": 100.0,
       "coiled_count": 2,
-      "other_screened_count": 8,
+      "other_screened_count": 0,
       "tickers": [
         {
-          "ticker": "ALKT",
-          "score": 97.0,
-          "flags": "inside; tight; NR20; volDry=0.92; 50SMA=+0.9%; 252H=0.54x; prior=2.2x; blind=1m/RS/VARS",
+          "ticker": "ALB",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.96; 50SMA=-4.3%; 252H=0.80x; prior=4.2x; blind=1m/RS/VARS",
           "rs": 19.2,
-          "vars": -13.94,
-          "price": 16.8,
-          "vol_dry": 0.92,
-          "dist50": 0.9,
-          "high252": 0.54,
-          "range10": 7.6,
-          "float": "61.7",
-          "eps": "54",
-          "sales": "29",
-          "inst": "-4.7",
-          "short": 11.6,
+          "vars": -2.39,
+          "price": 176.32,
+          "vol_dry": 0.96,
+          "dist50": -4.3,
+          "high252": 0.8,
+          "range10": 18.4,
+          "float": "117.6",
+          "eps": "1598",
+          "sales": "33",
+          "inst": "+1.7",
+          "short": 9.1,
           "ticker_color": "green"
         },
         {
-          "ticker": "SOFI",
-          "score": 92.0,
-          "flags": "inside; tight; volDry=0.94; 50SMA=-3.2%; 252H=0.49x; prior=2.5x; blind=1m/RS/VARS",
-          "rs": 42.3,
-          "vars": -16.43,
-          "price": 16.17,
-          "vol_dry": 0.94,
-          "dist50": -3.2,
-          "high252": 0.49,
-          "range10": 12.6,
-          "float": "1260.0",
-          "eps": "53",
-          "sales": "36",
-          "inst": "+1.5",
-          "short": 12.8,
+          "ticker": "SQM",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.91; 50SMA=-0.3%; 252H=0.87x; prior=3.3x; blind=1m/RS/VARS",
+          "rs": 19.2,
+          "vars": -2.21,
+          "price": 84.05,
+          "vol_dry": 0.91,
+          "dist50": -0.3,
+          "high252": 0.87,
+          "range10": 14.6,
+          "float": "142.7",
+          "eps": "189",
+          "sales": "68",
+          "inst": "-1.6",
+          "short": 1.1,
           "ticker_color": "green"
-        }
-      ],
-      "l1": "Fintech & Crypto",
-      "l2": "Payments",
-      "l3": null
-    },
-    {
-      "name": "Metals & Mining / Copper",
-      "theme_score": 100.0,
-      "avg_setup_score": 97.0,
-      "coiled_count": 2,
-      "other_screened_count": 5,
-      "tickers": [
-        {
-          "ticker": "NAK",
-          "score": 98.0,
-          "flags": "inside; tight; NR7; volDry=0.79; 50SMA=+19.3%; 252H=0.73x; prior=4.1x; blind=1m/RS/VARS",
-          "rs": 65.4,
-          "vars": -3.72,
-          "price": 2.17,
-          "vol_dry": 0.79,
-          "dist50": 19.3,
-          "high252": 0.73,
-          "range10": 21.7,
-          "float": "549.8",
-          "eps": "79",
-          "sales": null,
-          "inst": "+2.9",
-          "short": 4.7,
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "SCCO",
-          "score": 96.0,
-          "flags": "inside; tight; volDry=0.80; 50SMA=+6.9%; 252H=0.85x; prior=2.6x; blind=1m/RS/VARS",
-          "rs": 69.2,
-          "vars": 1.75,
-          "price": 187.75,
-          "vol_dry": 0.8,
-          "dist50": 6.9,
-          "high252": 0.85,
-          "range10": 15.8,
-          "float": "79.2",
-          "eps": "38",
-          "sales": "36",
-          "inst": null,
-          "short": 14.2
         }
       ],
       "l1": "Metals & Mining",
-      "l2": "Copper",
+      "l2": "Lithium",
+      "l3": "Hard Rock"
+    },
+    {
+      "name": "Oil & Gas / LNG & Natural Gas",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 2,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "NEXT",
+          "score": 100.0,
+          "flags": "inside; tight; NR7; volDry=0.59; 50SMA=+2.8%; 252H=0.66x; prior=2.6x; blind=1m/RS/VARS",
+          "rs": 38.5,
+          "vars": -2.99,
+          "price": 8.05,
+          "vol_dry": 0.59,
+          "dist50": 2.8,
+          "high252": 0.66,
+          "range10": 17.4,
+          "float": "129.0",
+          "eps": "-85",
+          "sales": null,
+          "inst": "+1.6",
+          "short": 17.3,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "VG",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.62; 50SMA=-8.3%; 252H=0.65x; prior=3.4x; blind=1m/RS/VARS",
+          "rs": 19.2,
+          "vars": 0.9,
+          "price": 12.54,
+          "vol_dry": 0.62,
+          "dist50": -8.3,
+          "high252": 0.65,
+          "range10": 21.3,
+          "float": "502.6",
+          "eps": "68",
+          "sales": "59",
+          "inst": "-2.8",
+          "short": 6.6
+        }
+      ],
+      "l1": "Oil & Gas",
+      "l2": "LNG & Natural Gas",
+      "l3": null
+    },
+    {
+      "name": "Specialty Chemicals / Specialty Materials",
+      "theme_score": 100.0,
+      "avg_setup_score": 99.0,
+      "coiled_count": 2,
+      "other_screened_count": 10,
+      "tickers": [
+        {
+          "ticker": "ALB",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.96; 50SMA=-4.3%; 252H=0.80x; prior=4.2x; blind=1m/RS/VARS",
+          "rs": 19.2,
+          "vars": -2.39,
+          "price": 176.32,
+          "vol_dry": 0.96,
+          "dist50": -4.3,
+          "high252": 0.8,
+          "range10": 18.4,
+          "float": "117.6",
+          "eps": "1598",
+          "sales": "33",
+          "inst": "+1.7",
+          "short": 9.1,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "KODK",
+          "score": 98.0,
+          "flags": "inside; tight; volDry=0.75; 50SMA=-9.3%; 252H=0.68x; prior=3.0x; blind=1m/RS/VARS",
+          "rs": 30.8,
+          "vars": -5.61,
+          "price": 10.07,
+          "vol_dry": 0.75,
+          "dist50": -9.3,
+          "high252": 0.68,
+          "range10": 11.9,
+          "float": "67.3",
+          "eps": null,
+          "sales": "7",
+          "inst": "+2.7",
+          "short": 6.5,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Specialty Chemicals",
+      "l2": "Specialty Materials",
       "l3": null
     },
     {
       "name": "AI / Software & Analytics",
       "theme_score": 100.0,
-      "avg_setup_score": 100.0,
+      "avg_setup_score": 99.0,
       "coiled_count": 1,
-      "other_screened_count": 21,
+      "other_screened_count": 26,
       "tickers": [
         {
-          "ticker": "RZLV",
-          "score": 100.0,
-          "flags": "tight; NR20; volDry=0.70; 50SMA=-2.6%; 252H=0.30x; prior=4.4x; blind=1m/RS/VARS",
-          "rs": 26.9,
-          "vars": -6.85,
-          "price": 2.55,
-          "vol_dry": 0.7,
-          "dist50": -2.6,
-          "high252": 0.3,
-          "range10": 16.9,
-          "float": "241.0",
-          "eps": "48",
-          "sales": null,
-          "inst": "-4.1",
-          "short": 18.3,
-          "ticker_color": "green"
+          "ticker": "CNXC",
+          "score": 99.0,
+          "flags": "inside; tight; NR7; volDry=0.64; 50SMA=+0.4%; 252H=0.44x; prior=2.7x; blind=1m/VARS",
+          "rs": 76.9,
+          "vars": -13.52,
+          "price": 26.48,
+          "vol_dry": 0.64,
+          "dist50": 0.4,
+          "high252": 0.44,
+          "range10": 15.3,
+          "float": "47.4",
+          "eps": "4",
+          "sales": "5",
+          "inst": "+0.9",
+          "short": 22.2
         }
       ],
       "l1": "AI",
       "l2": "Software & Analytics",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Cell & Gene Therapy",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 10,
+      "tickers": [
+        {
+          "ticker": "CAPR",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.71; 50SMA=-7.8%; 252H=0.72x; prior=9.4x; blind=1m/RS/VARS",
+          "rs": 7.7,
+          "vars": -7.98,
+          "price": 29.11,
+          "vol_dry": 0.71,
+          "dist50": -7.8,
+          "high252": 0.72,
+          "range10": 14.9,
+          "float": "52.3",
+          "eps": "74",
+          "sales": null,
+          "inst": "+8.5",
+          "short": 20.9,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Cell & Gene Therapy",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Drug Discovery Platform",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 4,
+      "tickers": [
+        {
+          "ticker": "IMNM",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.94; 50SMA=+1.9%; 252H=0.82x; prior=3.5x; blind=1m/RS/VARS",
+          "rs": 30.8,
+          "vars": -7.3,
+          "price": 22.54,
+          "vol_dry": 0.94,
+          "dist50": 1.9,
+          "high252": 0.82,
+          "range10": 17.0,
+          "float": "102.7",
+          "eps": "12",
+          "sales": "-100",
+          "inst": "+6.4",
+          "short": 17.2,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Drug Discovery Platform",
       "l3": null
     },
     {
@@ -314,21 +415,21 @@
       "other_screened_count": 3,
       "tickers": [
         {
-          "ticker": "RYTM",
+          "ticker": "GPCR",
           "score": 100.0,
-          "flags": "tight; NR20; volDry=0.73; 50SMA=+4.9%; 252H=0.75x; prior=2.1x; blind=1m/RS/VARS",
-          "rs": 61.5,
-          "vars": -10.97,
-          "price": 91.42,
+          "flags": "inside; tight; NR20; volDry=0.73; 50SMA=-11.5%; 252H=0.42x; prior=6.0x; blind=1m/RS/VARS",
+          "rs": 46.2,
+          "vars": -16.1,
+          "price": 40.17,
           "vol_dry": 0.73,
-          "dist50": 4.9,
-          "high252": 0.75,
-          "range10": 13.7,
-          "float": "66.4",
-          "eps": "-1",
-          "sales": "84",
-          "inst": "+1.2",
-          "short": 12.1,
+          "dist50": -11.5,
+          "high252": 0.42,
+          "range10": 14.2,
+          "float": "69.4",
+          "eps": "-73",
+          "sales": null,
+          "inst": "+0.7",
+          "short": 8.1,
           "ticker_color": "green"
         }
       ],
@@ -337,58 +438,28 @@
       "l3": null
     },
     {
-      "name": "Biotech / Neuroscience",
+      "name": "Biotech / Oncology / Antibodies",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 6,
+      "other_screened_count": 1,
       "tickers": [
         {
-          "ticker": "CLNN",
+          "ticker": "IMNM",
           "score": 100.0,
-          "flags": "inside; tight; NR20; volDry=0.24; 50SMA=+7.3%; 252H=0.50x; prior=5.7x; blind=RS/VARS",
-          "rs": 50.0,
-          "vars": -5.83,
-          "price": 6.69,
-          "vol_dry": 0.24,
-          "dist50": 7.3,
-          "high252": 0.5,
-          "range10": 20.3,
-          "float": "9.9",
-          "eps": "36",
-          "sales": "-81",
-          "inst": "+6.0",
-          "short": 8.8,
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Biotech",
-      "l2": "Neuroscience",
-      "l3": null
-    },
-    {
-      "name": "Biotech / Oncology / Antibodies",
-      "theme_score": 100.0,
-      "avg_setup_score": 94.0,
-      "coiled_count": 1,
-      "other_screened_count": 2,
-      "tickers": [
-        {
-          "ticker": "SMMT",
-          "score": 94.0,
-          "flags": "tight; NR20; volDry=0.92; 50SMA=-8.3%; 252H=0.56x; prior=2.2x; blind=1m/RS/VARS",
-          "rs": 23.1,
-          "vars": -4.63,
-          "price": 17.36,
-          "vol_dry": 0.92,
-          "dist50": -8.3,
-          "high252": 0.56,
-          "range10": 20.3,
-          "float": "134.5",
-          "eps": "21",
-          "sales": null,
-          "inst": "+2.0",
-          "short": 21.7,
+          "flags": "tight; NR20; volDry=0.94; 50SMA=+1.9%; 252H=0.82x; prior=3.5x; blind=1m/RS/VARS",
+          "rs": 30.8,
+          "vars": -7.3,
+          "price": 22.54,
+          "vol_dry": 0.94,
+          "dist50": 1.9,
+          "high252": 0.82,
+          "range10": 17.0,
+          "float": "102.7",
+          "eps": "12",
+          "sales": "-100",
+          "inst": "+6.4",
+          "short": 17.2,
           "ticker_color": "green"
         }
       ],
@@ -397,33 +468,122 @@
       "l3": "Antibodies"
     },
     {
-      "name": "Biotech / Ophthalmology",
+      "name": "Biotech / Oncology / Immuno-Oncology",
+      "theme_score": 100.0,
+      "avg_setup_score": 98.0,
+      "coiled_count": 1,
+      "other_screened_count": 7,
+      "tickers": [
+        {
+          "ticker": "CGON",
+          "score": 98.0,
+          "flags": "tight; NR20; volDry=0.89; 50SMA=-9.4%; 252H=0.80x; prior=3.2x; blind=1m/RS/VARS",
+          "rs": 0.0,
+          "vars": -1.22,
+          "price": 60.73,
+          "vol_dry": 0.89,
+          "dist50": -9.4,
+          "high252": 0.8,
+          "range10": 27.0,
+          "float": "62.4",
+          "eps": "-32",
+          "sales": "1983",
+          "inst": "+1.2",
+          "short": 14.7
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Oncology",
+      "l3": "Immuno-Oncology"
+    },
+    {
+      "name": "Biotech / Oncology / Oncolytic Viruses",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
       "other_screened_count": 1,
       "tickers": [
         {
-          "ticker": "VRDN",
+          "ticker": "REPL",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.64; 50SMA=-4.1%; 252H=0.50x; prior=2.6x; blind=RS/VARS",
-          "rs": 69.2,
-          "vars": -14.17,
-          "price": 17.26,
-          "vol_dry": 0.64,
-          "dist50": -4.1,
-          "high252": 0.5,
-          "range10": 14.8,
-          "float": "95.7",
+          "flags": "inside; tight; NR20; volDry=0.63; 50SMA=-0.1%; 252H=0.35x; prior=8.8x; blind=RS/VARS",
+          "rs": 65.4,
+          "vars": -12.13,
+          "price": 4.68,
+          "vol_dry": 0.63,
+          "dist50": -0.1,
+          "high252": 0.35,
+          "range10": 23.1,
+          "float": "76.2",
+          "eps": "0",
+          "sales": null,
+          "inst": "-12.0",
+          "short": 31.0,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Oncology",
+      "l3": "Oncolytic Viruses"
+    },
+    {
+      "name": "Biotech / Ophthalmology",
+      "theme_score": 100.0,
+      "avg_setup_score": 99.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "VRDN",
+          "score": 99.0,
+          "flags": "tight; NR20; volDry=0.60; 50SMA=-1.8%; 252H=0.51x; prior=2.6x; blind=VARS",
+          "rs": 73.1,
+          "vars": -13.91,
+          "price": 17.45,
+          "vol_dry": 0.6,
+          "dist50": -1.8,
+          "high252": 0.51,
+          "range10": 14.6,
+          "float": "102.5",
           "eps": "-14",
           "sales": "96",
           "inst": "+9.9",
-          "short": 12.0,
+          "short": 13.9,
           "ticker_color": "green"
         }
       ],
       "l1": "Biotech",
       "l2": "Ophthalmology",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Rare Disease",
+      "theme_score": 100.0,
+      "avg_setup_score": 99.0,
+      "coiled_count": 1,
+      "other_screened_count": 11,
+      "tickers": [
+        {
+          "ticker": "VRDN",
+          "score": 99.0,
+          "flags": "tight; NR20; volDry=0.60; 50SMA=-1.8%; 252H=0.51x; prior=2.6x; blind=VARS",
+          "rs": 73.1,
+          "vars": -13.91,
+          "price": 17.45,
+          "vol_dry": 0.6,
+          "dist50": -1.8,
+          "high252": 0.51,
+          "range10": 14.6,
+          "float": "102.5",
+          "eps": "-14",
+          "sales": "96",
+          "inst": "+9.9",
+          "short": 13.9,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Rare Disease",
       "l3": null
     },
     {
@@ -436,19 +596,19 @@
         {
           "ticker": "KYMR",
           "score": 100.0,
-          "flags": "tight; NR20; volDry=0.85; 50SMA=-1.9%; 252H=0.79x; prior=3.7x; blind=1m/RS/VARS",
-          "rs": 23.1,
-          "vars": -7.01,
-          "price": 81.7,
+          "flags": "tight; NR20; volDry=0.85; 50SMA=-2.2%; 252H=0.79x; prior=3.6x; blind=1m/RS/VARS",
+          "rs": 15.4,
+          "vars": -6.1,
+          "price": 81.46,
           "vol_dry": 0.85,
-          "dist50": -1.9,
+          "dist50": -2.2,
           "high252": 0.79,
-          "range10": 12.0,
+          "range10": 12.1,
           "float": "71.1",
           "eps": "5",
           "sales": "56",
           "inst": "+8.8",
-          "short": 13.6,
+          "short": 14.1,
           "ticker_color": "green"
         }
       ],
@@ -457,86 +617,118 @@
       "l3": null
     },
     {
-      "name": "Defense & Aerospace / Drones",
+      "name": "Clean Energy / Decarbonization Tech",
       "theme_score": 100.0,
-      "avg_setup_score": 93.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 6,
+      "other_screened_count": 1,
       "tickers": [
         {
-          "ticker": "AVAV",
-          "score": 93.0,
-          "flags": "inside; tight; volDry=0.87; 50SMA=-2.4%; 252H=0.43x; prior=2.7x; blind=1m/RS/VARS",
-          "rs": 53.8,
-          "vars": -6.88,
-          "price": 181.28,
-          "vol_dry": 0.87,
-          "dist50": -2.4,
-          "high252": 0.43,
-          "range10": 17.4,
-          "float": "37.5",
-          "eps": "-12",
-          "sales": "143",
-          "inst": "-1.8",
-          "short": 12.1
+          "ticker": "GPRE",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.93; 50SMA=-3.1%; 252H=0.83x; prior=4.8x; blind=1m/RS/VARS",
+          "rs": 11.5,
+          "vars": -0.44,
+          "price": 15.81,
+          "vol_dry": 0.93,
+          "dist50": -3.1,
+          "high252": 0.83,
+          "range10": 17.0,
+          "float": "67.6",
+          "eps": "199",
+          "sales": "-24",
+          "inst": "+2.6",
+          "short": 19.0,
+          "ticker_color": "green"
         }
       ],
-      "l1": "Defense & Aerospace",
-      "l2": "Drones",
+      "l1": "Clean Energy",
+      "l2": "Decarbonization Tech",
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Crypto / Generalist",
+      "name": "Clean Energy / Renewable Fuels",
       "theme_score": 100.0,
-      "avg_setup_score": 96.0,
-      "coiled_count": 1,
-      "other_screened_count": 5,
-      "tickers": [
-        {
-          "ticker": "BMNR",
-          "score": 96.0,
-          "flags": "tight; NR20; volDry=0.80; 50SMA=-10.6%; 252H=0.12x; prior=41.1x; blind=1m/RS/VARS",
-          "rs": 0.0,
-          "vars": -13.2,
-          "price": 18.82,
-          "vol_dry": 0.8,
-          "dist50": -10.6,
-          "high252": 0.12,
-          "range10": 23.2,
-          "float": "565.6",
-          "eps": "-218",
-          "sales": "628",
-          "inst": "+10.6",
-          "short": 5.8
-        }
-      ],
-      "l1": "Fintech & Crypto",
-      "l2": "Crypto",
-      "l3": "Generalist"
-    },
-    {
-      "name": "Fintech & Crypto / Insurance & Insurtech",
-      "theme_score": 100.0,
-      "avg_setup_score": 93.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
       "other_screened_count": 3,
       "tickers": [
         {
-          "ticker": "BWIN",
-          "score": 93.0,
-          "flags": "inside; tight; volDry=0.84; 50SMA=-11.6%; 252H=0.43x; prior=2.8x; blind=1m/RS/VARS",
-          "rs": 3.8,
-          "vars": -11.14,
-          "price": 19.39,
-          "vol_dry": 0.84,
-          "dist50": -11.6,
-          "high252": 0.43,
-          "range10": 13.4,
-          "float": "93.5",
-          "eps": "20",
-          "sales": "29",
-          "inst": "+8.2",
-          "short": 13.8
+          "ticker": "GPRE",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.93; 50SMA=-3.1%; 252H=0.83x; prior=4.8x; blind=1m/RS/VARS",
+          "rs": 11.5,
+          "vars": -0.44,
+          "price": 15.81,
+          "vol_dry": 0.93,
+          "dist50": -3.1,
+          "high252": 0.83,
+          "range10": 17.0,
+          "float": "67.6",
+          "eps": "199",
+          "sales": "-24",
+          "inst": "+2.6",
+          "short": 19.0,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Clean Energy",
+      "l2": "Renewable Fuels",
+      "l3": null
+    },
+    {
+      "name": "Defense & Aerospace / Defense Components",
+      "theme_score": 100.0,
+      "avg_setup_score": 95.0,
+      "coiled_count": 1,
+      "other_screened_count": 5,
+      "tickers": [
+        {
+          "ticker": "ATI",
+          "score": 95.0,
+          "flags": "inside; tight; NR7; volDry=0.82; 50SMA=+9.9%; 252H=0.99x; prior=2.4x; blind=VARS",
+          "rs": 96.2,
+          "vars": 0.65,
+          "price": 170.53,
+          "vol_dry": 0.82,
+          "dist50": 9.9,
+          "high252": 0.99,
+          "range10": 14.7,
+          "float": "134.9",
+          "eps": "36",
+          "sales": "1",
+          "inst": "+0.3",
+          "short": 2.8
+        }
+      ],
+      "l1": "Defense & Aerospace",
+      "l2": "Defense Components",
+      "l3": null
+    },
+    {
+      "name": "Fintech & Crypto / Insurance & Insurtech",
+      "theme_score": 100.0,
+      "avg_setup_score": 97.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "VRSK",
+          "score": 97.0,
+          "flags": "tight; NR20; volDry=0.98; 50SMA=-3.1%; 252H=0.54x; prior=2.1x; blind=1m/RS/VARS",
+          "rs": 26.9,
+          "vars": -18.23,
+          "price": 172.82,
+          "vol_dry": 0.98,
+          "dist50": -3.1,
+          "high252": 0.54,
+          "range10": 13.0,
+          "float": "130.7",
+          "eps": "7",
+          "sales": "4",
+          "inst": "+0.1",
+          "short": 5.7,
+          "ticker_color": "green"
         }
       ],
       "l1": "Fintech & Crypto",
@@ -544,58 +736,88 @@
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Investment Banking",
+      "name": "Fintech & Crypto / Private Equity Proxy",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 1,
+      "other_screened_count": 4,
       "tickers": [
         {
-          "ticker": "MRX",
+          "ticker": "CODI",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.60; 50SMA=+8.7%; 252H=0.92x; prior=2.1x; blind=1m/RS/VARS",
-          "rs": 15.4,
-          "vars": 1.36,
-          "price": 53.54,
-          "vol_dry": 0.6,
-          "dist50": 8.7,
-          "high252": 0.92,
-          "range10": 10.6,
-          "float": "59.8",
-          "eps": "30",
-          "sales": "54",
-          "inst": "+2.7",
-          "short": 3.6,
+          "flags": "inside; tight; volDry=0.71; 50SMA=+11.6%; 252H=0.90x; prior=2.8x; blind=1m/RS",
+          "rs": 0.0,
+          "vars": 6.81,
+          "price": 11.42,
+          "vol_dry": 0.71,
+          "dist50": 11.6,
+          "high252": 0.9,
+          "range10": 9.0,
+          "float": "66.6",
+          "eps": "289",
+          "sales": "-6",
+          "inst": "-0.4",
+          "short": 7.5,
           "ticker_color": "green"
         }
       ],
       "l1": "Fintech & Crypto",
-      "l2": "Investment Banking",
+      "l2": "Private Equity Proxy",
+      "l3": null
+    },
+    {
+      "name": "Fintech & Crypto / Specialty Lending",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 0,
+      "tickers": [
+        {
+          "ticker": "BUR",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.59; 50SMA=-10.7%; 252H=0.30x; prior=4.2x; blind=1m/RS/VARS",
+          "rs": 7.7,
+          "vars": -14.59,
+          "price": 4.51,
+          "vol_dry": 0.59,
+          "dist50": -10.7,
+          "high252": 0.3,
+          "range10": 14.4,
+          "float": "198.2",
+          "eps": "-2502",
+          "sales": "-1641",
+          "inst": "+8.5",
+          "short": 6.6,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Fintech & Crypto",
+      "l2": "Specialty Lending",
       "l3": null
     },
     {
       "name": "Healthcare / Home & Behavioral Health",
       "theme_score": 100.0,
-      "avg_setup_score": 98.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
       "other_screened_count": 5,
       "tickers": [
         {
-          "ticker": "LFST",
-          "score": 98.0,
-          "flags": "tight; NR20; volDry=0.86; 50SMA=+8.0%; 252H=0.86x; prior=2.4x; blind=1m/RS/VARS",
-          "rs": 38.5,
-          "vars": -3.28,
-          "price": 7.61,
-          "vol_dry": 0.86,
-          "dist50": 8.0,
-          "high252": 0.86,
-          "range10": 12.1,
-          "float": "234.4",
-          "eps": "580",
-          "sales": "21",
-          "inst": "+5.9",
-          "short": 3.0,
+          "ticker": "ACHC",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.78; 50SMA=-6.4%; 252H=0.79x; prior=2.6x; blind=1m/RS/VARS",
+          "rs": 11.5,
+          "vars": 0.35,
+          "price": 23.76,
+          "vol_dry": 0.78,
+          "dist50": -6.4,
+          "high252": 0.79,
+          "range10": 21.6,
+          "float": "86.0",
+          "eps": "-25",
+          "sales": "8",
+          "inst": "+15.8",
+          "short": 26.3,
           "ticker_color": "green"
         }
       ],
@@ -604,93 +826,92 @@
       "l3": null
     },
     {
-      "name": "Metals & Mining / Gold",
+      "name": "Healthcare / Managed Care",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 6,
+      "tickers": [
+        {
+          "ticker": "MOH",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.59; 50SMA=+8.1%; 252H=0.57x; prior=2.6x; blind=1m/RS/VARS",
+          "rs": 11.5,
+          "vars": -6.27,
+          "price": 178.02,
+          "vol_dry": 0.59,
+          "dist50": 8.1,
+          "high252": 0.57,
+          "range10": 11.2,
+          "float": "51.4",
+          "eps": "-53",
+          "sales": "-3",
+          "inst": "+3.9",
+          "short": 5.7,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Healthcare",
+      "l2": "Managed Care",
+      "l3": null
+    },
+    {
+      "name": "MedTech / Diagnostics",
       "theme_score": 100.0,
       "avg_setup_score": 98.0,
       "coiled_count": 1,
       "other_screened_count": 4,
       "tickers": [
         {
-          "ticker": "NAK",
+          "ticker": "BFLY",
           "score": 98.0,
-          "flags": "inside; tight; NR7; volDry=0.79; 50SMA=+19.3%; 252H=0.73x; prior=4.1x; blind=1m/RS/VARS",
-          "rs": 65.4,
-          "vars": -3.72,
-          "price": 2.17,
-          "vol_dry": 0.79,
-          "dist50": 19.3,
-          "high252": 0.73,
-          "range10": 21.7,
-          "float": "549.8",
-          "eps": "79",
-          "sales": null,
-          "inst": "+2.9",
-          "short": 4.7,
-          "ticker_color": "green"
+          "flags": "inside; tight; NR20; volDry=0.80; 50SMA=+2.8%; 252H=0.81x; prior=4.3x; blind=1m/RS/VARS",
+          "rs": 50.0,
+          "vars": -3.21,
+          "price": 4.61,
+          "vol_dry": 0.8,
+          "dist50": 2.8,
+          "high252": 0.81,
+          "range10": 20.4,
+          "float": "199.8",
+          "eps": "-4",
+          "sales": "25",
+          "inst": "+12.5",
+          "short": 12.5
         }
       ],
-      "l1": "Metals & Mining",
-      "l2": "Gold",
+      "l1": "MedTech",
+      "l2": "Diagnostics",
       "l3": null
     },
     {
-      "name": "Metals & Mining / Lithium / Hard Rock",
+      "name": "Metals & Mining / Rare Earth & Strategic",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 0,
+      "other_screened_count": 11,
       "tickers": [
         {
-          "ticker": "SBSW",
+          "ticker": "UAMY",
           "score": 100.0,
-          "flags": "inside; tight; NR7; volDry=0.86; 50SMA=-4.4%; 252H=0.57x; prior=3.6x; blind=1m/RS/VARS",
-          "rs": 11.5,
-          "vars": -8.32,
-          "price": 11.86,
-          "vol_dry": 0.86,
-          "dist50": -4.4,
-          "high252": 0.57,
-          "range10": 22.3,
-          "float": "707.6",
-          "eps": "759",
-          "sales": "36",
-          "inst": "-22.0",
-          "short": 1.4,
+          "flags": "inside; tight; NR20; volDry=0.92; 50SMA=-5.2%; 252H=0.46x; prior=10.2x; blind=1m/RS/VARS",
+          "rs": 26.9,
+          "vars": -2.66,
+          "price": 9.1,
+          "vol_dry": 0.92,
+          "dist50": -5.2,
+          "high252": 0.46,
+          "range10": 28.2,
+          "float": "132.4",
+          "eps": "225",
+          "sales": "-3",
+          "inst": "+10.4",
+          "short": 22.9,
           "ticker_color": "green"
         }
       ],
       "l1": "Metals & Mining",
-      "l2": "Lithium",
-      "l3": "Hard Rock"
-    },
-    {
-      "name": "Metals & Mining / Platinum Group",
-      "theme_score": 100.0,
-      "avg_setup_score": 100.0,
-      "coiled_count": 1,
-      "other_screened_count": 0,
-      "tickers": [
-        {
-          "ticker": "SBSW",
-          "score": 100.0,
-          "flags": "inside; tight; NR7; volDry=0.86; 50SMA=-4.4%; 252H=0.57x; prior=3.6x; blind=1m/RS/VARS",
-          "rs": 11.5,
-          "vars": -8.32,
-          "price": 11.86,
-          "vol_dry": 0.86,
-          "dist50": -4.4,
-          "high252": 0.57,
-          "range10": 22.3,
-          "float": "707.6",
-          "eps": "759",
-          "sales": "36",
-          "inst": "-22.0",
-          "short": 1.4,
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Platinum Group",
+      "l2": "Rare Earth & Strategic",
       "l3": null
     },
     {
@@ -698,24 +919,25 @@
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 6,
+      "other_screened_count": 5,
       "tickers": [
         {
-          "ticker": "PARR",
+          "ticker": "PBF",
           "score": 100.0,
-          "flags": "tight; NR20; volDry=0.83; 50SMA=-8.8%; 252H=0.80x; prior=3.4x; blind=1m/RS/VARS",
-          "rs": 3.8,
-          "vars": 1.89,
-          "price": 56.45,
-          "vol_dry": 0.83,
-          "dist50": -8.8,
-          "high252": 0.8,
-          "range10": 15.5,
-          "float": "48.5",
-          "eps": "63",
-          "sales": "5",
-          "inst": "-2.0",
-          "short": 7.1
+          "flags": "tight; NR20; volDry=0.71; 50SMA=-7.1%; 252H=0.77x; prior=3.1x; blind=1m/RS/VARS",
+          "rs": 11.5,
+          "vars": -2.03,
+          "price": 39.82,
+          "vol_dry": 0.71,
+          "dist50": -7.1,
+          "high252": 0.77,
+          "range10": 17.1,
+          "float": "97.0",
+          "eps": "261",
+          "sales": "12",
+          "inst": "+2.2",
+          "short": 13.5,
+          "ticker_color": "green"
         }
       ],
       "l1": "Oil & Gas",
@@ -725,26 +947,26 @@
     {
       "name": "Real Estate / Diversified REIT",
       "theme_score": 100.0,
-      "avg_setup_score": 93.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 11,
+      "other_screened_count": 10,
       "tickers": [
         {
-          "ticker": "GEO",
-          "score": 93.0,
-          "flags": "inside; tight; volDry=0.80; 50SMA=+17.9%; 252H=0.81x; prior=2.2x; blind=RS/VARS",
-          "rs": 61.5,
-          "vars": 0.11,
-          "price": 22.66,
-          "vol_dry": 0.8,
-          "dist50": 17.9,
-          "high252": 0.81,
-          "range10": 11.1,
-          "float": "127.1",
-          "eps": "42",
-          "sales": "17",
-          "inst": "-1.6",
-          "short": 7.5,
+          "ticker": "UNIT",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.68; 50SMA=+8.4%; 252H=0.92x; prior=2.3x; blind=1m/RS",
+          "rs": 30.8,
+          "vars": 2.13,
+          "price": 11.43,
+          "vol_dry": 0.68,
+          "dist50": 8.4,
+          "high252": 0.92,
+          "range10": 9.2,
+          "float": "227.3",
+          "eps": "-133",
+          "sales": "236",
+          "inst": "+4.2",
+          "short": 6.0,
           "ticker_color": "green"
         }
       ],
@@ -753,33 +975,33 @@
       "l3": null
     },
     {
-      "name": "Software & Internet / BPO & IT Services",
+      "name": "Retail (Multi-Category) / Southeast Asia",
       "theme_score": 100.0,
-      "avg_setup_score": 92.0,
+      "avg_setup_score": 95.0,
       "coiled_count": 1,
-      "other_screened_count": 10,
+      "other_screened_count": 1,
       "tickers": [
         {
-          "ticker": "ACN",
-          "score": 92.0,
-          "flags": "tight; NR20; volDry=0.95; 50SMA=-4.8%; 252H=0.56x; prior=2.0x; blind=1m/RS/VARS",
-          "rs": 19.2,
-          "vars": -17.19,
-          "price": 176.36,
-          "vol_dry": 0.95,
-          "dist50": -4.8,
-          "high252": 0.56,
-          "range10": 16.4,
-          "float": "612.3",
-          "eps": "7",
-          "sales": "8",
-          "inst": "+2.3",
-          "short": 3.5,
+          "ticker": "SE",
+          "score": 95.0,
+          "flags": "inside; tight; NR7; volDry=0.89; 50SMA=+7.2%; 252H=0.46x; prior=2.6x; blind=1m/VARS",
+          "rs": 80.8,
+          "vars": -14.84,
+          "price": 91.94,
+          "vol_dry": 0.89,
+          "dist50": 7.2,
+          "high252": 0.46,
+          "range10": 10.6,
+          "float": "560.8",
+          "eps": "1",
+          "sales": "47",
+          "inst": "+0.2",
+          "short": 3.4,
           "ticker_color": "green"
         }
       ],
-      "l1": "Software & Internet",
-      "l2": "BPO & IT Services",
+      "l1": "Retail (Multi-Category)",
+      "l2": "Southeast Asia",
       "l3": null
     },
     {
@@ -790,21 +1012,21 @@
       "other_screened_count": 10,
       "tickers": [
         {
-          "ticker": "ALKT",
+          "ticker": "VRSK",
           "score": 97.0,
-          "flags": "inside; tight; NR20; volDry=0.92; 50SMA=+0.9%; 252H=0.54x; prior=2.2x; blind=1m/RS/VARS",
-          "rs": 19.2,
-          "vars": -13.94,
-          "price": 16.8,
-          "vol_dry": 0.92,
-          "dist50": 0.9,
+          "flags": "tight; NR20; volDry=0.98; 50SMA=-3.1%; 252H=0.54x; prior=2.1x; blind=1m/RS/VARS",
+          "rs": 26.9,
+          "vars": -18.23,
+          "price": 172.82,
+          "vol_dry": 0.98,
+          "dist50": -3.1,
           "high252": 0.54,
-          "range10": 7.6,
-          "float": "61.7",
-          "eps": "54",
-          "sales": "29",
-          "inst": "-4.7",
-          "short": 11.6,
+          "range10": 13.0,
+          "float": "130.7",
+          "eps": "7",
+          "sales": "4",
+          "inst": "+0.1",
+          "short": 5.7,
           "ticker_color": "green"
         }
       ],
@@ -813,81 +1035,132 @@
       "l3": null
     },
     {
-      "name": "Software & Internet / E-commerce",
+      "name": "Software & Internet / Gaming",
       "theme_score": 100.0,
-      "avg_setup_score": 100.0,
+      "avg_setup_score": 95.0,
       "coiled_count": 1,
       "other_screened_count": 5,
       "tickers": [
         {
-          "ticker": "GCT",
-          "score": 100.0,
-          "flags": "inside; tight; NR20; volDry=0.96; 50SMA=-10.7%; 252H=0.74x; prior=3.0x; blind=1m/RS/VARS",
-          "rs": 19.2,
-          "vars": -7.3,
-          "price": 38.36,
-          "vol_dry": 0.96,
-          "dist50": -10.7,
-          "high252": 0.74,
-          "range10": 13.3,
-          "float": "26.8",
-          "eps": "14",
-          "sales": "32",
-          "inst": "+9.5",
-          "short": 10.9,
+          "ticker": "SE",
+          "score": 95.0,
+          "flags": "inside; tight; NR7; volDry=0.89; 50SMA=+7.2%; 252H=0.46x; prior=2.6x; blind=1m/VARS",
+          "rs": 80.8,
+          "vars": -14.84,
+          "price": 91.94,
+          "vol_dry": 0.89,
+          "dist50": 7.2,
+          "high252": 0.46,
+          "range10": 10.6,
+          "float": "560.8",
+          "eps": "1",
+          "sales": "47",
+          "inst": "+0.2",
+          "short": 3.4,
           "ticker_color": "green"
         }
       ],
       "l1": "Software & Internet",
-      "l2": "E-commerce",
+      "l2": "Gaming",
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Private Credit",
-      "theme_score": 96.0,
-      "avg_setup_score": 91.0,
+      "name": "Telecom / Fiber",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "UNIT",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.68; 50SMA=+8.4%; 252H=0.92x; prior=2.3x; blind=1m/RS",
+          "rs": 30.8,
+          "vars": 2.13,
+          "price": 11.43,
+          "vol_dry": 0.68,
+          "dist50": 8.4,
+          "high252": 0.92,
+          "range10": 9.2,
+          "float": "227.3",
+          "eps": "-133",
+          "sales": "236",
+          "inst": "+4.2",
+          "short": 6.0,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Telecom",
+      "l2": "Fiber",
+      "l3": null
+    },
+    {
+      "name": "Oil & Gas / Offshore Drilling",
+      "theme_score": 99.0,
+      "avg_setup_score": 91.0,
+      "coiled_count": 2,
       "other_screened_count": 1,
       "tickers": [
         {
-          "ticker": "ARES",
-          "score": 91.0,
-          "flags": "inside; tight; volDry=0.62; 50SMA=+10.2%; 252H=0.67x; prior=2.0x; blind=VARS",
-          "rs": 76.9,
-          "vars": -12.29,
-          "price": 126.58,
-          "vol_dry": 0.62,
-          "dist50": 10.2,
-          "high252": 0.67,
-          "range10": 8.3,
-          "float": "206.8",
-          "eps": "26",
-          "sales": "30",
-          "inst": "+0.6",
-          "short": 7.1
+          "ticker": "RIG",
+          "score": 92.0,
+          "flags": "tight; NR20; volDry=0.99; 50SMA=-5.1%; 252H=0.81x; prior=3.1x; blind=1m/RS/VARS",
+          "rs": 3.8,
+          "vars": 0.14,
+          "price": 6.22,
+          "vol_dry": 0.99,
+          "dist50": -5.1,
+          "high252": 0.81,
+          "range10": 24.6,
+          "float": "1010.0",
+          "eps": "288",
+          "sales": "19",
+          "inst": "+13.4",
+          "short": 22.0
+        },
+        {
+          "ticker": "VAL",
+          "score": 90.0,
+          "flags": "tight; NR20; volDry=0.97; 50SMA=-5.1%; 252H=0.81x; prior=3.0x; blind=1m/RS",
+          "rs": 3.8,
+          "vars": 2.89,
+          "price": 92.64,
+          "vol_dry": 0.97,
+          "dist50": -5.1,
+          "high252": 0.81,
+          "range10": 24.7,
+          "float": "48.3",
+          "eps": "-75",
+          "sales": "-25",
+          "inst": "+8.9",
+          "short": 15.3
         }
       ],
-      "l1": "Fintech & Crypto",
-      "l2": "Private Credit",
+      "l1": "Oil & Gas",
+      "l2": "Offshore Drilling",
       "l3": null
     }
   ],
   "network": {
     "nodes": [
       {
-        "id": "Metals & Mining",
+        "id": "Oil & Gas",
         "kind": "l1"
       },
       {
-        "id": "Metals & Mining / Diversified",
+        "id": "Oil & Gas / E&P",
         "kind": "leaf",
-        "parent": "Metals & Mining",
+        "parent": "Oil & Gas",
         "ticker_count": 3
       },
       {
-        "id": "Metals & Mining / Rare Earth & Strategic",
+        "id": "Software & Internet",
+        "kind": "l1"
+      },
+      {
+        "id": "Software & Internet / BPO & IT Services",
         "kind": "leaf",
-        "parent": "Metals & Mining",
+        "parent": "Software & Internet",
         "ticker_count": 3
       },
       {
@@ -895,25 +1168,35 @@
         "kind": "l1"
       },
       {
-        "id": "Biotech / Rare Disease",
+        "id": "Biotech / Immunology",
         "kind": "leaf",
         "parent": "Biotech",
         "ticker_count": 2
       },
       {
-        "id": "Fintech & Crypto",
+        "id": "Metals & Mining",
         "kind": "l1"
       },
       {
-        "id": "Fintech & Crypto / Payments",
+        "id": "Metals & Mining / Lithium / Hard Rock",
         "kind": "leaf",
-        "parent": "Fintech & Crypto",
+        "parent": "Metals & Mining",
         "ticker_count": 2
       },
       {
-        "id": "Metals & Mining / Copper",
+        "id": "Oil & Gas / LNG & Natural Gas",
         "kind": "leaf",
-        "parent": "Metals & Mining",
+        "parent": "Oil & Gas",
+        "ticker_count": 2
+      },
+      {
+        "id": "Specialty Chemicals",
+        "kind": "l1"
+      },
+      {
+        "id": "Specialty Chemicals / Specialty Materials",
+        "kind": "leaf",
+        "parent": "Specialty Chemicals",
         "ticker_count": 2
       },
       {
@@ -927,13 +1210,19 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Metabolic & Obesity",
+        "id": "Biotech / Cell & Gene Therapy",
         "kind": "leaf",
         "parent": "Biotech",
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Neuroscience",
+        "id": "Biotech / Drug Discovery Platform",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 1
+      },
+      {
+        "id": "Biotech / Metabolic & Obesity",
         "kind": "leaf",
         "parent": "Biotech",
         "ticker_count": 1
@@ -945,7 +1234,25 @@
         "ticker_count": 1
       },
       {
+        "id": "Biotech / Oncology / Immuno-Oncology",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 1
+      },
+      {
+        "id": "Biotech / Oncology / Oncolytic Viruses",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 1
+      },
+      {
         "id": "Biotech / Ophthalmology",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 1
+      },
+      {
+        "id": "Biotech / Rare Disease",
         "kind": "leaf",
         "parent": "Biotech",
         "ticker_count": 1
@@ -957,20 +1264,34 @@
         "ticker_count": 1
       },
       {
+        "id": "Clean Energy",
+        "kind": "l1"
+      },
+      {
+        "id": "Clean Energy / Decarbonization Tech",
+        "kind": "leaf",
+        "parent": "Clean Energy",
+        "ticker_count": 1
+      },
+      {
+        "id": "Clean Energy / Renewable Fuels",
+        "kind": "leaf",
+        "parent": "Clean Energy",
+        "ticker_count": 1
+      },
+      {
         "id": "Defense & Aerospace",
         "kind": "l1"
       },
       {
-        "id": "Defense & Aerospace / Drones",
+        "id": "Defense & Aerospace / Defense Components",
         "kind": "leaf",
         "parent": "Defense & Aerospace",
         "ticker_count": 1
       },
       {
-        "id": "Fintech & Crypto / Crypto / Generalist",
-        "kind": "leaf",
-        "parent": "Fintech & Crypto",
-        "ticker_count": 1
+        "id": "Fintech & Crypto",
+        "kind": "l1"
       },
       {
         "id": "Fintech & Crypto / Insurance & Insurtech",
@@ -979,7 +1300,13 @@
         "ticker_count": 1
       },
       {
-        "id": "Fintech & Crypto / Investment Banking",
+        "id": "Fintech & Crypto / Private Equity Proxy",
+        "kind": "leaf",
+        "parent": "Fintech & Crypto",
+        "ticker_count": 1
+      },
+      {
+        "id": "Fintech & Crypto / Specialty Lending",
         "kind": "leaf",
         "parent": "Fintech & Crypto",
         "ticker_count": 1
@@ -995,26 +1322,26 @@
         "ticker_count": 1
       },
       {
-        "id": "Metals & Mining / Gold",
+        "id": "Healthcare / Managed Care",
         "kind": "leaf",
-        "parent": "Metals & Mining",
+        "parent": "Healthcare",
         "ticker_count": 1
       },
       {
-        "id": "Metals & Mining / Lithium / Hard Rock",
-        "kind": "leaf",
-        "parent": "Metals & Mining",
-        "ticker_count": 1
-      },
-      {
-        "id": "Metals & Mining / Platinum Group",
-        "kind": "leaf",
-        "parent": "Metals & Mining",
-        "ticker_count": 1
-      },
-      {
-        "id": "Oil & Gas",
+        "id": "MedTech",
         "kind": "l1"
+      },
+      {
+        "id": "MedTech / Diagnostics",
+        "kind": "leaf",
+        "parent": "MedTech",
+        "ticker_count": 1
+      },
+      {
+        "id": "Metals & Mining / Rare Earth & Strategic",
+        "kind": "leaf",
+        "parent": "Metals & Mining",
+        "ticker_count": 1
       },
       {
         "id": "Oil & Gas / Refining",
@@ -1033,13 +1360,13 @@
         "ticker_count": 1
       },
       {
-        "id": "Software & Internet",
+        "id": "Retail (Multi-Category)",
         "kind": "l1"
       },
       {
-        "id": "Software & Internet / BPO & IT Services",
+        "id": "Retail (Multi-Category) / Southeast Asia",
         "kind": "leaf",
-        "parent": "Software & Internet",
+        "parent": "Retail (Multi-Category)",
         "ticker_count": 1
       },
       {
@@ -1049,42 +1376,57 @@
         "ticker_count": 1
       },
       {
-        "id": "Software & Internet / E-commerce",
+        "id": "Software & Internet / Gaming",
         "kind": "leaf",
         "parent": "Software & Internet",
         "ticker_count": 1
       },
       {
-        "id": "Fintech & Crypto / Private Credit",
+        "id": "Telecom",
+        "kind": "l1"
+      },
+      {
+        "id": "Telecom / Fiber",
         "kind": "leaf",
-        "parent": "Fintech & Crypto",
+        "parent": "Telecom",
         "ticker_count": 1
+      },
+      {
+        "id": "Oil & Gas / Offshore Drilling",
+        "kind": "leaf",
+        "parent": "Oil & Gas",
+        "ticker_count": 2
       }
     ],
     "edges": [
       {
-        "source": "Metals & Mining / Diversified",
-        "target": "Metals & Mining",
+        "source": "Oil & Gas / E&P",
+        "target": "Oil & Gas",
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Rare Earth & Strategic",
-        "target": "Metals & Mining",
+        "source": "Software & Internet / BPO & IT Services",
+        "target": "Software & Internet",
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Rare Disease",
+        "source": "Biotech / Immunology",
         "target": "Biotech",
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Payments",
-        "target": "Fintech & Crypto",
+        "source": "Metals & Mining / Lithium / Hard Rock",
+        "target": "Metals & Mining",
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Copper",
-        "target": "Metals & Mining",
+        "source": "Oil & Gas / LNG & Natural Gas",
+        "target": "Oil & Gas",
+        "kind": "is_a"
+      },
+      {
+        "source": "Specialty Chemicals / Specialty Materials",
+        "target": "Specialty Chemicals",
         "kind": "is_a"
       },
       {
@@ -1093,12 +1435,17 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Metabolic & Obesity",
+        "source": "Biotech / Cell & Gene Therapy",
         "target": "Biotech",
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Neuroscience",
+        "source": "Biotech / Drug Discovery Platform",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Metabolic & Obesity",
         "target": "Biotech",
         "kind": "is_a"
       },
@@ -1108,7 +1455,22 @@
         "kind": "is_a"
       },
       {
+        "source": "Biotech / Oncology / Immuno-Oncology",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Oncology / Oncolytic Viruses",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
         "source": "Biotech / Ophthalmology",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Rare Disease",
         "target": "Biotech",
         "kind": "is_a"
       },
@@ -1118,13 +1480,18 @@
         "kind": "is_a"
       },
       {
-        "source": "Defense & Aerospace / Drones",
-        "target": "Defense & Aerospace",
+        "source": "Clean Energy / Decarbonization Tech",
+        "target": "Clean Energy",
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Crypto / Generalist",
-        "target": "Fintech & Crypto",
+        "source": "Clean Energy / Renewable Fuels",
+        "target": "Clean Energy",
+        "kind": "is_a"
+      },
+      {
+        "source": "Defense & Aerospace / Defense Components",
+        "target": "Defense & Aerospace",
         "kind": "is_a"
       },
       {
@@ -1133,7 +1500,12 @@
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Investment Banking",
+        "source": "Fintech & Crypto / Private Equity Proxy",
+        "target": "Fintech & Crypto",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Specialty Lending",
         "target": "Fintech & Crypto",
         "kind": "is_a"
       },
@@ -1143,17 +1515,17 @@
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Gold",
-        "target": "Metals & Mining",
+        "source": "Healthcare / Managed Care",
+        "target": "Healthcare",
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Lithium / Hard Rock",
-        "target": "Metals & Mining",
+        "source": "MedTech / Diagnostics",
+        "target": "MedTech",
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Platinum Group",
+        "source": "Metals & Mining / Rare Earth & Strategic",
         "target": "Metals & Mining",
         "kind": "is_a"
       },
@@ -1168,8 +1540,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Software & Internet / BPO & IT Services",
-        "target": "Software & Internet",
+        "source": "Retail (Multi-Category) / Southeast Asia",
+        "target": "Retail (Multi-Category)",
         "kind": "is_a"
       },
       {
@@ -1178,13 +1550,18 @@
         "kind": "is_a"
       },
       {
-        "source": "Software & Internet / E-commerce",
+        "source": "Software & Internet / Gaming",
         "target": "Software & Internet",
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Private Credit",
-        "target": "Fintech & Crypto",
+        "source": "Telecom / Fiber",
+        "target": "Telecom",
+        "kind": "is_a"
+      },
+      {
+        "source": "Oil & Gas / Offshore Drilling",
+        "target": "Oil & Gas",
         "kind": "is_a"
       }
     ]

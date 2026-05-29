@@ -278,7 +278,7 @@
           { "id": "MAExp@tv-basicstudies", "inputs": { "length": 20 } },
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 50 } },
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } },
-          "STD;Volume"
+          { "id": "STD;Volume" }
         ],
         "studies_overrides": {
           "moving average exponential.ma.color": "#4CAF50",

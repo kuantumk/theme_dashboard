@@ -263,7 +263,7 @@
         "backgroundColor": "#0c0f15",
         "gridColor": "#1f2937",
         "hide_top_toolbar": false,
-        "hide_legend": false,
+        "hide_legend": true,
         "save_image": false,
         "disabled_features": [
           "use_localstorage_for_settings"
@@ -274,17 +274,22 @@
         "calendar": false,
         "hide_volume": true,
         "studies": [
-          "MAExp@tv-basicstudies",
-          "MASimple@tv-basicstudies",
+          { "id": "MAExp@tv-basicstudies", "inputs": { "length": 10 } },
+          { "id": "MAExp@tv-basicstudies", "inputs": { "length": 20 } },
+          { "id": "MASimple@tv-basicstudies", "inputs": { "length": 50 } },
+          { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } },
           "STD;Volume"
         ],
         "studies_overrides": {
-          "moving average exponential.length": 20,
           "moving average exponential.ma.color": "#4CAF50",
-          "moving average exponential.ma.linewidth": 2,
-          "moving average.length": 50,
+          "moving average exponential.ma.linewidth": 1,
+          "moving average exponential.ma.transparency": 20,
           "moving average.ma.color": "#FFD700",
-          "moving average.ma.linewidth": 2
+          "moving average.ma.linewidth": 1,
+          "moving average.ma.transparency": 20
+        },
+        "overrides": {
+          "scalesProperties.scaleSeriesOnly": true
         }
       });
     }

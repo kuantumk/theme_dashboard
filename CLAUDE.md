@@ -183,6 +183,20 @@ Each tab's session bar shows the last 5 trading days as clickable date buttons p
 
 **Every workflow run produces a fresh 60-session history**: `run_daily_workflow.py` calls `create_master_table.py --days 60` and each `run_screener.py --days 60`, so back-dated master + screener CSVs always carry today's full indicator schema (e.g. when `vars` was added, all 60 dropdown sessions get the new column on the very next workflow run instead of having to wait 60 days). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` all iterate up to 60 per-day CSVs and rewrite `*_history.json` from scratch each run — no append-only drift. Tabs without per-day source data (themes, industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and reach the 60-cap naturally.
 
+### Dashboard Chart (TradingView Free Embed Widget)
+
+The right-hand chart in [docs/app.js](docs/app.js)'s `openChart()` function uses the **free** TradingView embed widget loaded from `https://s3.tradingview.com/tv.js`. This is NOT the paid Charting Library — it is severely limited and several documented overrides silently no-op. Past mistakes to avoid:
+
+**No runtime chart API.** The widget instance exposes only `create / ready / render / generateUrl / image / imageCanvas / subscribeToQuote / getSymbolInfo / remove / reload`. `widget.activeChart()`, `getPanes()`, `setHeight()`, `applyOverrides()`, `setInputValues()`, `onChartReady()` are all undefined. Anything you want must be expressible in the constructor object. Do not write `onChartReady` callbacks — they fail silently. Pane heights cannot be controlled; the volume pane settles at ~1/3 of total chart height.
+
+**The `studies` array is type-sensitive.** When any entry is an object (e.g. `{ id, inputs }` to set a per-instance length), **every** entry must be object form. Mixing `{ id: "MAExp@tv-basicstudies", inputs: { length: 10 } }` with a trailing `"STD;Volume"` (string) silently drops the string and that study never registers. Always wrap bare IDs as `{ id: "STD;Volume" }`. This was the root cause of the volume-pane disappearance in [#23](https://github.com/kuantumk/theme_dashboard/pull/23).
+
+**Per-instance study styles are ignored.** `studies_overrides` is global per study type — two `MAExp@tv-basicstudies` instances both pick up `"moving average exponential.ma.color"`. The per-study `styles` field inside study objects (e.g. `{ id, inputs, styles: { plot_0: { color } } }`) is silently ignored by the free widget — that pattern only works in the paid Charting Library's `createStudy()`. To differentiate two EMA lines by color, you'd need to swap one for a different study type (e.g. WMA) and accept the formula change, or accept grouped colors.
+
+**Volume study identifier matters.** Use `STD;Volume`, not `Volume@tv-basicstudies`. `STD;Volume` renders volume bars **and** the Volume MA overlay (blue gradient area); `Volume@tv-basicstudies` only renders bars in the free embed. `hide_volume: true` hides the built-in candle-overlay volume — it is independent of the separate Volume study.
+
+**Safe constructor options that work reliably:** `hide_legend: true` (hides only the legend, not the studies themselves), `hide_volume: true` (only affects the candle-overlay volume), `overrides: { "scalesProperties.scaleSeriesOnly": true }` (auto-scales the price axis to candles instead of stretching to fit the lowest MA).
+
 ## Configuration
 
 All workflow parameters live in `config/workflow_config.yaml` (lookback windows, RS thresholds, screener list, scoring coefficients, LLM settings).

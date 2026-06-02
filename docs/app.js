@@ -263,7 +263,7 @@
         "backgroundColor": "#0c0f15",
         "gridColor": "#1f2937",
         "hide_top_toolbar": false,
-        "hide_legend": true,
+        "hide_legend": false,
         "save_image": false,
         "disabled_features": [
           "use_localstorage_for_settings"
@@ -289,7 +289,10 @@
           "moving average.ma.transparency": 20
         },
         "overrides": {
-          "scalesProperties.scaleSeriesOnly": true
+          "scalesProperties.scaleSeriesOnly": true,
+          "paneProperties.legendProperties.showStudyTitles": false,
+          "paneProperties.legendProperties.showStudyValues": false,
+          "paneProperties.legendProperties.showStudyArguments": false
         }
       });
     }

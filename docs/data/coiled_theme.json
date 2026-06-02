@@ -1,119 +1,382 @@
 {
-  "report_date": "2026-06-01",
+  "report_date": "2026-06-02",
   "themes": [
     {
-      "name": "Biotech / Gene Editing",
+      "name": "Oil & Gas / E&P",
       "theme_score": 100.0,
-      "avg_setup_score": 100.0,
-      "coiled_count": 1,
-      "other_screened_count": 3,
+      "avg_setup_score": 96.7,
+      "coiled_count": 3,
+      "other_screened_count": 11,
       "tickers": [
         {
-          "ticker": "NTLA",
+          "ticker": "APA",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.86; 50SMA=+1.1%; 252H=0.49x; prior=4.1x; blind=1m/RS/VARS",
-          "rs": 34.6,
-          "vars": 0.13,
-          "price": 13.73,
-          "vol_dry": 0.86,
-          "dist50": 1.1,
-          "high252": 0.49,
-          "range10": 18.3,
-          "float": "132.3",
-          "eps": "16",
-          "sales": "-10",
-          "inst": "+4.8",
-          "short": 39.2,
+          "flags": "inside; tight; volDry=0.69; 50SMA=-3.0%; 252H=0.83x; prior=2.8x; blind=1m/RS",
+          "rs": 30.8,
+          "vars": 5.67,
+          "price": 37.81,
+          "vol_dry": 0.69,
+          "dist50": -3.0,
+          "high252": 0.83,
+          "range10": 15.4,
+          "float": "351.7",
+          "eps": "68",
+          "sales": "-12",
+          "inst": "+1.0",
+          "short": 7.3,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "VIST",
+          "score": 100.0,
+          "flags": "inside; tight; NR7; volDry=0.65; 50SMA=+8.0%; 252H=0.94x; prior=2.6x; blind=1m/RS",
+          "rs": 65.4,
+          "vars": 7.1,
+          "price": 76.72,
+          "vol_dry": 0.65,
+          "dist50": 8.0,
+          "high252": 0.94,
+          "range10": 13.1,
+          "float": "95.2",
+          "eps": "65",
+          "sales": "99",
+          "inst": "+33.0",
+          "short": 2.6
+        },
+        {
+          "ticker": "TALO",
+          "score": 90.0,
+          "flags": "tight; NR20; volDry=0.91; 50SMA=-2.4%; 252H=0.88x; prior=2.2x; blind=1m/RS/VARS",
+          "rs": 15.4,
+          "vars": 1.34,
+          "price": 14.96,
+          "vol_dry": 0.91,
+          "dist50": -2.4,
+          "high252": 0.88,
+          "range10": 18.8,
+          "float": "124.3",
+          "eps": "131",
+          "sales": "-8",
+          "inst": "+0.5",
+          "short": 7.0,
           "ticker_color": "green"
         }
       ],
-      "l1": "Biotech",
-      "l2": "Gene Editing",
+      "l1": "Oil & Gas",
+      "l2": "E&P",
       "l3": null
     },
     {
-      "name": "Biotech / Neuroscience",
+      "name": "Metals & Mining / Diversified",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 2,
+      "other_screened_count": 11,
+      "tickers": [
+        {
+          "ticker": "IAG",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.88; 50SMA=-2.3%; 252H=0.70x; prior=3.7x; blind=1m/RS/VARS",
+          "rs": 50.0,
+          "vars": -7.05,
+          "price": 17.49,
+          "vol_dry": 0.88,
+          "dist50": -2.3,
+          "high252": 0.7,
+          "range10": 11.7,
+          "float": "586.9",
+          "eps": "105",
+          "sales": "116",
+          "inst": "-1.4",
+          "short": 0.5,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "SSRM",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.67; 50SMA=-2.5%; 252H=0.82x; prior=3.1x; blind=1m/RS/VARS",
+          "rs": 3.8,
+          "vars": -2.46,
+          "price": 29.81,
+          "vol_dry": 0.67,
+          "dist50": -2.5,
+          "high252": 0.82,
+          "range10": 9.4,
+          "float": "204.7",
+          "eps": "129",
+          "sales": "84",
+          "inst": "+2.7",
+          "short": 3.2,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Metals & Mining",
+      "l2": "Diversified",
+      "l3": null
+    },
+    {
+      "name": "Agriculture / Fertilizers",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 1,
+      "tickers": [
+        {
+          "ticker": "LXU",
+          "score": 100.0,
+          "flags": "tight; NR20; volDry=0.60; 50SMA=-9.1%; 252H=0.76x; prior=2.4x; blind=1m/RS/VARS",
+          "rs": 15.4,
+          "vars": 1.64,
+          "price": 13.06,
+          "vol_dry": 0.6,
+          "dist50": -9.1,
+          "high252": 0.76,
+          "range10": 13.2,
+          "float": "54.3",
+          "eps": "225",
+          "sales": "18",
+          "inst": "+19.1",
+          "short": 3.1,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Agriculture",
+      "l2": "Fertilizers",
+      "l3": null
+    },
+    {
+      "name": "Consumer / Home Goods & Furnishings",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
       "other_screened_count": 5,
       "tickers": [
         {
-          "ticker": "AMLX",
+          "ticker": "ARHS",
           "score": 100.0,
-          "flags": "tight; NR20; volDry=0.81; 50SMA=-7.7%; 252H=0.76x; prior=4.0x; blind=1m/RS/VARS",
-          "rs": 23.1,
-          "vars": -2.41,
-          "price": 14.07,
-          "vol_dry": 0.81,
-          "dist50": -7.7,
-          "high252": 0.76,
-          "range10": 13.7,
-          "float": "92.6",
-          "eps": "8",
-          "sales": null,
-          "inst": "+1.1",
-          "short": 15.7,
+          "flags": "inside; tight; volDry=0.87; 50SMA=-4.0%; 252H=0.53x; prior=2.2x; blind=1m/RS/VARS",
+          "rs": 38.5,
+          "vars": -14.93,
+          "price": 6.53,
+          "vol_dry": 0.87,
+          "dist50": -4.0,
+          "high252": 0.53,
+          "range10": 20.7,
+          "float": "51.6",
+          "eps": "-1",
+          "sales": "1",
+          "inst": "-7.0",
+          "short": 9.0,
           "ticker_color": "green"
         }
       ],
-      "l1": "Biotech",
-      "l2": "Neuroscience",
+      "l1": "Consumer",
+      "l2": "Home Goods & Furnishings",
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Investment Banking",
+      "name": "Consumer / RV & Outdoor Lifestyle",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 4,
+      "other_screened_count": 3,
       "tickers": [
         {
-          "ticker": "MRX",
+          "ticker": "CWH",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.66; 50SMA=+6.3%; 252H=0.91x; prior=2.1x; blind=1m/RS/VARS",
-          "rs": 11.5,
-          "vars": 1.4,
-          "price": 53.41,
-          "vol_dry": 0.66,
-          "dist50": 6.3,
-          "high252": 0.91,
-          "range10": 12.3,
-          "float": "59.7",
-          "eps": "30",
-          "sales": "54",
-          "inst": "+2.6",
-          "short": 4.2,
+          "flags": "inside; tight; NR7; volDry=0.87; 50SMA=+4.3%; 252H=0.39x; prior=3.4x; blind=1m/RS/VARS",
+          "rs": 46.2,
+          "vars": -9.57,
+          "price": 7.44,
+          "vol_dry": 0.87,
+          "dist50": 4.3,
+          "high252": 0.39,
+          "range10": 21.5,
+          "float": "59.5",
+          "eps": "242",
+          "sales": "-4",
+          "inst": "-1.6",
+          "short": 20.2,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Consumer",
+      "l2": "RV & Outdoor Lifestyle",
+      "l3": null
+    },
+    {
+      "name": "Defense & Aerospace / Commercial Aerospace / Engines",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 1,
+      "tickers": [
+        {
+          "ticker": "FTAI",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.80; 50SMA=-0.9%; 252H=0.76x; prior=3.0x; blind=1m/RS/VARS",
+          "rs": 26.9,
+          "vars": -6.91,
+          "price": 245.86,
+          "vol_dry": 0.8,
+          "dist50": -0.9,
+          "high252": 0.76,
+          "range10": 20.2,
+          "float": "101.4",
+          "eps": "49",
+          "sales": "64",
+          "inst": "-0.4",
+          "short": 6.7,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Defense & Aerospace",
+      "l2": "Commercial Aerospace",
+      "l3": "Engines"
+    },
+    {
+      "name": "Fintech & Crypto / Insurance & Insurtech",
+      "theme_score": 100.0,
+      "avg_setup_score": 98.0,
+      "coiled_count": 1,
+      "other_screened_count": 5,
+      "tickers": [
+        {
+          "ticker": "CCC",
+          "score": 98.0,
+          "flags": "inside; tight; volDry=0.88; 50SMA=-4.0%; 252H=0.48x; prior=2.6x; blind=1m/RS/VARS",
+          "rs": 50.0,
+          "vars": -21.24,
+          "price": 4.99,
+          "vol_dry": 0.88,
+          "dist50": -4.0,
+          "high252": 0.48,
+          "range10": 17.8,
+          "float": "551.0",
+          "eps": "22",
+          "sales": "12",
+          "inst": "-12.3",
+          "short": 6.2
+        }
+      ],
+      "l1": "Fintech & Crypto",
+      "l2": "Insurance & Insurtech",
+      "l3": null
+    },
+    {
+      "name": "Fintech & Crypto / Payments",
+      "theme_score": 100.0,
+      "avg_setup_score": 96.0,
+      "coiled_count": 1,
+      "other_screened_count": 19,
+      "tickers": [
+        {
+          "ticker": "LMND",
+          "score": 96.0,
+          "flags": "inside; tight; volDry=0.80; 50SMA=-2.9%; 252H=0.58x; prior=3.1x; blind=1m/RS/VARS",
+          "rs": 50.0,
+          "vars": -10.58,
+          "price": 58.06,
+          "vol_dry": 0.8,
+          "dist50": -2.9,
+          "high252": 0.58,
+          "range10": 14.7,
+          "float": "69.1",
+          "eps": "18",
+          "sales": "89",
+          "inst": "-0.7",
+          "short": 16.2,
           "ticker_color": "green"
         }
       ],
       "l1": "Fintech & Crypto",
-      "l2": "Investment Banking",
+      "l2": "Payments",
+      "l3": null
+    },
+    {
+      "name": "Industrials / Flooring",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 1,
+      "tickers": [
+        {
+          "ticker": "FND",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.82; 50SMA=+1.3%; 252H=0.55x; prior=2.2x; blind=1m/RS/VARS",
+          "rs": 46.2,
+          "vars": -12.07,
+          "price": 50.56,
+          "vol_dry": 0.82,
+          "dist50": 1.3,
+          "high252": 0.55,
+          "range10": 19.6,
+          "float": "105.6",
+          "eps": "-0",
+          "sales": "-1",
+          "inst": "+2.1",
+          "short": 12.1,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Industrials",
+      "l2": "Flooring",
+      "l3": null
+    },
+    {
+      "name": "Logistics / Maritime Shipping",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "NAT",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.86; 50SMA=-7.5%; 252H=0.83x; prior=2.6x; blind=1m/RS",
+          "rs": 7.7,
+          "vars": 3.75,
+          "price": 5.24,
+          "vol_dry": 0.86,
+          "dist50": -7.5,
+          "high252": 0.83,
+          "range10": 12.4,
+          "float": "200.6",
+          "eps": "1088",
+          "sales": "64",
+          "inst": "+4.0",
+          "short": 9.2,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Logistics",
+      "l2": "Maritime Shipping",
       "l3": null
     },
     {
       "name": "Metals & Mining / Gold",
       "theme_score": 100.0,
-      "avg_setup_score": 92.0,
+      "avg_setup_score": 100.0,
       "coiled_count": 1,
-      "other_screened_count": 6,
+      "other_screened_count": 8,
       "tickers": [
         {
-          "ticker": "SA",
-          "score": 92.0,
-          "flags": "inside; tight; volDry=0.89; 50SMA=+11.2%; 252H=0.83x; prior=3.3x; blind=VARS",
-          "rs": 84.6,
-          "vars": -6.12,
-          "price": 33.29,
-          "vol_dry": 0.89,
-          "dist50": 11.2,
-          "high252": 0.83,
-          "range10": 22.0,
-          "float": "88.5",
-          "eps": "60",
-          "sales": null,
-          "inst": "-1.8",
-          "short": 5.1
+          "ticker": "AU",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.93; 50SMA=-5.0%; 252H=0.73x; prior=3.0x; blind=1m/RS/VARS",
+          "rs": 7.7,
+          "vars": -6.22,
+          "price": 91.85,
+          "vol_dry": 0.93,
+          "dist50": -5.0,
+          "high252": 0.73,
+          "range10": 13.3,
+          "float": "503.9",
+          "eps": "101",
+          "sales": "65",
+          "inst": "+0.5",
+          "short": 0.8,
+          "ticker_color": "green"
         }
       ],
       "l1": "Metals & Mining",
@@ -121,52 +384,299 @@
       "l3": null
     },
     {
-      "name": "Nuclear / Uranium Mining",
+      "name": "Retail (Multi-Category) / Home Goods",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "FND",
+          "score": 100.0,
+          "flags": "inside; tight; NR20; volDry=0.82; 50SMA=+1.3%; 252H=0.55x; prior=2.2x; blind=1m/RS/VARS",
+          "rs": 46.2,
+          "vars": -12.07,
+          "price": 50.56,
+          "vol_dry": 0.82,
+          "dist50": 1.3,
+          "high252": 0.55,
+          "range10": 19.6,
+          "float": "105.6",
+          "eps": "-0",
+          "sales": "-1",
+          "inst": "+2.1",
+          "short": 12.1,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Retail (Multi-Category)",
+      "l2": "Home Goods",
+      "l3": null
+    },
+    {
+      "name": "Software & Internet / BPO & IT Services",
+      "theme_score": 100.0,
+      "avg_setup_score": 97.0,
+      "coiled_count": 1,
+      "other_screened_count": 14,
+      "tickers": [
+        {
+          "ticker": "KD",
+          "score": 97.0,
+          "flags": "inside; tight; volDry=0.98; 50SMA=-2.3%; 252H=0.29x; prior=4.4x; blind=1m/RS/VARS",
+          "rs": 53.8,
+          "vars": -16.92,
+          "price": 12.6,
+          "vol_dry": 0.98,
+          "dist50": -2.3,
+          "high252": 0.29,
+          "range10": 12.1,
+          "float": "220.5",
+          "eps": "23",
+          "sales": "-1",
+          "inst": "-7.0",
+          "short": 10.8,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Software & Internet",
+      "l2": "BPO & IT Services",
+      "l3": null
+    },
+    {
+      "name": "Software & Internet / Data & Analytics",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 11,
+      "tickers": [
+        {
+          "ticker": "CLVT",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.88; 50SMA=+3.7%; 252H=0.55x; prior=2.9x; blind=1m/RS/VARS",
+          "rs": 57.7,
+          "vars": -13.1,
+          "price": 2.64,
+          "vol_dry": 0.88,
+          "dist50": 3.7,
+          "high252": 0.55,
+          "range10": 15.5,
+          "float": "340.6",
+          "eps": "8",
+          "sales": "-1",
+          "inst": "+1.5",
+          "short": 16.5,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Software & Internet",
+      "l2": "Data & Analytics",
+      "l3": null
+    },
+    {
+      "name": "Space / Imaging & Earth Observation",
+      "theme_score": 100.0,
+      "avg_setup_score": 91.0,
       "coiled_count": 1,
       "other_screened_count": 3,
       "tickers": [
         {
-          "ticker": "DNN",
-          "score": 100.0,
-          "flags": "inside; tight; volDry=0.79; 50SMA=-4.6%; 252H=0.77x; prior=2.9x; blind=1m/RS/VARS",
-          "rs": 34.6,
-          "vars": -5.57,
-          "price": 3.43,
-          "vol_dry": 0.79,
-          "dist50": -4.6,
-          "high252": 0.77,
-          "range10": 11.7,
-          "float": "899.8",
-          "eps": "52",
-          "sales": "-16",
-          "inst": "+1.5",
-          "short": 8.1,
+          "ticker": "BKSY",
+          "score": 91.0,
+          "flags": "inside; tight; volDry=0.99; 50SMA=+19.6%; 252H=0.83x; prior=5.0x; blind=RS/VARS",
+          "rs": 65.4,
+          "vars": -2.17,
+          "price": 43.91,
+          "vol_dry": 0.99,
+          "dist50": 19.6,
+          "high252": 0.83,
+          "range10": 32.1,
+          "float": "30.8",
+          "eps": "29",
+          "sales": "-30",
+          "inst": "+4.8",
+          "short": 22.8,
           "ticker_color": "green"
         }
       ],
-      "l1": "Nuclear",
-      "l2": "Uranium Mining",
+      "l1": "Space",
+      "l2": "Imaging & Earth Observation",
+      "l3": null
+    },
+    {
+      "name": "Specialty Chemicals / Specialty Materials",
+      "theme_score": 100.0,
+      "avg_setup_score": 98.0,
+      "coiled_count": 1,
+      "other_screened_count": 7,
+      "tickers": [
+        {
+          "ticker": "CE",
+          "score": 98.0,
+          "flags": "inside; tight; volDry=0.87; 50SMA=-9.8%; 252H=0.78x; prior=2.0x; blind=1m/RS/VARS",
+          "rs": 26.9,
+          "vars": -2.66,
+          "price": 55.27,
+          "vol_dry": 0.87,
+          "dist50": -9.8,
+          "high252": 0.78,
+          "range10": 9.2,
+          "float": "109.2",
+          "eps": "54",
+          "sales": "-2",
+          "inst": "-2.6",
+          "short": 5.7,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Specialty Chemicals",
+      "l2": "Specialty Materials",
+      "l3": null
+    },
+    {
+      "name": "Telecom / Latin America",
+      "theme_score": 100.0,
+      "avg_setup_score": 100.0,
+      "coiled_count": 1,
+      "other_screened_count": 2,
+      "tickers": [
+        {
+          "ticker": "AKAN",
+          "score": 100.0,
+          "flags": "inside; tight; volDry=0.31; 50SMA=+11.7%; 252H=0.08x; prior=91.1x; blind=1m/RS/VARS",
+          "rs": 23.1,
+          "vars": -1.57,
+          "price": 17.1,
+          "vol_dry": 0.31,
+          "dist50": 11.7,
+          "high252": 0.08,
+          "range10": 105.3,
+          "float": "0.5",
+          "eps": null,
+          "sales": "-100",
+          "inst": "+1.5",
+          "short": 7.5
+        }
+      ],
+      "l1": "Telecom",
+      "l2": "Latin America",
+      "l3": null
+    },
+    {
+      "name": "Travel & Leisure / Themed Attractions",
+      "theme_score": 100.0,
+      "avg_setup_score": 96.0,
+      "coiled_count": 1,
+      "other_screened_count": 4,
+      "tickers": [
+        {
+          "ticker": "SPHR",
+          "score": 96.0,
+          "flags": "inside; tight; volDry=0.85; 50SMA=+9.0%; 252H=0.95x; prior=4.1x; blind=1m/RS/VARS",
+          "rs": 65.4,
+          "vars": 1.12,
+          "price": 141.95,
+          "vol_dry": 0.85,
+          "dist50": 9.0,
+          "high252": 0.95,
+          "range10": 13.6,
+          "float": "27.0",
+          "eps": "-433",
+          "sales": "38",
+          "inst": "+4.3",
+          "short": 27.4
+        }
+      ],
+      "l1": "Travel & Leisure",
+      "l2": "Themed Attractions",
+      "l3": null
+    },
+    {
+      "name": "Travel & Leisure / Live Events",
+      "theme_score": 99.0,
+      "avg_setup_score": 96.0,
+      "coiled_count": 1,
+      "other_screened_count": 0,
+      "tickers": [
+        {
+          "ticker": "SPHR",
+          "score": 96.0,
+          "flags": "inside; tight; volDry=0.85; 50SMA=+9.0%; 252H=0.95x; prior=4.1x; blind=1m/RS/VARS",
+          "rs": 65.4,
+          "vars": 1.12,
+          "price": 141.95,
+          "vol_dry": 0.85,
+          "dist50": 9.0,
+          "high252": 0.95,
+          "range10": 13.6,
+          "float": "27.0",
+          "eps": "-433",
+          "sales": "38",
+          "inst": "+4.3",
+          "short": 27.4
+        }
+      ],
+      "l1": "Travel & Leisure",
+      "l2": "Live Events",
       "l3": null
     }
   ],
   "network": {
     "nodes": [
       {
-        "id": "Biotech",
+        "id": "Oil & Gas",
         "kind": "l1"
       },
       {
-        "id": "Biotech / Gene Editing",
+        "id": "Oil & Gas / E&P",
         "kind": "leaf",
-        "parent": "Biotech",
+        "parent": "Oil & Gas",
+        "ticker_count": 3
+      },
+      {
+        "id": "Metals & Mining",
+        "kind": "l1"
+      },
+      {
+        "id": "Metals & Mining / Diversified",
+        "kind": "leaf",
+        "parent": "Metals & Mining",
+        "ticker_count": 2
+      },
+      {
+        "id": "Agriculture",
+        "kind": "l1"
+      },
+      {
+        "id": "Agriculture / Fertilizers",
+        "kind": "leaf",
+        "parent": "Agriculture",
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Neuroscience",
+        "id": "Consumer",
+        "kind": "l1"
+      },
+      {
+        "id": "Consumer / Home Goods & Furnishings",
         "kind": "leaf",
-        "parent": "Biotech",
+        "parent": "Consumer",
+        "ticker_count": 1
+      },
+      {
+        "id": "Consumer / RV & Outdoor Lifestyle",
+        "kind": "leaf",
+        "parent": "Consumer",
+        "ticker_count": 1
+      },
+      {
+        "id": "Defense & Aerospace",
+        "kind": "l1"
+      },
+      {
+        "id": "Defense & Aerospace / Commercial Aerospace / Engines",
+        "kind": "leaf",
+        "parent": "Defense & Aerospace",
         "ticker_count": 1
       },
       {
@@ -174,14 +684,36 @@
         "kind": "l1"
       },
       {
-        "id": "Fintech & Crypto / Investment Banking",
+        "id": "Fintech & Crypto / Insurance & Insurtech",
         "kind": "leaf",
         "parent": "Fintech & Crypto",
         "ticker_count": 1
       },
       {
-        "id": "Metals & Mining",
+        "id": "Fintech & Crypto / Payments",
+        "kind": "leaf",
+        "parent": "Fintech & Crypto",
+        "ticker_count": 1
+      },
+      {
+        "id": "Industrials",
         "kind": "l1"
+      },
+      {
+        "id": "Industrials / Flooring",
+        "kind": "leaf",
+        "parent": "Industrials",
+        "ticker_count": 1
+      },
+      {
+        "id": "Logistics",
+        "kind": "l1"
+      },
+      {
+        "id": "Logistics / Maritime Shipping",
+        "kind": "leaf",
+        "parent": "Logistics",
+        "ticker_count": 1
       },
       {
         "id": "Metals & Mining / Gold",
@@ -190,30 +722,127 @@
         "ticker_count": 1
       },
       {
-        "id": "Nuclear",
+        "id": "Retail (Multi-Category)",
         "kind": "l1"
       },
       {
-        "id": "Nuclear / Uranium Mining",
+        "id": "Retail (Multi-Category) / Home Goods",
         "kind": "leaf",
-        "parent": "Nuclear",
+        "parent": "Retail (Multi-Category)",
+        "ticker_count": 1
+      },
+      {
+        "id": "Software & Internet",
+        "kind": "l1"
+      },
+      {
+        "id": "Software & Internet / BPO & IT Services",
+        "kind": "leaf",
+        "parent": "Software & Internet",
+        "ticker_count": 1
+      },
+      {
+        "id": "Software & Internet / Data & Analytics",
+        "kind": "leaf",
+        "parent": "Software & Internet",
+        "ticker_count": 1
+      },
+      {
+        "id": "Space",
+        "kind": "l1"
+      },
+      {
+        "id": "Space / Imaging & Earth Observation",
+        "kind": "leaf",
+        "parent": "Space",
+        "ticker_count": 1
+      },
+      {
+        "id": "Specialty Chemicals",
+        "kind": "l1"
+      },
+      {
+        "id": "Specialty Chemicals / Specialty Materials",
+        "kind": "leaf",
+        "parent": "Specialty Chemicals",
+        "ticker_count": 1
+      },
+      {
+        "id": "Telecom",
+        "kind": "l1"
+      },
+      {
+        "id": "Telecom / Latin America",
+        "kind": "leaf",
+        "parent": "Telecom",
+        "ticker_count": 1
+      },
+      {
+        "id": "Travel & Leisure",
+        "kind": "l1"
+      },
+      {
+        "id": "Travel & Leisure / Themed Attractions",
+        "kind": "leaf",
+        "parent": "Travel & Leisure",
+        "ticker_count": 1
+      },
+      {
+        "id": "Travel & Leisure / Live Events",
+        "kind": "leaf",
+        "parent": "Travel & Leisure",
         "ticker_count": 1
       }
     ],
     "edges": [
       {
-        "source": "Biotech / Gene Editing",
-        "target": "Biotech",
+        "source": "Oil & Gas / E&P",
+        "target": "Oil & Gas",
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Neuroscience",
-        "target": "Biotech",
+        "source": "Metals & Mining / Diversified",
+        "target": "Metals & Mining",
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Investment Banking",
+        "source": "Agriculture / Fertilizers",
+        "target": "Agriculture",
+        "kind": "is_a"
+      },
+      {
+        "source": "Consumer / Home Goods & Furnishings",
+        "target": "Consumer",
+        "kind": "is_a"
+      },
+      {
+        "source": "Consumer / RV & Outdoor Lifestyle",
+        "target": "Consumer",
+        "kind": "is_a"
+      },
+      {
+        "source": "Defense & Aerospace / Commercial Aerospace / Engines",
+        "target": "Defense & Aerospace",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Insurance & Insurtech",
         "target": "Fintech & Crypto",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Payments",
+        "target": "Fintech & Crypto",
+        "kind": "is_a"
+      },
+      {
+        "source": "Industrials / Flooring",
+        "target": "Industrials",
+        "kind": "is_a"
+      },
+      {
+        "source": "Logistics / Maritime Shipping",
+        "target": "Logistics",
         "kind": "is_a"
       },
       {
@@ -222,8 +851,43 @@
         "kind": "is_a"
       },
       {
-        "source": "Nuclear / Uranium Mining",
-        "target": "Nuclear",
+        "source": "Retail (Multi-Category) / Home Goods",
+        "target": "Retail (Multi-Category)",
+        "kind": "is_a"
+      },
+      {
+        "source": "Software & Internet / BPO & IT Services",
+        "target": "Software & Internet",
+        "kind": "is_a"
+      },
+      {
+        "source": "Software & Internet / Data & Analytics",
+        "target": "Software & Internet",
+        "kind": "is_a"
+      },
+      {
+        "source": "Space / Imaging & Earth Observation",
+        "target": "Space",
+        "kind": "is_a"
+      },
+      {
+        "source": "Specialty Chemicals / Specialty Materials",
+        "target": "Specialty Chemicals",
+        "kind": "is_a"
+      },
+      {
+        "source": "Telecom / Latin America",
+        "target": "Telecom",
+        "kind": "is_a"
+      },
+      {
+        "source": "Travel & Leisure / Themed Attractions",
+        "target": "Travel & Leisure",
+        "kind": "is_a"
+      },
+      {
+        "source": "Travel & Leisure / Live Events",
+        "target": "Travel & Leisure",
         "kind": "is_a"
       }
     ]

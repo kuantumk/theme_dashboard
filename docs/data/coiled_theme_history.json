@@ -1,5 +1,900 @@
 [
   {
+    "report_date": "2026-06-02",
+    "themes": [
+      {
+        "name": "Oil & Gas / E&P",
+        "theme_score": 100.0,
+        "avg_setup_score": 96.7,
+        "coiled_count": 3,
+        "other_screened_count": 11,
+        "tickers": [
+          {
+            "ticker": "APA",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.69; 50SMA=-3.0%; 252H=0.83x; prior=2.8x; blind=1m/RS",
+            "rs": 30.8,
+            "vars": 5.67,
+            "price": 37.81,
+            "vol_dry": 0.69,
+            "dist50": -3.0,
+            "high252": 0.83,
+            "range10": 15.4,
+            "float": "351.7",
+            "eps": "68",
+            "sales": "-12",
+            "inst": "+1.0",
+            "short": 7.3,
+            "ticker_color": "green"
+          },
+          {
+            "ticker": "VIST",
+            "score": 100.0,
+            "flags": "inside; tight; NR7; volDry=0.65; 50SMA=+8.0%; 252H=0.94x; prior=2.6x; blind=1m/RS",
+            "rs": 65.4,
+            "vars": 7.1,
+            "price": 76.72,
+            "vol_dry": 0.65,
+            "dist50": 8.0,
+            "high252": 0.94,
+            "range10": 13.1,
+            "float": "95.2",
+            "eps": "65",
+            "sales": "99",
+            "inst": "+33.0",
+            "short": 2.6
+          },
+          {
+            "ticker": "TALO",
+            "score": 90.0,
+            "flags": "tight; NR20; volDry=0.91; 50SMA=-2.4%; 252H=0.88x; prior=2.2x; blind=1m/RS/VARS",
+            "rs": 15.4,
+            "vars": 1.34,
+            "price": 14.96,
+            "vol_dry": 0.91,
+            "dist50": -2.4,
+            "high252": 0.88,
+            "range10": 18.8,
+            "float": "124.3",
+            "eps": "131",
+            "sales": "-8",
+            "inst": "+0.5",
+            "short": 7.0,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Oil & Gas",
+        "l2": "E&P",
+        "l3": null
+      },
+      {
+        "name": "Metals & Mining / Diversified",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 2,
+        "other_screened_count": 11,
+        "tickers": [
+          {
+            "ticker": "IAG",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.88; 50SMA=-2.3%; 252H=0.70x; prior=3.7x; blind=1m/RS/VARS",
+            "rs": 50.0,
+            "vars": -7.05,
+            "price": 17.49,
+            "vol_dry": 0.88,
+            "dist50": -2.3,
+            "high252": 0.7,
+            "range10": 11.7,
+            "float": "586.9",
+            "eps": "105",
+            "sales": "116",
+            "inst": "-1.4",
+            "short": 0.5,
+            "ticker_color": "green"
+          },
+          {
+            "ticker": "SSRM",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.67; 50SMA=-2.5%; 252H=0.82x; prior=3.1x; blind=1m/RS/VARS",
+            "rs": 3.8,
+            "vars": -2.46,
+            "price": 29.81,
+            "vol_dry": 0.67,
+            "dist50": -2.5,
+            "high252": 0.82,
+            "range10": 9.4,
+            "float": "204.7",
+            "eps": "129",
+            "sales": "84",
+            "inst": "+2.7",
+            "short": 3.2,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Metals & Mining",
+        "l2": "Diversified",
+        "l3": null
+      },
+      {
+        "name": "Agriculture / Fertilizers",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 1,
+        "tickers": [
+          {
+            "ticker": "LXU",
+            "score": 100.0,
+            "flags": "tight; NR20; volDry=0.60; 50SMA=-9.1%; 252H=0.76x; prior=2.4x; blind=1m/RS/VARS",
+            "rs": 15.4,
+            "vars": 1.64,
+            "price": 13.06,
+            "vol_dry": 0.6,
+            "dist50": -9.1,
+            "high252": 0.76,
+            "range10": 13.2,
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Agriculture",
+        "l2": "Fertilizers",
+        "l3": null
+      },
+      {
+        "name": "Consumer / Home Goods & Furnishings",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 5,
+        "tickers": [
+          {
+            "ticker": "ARHS",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.87; 50SMA=-4.0%; 252H=0.53x; prior=2.2x; blind=1m/RS/VARS",
+            "rs": 38.5,
+            "vars": -14.93,
+            "price": 6.53,
+            "vol_dry": 0.87,
+            "dist50": -4.0,
+            "high252": 0.53,
+            "range10": 20.7,
+            "float": "51.6",
+            "eps": "-1",
+            "sales": "1",
+            "inst": "-7.0",
+            "short": 9.0,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Consumer",
+        "l2": "Home Goods & Furnishings",
+        "l3": null
+      },
+      {
+        "name": "Consumer / RV & Outdoor Lifestyle",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 3,
+        "tickers": [
+          {
+            "ticker": "CWH",
+            "score": 100.0,
+            "flags": "inside; tight; NR7; volDry=0.87; 50SMA=+4.3%; 252H=0.39x; prior=3.4x; blind=1m/RS/VARS",
+            "rs": 46.2,
+            "vars": -9.57,
+            "price": 7.44,
+            "vol_dry": 0.87,
+            "dist50": 4.3,
+            "high252": 0.39,
+            "range10": 21.5,
+            "float": "59.5",
+            "eps": "242",
+            "sales": "-4",
+            "inst": "-1.6",
+            "short": 20.2,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Consumer",
+        "l2": "RV & Outdoor Lifestyle",
+        "l3": null
+      },
+      {
+        "name": "Defense & Aerospace / Commercial Aerospace / Engines",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 1,
+        "tickers": [
+          {
+            "ticker": "FTAI",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.80; 50SMA=-0.9%; 252H=0.76x; prior=3.0x; blind=1m/RS/VARS",
+            "rs": 26.9,
+            "vars": -6.91,
+            "price": 245.86,
+            "vol_dry": 0.8,
+            "dist50": -0.9,
+            "high252": 0.76,
+            "range10": 20.2,
+            "float": "101.4",
+            "eps": "49",
+            "sales": "64",
+            "inst": "-0.4",
+            "short": 6.7,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Defense & Aerospace",
+        "l2": "Commercial Aerospace",
+        "l3": "Engines"
+      },
+      {
+        "name": "Fintech & Crypto / Insurance & Insurtech",
+        "theme_score": 100.0,
+        "avg_setup_score": 98.0,
+        "coiled_count": 1,
+        "other_screened_count": 5,
+        "tickers": [
+          {
+            "ticker": "CCC",
+            "score": 98.0,
+            "flags": "inside; tight; volDry=0.88; 50SMA=-4.0%; 252H=0.48x; prior=2.6x; blind=1m/RS/VARS",
+            "rs": 50.0,
+            "vars": -21.24,
+            "price": 4.99,
+            "vol_dry": 0.88,
+            "dist50": -4.0,
+            "high252": 0.48,
+            "range10": 17.8,
+            "float": "551.0",
+            "eps": "22",
+            "sales": "12",
+            "inst": "-12.3",
+            "short": 6.2
+          }
+        ],
+        "l1": "Fintech & Crypto",
+        "l2": "Insurance & Insurtech",
+        "l3": null
+      },
+      {
+        "name": "Fintech & Crypto / Payments",
+        "theme_score": 100.0,
+        "avg_setup_score": 96.0,
+        "coiled_count": 1,
+        "other_screened_count": 19,
+        "tickers": [
+          {
+            "ticker": "LMND",
+            "score": 96.0,
+            "flags": "inside; tight; volDry=0.80; 50SMA=-2.9%; 252H=0.58x; prior=3.1x; blind=1m/RS/VARS",
+            "rs": 50.0,
+            "vars": -10.58,
+            "price": 58.06,
+            "vol_dry": 0.8,
+            "dist50": -2.9,
+            "high252": 0.58,
+            "range10": 14.7,
+            "float": "69.1",
+            "eps": "18",
+            "sales": "89",
+            "inst": "-0.7",
+            "short": 16.2,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Fintech & Crypto",
+        "l2": "Payments",
+        "l3": null
+      },
+      {
+        "name": "Industrials / Flooring",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 1,
+        "tickers": [
+          {
+            "ticker": "FND",
+            "score": 100.0,
+            "flags": "inside; tight; NR20; volDry=0.82; 50SMA=+1.3%; 252H=0.55x; prior=2.2x; blind=1m/RS/VARS",
+            "rs": 46.2,
+            "vars": -12.07,
+            "price": 50.56,
+            "vol_dry": 0.82,
+            "dist50": 1.3,
+            "high252": 0.55,
+            "range10": 19.6,
+            "float": "105.6",
+            "eps": "-0",
+            "sales": "-1",
+            "inst": "+2.1",
+            "short": 12.1,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Industrials",
+        "l2": "Flooring",
+        "l3": null
+      },
+      {
+        "name": "Logistics / Maritime Shipping",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 2,
+        "tickers": [
+          {
+            "ticker": "NAT",
+            "score": 100.0,
+            "flags": "inside; tight; NR20; volDry=0.86; 50SMA=-7.5%; 252H=0.83x; prior=2.6x; blind=1m/RS",
+            "rs": 7.7,
+            "vars": 3.75,
+            "price": 5.24,
+            "vol_dry": 0.86,
+            "dist50": -7.5,
+            "high252": 0.83,
+            "range10": 12.4,
+            "float": "200.6",
+            "eps": "1088",
+            "sales": "64",
+            "inst": "+4.0",
+            "short": 9.2,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Logistics",
+        "l2": "Maritime Shipping",
+        "l3": null
+      },
+      {
+        "name": "Metals & Mining / Gold",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 8,
+        "tickers": [
+          {
+            "ticker": "AU",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.93; 50SMA=-5.0%; 252H=0.73x; prior=3.0x; blind=1m/RS/VARS",
+            "rs": 7.7,
+            "vars": -6.22,
+            "price": 91.85,
+            "vol_dry": 0.93,
+            "dist50": -5.0,
+            "high252": 0.73,
+            "range10": 13.3,
+            "float": "503.9",
+            "eps": "101",
+            "sales": "65",
+            "inst": "+0.5",
+            "short": 0.8,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Metals & Mining",
+        "l2": "Gold",
+        "l3": null
+      },
+      {
+        "name": "Retail (Multi-Category) / Home Goods",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 2,
+        "tickers": [
+          {
+            "ticker": "FND",
+            "score": 100.0,
+            "flags": "inside; tight; NR20; volDry=0.82; 50SMA=+1.3%; 252H=0.55x; prior=2.2x; blind=1m/RS/VARS",
+            "rs": 46.2,
+            "vars": -12.07,
+            "price": 50.56,
+            "vol_dry": 0.82,
+            "dist50": 1.3,
+            "high252": 0.55,
+            "range10": 19.6,
+            "float": "105.6",
+            "eps": "-0",
+            "sales": "-1",
+            "inst": "+2.1",
+            "short": 12.1,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Retail (Multi-Category)",
+        "l2": "Home Goods",
+        "l3": null
+      },
+      {
+        "name": "Software & Internet / BPO & IT Services",
+        "theme_score": 100.0,
+        "avg_setup_score": 97.0,
+        "coiled_count": 1,
+        "other_screened_count": 14,
+        "tickers": [
+          {
+            "ticker": "KD",
+            "score": 97.0,
+            "flags": "inside; tight; volDry=0.98; 50SMA=-2.3%; 252H=0.29x; prior=4.4x; blind=1m/RS/VARS",
+            "rs": 53.8,
+            "vars": -16.92,
+            "price": 12.6,
+            "vol_dry": 0.98,
+            "dist50": -2.3,
+            "high252": 0.29,
+            "range10": 12.1,
+            "float": "220.5",
+            "eps": "23",
+            "sales": "-1",
+            "inst": "-7.0",
+            "short": 10.8,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Software & Internet",
+        "l2": "BPO & IT Services",
+        "l3": null
+      },
+      {
+        "name": "Software & Internet / Data & Analytics",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 11,
+        "tickers": [
+          {
+            "ticker": "CLVT",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.88; 50SMA=+3.7%; 252H=0.55x; prior=2.9x; blind=1m/RS/VARS",
+            "rs": 57.7,
+            "vars": -13.1,
+            "price": 2.64,
+            "vol_dry": 0.88,
+            "dist50": 3.7,
+            "high252": 0.55,
+            "range10": 15.5,
+            "float": "340.6",
+            "eps": "8",
+            "sales": "-1",
+            "inst": "+1.5",
+            "short": 16.5,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Software & Internet",
+        "l2": "Data & Analytics",
+        "l3": null
+      },
+      {
+        "name": "Space / Imaging & Earth Observation",
+        "theme_score": 100.0,
+        "avg_setup_score": 91.0,
+        "coiled_count": 1,
+        "other_screened_count": 3,
+        "tickers": [
+          {
+            "ticker": "BKSY",
+            "score": 91.0,
+            "flags": "inside; tight; volDry=0.99; 50SMA=+19.6%; 252H=0.83x; prior=5.0x; blind=RS/VARS",
+            "rs": 65.4,
+            "vars": -2.17,
+            "price": 43.91,
+            "vol_dry": 0.99,
+            "dist50": 19.6,
+            "high252": 0.83,
+            "range10": 32.1,
+            "float": "30.8",
+            "eps": "29",
+            "sales": "-30",
+            "inst": "+4.8",
+            "short": 22.8,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Space",
+        "l2": "Imaging & Earth Observation",
+        "l3": null
+      },
+      {
+        "name": "Specialty Chemicals / Specialty Materials",
+        "theme_score": 100.0,
+        "avg_setup_score": 98.0,
+        "coiled_count": 1,
+        "other_screened_count": 7,
+        "tickers": [
+          {
+            "ticker": "CE",
+            "score": 98.0,
+            "flags": "inside; tight; volDry=0.87; 50SMA=-9.8%; 252H=0.78x; prior=2.0x; blind=1m/RS/VARS",
+            "rs": 26.9,
+            "vars": -2.66,
+            "price": 55.27,
+            "vol_dry": 0.87,
+            "dist50": -9.8,
+            "high252": 0.78,
+            "range10": 9.2,
+            "float": "109.2",
+            "eps": "54",
+            "sales": "-2",
+            "inst": "-2.6",
+            "short": 5.7,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Specialty Chemicals",
+        "l2": "Specialty Materials",
+        "l3": null
+      },
+      {
+        "name": "Telecom / Latin America",
+        "theme_score": 100.0,
+        "avg_setup_score": 100.0,
+        "coiled_count": 1,
+        "other_screened_count": 2,
+        "tickers": [
+          {
+            "ticker": "AKAN",
+            "score": 100.0,
+            "flags": "inside; tight; volDry=0.31; 50SMA=+11.7%; 252H=0.08x; prior=91.1x; blind=1m/RS/VARS",
+            "rs": 23.1,
+            "vars": -1.57,
+            "price": 17.1,
+            "vol_dry": 0.31,
+            "dist50": 11.7,
+            "high252": 0.08,
+            "range10": 105.3,
+            "float": "0.5",
+            "eps": null,
+            "sales": "-100",
+            "inst": "+1.5",
+            "short": 7.5
+          }
+        ],
+        "l1": "Telecom",
+        "l2": "Latin America",
+        "l3": null
+      },
+      {
+        "name": "Travel & Leisure / Themed Attractions",
+        "theme_score": 100.0,
+        "avg_setup_score": 96.0,
+        "coiled_count": 1,
+        "other_screened_count": 4,
+        "tickers": [
+          {
+            "ticker": "SPHR",
+            "score": 96.0,
+            "flags": "inside; tight; volDry=0.85; 50SMA=+9.0%; 252H=0.95x; prior=4.1x; blind=1m/RS/VARS",
+            "rs": 65.4,
+            "vars": 1.12,
+            "price": 141.95,
+            "vol_dry": 0.85,
+            "dist50": 9.0,
+            "high252": 0.95,
+            "range10": 13.6,
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
+          }
+        ],
+        "l1": "Travel & Leisure",
+        "l2": "Themed Attractions",
+        "l3": null
+      },
+      {
+        "name": "Travel & Leisure / Live Events",
+        "theme_score": 99.0,
+        "avg_setup_score": 96.0,
+        "coiled_count": 1,
+        "other_screened_count": 0,
+        "tickers": [
+          {
+            "ticker": "SPHR",
+            "score": 96.0,
+            "flags": "inside; tight; volDry=0.85; 50SMA=+9.0%; 252H=0.95x; prior=4.1x; blind=1m/RS/VARS",
+            "rs": 65.4,
+            "vars": 1.12,
+            "price": 141.95,
+            "vol_dry": 0.85,
+            "dist50": 9.0,
+            "high252": 0.95,
+            "range10": 13.6,
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
+          }
+        ],
+        "l1": "Travel & Leisure",
+        "l2": "Live Events",
+        "l3": null
+      }
+    ],
+    "network": {
+      "nodes": [
+        {
+          "id": "Oil & Gas",
+          "kind": "l1"
+        },
+        {
+          "id": "Oil & Gas / E&P",
+          "kind": "leaf",
+          "parent": "Oil & Gas",
+          "ticker_count": 3
+        },
+        {
+          "id": "Metals & Mining",
+          "kind": "l1"
+        },
+        {
+          "id": "Metals & Mining / Diversified",
+          "kind": "leaf",
+          "parent": "Metals & Mining",
+          "ticker_count": 2
+        },
+        {
+          "id": "Agriculture",
+          "kind": "l1"
+        },
+        {
+          "id": "Agriculture / Fertilizers",
+          "kind": "leaf",
+          "parent": "Agriculture",
+          "ticker_count": 1
+        },
+        {
+          "id": "Consumer",
+          "kind": "l1"
+        },
+        {
+          "id": "Consumer / Home Goods & Furnishings",
+          "kind": "leaf",
+          "parent": "Consumer",
+          "ticker_count": 1
+        },
+        {
+          "id": "Consumer / RV & Outdoor Lifestyle",
+          "kind": "leaf",
+          "parent": "Consumer",
+          "ticker_count": 1
+        },
+        {
+          "id": "Defense & Aerospace",
+          "kind": "l1"
+        },
+        {
+          "id": "Defense & Aerospace / Commercial Aerospace / Engines",
+          "kind": "leaf",
+          "parent": "Defense & Aerospace",
+          "ticker_count": 1
+        },
+        {
+          "id": "Fintech & Crypto",
+          "kind": "l1"
+        },
+        {
+          "id": "Fintech & Crypto / Insurance & Insurtech",
+          "kind": "leaf",
+          "parent": "Fintech & Crypto",
+          "ticker_count": 1
+        },
+        {
+          "id": "Fintech & Crypto / Payments",
+          "kind": "leaf",
+          "parent": "Fintech & Crypto",
+          "ticker_count": 1
+        },
+        {
+          "id": "Industrials",
+          "kind": "l1"
+        },
+        {
+          "id": "Industrials / Flooring",
+          "kind": "leaf",
+          "parent": "Industrials",
+          "ticker_count": 1
+        },
+        {
+          "id": "Logistics",
+          "kind": "l1"
+        },
+        {
+          "id": "Logistics / Maritime Shipping",
+          "kind": "leaf",
+          "parent": "Logistics",
+          "ticker_count": 1
+        },
+        {
+          "id": "Metals & Mining / Gold",
+          "kind": "leaf",
+          "parent": "Metals & Mining",
+          "ticker_count": 1
+        },
+        {
+          "id": "Retail (Multi-Category)",
+          "kind": "l1"
+        },
+        {
+          "id": "Retail (Multi-Category) / Home Goods",
+          "kind": "leaf",
+          "parent": "Retail (Multi-Category)",
+          "ticker_count": 1
+        },
+        {
+          "id": "Software & Internet",
+          "kind": "l1"
+        },
+        {
+          "id": "Software & Internet / BPO & IT Services",
+          "kind": "leaf",
+          "parent": "Software & Internet",
+          "ticker_count": 1
+        },
+        {
+          "id": "Software & Internet / Data & Analytics",
+          "kind": "leaf",
+          "parent": "Software & Internet",
+          "ticker_count": 1
+        },
+        {
+          "id": "Space",
+          "kind": "l1"
+        },
+        {
+          "id": "Space / Imaging & Earth Observation",
+          "kind": "leaf",
+          "parent": "Space",
+          "ticker_count": 1
+        },
+        {
+          "id": "Specialty Chemicals",
+          "kind": "l1"
+        },
+        {
+          "id": "Specialty Chemicals / Specialty Materials",
+          "kind": "leaf",
+          "parent": "Specialty Chemicals",
+          "ticker_count": 1
+        },
+        {
+          "id": "Telecom",
+          "kind": "l1"
+        },
+        {
+          "id": "Telecom / Latin America",
+          "kind": "leaf",
+          "parent": "Telecom",
+          "ticker_count": 1
+        },
+        {
+          "id": "Travel & Leisure",
+          "kind": "l1"
+        },
+        {
+          "id": "Travel & Leisure / Themed Attractions",
+          "kind": "leaf",
+          "parent": "Travel & Leisure",
+          "ticker_count": 1
+        },
+        {
+          "id": "Travel & Leisure / Live Events",
+          "kind": "leaf",
+          "parent": "Travel & Leisure",
+          "ticker_count": 1
+        }
+      ],
+      "edges": [
+        {
+          "source": "Oil & Gas / E&P",
+          "target": "Oil & Gas",
+          "kind": "is_a"
+        },
+        {
+          "source": "Metals & Mining / Diversified",
+          "target": "Metals & Mining",
+          "kind": "is_a"
+        },
+        {
+          "source": "Agriculture / Fertilizers",
+          "target": "Agriculture",
+          "kind": "is_a"
+        },
+        {
+          "source": "Consumer / Home Goods & Furnishings",
+          "target": "Consumer",
+          "kind": "is_a"
+        },
+        {
+          "source": "Consumer / RV & Outdoor Lifestyle",
+          "target": "Consumer",
+          "kind": "is_a"
+        },
+        {
+          "source": "Defense & Aerospace / Commercial Aerospace / Engines",
+          "target": "Defense & Aerospace",
+          "kind": "is_a"
+        },
+        {
+          "source": "Fintech & Crypto / Insurance & Insurtech",
+          "target": "Fintech & Crypto",
+          "kind": "is_a"
+        },
+        {
+          "source": "Fintech & Crypto / Payments",
+          "target": "Fintech & Crypto",
+          "kind": "is_a"
+        },
+        {
+          "source": "Industrials / Flooring",
+          "target": "Industrials",
+          "kind": "is_a"
+        },
+        {
+          "source": "Logistics / Maritime Shipping",
+          "target": "Logistics",
+          "kind": "is_a"
+        },
+        {
+          "source": "Metals & Mining / Gold",
+          "target": "Metals & Mining",
+          "kind": "is_a"
+        },
+        {
+          "source": "Retail (Multi-Category) / Home Goods",
+          "target": "Retail (Multi-Category)",
+          "kind": "is_a"
+        },
+        {
+          "source": "Software & Internet / BPO & IT Services",
+          "target": "Software & Internet",
+          "kind": "is_a"
+        },
+        {
+          "source": "Software & Internet / Data & Analytics",
+          "target": "Software & Internet",
+          "kind": "is_a"
+        },
+        {
+          "source": "Space / Imaging & Earth Observation",
+          "target": "Space",
+          "kind": "is_a"
+        },
+        {
+          "source": "Specialty Chemicals / Specialty Materials",
+          "target": "Specialty Chemicals",
+          "kind": "is_a"
+        },
+        {
+          "source": "Telecom / Latin America",
+          "target": "Telecom",
+          "kind": "is_a"
+        },
+        {
+          "source": "Travel & Leisure / Themed Attractions",
+          "target": "Travel & Leisure",
+          "kind": "is_a"
+        },
+        {
+          "source": "Travel & Leisure / Live Events",
+          "target": "Travel & Leisure",
+          "kind": "is_a"
+        }
+      ]
+    }
+  },
+  {
     "report_date": "2026-06-01",
     "themes": [
       {
@@ -20,12 +915,11 @@
             "dist50": 1.1,
             "high252": 0.49,
             "range10": 18.3,
-            "float": "132.3",
-            "eps": "16",
-            "sales": "-10",
-            "inst": "+4.8",
-            "short": 39.2,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -50,12 +944,11 @@
             "dist50": -7.7,
             "high252": 0.76,
             "range10": 13.7,
-            "float": "92.6",
-            "eps": "8",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+1.1",
-            "short": 15.7,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -84,8 +977,7 @@
             "eps": "30",
             "sales": "54",
             "inst": "+2.6",
-            "short": 4.2,
-            "ticker_color": "green"
+            "short": 4.2
           }
         ],
         "l1": "Fintech & Crypto",
@@ -143,8 +1035,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           }
         ],
         "l1": "Nuclear",
@@ -252,7 +1143,7 @@
             "high252": 0.46,
             "range10": 19.0,
             "float": "131.0",
-            "eps": "116",
+            "eps": "114",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -272,7 +1163,8 @@
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
-            "short": 7.3
+            "short": 7.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -301,7 +1193,8 @@
             "eps": "54",
             "sales": "30",
             "inst": "+3.4",
-            "short": 3.6
+            "short": 3.6,
+            "ticker_color": "green"
           }
         ],
         "l1": "AI",
@@ -359,7 +1252,8 @@
             "eps": "-40",
             "sales": "-100",
             "inst": "-2.8",
-            "short": 15.4
+            "short": 15.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -475,7 +1369,8 @@
             "eps": "49",
             "sales": "64",
             "inst": "-0.4",
-            "short": 6.7
+            "short": 6.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -529,11 +1424,12 @@
             "dist50": -9.2,
             "high252": 0.81,
             "range10": 12.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "200.6",
+            "eps": "1088",
+            "sales": "64",
+            "inst": "+4.0",
+            "short": 9.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Logistics",
@@ -587,11 +1483,11 @@
             "dist50": -6.1,
             "high252": 0.65,
             "range10": 17.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "245.9",
+            "eps": "52",
+            "sales": "112",
+            "inst": "+4.2",
+            "short": 15.8
           }
         ],
         "l1": "Nuclear",
@@ -620,8 +1516,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Oil & Gas",
@@ -679,7 +1574,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -1106,11 +2002,11 @@
             "dist50": -0.7,
             "high252": 0.77,
             "range10": 25.7,
-            "float": "59.7",
-            "eps": "270",
-            "sales": "-23",
-            "inst": "+11.6",
-            "short": 11.9
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "MUR",
@@ -1220,8 +2116,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -1250,7 +2145,8 @@
             "eps": "-85",
             "sales": null,
             "inst": "+1.0",
-            "short": 17.3
+            "short": 17.3,
+            "ticker_color": "green"
           },
           {
             "ticker": "VG",
@@ -1263,12 +2159,11 @@
             "dist50": -8.3,
             "high252": 0.65,
             "range10": 21.3,
-            "float": "502.6",
-            "eps": "69",
-            "sales": "59",
-            "inst": "-0.8",
-            "short": 6.6,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Oil & Gas",
@@ -1314,7 +2209,8 @@
             "eps": "23",
             "sales": "-1",
             "inst": "-7.0",
-            "short": 10.8
+            "short": 10.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -1794,11 +2690,11 @@
             "dist50": -10.7,
             "high252": 0.3,
             "range10": 14.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "198.2",
+            "eps": "-2502",
+            "sales": "-1641",
+            "inst": "+8.3",
+            "short": 6.6,
             "ticker_color": "green"
           }
         ],
@@ -1824,11 +2720,11 @@
             "dist50": -6.4,
             "high252": 0.79,
             "range10": 21.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+14.8",
+            "short": 26.3
           }
         ],
         "l1": "Healthcare",
@@ -1857,7 +2753,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -1886,7 +2783,8 @@
             "eps": "-4",
             "sales": "25",
             "inst": "+11.7",
-            "short": 12.1
+            "short": 12.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -1911,11 +2809,11 @@
             "dist50": -5.2,
             "high252": 0.46,
             "range10": 28.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+9.4",
+            "short": 22.9
           }
         ],
         "l1": "Metals & Mining",
@@ -1944,8 +2842,7 @@
             "eps": "261",
             "sales": "12",
             "inst": "+2.0",
-            "short": 13.5,
-            "ticker_color": "green"
+            "short": 13.5
           }
         ],
         "l1": "Oil & Gas",
@@ -2003,7 +2900,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -2061,7 +2959,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -2580,7 +3479,8 @@
             "eps": "4286",
             "sales": "231",
             "inst": "+4.5",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           },
           {
             "ticker": "NG",
@@ -2593,11 +3493,12 @@
             "dist50": -7.7,
             "high252": 0.56,
             "range10": 20.1,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -2626,7 +3527,8 @@
             "eps": "-141",
             "sales": null,
             "inst": "+3.1",
-            "short": 31.5
+            "short": 31.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "NB",
@@ -2685,11 +3587,11 @@
             "dist50": -2.9,
             "high252": 0.62,
             "range10": 6.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "55.7",
+            "eps": "13",
+            "sales": "138",
+            "inst": "-2.0",
+            "short": 13.4
           },
           {
             "ticker": "VRDN",
@@ -2955,8 +3857,7 @@
             "eps": "30",
             "sales": "54",
             "inst": "+2.6",
-            "short": 4.2,
-            "ticker_color": "green"
+            "short": 4.2
           }
         ],
         "l1": "Fintech & Crypto",
@@ -3128,11 +4029,11 @@
             "dist50": -8.8,
             "high252": 0.8,
             "range10": 15.5,
-            "float": "48.5",
-            "eps": "63",
-            "sales": "5",
-            "inst": "-2.7",
-            "short": 8.4,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
             "ticker_color": "green"
           }
         ],
@@ -3278,7 +4179,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -3642,7 +4544,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -3702,11 +4605,11 @@
             "dist50": 2.3,
             "high252": 0.45,
             "range10": 14.2,
-            "float": "41.2",
-            "eps": "5",
-            "sales": "4",
-            "inst": "-3.6",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -3935,12 +4838,11 @@
             "dist50": 6.4,
             "high252": 0.75,
             "range10": 13.7,
-            "float": "57.9",
-            "eps": "-260",
-            "sales": "-95",
-            "inst": "+35.9",
-            "short": 25.9,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -3969,8 +4871,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Cannabis",
@@ -4058,7 +4959,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -4145,7 +5047,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -4199,11 +5102,11 @@
             "dist50": -2.0,
             "high252": 0.88,
             "range10": 9.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.0",
+            "eps": "25",
+            "sales": "24",
+            "inst": "-1.6",
+            "short": 4.0
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -4261,7 +5164,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -4290,7 +5194,8 @@
             "eps": "43",
             "sales": "2",
             "inst": "+10.9",
-            "short": 9.4
+            "short": 9.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -4704,8 +5609,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "SA",
@@ -4781,11 +5685,11 @@
             "dist50": -8.6,
             "high252": 0.77,
             "range10": 23.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "86.0",
+            "eps": "-25",
+            "sales": "8",
+            "inst": "+14.8",
+            "short": 26.3
           },
           {
             "ticker": "TDOC",
@@ -4923,8 +5827,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PTEN",
@@ -4941,8 +5844,7 @@
             "eps": "29",
             "sales": "-13",
             "inst": "+0.1",
-            "short": 4.0,
-            "ticker_color": "green"
+            "short": 4.0
           }
         ],
         "l1": "Oil & Gas",
@@ -5174,7 +6076,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -5315,11 +6218,11 @@
             "dist50": -4.2,
             "high252": 0.36,
             "range10": 17.9,
-            "float": "78.2",
-            "eps": "-46",
-            "sales": "38",
-            "inst": "+16.9",
-            "short": 12.3
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -5344,11 +6247,11 @@
             "dist50": -12.9,
             "high252": 0.43,
             "range10": 44.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "132.4",
+            "eps": "225",
+            "sales": "-3",
+            "inst": "+9.4",
+            "short": 22.9
           }
         ],
         "l1": "Metals & Mining",
@@ -5406,8 +6309,7 @@
             "eps": "29",
             "sales": "-13",
             "inst": "+0.1",
-            "short": 4.0,
-            "ticker_color": "green"
+            "short": 4.0
           }
         ],
         "l1": "Oil & Gas",
@@ -5494,7 +6396,8 @@
             "eps": "75",
             "sales": "12",
             "inst": "-10.4",
-            "short": 11.4
+            "short": 11.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -5519,11 +6422,11 @@
             "dist50": -7.7,
             "high252": 0.77,
             "range10": 18.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "434.5",
+            "eps": "10",
+            "sales": "12",
+            "inst": "-2.5",
+            "short": 1.4
           }
         ],
         "l1": "Nuclear",
@@ -5581,7 +6484,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -6013,7 +6917,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -6105,7 +7010,8 @@
             "eps": "18",
             "sales": "89",
             "inst": "-0.7",
-            "short": 16.2
+            "short": 16.2,
+            "ticker_color": "green"
           },
           {
             "ticker": "PHR",
@@ -6139,7 +7045,8 @@
             "eps": "40",
             "sales": "44",
             "inst": "-8.9",
-            "short": 32.5
+            "short": 32.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -6367,12 +7274,11 @@
             "dist50": -8.1,
             "high252": 0.75,
             "range10": 13.9,
-            "float": "147.1",
-            "eps": "-4",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+7.1",
-            "short": 7.6,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -6749,7 +7655,8 @@
             "eps": "8",
             "sales": "-1",
             "inst": "+1.5",
-            "short": 16.5
+            "short": 16.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -7225,11 +8132,12 @@
             "dist50": 4.7,
             "high252": 0.57,
             "range10": 28.5,
-            "float": "108.6",
-            "eps": "111",
-            "sales": "108",
-            "inst": "-10.8",
-            "short": 15.0
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -7258,8 +8166,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -7435,8 +8342,7 @@
             "eps": "261",
             "sales": "12",
             "inst": "+2.0",
-            "short": 13.5,
-            "ticker_color": "green"
+            "short": 13.5
           }
         ],
         "l1": "Oil & Gas",
@@ -7523,8 +8429,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -7611,7 +8516,8 @@
             "eps": "18",
             "sales": "89",
             "inst": "-0.7",
-            "short": 16.2
+            "short": 16.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -7723,11 +8629,11 @@
             "dist50": -3.9,
             "high252": 0.81,
             "range10": 10.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "51.7",
+            "eps": "482",
+            "sales": "54",
+            "inst": "-5.2",
+            "short": 8.3
           }
         ],
         "l1": "Oil & Gas",
@@ -7810,11 +8716,11 @@
             "dist50": 7.5,
             "high252": 0.91,
             "range10": 16.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
           }
         ],
         "l1": "Travel & Leisure",
@@ -7839,11 +8745,11 @@
             "dist50": 7.5,
             "high252": 0.91,
             "range10": 16.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
           }
         ],
         "l1": "Travel & Leisure",
@@ -8317,11 +9223,12 @@
             "dist50": -0.7,
             "high252": 0.84,
             "range10": 13.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Agriculture",
@@ -8408,8 +9315,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Oil & Gas",
@@ -8434,11 +9340,11 @@
             "dist50": -5.2,
             "high252": 0.85,
             "range10": 16.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.0",
+            "eps": "25",
+            "sales": "24",
+            "inst": "-1.6",
+            "short": 4.0
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -8687,7 +9593,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "LYB",
@@ -8907,7 +9814,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -9256,11 +10164,11 @@
             "dist50": -6.0,
             "high252": 0.36,
             "range10": 23.4,
-            "float": "78.2",
-            "eps": "-46",
-            "sales": "38",
-            "inst": "+16.9",
-            "short": 12.3
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "AG",
@@ -9277,7 +10185,8 @@
             "eps": "92",
             "sales": "95",
             "inst": "-0.1",
-            "short": 4.4
+            "short": 4.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -9352,8 +10261,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "WPM",
@@ -9370,8 +10278,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -9513,12 +10420,11 @@
             "dist50": 6.2,
             "high252": 0.74,
             "range10": 14.3,
-            "float": "57.9",
-            "eps": "-260",
-            "sales": "-95",
-            "inst": "+35.9",
-            "short": 25.9,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -9572,11 +10478,11 @@
             "dist50": 8.8,
             "high252": 0.76,
             "range10": 20.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "480.9",
+            "eps": "48",
+            "sales": "-59",
+            "inst": "+2.3",
+            "short": 12.2
           }
         ],
         "l1": "Nuclear",
@@ -9610,35 +10516,6 @@
         ],
         "l1": "Quantum Computing",
         "l2": null,
-        "l3": null
-      },
-      {
-        "name": "Retail (Multi-Category) / Specialty Apparel",
-        "theme_score": 100.0,
-        "avg_setup_score": 100.0,
-        "coiled_count": 1,
-        "other_screened_count": 1,
-        "tickers": [
-          {
-            "ticker": "VSCO",
-            "score": 100.0,
-            "flags": "inside; tight; NR7; volDry=0.82; 50SMA=-7.5%; 252H=0.68x; prior=3.8x; blind=1m/RS/VARS",
-            "rs": 0.0,
-            "vars": -9.05,
-            "price": 45.19,
-            "vol_dry": 0.82,
-            "dist50": -7.5,
-            "high252": 0.68,
-            "range10": 20.2,
-            "float": "67.9",
-            "eps": "16",
-            "sales": "8",
-            "inst": "+1.9",
-            "short": 19.1
-          }
-        ],
-        "l1": "Retail (Multi-Category)",
-        "l2": "Specialty Apparel",
         "l3": null
       },
       {
@@ -9756,16 +10633,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Retail (Multi-Category)",
-          "kind": "l1"
-        },
-        {
-          "id": "Retail (Multi-Category) / Specialty Apparel",
-          "kind": "leaf",
-          "parent": "Retail (Multi-Category)",
-          "ticker_count": 1
-        },
-        {
           "id": "Space",
           "kind": "l1"
         },
@@ -9828,11 +10695,6 @@
           "kind": "is_a"
         },
         {
-          "source": "Retail (Multi-Category) / Specialty Apparel",
-          "target": "Retail (Multi-Category)",
-          "kind": "is_a"
-        },
-        {
           "source": "Space / Satellites & Communication",
           "target": "Space",
           "kind": "is_a"
@@ -9865,7 +10727,8 @@
             "eps": "-21",
             "sales": "83",
             "inst": "+4.1",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           },
           {
             "ticker": "BWIN",
@@ -10189,7 +11052,8 @@
             "eps": "51",
             "sales": "48",
             "inst": "+1.4",
-            "short": 23.5
+            "short": 23.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -10214,11 +11078,12 @@
             "dist50": 3.1,
             "high252": 0.92,
             "range10": 9.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "200.6",
+            "eps": "1088",
+            "sales": "64",
+            "inst": "+4.0",
+            "short": 9.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Logistics",
@@ -10363,8 +11228,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -10673,8 +11537,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "AI",
@@ -10761,8 +11624,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -10791,8 +11653,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "Healthcare",
@@ -10821,7 +11682,8 @@
             "eps": "108",
             "sales": "12",
             "inst": "+2.8",
-            "short": 8.9
+            "short": 8.9,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -10976,11 +11838,12 @@
             "dist50": -9.1,
             "high252": 0.61,
             "range10": 19.3,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -11072,7 +11935,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -11098,7 +11962,7 @@
             "high252": 0.37,
             "range10": 21.8,
             "float": "131.0",
-            "eps": "116",
+            "eps": "114",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -11118,58 +11982,11 @@
             "eps": "65",
             "sales": "99",
             "inst": "+33.0",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           }
         ],
         "l1": "Oil & Gas",
         "l2": "E&P",
-        "l3": null
-      },
-      {
-        "name": "Retail (Multi-Category) / Specialty Apparel",
-        "theme_score": 100.0,
-        "avg_setup_score": 98.5,
-        "coiled_count": 2,
-        "other_screened_count": 3,
-        "tickers": [
-          {
-            "ticker": "VSCO",
-            "score": 100.0,
-            "flags": "inside; tight; volDry=0.70; 50SMA=-3.6%; 252H=0.72x; prior=3.8x; blind=1m/RS/VARS",
-            "rs": 3.8,
-            "vars": -5.89,
-            "price": 48.04,
-            "vol_dry": 0.7,
-            "dist50": -3.6,
-            "high252": 0.72,
-            "range10": 14.0,
-            "float": "67.9",
-            "eps": "16",
-            "sales": "8",
-            "inst": "+1.9",
-            "short": 19.1
-          },
-          {
-            "ticker": "AEO",
-            "score": 97.0,
-            "flags": "inside; tight; volDry=0.70; 50SMA=-7.4%; 252H=0.59x; prior=3.1x; blind=1m/RS/VARS",
-            "rs": 0.0,
-            "vars": -11.83,
-            "price": 16.68,
-            "vol_dry": 0.7,
-            "dist50": -7.4,
-            "high252": 0.59,
-            "range10": 10.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Retail (Multi-Category)",
-        "l2": "Specialty Apparel",
         "l3": null
       },
       {
@@ -11194,7 +12011,8 @@
             "eps": "16",
             "sales": "10",
             "inst": "-1.9",
-            "short": 14.9
+            "short": 14.9,
+            "ticker_color": "green"
           },
           {
             "ticker": "PAYC",
@@ -11207,11 +12025,11 @@
             "dist50": 8.4,
             "high252": 0.51,
             "range10": 12.2,
-            "float": "40.9",
-            "eps": "18",
-            "sales": "8",
-            "inst": "-11.3",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -11236,11 +12054,12 @@
             "dist50": -3.2,
             "high252": 0.81,
             "range10": 14.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Agriculture",
@@ -11265,11 +12084,11 @@
             "dist50": 10.9,
             "high252": 0.77,
             "range10": 11.6,
-            "float": "157.8",
-            "eps": "98",
-            "sales": "1634",
-            "inst": "-1.6",
-            "short": 25.3
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -11383,11 +12202,11 @@
             "dist50": 6.8,
             "high252": 0.75,
             "range10": 11.5,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -11412,11 +12231,11 @@
             "dist50": 6.8,
             "high252": 0.75,
             "range10": 11.5,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -11532,7 +12351,8 @@
             "eps": "16",
             "sales": "10",
             "inst": "-1.9",
-            "short": 14.9
+            "short": 14.9,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -11677,8 +12497,7 @@
             "eps": "-1",
             "sales": "-1",
             "inst": "-2.2",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "Metals & Mining",
@@ -11736,8 +12555,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           }
         ],
         "l1": "Nuclear",
@@ -11766,7 +12584,8 @@
             "eps": "-85",
             "sales": null,
             "inst": "+1.0",
-            "short": 17.3
+            "short": 17.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -11824,8 +12643,7 @@
             "eps": "-1",
             "sales": "-1",
             "inst": "-2.2",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "Oil & Gas",
@@ -11889,6 +12707,36 @@
         "l1": "Retail (Multi-Category)",
         "l2": "Big-Box",
         "l3": null
+      },
+      {
+        "name": "Retail (Multi-Category) / Specialty Apparel",
+        "theme_score": 100.0,
+        "avg_setup_score": 97.0,
+        "coiled_count": 1,
+        "other_screened_count": 3,
+        "tickers": [
+          {
+            "ticker": "AEO",
+            "score": 97.0,
+            "flags": "inside; tight; volDry=0.70; 50SMA=-7.4%; 252H=0.59x; prior=3.1x; blind=1m/RS/VARS",
+            "rs": 0.0,
+            "vars": -11.83,
+            "price": 16.68,
+            "vol_dry": 0.7,
+            "dist50": -7.4,
+            "high252": 0.59,
+            "range10": 10.9,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Retail (Multi-Category)",
+        "l2": "Specialty Apparel",
+        "l3": null
       }
     ],
     "network": {
@@ -11923,16 +12771,6 @@
           "id": "Oil & Gas / E&P",
           "kind": "leaf",
           "parent": "Oil & Gas",
-          "ticker_count": 2
-        },
-        {
-          "id": "Retail (Multi-Category)",
-          "kind": "l1"
-        },
-        {
-          "id": "Retail (Multi-Category) / Specialty Apparel",
-          "kind": "leaf",
-          "parent": "Retail (Multi-Category)",
           "ticker_count": 2
         },
         {
@@ -12100,6 +12938,10 @@
           "ticker_count": 1
         },
         {
+          "id": "Retail (Multi-Category)",
+          "kind": "l1"
+        },
+        {
           "id": "Retail (Multi-Category) / Auto Marketplace",
           "kind": "leaf",
           "parent": "Retail (Multi-Category)",
@@ -12107,6 +12949,12 @@
         },
         {
           "id": "Retail (Multi-Category) / Big-Box",
+          "kind": "leaf",
+          "parent": "Retail (Multi-Category)",
+          "ticker_count": 1
+        },
+        {
+          "id": "Retail (Multi-Category) / Specialty Apparel",
           "kind": "leaf",
           "parent": "Retail (Multi-Category)",
           "ticker_count": 1
@@ -12131,11 +12979,6 @@
         {
           "source": "Oil & Gas / E&P",
           "target": "Oil & Gas",
-          "kind": "is_a"
-        },
-        {
-          "source": "Retail (Multi-Category) / Specialty Apparel",
-          "target": "Retail (Multi-Category)",
           "kind": "is_a"
         },
         {
@@ -12257,6 +13100,11 @@
           "source": "Retail (Multi-Category) / Big-Box",
           "target": "Retail (Multi-Category)",
           "kind": "is_a"
+        },
+        {
+          "source": "Retail (Multi-Category) / Specialty Apparel",
+          "target": "Retail (Multi-Category)",
+          "kind": "is_a"
         }
       ]
     }
@@ -12299,11 +13147,11 @@
             "dist50": 11.7,
             "high252": 0.97,
             "range10": 12.8,
-            "float": "44.9",
-            "eps": "130",
-            "sales": "46",
-            "inst": "-1.9",
-            "short": 3.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Logistics",
@@ -12390,8 +13238,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -12420,7 +13267,8 @@
             "eps": "18",
             "sales": "11",
             "inst": "-3.3",
-            "short": 14.1
+            "short": 14.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -13104,7 +13952,8 @@
             "eps": "92",
             "sales": "16",
             "inst": "+17.8",
-            "short": 19.9
+            "short": 19.9,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -13133,7 +13982,8 @@
             "eps": "108",
             "sales": "12",
             "inst": "+2.8",
-            "short": 8.9
+            "short": 8.9,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -13400,7 +14250,7 @@
             "high252": 0.41,
             "range10": 14.4,
             "float": "131.0",
-            "eps": "116",
+            "eps": "114",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -13463,7 +14313,7 @@
             "high252": 0.56,
             "range10": 8.6,
             "float": "107.4",
-            "eps": "3",
+            "eps": "4",
             "sales": "-4",
             "inst": "+0.3",
             "short": 29.7
@@ -13549,11 +14399,11 @@
             "dist50": 6.0,
             "high252": 0.74,
             "range10": 12.0,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -13578,11 +14428,11 @@
             "dist50": 6.0,
             "high252": 0.74,
             "range10": 12.0,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -13698,8 +14548,7 @@
             "eps": "198",
             "sales": "236",
             "inst": "+21.6",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           }
         ],
         "l1": "Metals & Mining",
@@ -14049,7 +14898,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "NCNO",
@@ -14066,7 +14916,8 @@
             "eps": "18",
             "sales": "11",
             "inst": "-3.3",
-            "short": 14.1
+            "short": 14.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -14108,11 +14959,11 @@
             "dist50": 10.9,
             "high252": 0.99,
             "range10": 13.2,
-            "float": "44.9",
-            "eps": "130",
-            "sales": "46",
-            "inst": "-1.9",
-            "short": 3.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Logistics",
@@ -14141,8 +14992,7 @@
             "eps": "65",
             "sales": "99",
             "inst": "+33.0",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           },
           {
             "ticker": "EC",
@@ -14184,11 +15034,11 @@
             "dist50": 10.0,
             "high252": 0.79,
             "range10": 19.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "145.2",
+            "eps": "150",
+            "sales": "20",
+            "inst": "+17.5",
+            "short": 14.6
           }
         ],
         "l1": "AI",
@@ -14217,8 +15067,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "AI",
@@ -14305,7 +15154,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Clean Energy",
@@ -14392,8 +15242,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "Healthcare",
@@ -14422,7 +15271,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -14480,7 +15330,8 @@
             "eps": "11",
             "sales": "20",
             "inst": "+4.5",
-            "short": 12.3
+            "short": 12.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -14509,7 +15360,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -14538,8 +15390,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           }
         ],
         "l1": "Nuclear",
@@ -14568,7 +15419,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Specialty Chemicals",
@@ -14929,7 +15781,8 @@
             "eps": "4286",
             "sales": "231",
             "inst": "+4.5",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -14993,8 +15846,7 @@
             "eps": "98",
             "sales": "-5",
             "inst": "+10.5",
-            "short": 30.6,
-            "ticker_color": "green"
+            "short": 30.6
           }
         ],
         "l1": "Space",
@@ -15019,11 +15871,12 @@
             "dist50": 5.6,
             "high252": 0.86,
             "range10": 11.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Agriculture",
@@ -15106,11 +15959,11 @@
             "dist50": -2.7,
             "high252": 0.19,
             "range10": 16.1,
-            "float": "38.7",
-            "eps": "-72",
-            "sales": "24",
-            "inst": "-19.8",
-            "short": 15.7
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Consumer",
@@ -15227,7 +16080,8 @@
             "eps": "11",
             "sales": "20",
             "inst": "+4.5",
-            "short": 12.3
+            "short": 12.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -15344,8 +16198,7 @@
             "eps": "261",
             "sales": "12",
             "inst": "+2.0",
-            "short": 13.5,
-            "ticker_color": "green"
+            "short": 13.5
           }
         ],
         "l1": "Oil & Gas",
@@ -15403,7 +16256,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -15432,7 +16286,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -15832,11 +16687,11 @@
             "dist50": 1.6,
             "high252": 0.48,
             "range10": 12.4,
-            "float": "40.9",
-            "eps": "18",
-            "sales": "8",
-            "inst": "-11.3",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -15878,11 +16733,11 @@
             "dist50": 1.2,
             "high252": 0.71,
             "range10": 17.0,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -15994,11 +16849,11 @@
             "dist50": -11.6,
             "high252": 0.48,
             "range10": 22.1,
-            "float": "255.6",
-            "eps": "18",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+7.1",
-            "short": 16.5
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -16023,11 +16878,11 @@
             "dist50": 4.1,
             "high252": 0.82,
             "range10": 14.2,
-            "float": "143.1",
-            "eps": "29",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+9.5",
-            "short": 17.0
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -16110,11 +16965,11 @@
             "dist50": 1.2,
             "high252": 0.71,
             "range10": 17.0,
-            "float": "85.9",
-            "eps": "-12",
-            "sales": "29",
-            "inst": "-1.8",
-            "short": 18.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -16169,7 +17024,7 @@
             "high252": 0.8,
             "range10": 30.1,
             "float": "59.7",
-            "eps": "100",
+            "eps": "101",
             "sales": "41",
             "inst": "-4.2",
             "short": 17.6
@@ -16521,7 +17376,8 @@
             "eps": "43",
             "sales": "2",
             "inst": "+10.9",
-            "short": 9.4
+            "short": 9.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -16550,7 +17406,8 @@
             "eps": "2325",
             "sales": "17",
             "inst": "-8.1",
-            "short": 8.2
+            "short": 8.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -16579,7 +17436,8 @@
             "eps": "20",
             "sales": "12",
             "inst": "-0.3",
-            "short": 11.2
+            "short": 11.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -16998,11 +17856,11 @@
             "dist50": -9.8,
             "high252": 0.47,
             "range10": 8.5,
-            "float": "37.7",
-            "eps": "62",
-            "sales": "21",
-            "inst": "-2.8",
-            "short": 16.1
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "SNOW",
@@ -17048,8 +17906,7 @@
             "eps": "55",
             "sales": "21",
             "inst": "+6.6",
-            "short": 4.6,
-            "ticker_color": "green"
+            "short": 4.6
           },
           {
             "ticker": "CIEN",
@@ -17066,8 +17923,7 @@
             "eps": "134",
             "sales": "27",
             "inst": "-2.5",
-            "short": 3.2,
-            "ticker_color": "green"
+            "short": 3.2
           }
         ],
         "l1": "AI",
@@ -17138,11 +17994,12 @@
             "dist50": 11.5,
             "high252": 0.94,
             "range10": 23.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "124.3",
+            "eps": "131",
+            "sales": "-8",
+            "inst": "+0.5",
+            "short": 7.0,
+            "ticker_color": "green"
           },
           {
             "ticker": "CRK",
@@ -17234,7 +18091,8 @@
             "eps": "54",
             "sales": "30",
             "inst": "+3.4",
-            "short": 3.6
+            "short": 3.6,
+            "ticker_color": "green"
           }
         ],
         "l1": "AI",
@@ -17259,11 +18117,12 @@
             "dist50": 10.3,
             "high252": 0.88,
             "range10": 14.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Agriculture",
@@ -17321,8 +18180,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -17351,8 +18209,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -17377,12 +18234,11 @@
             "dist50": 5.9,
             "high252": 0.73,
             "range10": 19.1,
-            "float": "57.9",
-            "eps": "-260",
-            "sales": "-95",
-            "inst": "+35.9",
-            "short": 25.9,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -17523,11 +18379,11 @@
             "dist50": 0.9,
             "high252": 0.7,
             "range10": 11.8,
-            "float": "105.5",
-            "eps": "20",
-            "sales": "26",
-            "inst": "+2.5",
-            "short": 9.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Cybersecurity",
@@ -17730,7 +18586,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -17904,7 +18761,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -17929,11 +18787,11 @@
             "dist50": 2.5,
             "high252": 0.86,
             "range10": 9.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "51.7",
+            "eps": "482",
+            "sales": "54",
+            "inst": "-5.2",
+            "short": 8.3
           }
         ],
         "l1": "Oil & Gas",
@@ -18414,11 +19272,11 @@
             "dist50": -0.4,
             "high252": 0.86,
             "range10": 9.5,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "SRPT",
@@ -18435,8 +19293,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -18482,7 +19339,8 @@
             "eps": "-18",
             "sales": "-3",
             "inst": "+4.5",
-            "short": 6.8
+            "short": 6.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "Consumer",
@@ -18557,7 +19415,8 @@
             "eps": "-85",
             "sales": null,
             "inst": "+1.0",
-            "short": 17.3
+            "short": 17.3,
+            "ticker_color": "green"
           },
           {
             "ticker": "CRK",
@@ -18649,8 +19508,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "CPNG",
@@ -18750,11 +19608,12 @@
             "dist50": 8.6,
             "high252": 0.86,
             "range10": 13.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.3",
+            "eps": "225",
+            "sales": "18",
+            "inst": "+19.1",
+            "short": 3.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Agriculture",
@@ -18812,8 +19671,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -18838,11 +19696,11 @@
             "dist50": -0.4,
             "high252": 0.86,
             "range10": 9.5,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -18929,7 +19787,8 @@
             "eps": "-36",
             "sales": null,
             "inst": "-4.8",
-            "short": 16.8
+            "short": 16.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -19012,11 +19871,11 @@
             "dist50": -0.9,
             "high252": 0.87,
             "range10": 10.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.2",
+            "eps": "-1",
+            "sales": "41",
+            "inst": "+55.6",
+            "short": 4.5
           }
         ],
         "l1": "Industrials",
@@ -19173,7 +20032,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 100.0,
         "coiled_count": 1,
-        "other_screened_count": 6,
+        "other_screened_count": 5,
         "tickers": [
           {
             "ticker": "SBH",
@@ -19277,7 +20136,8 @@
             "eps": null,
             "sales": "278",
             "inst": "+0.6",
-            "short": 25.2
+            "short": 25.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -19306,7 +20166,8 @@
             "eps": "2325",
             "sales": "17",
             "inst": "-8.1",
-            "short": 8.2
+            "short": 8.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -20018,7 +20879,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "FSM",
@@ -20060,11 +20922,12 @@
             "dist50": 6.7,
             "high252": 0.89,
             "range10": 19.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "124.3",
+            "eps": "131",
+            "sales": "-8",
+            "inst": "+0.5",
+            "short": 7.0,
+            "ticker_color": "green"
           },
           {
             "ticker": "VET",
@@ -20081,7 +20944,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -20110,7 +20974,8 @@
             "eps": "8",
             "sales": "-1",
             "inst": "+1.5",
-            "short": 16.5
+            "short": 16.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "TDC",
@@ -20152,11 +21017,11 @@
             "dist50": -5.3,
             "high252": 0.75,
             "range10": 15.0,
-            "float": "68.1",
-            "eps": "33",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "-6.8",
-            "short": 3.6
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -20185,8 +21050,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -20215,8 +21079,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -20332,7 +21195,8 @@
             "eps": "126",
             "sales": "44",
             "inst": "+1.3",
-            "short": 21.1
+            "short": 21.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -20566,7 +21430,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -20578,7 +21443,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 93.0,
         "coiled_count": 1,
-        "other_screened_count": 6,
+        "other_screened_count": 5,
         "tickers": [
           {
             "ticker": "ANF",
@@ -20654,7 +21519,8 @@
             "eps": "1",
             "sales": "47",
             "inst": "+0.3",
-            "short": 3.4
+            "short": 3.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -20683,7 +21549,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Space",
@@ -20709,7 +21576,7 @@
             "high252": 0.56,
             "range10": 10.0,
             "float": "107.4",
-            "eps": "3",
+            "eps": "4",
             "sales": "-4",
             "inst": "+0.3",
             "short": 29.7
@@ -20741,7 +21608,8 @@
             "eps": "49",
             "sales": "64",
             "inst": "-0.4",
-            "short": 6.7
+            "short": 6.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -20770,8 +21638,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Oil & Gas",
@@ -20825,11 +21692,11 @@
             "dist50": -0.2,
             "high252": 0.83,
             "range10": 9.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "51.7",
+            "eps": "482",
+            "sales": "54",
+            "inst": "-5.2",
+            "short": 8.3
           }
         ],
         "l1": "Oil & Gas",
@@ -21352,7 +22219,7 @@
             "high252": 0.69,
             "range10": 21.6,
             "float": "98.3",
-            "eps": "90",
+            "eps": "91",
             "sales": "110",
             "inst": "+1.7",
             "short": 3.6
@@ -21481,7 +22348,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "SOLS",
@@ -21498,8 +22366,7 @@
             "eps": "82",
             "sales": null,
             "inst": "+1.3",
-            "short": 2.5,
-            "ticker_color": "green"
+            "short": 2.5
           },
           {
             "ticker": "HUN",
@@ -21516,7 +22383,8 @@
             "eps": "79",
             "sales": "1",
             "inst": "+8.4",
-            "short": 15.5
+            "short": 15.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Specialty Chemicals",
@@ -21637,8 +22505,7 @@
             "eps": "261",
             "sales": "12",
             "inst": "+2.0",
-            "short": 13.5,
-            "ticker_color": "green"
+            "short": 13.5
           },
           {
             "ticker": "VLO",
@@ -21651,11 +22518,11 @@
             "dist50": 3.6,
             "high252": 0.91,
             "range10": 12.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "295.2",
+            "eps": "160",
+            "sales": "8",
+            "inst": "-1.2",
+            "short": 2.9
           }
         ],
         "l1": "Oil & Gas",
@@ -21800,7 +22667,8 @@
             "eps": "-118",
             "sales": "-79",
             "inst": "-0.8",
-            "short": 29.0
+            "short": 29.0,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -21946,7 +22814,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Education",
@@ -22000,11 +22869,11 @@
             "dist50": -3.7,
             "high252": 0.41,
             "range10": 18.6,
-            "float": "117.4",
-            "eps": "86",
-            "sales": "73",
-            "inst": "+15.8",
-            "short": 8.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -22062,7 +22931,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -22120,7 +22990,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -22203,11 +23074,11 @@
             "dist50": -0.1,
             "high252": 0.88,
             "range10": 11.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.2",
+            "eps": "-1",
+            "sales": "41",
+            "inst": "+55.6",
+            "short": 4.5
           }
         ],
         "l1": "Industrials",
@@ -22236,8 +23107,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Logistics",
@@ -22266,7 +23136,8 @@
             "eps": "-17",
             "sales": null,
             "inst": "+15.5",
-            "short": 17.6
+            "short": 17.6,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -22413,8 +23284,7 @@
             "eps": "65",
             "sales": "99",
             "inst": "+33.0",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           }
         ],
         "l1": "Oil & Gas",
@@ -22501,7 +23371,8 @@
             "eps": "305",
             "sales": "-4",
             "inst": "+0.4",
-            "short": 15.1
+            "short": 15.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -22530,7 +23401,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -22559,7 +23431,8 @@
             "eps": "20",
             "sales": "13",
             "inst": "+3.8",
-            "short": 13.4
+            "short": 13.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -22588,7 +23461,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Space",
@@ -22617,7 +23491,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -22646,7 +23521,8 @@
             "eps": "49",
             "sales": "64",
             "inst": "-0.4",
-            "short": 6.7
+            "short": 6.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -22671,11 +23547,11 @@
             "dist50": -3.7,
             "high252": 0.41,
             "range10": 18.6,
-            "float": "117.4",
-            "eps": "86",
-            "sales": "73",
-            "inst": "+15.8",
-            "short": 8.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -23341,7 +24217,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "SATS",
@@ -23358,8 +24235,7 @@
             "eps": "98",
             "sales": "-5",
             "inst": "+10.5",
-            "short": 30.6,
-            "ticker_color": "green"
+            "short": 30.6
           }
         ],
         "l1": "Space",
@@ -23388,7 +24264,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -23504,7 +24381,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Clean Energy",
@@ -23620,8 +24498,7 @@
             "eps": "61",
             "sales": "12",
             "inst": "-6.7",
-            "short": 4.3,
-            "ticker_color": "green"
+            "short": 4.3
           }
         ],
         "l1": "Oil & Gas",
@@ -23913,7 +24790,8 @@
             "eps": "92",
             "sales": "95",
             "inst": "-0.1",
-            "short": 4.4
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "EQX",
@@ -23947,7 +24825,8 @@
             "eps": "4286",
             "sales": "231",
             "inst": "+4.5",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           },
           {
             "ticker": "HYMC",
@@ -23964,7 +24843,8 @@
             "eps": "-17",
             "sales": null,
             "inst": "+15.5",
-            "short": 17.6
+            "short": 17.6,
+            "ticker_color": "green"
           },
           {
             "ticker": "SSRM",
@@ -23977,11 +24857,12 @@
             "dist50": 3.9,
             "high252": 0.84,
             "range10": 21.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "204.7",
+            "eps": "129",
+            "sales": "84",
+            "inst": "+2.7",
+            "short": 3.2,
+            "ticker_color": "green"
           },
           {
             "ticker": "USAS",
@@ -24027,8 +24908,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "FSM",
@@ -24113,7 +24993,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -24222,7 +25103,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "APA",
@@ -24239,7 +25121,8 @@
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
-            "short": 7.3
+            "short": 7.3,
+            "ticker_color": "green"
           },
           {
             "ticker": "VET",
@@ -24256,7 +25139,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "VIST",
@@ -24273,8 +25157,7 @@
             "eps": "65",
             "sales": "99",
             "inst": "+33.0",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           }
         ],
         "l1": "Oil & Gas",
@@ -24300,7 +25183,7 @@
             "high252": 0.69,
             "range10": 21.0,
             "float": "98.3",
-            "eps": "90",
+            "eps": "91",
             "sales": "110",
             "inst": "+1.7",
             "short": 3.6
@@ -24429,7 +25312,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -24458,8 +25342,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "WPM",
@@ -24476,8 +25359,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -24657,11 +25539,11 @@
             "dist50": -9.6,
             "high252": 0.46,
             "range10": 19.0,
-            "float": "41.2",
-            "eps": "5",
-            "sales": "4",
-            "inst": "-3.6",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -24802,11 +25684,11 @@
             "dist50": 12.9,
             "high252": 0.87,
             "range10": 14.3,
-            "float": "143.1",
-            "eps": "29",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+9.5",
-            "short": 17.0
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -24835,8 +25717,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -24919,11 +25800,11 @@
             "dist50": -7.6,
             "high252": 0.2,
             "range10": 15.6,
-            "float": "38.7",
-            "eps": "-72",
-            "sales": "24",
-            "inst": "-19.8",
-            "short": 15.7
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Consumer",
@@ -25010,7 +25891,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Education",
@@ -25093,11 +25975,11 @@
             "dist50": -2.6,
             "high252": 0.86,
             "range10": 12.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.2",
+            "eps": "-1",
+            "sales": "41",
+            "inst": "+55.6",
+            "short": 4.5
           }
         ],
         "l1": "Industrials",
@@ -25184,7 +26066,8 @@
             "eps": "20",
             "sales": "12",
             "inst": "-0.3",
-            "short": 11.2
+            "short": 11.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -25213,8 +26096,7 @@
             "eps": "82",
             "sales": null,
             "inst": "+1.3",
-            "short": 2.5,
-            "ticker_color": "green"
+            "short": 2.5
           }
         ],
         "l1": "Specialty Chemicals",
@@ -25239,11 +26121,11 @@
             "dist50": 10.3,
             "high252": 0.94,
             "range10": 8.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
           }
         ],
         "l1": "Travel & Leisure",
@@ -25268,11 +26150,11 @@
             "dist50": 10.3,
             "high252": 0.94,
             "range10": 8.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "27.0",
+            "eps": "-433",
+            "sales": "38",
+            "inst": "+4.3",
+            "short": 27.4
           }
         ],
         "l1": "Travel & Leisure",
@@ -26131,7 +27013,7 @@
             "high252": 0.71,
             "range10": 17.8,
             "float": "98.3",
-            "eps": "90",
+            "eps": "91",
             "sales": "110",
             "inst": "+1.7",
             "short": 3.6
@@ -26176,11 +27058,12 @@
             "dist50": 4.4,
             "high252": 0.75,
             "range10": 26.0,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -26273,8 +27156,7 @@
             "eps": "261",
             "sales": "12",
             "inst": "+2.0",
-            "short": 13.5,
-            "ticker_color": "green"
+            "short": 13.5
           },
           {
             "ticker": "VLO",
@@ -26287,11 +27169,11 @@
             "dist50": 0.6,
             "high252": 0.88,
             "range10": 17.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "295.2",
+            "eps": "160",
+            "sales": "8",
+            "inst": "-1.2",
+            "short": 2.9
           }
         ],
         "l1": "Oil & Gas",
@@ -26333,11 +27215,12 @@
             "dist50": 9.2,
             "high252": 0.92,
             "range10": 15.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "109.2",
+            "eps": "54",
+            "sales": "-2",
+            "inst": "-2.6",
+            "short": 5.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Specialty Chemicals",
@@ -26540,7 +27423,8 @@
             "eps": "49",
             "sales": "64",
             "inst": "-0.4",
-            "short": 6.7
+            "short": 6.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -26627,7 +27511,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Education",
@@ -26710,11 +27595,12 @@
             "dist50": 0.1,
             "high252": 0.6,
             "range10": 10.9,
-            "float": "483.0",
-            "eps": "67",
-            "sales": "7",
-            "inst": "+1.1",
-            "short": 3.1
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -26856,11 +27742,11 @@
             "dist50": 5.6,
             "high252": 0.9,
             "range10": 14.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.7",
+            "eps": "-82",
+            "sales": "-25",
+            "inst": "+17.1",
+            "short": 13.7
           }
         ],
         "l1": "Oil & Gas",
@@ -27609,8 +28495,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -27784,8 +28669,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -27814,8 +28698,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -27873,7 +28756,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Education",
@@ -28044,7 +28928,7 @@
             "high252": 0.56,
             "range10": 9.7,
             "float": "107.4",
-            "eps": "3",
+            "eps": "4",
             "sales": "-4",
             "inst": "+0.3",
             "short": 29.7
@@ -28379,7 +29263,8 @@
             "eps": "92",
             "sales": "95",
             "inst": "-0.1",
-            "short": 4.4
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "NG",
@@ -28392,11 +29277,12 @@
             "dist50": -0.8,
             "high252": 0.7,
             "range10": 17.7,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "ASM",
@@ -28426,11 +29312,12 @@
             "dist50": 7.8,
             "high252": 0.85,
             "range10": 22.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "204.7",
+            "eps": "129",
+            "sales": "84",
+            "inst": "+2.7",
+            "short": 3.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -28645,11 +29532,11 @@
             "dist50": 0.4,
             "high252": 0.88,
             "range10": 7.3,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -28720,11 +29607,11 @@
             "dist50": 5.5,
             "high252": 0.89,
             "range10": 13.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "434.5",
+            "eps": "10",
+            "sales": "12",
+            "inst": "-2.5",
+            "short": 1.4
           },
           {
             "ticker": "UEC",
@@ -28737,11 +29624,11 @@
             "dist50": 5.1,
             "high252": 0.75,
             "range10": 18.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "480.9",
+            "eps": "48",
+            "sales": "-59",
+            "inst": "+2.3",
+            "short": 12.2
           }
         ],
         "l1": "Nuclear",
@@ -28770,7 +29657,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "AVPT",
@@ -28816,7 +29704,8 @@
             "eps": "31",
             "sales": "17",
             "inst": "-1.8",
-            "short": 5.8
+            "short": 5.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "AI",
@@ -28903,7 +29792,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -28932,8 +29822,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -28958,11 +29847,11 @@
             "dist50": 0.4,
             "high252": 0.88,
             "range10": 7.3,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -28987,11 +29876,11 @@
             "dist50": 3.2,
             "high252": 0.82,
             "range10": 13.4,
-            "float": "68.1",
-            "eps": "33",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "-6.8",
-            "short": 3.6
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -29016,11 +29905,11 @@
             "dist50": 8.5,
             "high252": 0.82,
             "range10": 13.5,
-            "float": "112.8",
-            "eps": "-49",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+0.3",
-            "short": 19.7
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -29103,12 +29992,11 @@
             "dist50": -1.3,
             "high252": 0.83,
             "range10": 10.4,
-            "float": "147.1",
-            "eps": "-4",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+7.1",
-            "short": 7.6,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -29137,8 +30025,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -29164,7 +30051,7 @@
             "high252": 0.72,
             "range10": 40.0,
             "float": "59.7",
-            "eps": "100",
+            "eps": "101",
             "sales": "41",
             "inst": "-4.2",
             "short": 17.6
@@ -29254,7 +30141,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -29341,8 +30229,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Industrials",
@@ -29441,7 +30328,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 98.0,
         "coiled_count": 1,
-        "other_screened_count": 7,
+        "other_screened_count": 6,
         "tickers": [
           {
             "ticker": "CPRI",
@@ -29458,8 +30345,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -29517,8 +30403,7 @@
             "eps": "48",
             "sales": "15",
             "inst": "-2.9",
-            "short": 6.6,
-            "ticker_color": "green"
+            "short": 6.6
           }
         ],
         "l1": "Semiconductors",
@@ -29572,11 +30457,11 @@
             "dist50": 1.0,
             "high252": 0.47,
             "range10": 13.3,
-            "float": "40.9",
-            "eps": "18",
-            "sales": "8",
-            "inst": "-11.3",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -30277,11 +31162,11 @@
             "dist50": 6.8,
             "high252": 0.92,
             "range10": 12.8,
-            "float": "684.2",
-            "eps": "145",
-            "sales": "-50",
-            "inst": "+10.9",
-            "short": 1.9
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "VIST",
@@ -30298,8 +31183,7 @@
             "eps": "65",
             "sales": "99",
             "inst": "+33.0",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           },
           {
             "ticker": "ANNA",
@@ -30316,7 +31200,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -30345,8 +31230,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "VNET",
@@ -30388,11 +31272,11 @@
             "dist50": 0.7,
             "high252": 0.88,
             "range10": 7.4,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "CRNX",
@@ -30484,7 +31368,8 @@
             "eps": "-141",
             "sales": null,
             "inst": "+3.1",
-            "short": 31.5
+            "short": 31.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -30548,7 +31433,8 @@
             "eps": "79",
             "sales": "1",
             "inst": "+8.4",
-            "short": 15.5
+            "short": 15.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Specialty Chemicals",
@@ -30577,8 +31463,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -30603,11 +31488,11 @@
             "dist50": -0.8,
             "high252": 0.71,
             "range10": 15.9,
-            "float": "157.8",
-            "eps": "98",
-            "sales": "1634",
-            "inst": "-1.6",
-            "short": 25.3
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -30636,7 +31521,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -30661,11 +31547,11 @@
             "dist50": 0.7,
             "high252": 0.88,
             "range10": 7.4,
-            "float": "49.6",
-            "eps": "-3197",
-            "sales": "43",
-            "inst": "+11.3",
-            "short": 16.5
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -30781,7 +31667,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Clean Energy",
@@ -31055,7 +31942,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 97.0,
         "coiled_count": 1,
-        "other_screened_count": 6,
+        "other_screened_count": 5,
         "tickers": [
           {
             "ticker": "ANF",
@@ -31598,8 +32485,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "RYTM",
@@ -31616,8 +32502,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "SRPT",
@@ -31634,8 +32519,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -31664,7 +32548,8 @@
             "eps": "4286",
             "sales": "231",
             "inst": "+4.5",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           },
           {
             "ticker": "HYMC",
@@ -31681,7 +32566,8 @@
             "eps": "-17",
             "sales": null,
             "inst": "+15.5",
-            "short": 17.6
+            "short": 17.6,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -31727,7 +32613,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -31785,8 +32672,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -31815,7 +32701,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -31844,8 +32731,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -31903,8 +32789,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -32103,11 +32988,11 @@
             "dist50": 10.6,
             "high252": 0.98,
             "range10": 18.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "1430.0",
+            "eps": "48",
+            "sales": "12",
+            "inst": "-1.1",
+            "short": 2.0
           }
         ],
         "l1": "Metals & Mining",
@@ -32136,8 +33021,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -32191,11 +33075,11 @@
             "dist50": 0.7,
             "high252": 0.92,
             "range10": 11.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.0",
+            "eps": "25",
+            "sales": "24",
+            "inst": "-1.6",
+            "short": 4.0
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -32207,7 +33091,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 93.0,
         "coiled_count": 1,
-        "other_screened_count": 5,
+        "other_screened_count": 4,
         "tickers": [
           {
             "ticker": "SBH",
@@ -32336,12 +33220,11 @@
             "dist50": 9.9,
             "high252": 1.0,
             "range10": 14.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "float": "143.6",
+            "eps": "8",
+            "sales": "1",
+            "inst": "-1.8",
+            "short": 5.5
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -32850,8 +33733,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -32876,11 +33758,11 @@
             "dist50": 5.5,
             "high252": 0.81,
             "range10": 26.1,
-            "float": "143.1",
-            "eps": "29",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+9.5",
-            "short": 17.0
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -32997,7 +33879,8 @@
             "eps": "11",
             "sales": "20",
             "inst": "+4.5",
-            "short": 12.3
+            "short": 12.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -33026,7 +33909,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -33085,7 +33969,8 @@
             "eps": "-21",
             "sales": "83",
             "inst": "+4.1",
-            "short": 7.1
+            "short": 7.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -33326,8 +34211,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "BTG",
@@ -33392,11 +34276,11 @@
             "dist50": 6.1,
             "high252": 0.86,
             "range10": 25.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "503.9",
+            "eps": "101",
+            "sales": "65",
+            "inst": "+0.5",
+            "short": 0.8,
             "ticker_color": "green"
           }
         ],
@@ -33520,7 +34404,7 @@
             "high252": 0.38,
             "range10": 51.0,
             "float": "131.0",
-            "eps": "116",
+            "eps": "114",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -33540,7 +34424,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Oil & Gas",
@@ -33582,11 +34467,11 @@
             "dist50": 5.1,
             "high252": 0.91,
             "range10": 17.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "66.2",
+            "eps": "10",
+            "sales": "4",
+            "inst": "-4.5",
+            "short": 4.2
           }
         ],
         "l1": "AI",
@@ -33632,8 +34517,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "AI",
@@ -33680,7 +34564,8 @@
             "eps": "30",
             "sales": "26",
             "inst": "-1.5",
-            "short": 3.0
+            "short": 3.0,
+            "ticker_color": "green"
           }
         ],
         "l1": "Clean Energy",
@@ -33751,11 +34636,11 @@
             "dist50": 0.1,
             "high252": 0.29,
             "range10": 19.9,
-            "float": "186.3",
-            "eps": "304",
-            "sales": "20",
-            "inst": "+6.8",
-            "short": 9.7
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "WT",
@@ -33849,7 +34734,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "PAAS",
@@ -33896,8 +34782,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           },
           {
             "ticker": "MIR",
@@ -33914,8 +34799,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Nuclear",
@@ -33961,7 +34845,8 @@
             "eps": "30",
             "sales": "26",
             "inst": "-1.5",
-            "short": 3.0
+            "short": 3.0,
+            "ticker_color": "green"
           }
         ],
         "l1": "Power & Utilities",
@@ -33990,8 +34875,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "AI",
@@ -34223,7 +35107,8 @@
             "eps": "-26",
             "sales": "43",
             "inst": "+1.3",
-            "short": 25.8
+            "short": 25.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "Clean Energy",
@@ -34248,11 +35133,11 @@
             "dist50": -1.6,
             "high252": 0.66,
             "range10": 16.6,
-            "float": "105.5",
-            "eps": "20",
-            "sales": "26",
-            "inst": "+2.5",
-            "short": 9.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Cybersecurity",
@@ -34340,8 +35225,7 @@
             "eps": "70",
             "sales": "41",
             "inst": "+16.4",
-            "short": 5.5,
-            "ticker_color": "green"
+            "short": 5.5
           }
         ],
         "l1": "Healthcare",
@@ -34370,7 +35254,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -34424,11 +35309,11 @@
             "dist50": 5.1,
             "high252": 0.91,
             "range10": 17.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "66.2",
+            "eps": "10",
+            "sales": "4",
+            "inst": "-4.5",
+            "short": 4.2
           }
         ],
         "l1": "Industrials",
@@ -34486,8 +35371,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "MedTech",
@@ -34574,8 +35458,7 @@
             "eps": "198",
             "sales": "236",
             "inst": "+21.6",
-            "short": 2.6,
-            "ticker_color": "green"
+            "short": 2.6
           }
         ],
         "l1": "Metals & Mining",
@@ -34807,8 +35690,7 @@
             "eps": "35",
             "sales": "8",
             "inst": "+1.2",
-            "short": 11.9,
-            "ticker_color": "green"
+            "short": 11.9
           }
         ],
         "l1": "Consumer",
@@ -34837,7 +35719,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -35423,8 +36306,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "GFI",
@@ -35489,11 +36371,11 @@
             "dist50": 5.3,
             "high252": 0.85,
             "range10": 26.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "503.9",
+            "eps": "101",
+            "sales": "65",
+            "inst": "+0.5",
+            "short": 0.8,
             "ticker_color": "green"
           }
         ],
@@ -35537,11 +36419,12 @@
             "dist50": -8.4,
             "high252": 0.65,
             "range10": 22.8,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "SVM",
@@ -35558,7 +36441,8 @@
             "eps": "2114",
             "sales": "96",
             "inst": "-0.1",
-            "short": 12.8
+            "short": 12.8,
+            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -35605,8 +36489,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           },
           {
             "ticker": "NXE",
@@ -35619,12 +36502,11 @@
             "dist50": -4.4,
             "high252": 0.82,
             "range10": 14.6,
-            "float": null,
-            "eps": null,
+            "float": "618.8",
+            "eps": "46",
             "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "inst": "-2.2",
+            "short": 7.0
           },
           {
             "ticker": "UUUU",
@@ -35637,11 +36519,11 @@
             "dist50": -9.9,
             "high252": 0.66,
             "range10": 19.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "245.9",
+            "eps": "52",
+            "sales": "112",
+            "inst": "+4.2",
+            "short": 15.8
           }
         ],
         "l1": "Nuclear",
@@ -35670,7 +36552,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "WPM",
@@ -35687,8 +36570,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -35717,7 +36599,8 @@
             "eps": "31",
             "sales": "17",
             "inst": "-1.8",
-            "short": 5.8
+            "short": 5.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "AI",
@@ -35772,12 +36655,11 @@
             "dist50": 5.9,
             "high252": 0.49,
             "range10": 20.8,
-            "float": "132.3",
-            "eps": "16",
-            "sales": "-10",
-            "inst": "+4.8",
-            "short": 39.2,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -35864,8 +36746,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -35894,8 +36775,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -36011,7 +36891,8 @@
             "eps": "40",
             "sales": "44",
             "inst": "-8.9",
-            "short": 32.5
+            "short": 32.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -36154,11 +37035,11 @@
             "dist50": 2.4,
             "high252": 0.42,
             "range10": 6.3,
-            "float": "93.4",
-            "eps": "5",
-            "sales": "4",
-            "inst": "+1.1",
-            "short": 10.6
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -36216,8 +37097,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -36242,11 +37122,12 @@
             "dist50": -9.6,
             "high252": 0.71,
             "range10": 21.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "129.9",
+            "eps": "18",
+            "sales": "36",
+            "inst": "+8.7",
+            "short": 4.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "EV & Autonomous",
@@ -36697,8 +37578,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -36951,11 +37831,11 @@
             "dist50": -4.5,
             "high252": 0.84,
             "range10": 12.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.2",
+            "eps": "-1",
+            "sales": "41",
+            "inst": "+55.6",
+            "short": 4.5
           }
         ],
         "l1": "Industrials",
@@ -37093,7 +37973,8 @@
             "eps": "94",
             "sales": "0",
             "inst": "-3.0",
-            "short": 56.6
+            "short": 56.6,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -37413,8 +38294,7 @@
             "eps": "84",
             "sales": "-3",
             "inst": "+0.2",
-            "short": 20.5,
-            "ticker_color": "green"
+            "short": 20.5
           }
         ],
         "l1": "Consumer",
@@ -37530,7 +38410,8 @@
             "eps": "-4",
             "sales": "25",
             "inst": "+11.7",
-            "short": 12.1
+            "short": 12.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -37676,7 +38557,8 @@
             "eps": "23",
             "sales": "-1",
             "inst": "-7.0",
-            "short": 10.8
+            "short": 10.8,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -37705,7 +38587,8 @@
             "eps": "2325",
             "sales": "17",
             "inst": "-8.1",
-            "short": 8.2
+            "short": 8.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -37759,11 +38642,11 @@
             "dist50": -3.5,
             "high252": 0.75,
             "range10": 10.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "71.3",
+            "eps": "24",
+            "sales": "18",
+            "inst": "-6.6",
+            "short": 5.9
           }
         ],
         "l1": "Consumer",
@@ -38185,11 +39068,11 @@
             "dist50": -1.6,
             "high252": 0.8,
             "range10": 22.9,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "503.9",
+            "eps": "101",
+            "sales": "65",
+            "inst": "+0.5",
+            "short": 0.8,
             "ticker_color": "green"
           },
           {
@@ -38224,8 +39107,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "EGO",
@@ -38310,7 +39192,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "ODV",
@@ -38363,8 +39246,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -38512,7 +39394,8 @@
             "eps": "40",
             "sales": "36",
             "inst": "+2.9",
-            "short": 33.3
+            "short": 33.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "AI",
@@ -38655,7 +39538,8 @@
             "eps": "92",
             "sales": "95",
             "inst": "-0.1",
-            "short": 4.4
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "HYMC",
@@ -38672,7 +39556,8 @@
             "eps": "-17",
             "sales": null,
             "inst": "+15.5",
-            "short": 17.6
+            "short": 17.6,
+            "ticker_color": "green"
           },
           {
             "ticker": "IAG",
@@ -38703,11 +39588,12 @@
             "dist50": -11.8,
             "high252": 0.63,
             "range10": 23.5,
-            "float": null,
-            "eps": null,
+            "float": "329.8",
+            "eps": "44",
             "sales": null,
-            "inst": null,
-            "short": null
+            "inst": "-1.0",
+            "short": 4.4,
+            "ticker_color": "green"
           },
           {
             "ticker": "PPTA",
@@ -38754,8 +39640,7 @@
             "eps": "499",
             "sales": "5",
             "inst": "-6.6",
-            "short": 4.6,
-            "ticker_color": "green"
+            "short": 4.6
           },
           {
             "ticker": "MKSI",
@@ -38772,8 +39657,7 @@
             "eps": "48",
             "sales": "15",
             "inst": "-2.9",
-            "short": 6.6,
-            "ticker_color": "green"
+            "short": 6.6
           },
           {
             "ticker": "ASX",
@@ -38807,8 +39691,7 @@
             "eps": "32",
             "sales": "5",
             "inst": "-2.8",
-            "short": 5.8,
-            "ticker_color": "green"
+            "short": 5.8
           }
         ],
         "l1": "Semiconductors",
@@ -38888,7 +39771,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -38930,11 +39814,11 @@
             "dist50": -4.7,
             "high252": 0.81,
             "range10": 11.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "66.2",
+            "eps": "10",
+            "sales": "4",
+            "inst": "-4.5",
+            "short": 4.2
           },
           {
             "ticker": "ALGM",
@@ -38951,8 +39835,7 @@
             "eps": "82",
             "sales": "26",
             "inst": "+1.0",
-            "short": 8.4,
-            "ticker_color": "green"
+            "short": 8.4
           }
         ],
         "l1": "AI",
@@ -39104,11 +39987,11 @@
             "dist50": -3.4,
             "high252": 0.46,
             "range10": 9.4,
-            "float": "40.9",
-            "eps": "18",
-            "sales": "8",
-            "inst": "-11.3",
-            "short": 10.2
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "TTAN",
@@ -39142,7 +40025,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -39171,7 +40055,8 @@
             "eps": "2325",
             "sales": "17",
             "inst": "-8.1",
-            "short": 8.2
+            "short": 8.2,
+            "ticker_color": "green"
           },
           {
             "ticker": "SGHC",
@@ -39184,11 +40069,11 @@
             "dist50": 5.7,
             "high252": 0.75,
             "range10": 8.8,
-            "float": "163.2",
-            "eps": "99",
-            "sales": "18",
-            "inst": "+1.0",
-            "short": 12.0
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "SRAD",
@@ -39231,7 +40116,7 @@
             "high252": 0.43,
             "range10": 26.7,
             "float": "336.2",
-            "eps": "-119",
+            "eps": "-123",
             "sales": "112",
             "inst": "+9.6",
             "short": 15.3
@@ -39280,8 +40165,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "CCOI",
@@ -39344,8 +40228,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Consumer",
@@ -39374,7 +40257,8 @@
             "eps": "18",
             "sales": "89",
             "inst": "-0.7",
-            "short": 16.2
+            "short": 16.2,
+            "ticker_color": "green"
           },
           {
             "ticker": "INTU",
@@ -39420,7 +40304,8 @@
             "eps": "40",
             "sales": "36",
             "inst": "+2.9",
-            "short": 33.3
+            "short": 33.3,
+            "ticker_color": "green"
           },
           {
             "ticker": "CNC",
@@ -39433,11 +40318,12 @@
             "dist50": -10.0,
             "high252": 0.54,
             "range10": 11.6,
-            "float": "483.0",
-            "eps": "67",
-            "sales": "7",
-            "inst": "+1.1",
-            "short": 3.1
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -39479,11 +40365,11 @@
             "dist50": -4.7,
             "high252": 0.81,
             "range10": 11.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "66.2",
+            "eps": "10",
+            "sales": "4",
+            "inst": "-4.5",
+            "short": 4.2
           }
         ],
         "l1": "Industrials",
@@ -39512,8 +40398,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "NVCR",
@@ -39555,11 +40440,11 @@
             "dist50": -0.4,
             "high252": 0.88,
             "range10": 15.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "1430.0",
+            "eps": "48",
+            "sales": "12",
+            "inst": "-1.1",
+            "short": 2.0
           },
           {
             "ticker": "SCCO",
@@ -39605,8 +40490,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "WPM",
@@ -39623,8 +40507,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -39718,7 +40601,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -39747,8 +40631,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "UUUU",
@@ -39761,11 +40644,11 @@
             "dist50": -13.9,
             "high252": 0.64,
             "range10": 19.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "245.9",
+            "eps": "52",
+            "sales": "112",
+            "inst": "+4.2",
+            "short": 15.8
           }
         ],
         "l1": "Nuclear",
@@ -39836,11 +40719,11 @@
             "dist50": 8.9,
             "high252": 0.89,
             "range10": 14.6,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "112.7",
+            "eps": "-82",
+            "sales": "-25",
+            "inst": "+17.1",
+            "short": 13.7
           },
           {
             "ticker": "PTEN",
@@ -39857,8 +40740,7 @@
             "eps": "29",
             "sales": "-13",
             "inst": "+0.1",
-            "short": 4.0,
-            "ticker_color": "green"
+            "short": 4.0
           }
         ],
         "l1": "Oil & Gas",
@@ -39933,8 +40815,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "AI",
@@ -40108,8 +40989,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -40196,8 +41076,7 @@
             "eps": "181",
             "sales": "130",
             "inst": "+2.5",
-            "short": 10.9,
-            "ticker_color": "green"
+            "short": 10.9
           }
         ],
         "l1": "Clean Energy",
@@ -40284,8 +41163,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Cybersecurity",
@@ -40314,7 +41192,8 @@
             "eps": "49",
             "sales": "64",
             "inst": "-0.4",
-            "short": 6.7
+            "short": 6.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Defense & Aerospace",
@@ -40571,11 +41450,11 @@
             "dist50": 8.7,
             "high252": 0.94,
             "range10": 12.0,
-            "float": "44.9",
-            "eps": "130",
-            "sales": "46",
-            "inst": "-1.9",
-            "short": 3.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Logistics",
@@ -40604,7 +41483,8 @@
             "eps": "-4",
             "sales": "25",
             "inst": "+11.7",
-            "short": 12.1
+            "short": 12.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -40749,8 +41629,7 @@
             "eps": "19",
             "sales": "41",
             "inst": "+1.9",
-            "short": 5.9,
-            "ticker_color": "green"
+            "short": 5.9
           }
         ],
         "l1": "Specialty Chemicals",
@@ -40837,8 +41716,7 @@
             "eps": "32",
             "sales": "5",
             "inst": "-2.8",
-            "short": 5.8,
-            "ticker_color": "green"
+            "short": 5.8
           }
         ],
         "l1": "Semiconductors",
@@ -40867,7 +41745,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -40896,8 +41775,7 @@
             "eps": "29",
             "sales": "-13",
             "inst": "+0.1",
-            "short": 4.0,
-            "ticker_color": "green"
+            "short": 4.0
           }
         ],
         "l1": "Oil & Gas",
@@ -41754,7 +42632,8 @@
             "eps": "79",
             "sales": "1",
             "inst": "+8.4",
-            "short": 15.5
+            "short": 15.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Specialty Chemicals",
@@ -41841,8 +42720,7 @@
             "eps": "-273",
             "sales": "-19",
             "inst": "+17.5",
-            "short": 96.3,
-            "ticker_color": "green"
+            "short": 96.3
           },
           {
             "ticker": "MOD",
@@ -42137,8 +43015,7 @@
             "eps": "48",
             "sales": "15",
             "inst": "-2.9",
-            "short": 6.6,
-            "ticker_color": "green"
+            "short": 6.6
           }
         ],
         "l1": "Semiconductors",
@@ -42425,11 +43302,12 @@
             "dist50": -4.3,
             "high252": 0.43,
             "range10": 10.1,
-            "float": "220.0",
-            "eps": "6",
-            "sales": "9",
-            "inst": "+9.6",
-            "short": 12.0
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Education",
@@ -42847,11 +43725,11 @@
             "dist50": 2.9,
             "high252": 0.69,
             "range10": 12.9,
-            "float": "105.5",
-            "eps": "20",
-            "sales": "26",
-            "inst": "+2.5",
-            "short": 9.8
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Cybersecurity",
@@ -42880,8 +43758,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Healthcare",
@@ -42935,11 +43812,11 @@
             "dist50": 4.8,
             "high252": 0.42,
             "range10": 16.0,
-            "float": "93.4",
-            "eps": "5",
-            "sales": "4",
-            "inst": "+1.1",
-            "short": 10.6
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -42968,7 +43845,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -43026,7 +43904,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -43328,7 +44207,8 @@
             "eps": "30",
             "sales": "26",
             "inst": "-1.5",
-            "short": 3.0
+            "short": 3.0,
+            "ticker_color": "green"
           },
           {
             "ticker": "STRL",
@@ -43437,7 +44317,8 @@
             "eps": "11",
             "sales": "10",
             "inst": null,
-            "short": 9.7
+            "short": 9.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -43521,11 +44402,10 @@
             "high252": 0.86,
             "range10": 14.9,
             "float": "155.5",
-            "eps": "84",
+            "eps": "86",
             "sales": "87",
             "inst": "-2.5",
-            "short": 3.9,
-            "ticker_color": "green"
+            "short": 3.9
           }
         ],
         "l1": "AI",
@@ -43608,12 +44488,11 @@
             "dist50": -1.8,
             "high252": 0.89,
             "range10": 12.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "float": "143.6",
+            "eps": "8",
+            "sales": "1",
+            "inst": "-1.8",
+            "short": 5.5
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -43642,8 +44521,7 @@
             "eps": "76",
             "sales": "22",
             "inst": "+7.2",
-            "short": 25.6,
-            "ticker_color": "green"
+            "short": 25.6
           }
         ],
         "l1": "Clean Energy",
@@ -43730,7 +44608,8 @@
             "eps": "30",
             "sales": "26",
             "inst": "-1.5",
-            "short": 3.0
+            "short": 3.0,
+            "ticker_color": "green"
           }
         ],
         "l1": "Power & Utilities",
@@ -43759,8 +44638,7 @@
             "eps": "499",
             "sales": "5",
             "inst": "-6.6",
-            "short": 4.6,
-            "ticker_color": "green"
+            "short": 4.6
           }
         ],
         "l1": "Semiconductors",
@@ -43785,11 +44663,11 @@
             "dist50": 3.8,
             "high252": 0.73,
             "range10": 9.2,
-            "float": "163.2",
-            "eps": "99",
-            "sales": "18",
-            "inst": "+1.0",
-            "short": 12.0
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Software & Internet",
@@ -43818,8 +44696,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -44101,7 +44978,8 @@
             "eps": "229",
             "sales": "19",
             "inst": "-2.0",
-            "short": 4.5
+            "short": 4.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -44176,8 +45054,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "LBRDK",
@@ -44194,8 +45071,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Telecom",
@@ -44573,7 +45449,8 @@
             "eps": "-4",
             "sales": "25",
             "inst": "+11.7",
-            "short": 12.1
+            "short": 12.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -44602,7 +45479,8 @@
             "eps": "11",
             "sales": "20",
             "inst": "+4.5",
-            "short": 12.3
+            "short": 12.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -45051,8 +45929,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "AI",
@@ -45094,11 +45971,11 @@
             "dist50": -0.1,
             "high252": 0.9,
             "range10": 8.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "385.2",
+            "eps": "27",
+            "sales": "26",
+            "inst": "-18.2",
+            "short": 0.3
           }
         ],
         "l1": "AI",
@@ -45127,8 +46004,7 @@
             "eps": "48",
             "sales": "15",
             "inst": "-2.9",
-            "short": 6.6,
-            "ticker_color": "green"
+            "short": 6.6
           },
           {
             "ticker": "ASML",
@@ -45141,11 +46017,11 @@
             "dist50": -0.1,
             "high252": 0.9,
             "range10": 8.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "385.2",
+            "eps": "27",
+            "sales": "26",
+            "inst": "-18.2",
+            "short": 0.3
           }
         ],
         "l1": "Semiconductors",
@@ -45232,8 +46108,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "AI",
@@ -45262,8 +46137,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -45292,8 +46166,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -45438,7 +46311,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Logistics",
@@ -45612,7 +46486,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -45906,7 +46781,7 @@
             "high252": 0.6,
             "range10": 10.6,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -45972,7 +46847,8 @@
             "eps": "229",
             "sales": "19",
             "inst": "-2.0",
-            "short": 4.5
+            "short": 4.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -45998,7 +46874,7 @@
             "high252": 0.6,
             "range10": 10.6,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -46084,11 +46960,11 @@
             "dist50": -8.4,
             "high252": 0.74,
             "range10": 10.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "80.1",
+            "eps": "-92",
+            "sales": "-77",
+            "inst": "+2.7",
+            "short": 12.8
           }
         ],
         "l1": "Biotech",
@@ -46570,11 +47446,11 @@
             "dist50": 1.6,
             "high252": 0.75,
             "range10": 18.5,
-            "float": "112.8",
-            "eps": "-49",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+0.3",
-            "short": 19.7
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -46865,7 +47741,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -47109,11 +47986,11 @@
             "dist50": -6.2,
             "high252": 0.55,
             "range10": 8.6,
-            "float": "37.7",
-            "eps": "62",
-            "sales": "21",
-            "inst": "-2.8",
-            "short": 16.1
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "TDC",
@@ -47159,7 +48036,8 @@
             "eps": "11",
             "sales": "10",
             "inst": null,
-            "short": 9.7
+            "short": 9.7,
+            "ticker_color": "green"
           },
           {
             "ticker": "TDC",
@@ -47202,7 +48080,7 @@
             "high252": 0.59,
             "range10": 10.8,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47231,7 +48109,7 @@
             "high252": 0.59,
             "range10": 10.8,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47293,7 +48171,8 @@
             "eps": "-4",
             "sales": "25",
             "inst": "+11.7",
-            "short": 12.1
+            "short": 12.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "MedTech",
@@ -47322,8 +48201,7 @@
             "eps": "32",
             "sales": "5",
             "inst": "-2.8",
-            "short": 5.8,
-            "ticker_color": "green"
+            "short": 5.8
           }
         ],
         "l1": "Semiconductors",
@@ -47352,8 +48230,7 @@
             "eps": "32",
             "sales": "5",
             "inst": "-2.8",
-            "short": 5.8,
-            "ticker_color": "green"
+            "short": 5.8
           }
         ],
         "l1": "Semiconductors",
@@ -47687,8 +48564,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -47717,8 +48593,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -47894,8 +48769,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "RCUS",
@@ -47972,7 +48846,7 @@
             "high252": 0.59,
             "range10": 14.2,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -48021,8 +48895,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -48048,7 +48921,7 @@
             "high252": 0.59,
             "range10": 14.2,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -48109,8 +48982,7 @@
             "eps": "42",
             "sales": "109",
             "inst": "+10.2",
-            "short": 7.4,
-            "ticker_color": "green"
+            "short": 7.4
           }
         ],
         "l1": "AI",
@@ -48135,11 +49007,11 @@
             "dist50": -7.9,
             "high252": 0.55,
             "range10": 9.9,
-            "float": "37.7",
-            "eps": "62",
-            "sales": "21",
-            "inst": "-2.8",
-            "short": 16.1
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "AI",
@@ -48197,8 +49069,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -48256,8 +49127,7 @@
             "eps": "84",
             "sales": "-3",
             "inst": "+0.2",
-            "short": 20.5,
-            "ticker_color": "green"
+            "short": 20.5
           }
         ],
         "l1": "Consumer",
@@ -48282,11 +49152,12 @@
             "dist50": -6.4,
             "high252": 0.79,
             "range10": 15.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "129.9",
+            "eps": "18",
+            "sales": "36",
+            "inst": "+8.7",
+            "short": 4.1,
+            "ticker_color": "green"
           }
         ],
         "l1": "EV & Autonomous",
@@ -48431,7 +49302,8 @@
             "eps": "16",
             "sales": "22",
             "inst": "+3.0",
-            "short": 9.3
+            "short": 9.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -48460,8 +49332,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           }
         ],
         "l1": "Nuclear",
@@ -48519,7 +49390,8 @@
             "eps": "8",
             "sales": "-1",
             "inst": "+1.5",
-            "short": 16.5
+            "short": 16.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -48635,7 +49507,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -48992,8 +49865,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "MUX",
@@ -49053,12 +49925,11 @@
             "dist50": 0.6,
             "high252": 0.82,
             "range10": 12.1,
-            "float": "92.6",
-            "eps": "8",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+1.1",
-            "short": 15.7,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "DNLI",
@@ -49248,7 +50119,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Consumer",
@@ -49291,7 +50163,7 @@
             "high252": 0.28,
             "range10": 17.2,
             "float": "251.5",
-            "eps": "-2536",
+            "eps": "-6",
             "sales": "219",
             "inst": "+5.5",
             "short": 14.1
@@ -49323,8 +50195,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           },
           {
             "ticker": "NXE",
@@ -49337,12 +50208,11 @@
             "dist50": -1.2,
             "high252": 0.86,
             "range10": 15.7,
-            "float": null,
-            "eps": null,
+            "float": "618.8",
+            "eps": "46",
             "sales": null,
-            "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "inst": "-2.2",
+            "short": 7.0
           }
         ],
         "l1": "Nuclear",
@@ -49371,8 +50241,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "W",
@@ -49563,8 +50432,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -49647,12 +50515,11 @@
             "dist50": -0.1,
             "high252": 0.78,
             "range10": 24.6,
-            "float": "92.6",
-            "eps": "-47",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+3.4",
-            "short": 14.3,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -49799,7 +50666,8 @@
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
-            "short": 6.4
+            "short": 6.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -49857,8 +50725,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -49970,12 +50837,11 @@
             "dist50": 5.4,
             "high252": 0.48,
             "range10": 11.9,
-            "float": "132.3",
-            "eps": "16",
-            "sales": "-10",
-            "inst": "+4.8",
-            "short": 39.2,
-            "ticker_color": "green"
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -50000,11 +50866,11 @@
             "dist50": -3.7,
             "high252": 0.82,
             "range10": 12.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "51.7",
+            "eps": "482",
+            "sales": "54",
+            "inst": "-5.2",
+            "short": 8.3
           }
         ],
         "l1": "Oil & Gas",
@@ -50033,8 +50899,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -50063,7 +50928,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Consumer",
@@ -50810,7 +51676,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "MQ",
@@ -50827,7 +51694,8 @@
             "eps": "229",
             "sales": "19",
             "inst": "-2.0",
-            "short": 4.5
+            "short": 4.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -50944,12 +51812,11 @@
             "dist50": 1.6,
             "high252": 0.82,
             "range10": 15.1,
-            "float": "92.6",
-            "eps": "8",
+            "float": null,
+            "eps": null,
             "sales": null,
-            "inst": "+1.1",
-            "short": 15.7,
-            "ticker_color": "green"
+            "inst": null,
+            "short": null
           },
           {
             "ticker": "DNLI",
@@ -51058,7 +51925,8 @@
             "eps": "93",
             "sales": "3",
             "inst": "-8.9",
-            "short": 14.7
+            "short": 14.7,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -51104,7 +51972,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Logistics",
@@ -51242,7 +52111,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -51288,8 +52158,7 @@
             "eps": "48",
             "sales": "1",
             "inst": "-3.0",
-            "short": 6.4,
-            "ticker_color": "green"
+            "short": 6.4
           }
         ],
         "l1": "Specialty Chemicals",
@@ -51434,8 +52303,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -51609,8 +52477,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Cybersecurity",
@@ -51668,7 +52535,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -51697,7 +52565,8 @@
             "eps": "16",
             "sales": "22",
             "inst": "+3.0",
-            "short": 9.3
+            "short": 9.3,
+            "ticker_color": "green"
           }
         ],
         "l1": "Healthcare",
@@ -51987,7 +52856,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Space",
@@ -52045,7 +52915,8 @@
             "eps": "51",
             "sales": "48",
             "inst": "+1.4",
-            "short": 23.5
+            "short": 23.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -52701,7 +53572,7 @@
             "high252": 0.6,
             "range10": 17.4,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -52747,7 +53618,7 @@
             "high252": 0.6,
             "range10": 17.4,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -52942,7 +53813,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Fintech & Crypto",
@@ -53000,7 +53872,8 @@
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
-            "short": 6.4
+            "short": 6.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -53145,7 +54018,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -53695,8 +54569,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Metals & Mining",
@@ -53896,11 +54769,11 @@
             "dist50": -4.9,
             "high252": 0.83,
             "range10": 26.7,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "49.4",
+            "eps": "44",
+            "sales": "10",
+            "inst": "+0.8",
+            "short": 2.2
           },
           {
             "ticker": "ACLS",
@@ -53992,8 +54865,7 @@
             "eps": "52",
             "sales": "-16",
             "inst": "+1.5",
-            "short": 8.1,
-            "ticker_color": "green"
+            "short": 8.1
           },
           {
             "ticker": "UEC",
@@ -54006,11 +54878,11 @@
             "dist50": -10.6,
             "high252": 0.7,
             "range10": 25.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "480.9",
+            "eps": "48",
+            "sales": "-59",
+            "inst": "+2.3",
+            "short": 12.2
           }
         ],
         "l1": "Nuclear",
@@ -54126,8 +54998,7 @@
             "eps": "42",
             "sales": "109",
             "inst": "+10.2",
-            "short": 7.4,
-            "ticker_color": "green"
+            "short": 7.4
           }
         ],
         "l1": "AI",
@@ -54243,7 +55114,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Automotive (Legacy)",
@@ -54359,8 +55231,7 @@
             "eps": "6",
             "sales": null,
             "inst": "+0.7",
-            "short": 25.2,
-            "ticker_color": "green"
+            "short": 25.2
           }
         ],
         "l1": "Biotech",
@@ -54505,8 +55376,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Fintech & Crypto",
@@ -54593,8 +55463,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Oil & Gas",
@@ -54619,11 +55488,11 @@
             "dist50": 7.0,
             "high252": 0.95,
             "range10": 10.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "float": "54.0",
+            "eps": "25",
+            "sales": "24",
+            "inst": "-1.6",
+            "short": 4.0
           }
         ],
         "l1": "Retail (Multi-Category)",
@@ -54635,7 +55504,7 @@
         "theme_score": 100.0,
         "avg_setup_score": 96.0,
         "coiled_count": 1,
-        "other_screened_count": 7,
+        "other_screened_count": 6,
         "tickers": [
           {
             "ticker": "SBH",
@@ -54681,8 +55550,7 @@
             "eps": "48",
             "sales": "15",
             "inst": "-2.9",
-            "short": 6.6,
-            "ticker_color": "green"
+            "short": 6.6
           }
         ],
         "l1": "Semiconductors",
@@ -55318,7 +56186,7 @@
             "high252": 0.62,
             "range10": 19.3,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -55364,7 +56232,7 @@
             "high252": 0.62,
             "range10": 19.3,
             "float": "48.5",
-            "eps": "16",
+            "eps": "18",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -55414,7 +56282,8 @@
             "eps": "-414",
             "sales": "80",
             "inst": "+7.9",
-            "short": 11.2
+            "short": 11.2,
+            "ticker_color": "green"
           }
         ],
         "l1": "Space",
@@ -55440,7 +56309,7 @@
             "high252": 0.68,
             "range10": 25.7,
             "float": "201.0",
-            "eps": "-12",
+            "eps": "-18",
             "sales": "622",
             "inst": "+15.2",
             "short": 22.4
@@ -55501,8 +56370,7 @@
             "eps": "42",
             "sales": "109",
             "inst": "+10.2",
-            "short": 7.4,
-            "ticker_color": "green"
+            "short": 7.4
           }
         ],
         "l1": "AI",
@@ -55589,8 +56457,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -55619,8 +56486,7 @@
             "eps": "181",
             "sales": "130",
             "inst": "+2.5",
-            "short": 10.9,
-            "ticker_color": "green"
+            "short": 10.9
           }
         ],
         "l1": "Clean Energy",
@@ -55795,7 +56661,8 @@
             "eps": "97",
             "sales": "12",
             "inst": "+0.3",
-            "short": 17.4
+            "short": 17.4,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -56043,7 +56910,8 @@
             "eps": "51",
             "sales": "48",
             "inst": "+1.4",
-            "short": 23.5
+            "short": 23.5,
+            "ticker_color": "green"
           }
         ],
         "l1": "Industrials",
@@ -56068,370 +56936,6 @@
         {
           "source": "Industrials / Additive Manufacturing",
           "target": "Industrials",
-          "kind": "is_a"
-        }
-      ]
-    }
-  },
-  {
-    "report_date": "2026-03-06",
-    "themes": [
-      {
-        "name": "Biotech / Rare Disease",
-        "theme_score": 100.0,
-        "avg_setup_score": 96.5,
-        "coiled_count": 2,
-        "other_screened_count": 9,
-        "tickers": [
-          {
-            "ticker": "CNTA",
-            "score": 99.0,
-            "flags": "inside; tight; NR7; volDry=0.96; 50SMA=+5.8%; 252H=0.85x; prior=3.2x; blind=1m/VARS",
-            "rs": 76.9,
-            "vars": 0.38,
-            "price": 25.95,
-            "vol_dry": 0.96,
-            "dist50": 5.8,
-            "high252": 0.85,
-            "range10": 12.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
-            "ticker": "WVE",
-            "score": 94.0,
-            "flags": "tight; NR20; volDry=0.77; 50SMA=-7.6%; 252H=0.60x; prior=4.1x; blind=1m/RS",
-            "rs": 53.8,
-            "vars": 3.58,
-            "price": 13.12,
-            "vol_dry": 0.77,
-            "dist50": -7.6,
-            "high252": 0.6,
-            "range10": 19.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Biotech",
-        "l2": "Rare Disease",
-        "l3": null
-      },
-      {
-        "name": "AI / Software & Analytics",
-        "theme_score": 100.0,
-        "avg_setup_score": 91.0,
-        "coiled_count": 1,
-        "other_screened_count": 20,
-        "tickers": [
-          {
-            "ticker": "APPN",
-            "score": 91.0,
-            "flags": "tight; NR20; volDry=0.99; 50SMA=-8.0%; 252H=0.58x; prior=2.1x; blind=1m/VARS",
-            "rs": 80.8,
-            "vars": -3.54,
-            "price": 26.62,
-            "vol_dry": 0.99,
-            "dist50": -8.0,
-            "high252": 0.58,
-            "range10": 15.6,
-            "float": "37.7",
-            "eps": "62",
-            "sales": "21",
-            "inst": "-2.8",
-            "short": 16.1
-          }
-        ],
-        "l1": "AI",
-        "l2": "Software & Analytics",
-        "l3": null
-      },
-      {
-        "name": "Biotech / Immunology",
-        "theme_score": 100.0,
-        "avg_setup_score": 98.0,
-        "coiled_count": 1,
-        "other_screened_count": 9,
-        "tickers": [
-          {
-            "ticker": "ALMS",
-            "score": 98.0,
-            "flags": "inside; tight; volDry=0.37; 50SMA=+15.5%; 252H=0.88x; prior=11.1x; blind=1m/RS",
-            "rs": 53.8,
-            "vars": 16.67,
-            "price": 26.9,
-            "vol_dry": 0.37,
-            "dist50": 15.5,
-            "high252": 0.88,
-            "range10": 13.3,
-            "float": "83.7",
-            "eps": "0",
-            "sales": "-90",
-            "inst": "+29.6",
-            "short": 13.6
-          }
-        ],
-        "l1": "Biotech",
-        "l2": "Immunology",
-        "l3": null
-      },
-      {
-        "name": "Biotech / Neuroscience",
-        "theme_score": 100.0,
-        "avg_setup_score": 94.0,
-        "coiled_count": 1,
-        "other_screened_count": 4,
-        "tickers": [
-          {
-            "ticker": "WVE",
-            "score": 94.0,
-            "flags": "tight; NR20; volDry=0.77; 50SMA=-7.6%; 252H=0.60x; prior=4.1x; blind=1m/RS",
-            "rs": 53.8,
-            "vars": 3.58,
-            "price": 13.12,
-            "vol_dry": 0.77,
-            "dist50": -7.6,
-            "high252": 0.6,
-            "range10": 19.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Biotech",
-        "l2": "Neuroscience",
-        "l3": null
-      },
-      {
-        "name": "Biotech / Oncology / General",
-        "theme_score": 100.0,
-        "avg_setup_score": 99.0,
-        "coiled_count": 1,
-        "other_screened_count": 13,
-        "tickers": [
-          {
-            "ticker": "CNTA",
-            "score": 99.0,
-            "flags": "inside; tight; NR7; volDry=0.96; 50SMA=+5.8%; 252H=0.85x; prior=3.2x; blind=1m/VARS",
-            "rs": 76.9,
-            "vars": 0.38,
-            "price": 25.95,
-            "vol_dry": 0.96,
-            "dist50": 5.8,
-            "high252": 0.85,
-            "range10": 12.2,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Biotech",
-        "l2": "Oncology",
-        "l3": "General"
-      },
-      {
-        "name": "Biotech / RNAi & Antisense",
-        "theme_score": 100.0,
-        "avg_setup_score": 94.0,
-        "coiled_count": 1,
-        "other_screened_count": 2,
-        "tickers": [
-          {
-            "ticker": "WVE",
-            "score": 94.0,
-            "flags": "tight; NR20; volDry=0.77; 50SMA=-7.6%; 252H=0.60x; prior=4.1x; blind=1m/RS",
-            "rs": 53.8,
-            "vars": 3.58,
-            "price": 13.12,
-            "vol_dry": 0.77,
-            "dist50": -7.6,
-            "high252": 0.6,
-            "range10": 19.4,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Biotech",
-        "l2": "RNAi & Antisense",
-        "l3": null
-      },
-      {
-        "name": "Industrials / Workplace Services & Uniforms",
-        "theme_score": 100.0,
-        "avg_setup_score": 98.0,
-        "coiled_count": 1,
-        "other_screened_count": 1,
-        "tickers": [
-          {
-            "ticker": "VSTS",
-            "score": 98.0,
-            "flags": "inside; tight; volDry=0.79; 50SMA=+10.5%; 252H=0.68x; prior=2.9x",
-            "rs": 84.6,
-            "vars": 9.24,
-            "price": 7.86,
-            "vol_dry": 0.79,
-            "dist50": 10.5,
-            "high252": 0.68,
-            "range10": 10.5,
-            "float": "129.7",
-            "eps": "95",
-            "sales": "-1",
-            "inst": "-6.8",
-            "short": 6.3
-          }
-        ],
-        "l1": "Industrials",
-        "l2": "Workplace Services & Uniforms",
-        "l3": null
-      },
-      {
-        "name": "Real Estate / iBuying & PropTech",
-        "theme_score": 100.0,
-        "avg_setup_score": 100.0,
-        "coiled_count": 1,
-        "other_screened_count": 1,
-        "tickers": [
-          {
-            "ticker": "OPEN",
-            "score": 100.0,
-            "flags": "inside; tight; volDry=0.80; 50SMA=-10.5%; 252H=0.46x; prior=21.4x; blind=1m/VARS",
-            "rs": 73.1,
-            "vars": -6.31,
-            "price": 5.0,
-            "vol_dry": 0.8,
-            "dist50": -10.5,
-            "high252": 0.46,
-            "range10": 17.6,
-            "float": "805.2",
-            "eps": "77",
-            "sales": "-38",
-            "inst": "+6.2",
-            "short": 15.8
-          }
-        ],
-        "l1": "Real Estate",
-        "l2": "iBuying & PropTech",
-        "l3": null
-      }
-    ],
-    "network": {
-      "nodes": [
-        {
-          "id": "Biotech",
-          "kind": "l1"
-        },
-        {
-          "id": "Biotech / Rare Disease",
-          "kind": "leaf",
-          "parent": "Biotech",
-          "ticker_count": 2
-        },
-        {
-          "id": "AI",
-          "kind": "l1"
-        },
-        {
-          "id": "AI / Software & Analytics",
-          "kind": "leaf",
-          "parent": "AI",
-          "ticker_count": 1
-        },
-        {
-          "id": "Biotech / Immunology",
-          "kind": "leaf",
-          "parent": "Biotech",
-          "ticker_count": 1
-        },
-        {
-          "id": "Biotech / Neuroscience",
-          "kind": "leaf",
-          "parent": "Biotech",
-          "ticker_count": 1
-        },
-        {
-          "id": "Biotech / Oncology / General",
-          "kind": "leaf",
-          "parent": "Biotech",
-          "ticker_count": 1
-        },
-        {
-          "id": "Biotech / RNAi & Antisense",
-          "kind": "leaf",
-          "parent": "Biotech",
-          "ticker_count": 1
-        },
-        {
-          "id": "Industrials",
-          "kind": "l1"
-        },
-        {
-          "id": "Industrials / Workplace Services & Uniforms",
-          "kind": "leaf",
-          "parent": "Industrials",
-          "ticker_count": 1
-        },
-        {
-          "id": "Real Estate",
-          "kind": "l1"
-        },
-        {
-          "id": "Real Estate / iBuying & PropTech",
-          "kind": "leaf",
-          "parent": "Real Estate",
-          "ticker_count": 1
-        }
-      ],
-      "edges": [
-        {
-          "source": "Biotech / Rare Disease",
-          "target": "Biotech",
-          "kind": "is_a"
-        },
-        {
-          "source": "AI / Software & Analytics",
-          "target": "AI",
-          "kind": "is_a"
-        },
-        {
-          "source": "Biotech / Immunology",
-          "target": "Biotech",
-          "kind": "is_a"
-        },
-        {
-          "source": "Biotech / Neuroscience",
-          "target": "Biotech",
-          "kind": "is_a"
-        },
-        {
-          "source": "Biotech / Oncology / General",
-          "target": "Biotech",
-          "kind": "is_a"
-        },
-        {
-          "source": "Biotech / RNAi & Antisense",
-          "target": "Biotech",
-          "kind": "is_a"
-        },
-        {
-          "source": "Industrials / Workplace Services & Uniforms",
-          "target": "Industrials",
-          "kind": "is_a"
-        },
-        {
-          "source": "Real Estate / iBuying & PropTech",
-          "target": "Real Estate",
           "kind": "is_a"
         }
       ]

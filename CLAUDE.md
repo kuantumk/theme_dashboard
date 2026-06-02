@@ -195,7 +195,19 @@ The right-hand chart in [docs/app.js](docs/app.js)'s `openChart()` function uses
 
 **Volume study identifier matters.** Use `STD;Volume`, not `Volume@tv-basicstudies`. `STD;Volume` renders volume bars **and** the Volume MA overlay (blue gradient area); `Volume@tv-basicstudies` only renders bars in the free embed. `hide_volume: true` hides the built-in candle-overlay volume — it is independent of the separate Volume study.
 
-**Safe constructor options that work reliably:** `hide_legend: true` (hides only the legend, not the studies themselves), `hide_volume: true` (only affects the candle-overlay volume), `overrides: { "scalesProperties.scaleSeriesOnly": true }` (auto-scales the price axis to candles instead of stretching to fit the lowest MA).
+**`hide_legend` is all-or-nothing — do not use it.** Setting `hide_legend: true` removes the entire upper-left panel: the OHLC values, the daily change %, the volume readout, AND the study legend rows. Swing traders need OHLC + change % + volume at a glance, so leave `hide_legend: false` and use the per-element legend overrides instead:
+
+```js
+"overrides": {
+  "paneProperties.legendProperties.showStudyTitles": false,
+  "paneProperties.legendProperties.showStudyValues": false,
+  "paneProperties.legendProperties.showStudyArguments": false
+}
+```
+
+These suppress only the EMA/SMA rows while keeping the main series title, OHLC, change %, and volume value intact. Other useful legend toggles in the same family: `showSeriesOHLC`, `showVolume`, `showBarChange`, `showLastDayChange`, `showSeriesTitle` — see [TradingView's legend overrides docs](https://www.tradingview.com/charting-library-docs/latest/customization/overrides/chart-overrides).
+
+**Other safe constructor options:** `hide_volume: true` (only affects the candle-overlay volume; the separate Volume study still renders), `overrides: { "scalesProperties.scaleSeriesOnly": true }` (auto-scales the price axis to candles instead of stretching to fit the lowest MA).
 
 ## Configuration
 

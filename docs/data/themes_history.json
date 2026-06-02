@@ -449,7 +449,7 @@
       {
         "rank": 8,
         "name": "Logistics / Freight Brokerage & Trucking",
-        "score": 47.5,
+        "score": 47.6,
         "avg_rs": 92.9,
         "tickers": [
           {
@@ -501,7 +501,7 @@
             "vars": 2.91,
             "rs": 84.6,
             "price": 228.53,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -517,6 +517,17 @@
             "sales": "1",
             "inst": "-3.2",
             "short": 5.6
+          },
+          {
+            "ticker": "FDX",
+            "vars": 4.67,
+            "rs": 92.3,
+            "price": 338.49,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -549,7 +560,7 @@
             "eps": "2",
             "sales": "-1",
             "inst": "-3.9",
-            "short": 20.1
+            "short": 20.2
           },
           {
             "ticker": "TEM",
@@ -699,7 +710,7 @@
             "vars": 4.47,
             "rs": 100.0,
             "price": 277.49,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -743,11 +754,11 @@
             "vars": -5.15,
             "rs": 80.8,
             "price": 1.66,
-            "float": "26.4",
+            "float": "25.9",
             "eps": "N/A",
             "sales": "-12",
             "inst": "-0.3",
-            "short": 14.4,
+            "short": 14.6,
             "ticker_color": "green"
           },
           {
@@ -883,17 +894,6 @@
             "short": 18.5
           },
           {
-            "ticker": "FIG",
-            "vars": -12.92,
-            "rs": 100.0,
-            "price": 27.12,
-            "float": "127.1",
-            "eps": "-39",
-            "sales": "46",
-            "inst": "+20.0",
-            "short": 55.2
-          },
-          {
             "ticker": "VYX",
             "vars": -11.61,
             "rs": 65.4,
@@ -914,6 +914,17 @@
             "sales": "10",
             "inst": "-1.9",
             "short": 14.9
+          },
+          {
+            "ticker": "FIG",
+            "vars": -12.92,
+            "rs": 100.0,
+            "price": 27.12,
+            "float": "192.5",
+            "eps": "-39",
+            "sales": "46",
+            "inst": "+20.0",
+            "short": 36.4
           },
           {
             "ticker": "RNG",
@@ -1105,7 +1116,7 @@
           },
           {
             "ticker": "BWA",
-            "vars": 6.71,
+            "vars": 6.77,
             "rs": 88.5,
             "price": 71.06,
             "float": "203.6",
@@ -1250,7 +1261,7 @@
             "ticker": "GSIT",
             "vars": -0.29,
             "rs": 84.6,
-            "price": 10.9,
+            "price": 10.91,
             "float": "29.5",
             "eps": "N/A",
             "sales": "7",
@@ -1341,6 +1352,50 @@
       },
       {
         "rank": 19,
+        "name": "Healthcare / Staffing",
+        "score": 45.1,
+        "avg_rs": 91.0,
+        "tickers": [
+          {
+            "ticker": "RHI",
+            "vars": -2.89,
+            "rs": 100.0,
+            "price": 30.99,
+            "float": "98.4",
+            "eps": "-1",
+            "sales": "-4",
+            "inst": "+15.9",
+            "short": 24.8
+          },
+          {
+            "ticker": "MAN",
+            "vars": -4.51,
+            "rs": 100.0,
+            "price": 32.93,
+            "float": "45.7",
+            "eps": "24",
+            "sales": "10",
+            "inst": "-3.0",
+            "short": 11.8
+          },
+          {
+            "ticker": "AMN",
+            "vars": 4.88,
+            "rs": 73.1,
+            "price": 29.34,
+            "float": "38.4",
+            "eps": "96",
+            "sales": "100",
+            "inst": "+13.5",
+            "short": 6.7
+          }
+        ],
+        "l1": "Healthcare",
+        "l2": "Staffing",
+        "l3": null
+      },
+      {
+        "rank": 20,
         "name": "Software & Internet / BPO & IT Services",
         "score": 45.1,
         "avg_rs": 86.3,
@@ -1365,7 +1420,7 @@
             "eps": "2",
             "sales": "-1",
             "inst": "-3.9",
-            "short": 20.1
+            "short": 20.2
           },
           {
             "ticker": "RXT",
@@ -1461,7 +1516,7 @@
         "l3": null
       },
       {
-        "rank": 20,
+        "rank": 21,
         "name": "Biotech / Specialty Pharma",
         "score": 45.0,
         "avg_rs": 90.4,
@@ -1494,7 +1549,7 @@
         "l3": null
       },
       {
-        "rank": 21,
+        "rank": 22,
         "name": "Clean Energy / Solar / Thin-Film",
         "score": 45.0,
         "avg_rs": 94.2,
@@ -1527,7 +1582,7 @@
         "l3": "Thin-Film"
       },
       {
-        "rank": 22,
+        "rank": 23,
         "name": "Clean Energy / Renewable Fuels",
         "score": 44.6,
         "avg_rs": 82.7,
@@ -1560,7 +1615,7 @@
         "l3": null
       },
       {
-        "rank": 23,
+        "rank": 24,
         "name": "Fintech & Crypto / Crypto / Mining",
         "score": 44.5,
         "avg_rs": 91.0,
@@ -1671,7 +1726,7 @@
         "l3": "Mining"
       },
       {
-        "rank": 24,
+        "rank": 25,
         "name": "Industrials / Additive Manufacturing",
         "score": 44.5,
         "avg_rs": 89.7,
@@ -1715,7 +1770,7 @@
         "l3": null
       },
       {
-        "rank": 25,
+        "rank": 26,
         "name": "Travel & Leisure / Theme Parks",
         "score": 44.5,
         "avg_rs": 92.3,
@@ -1748,7 +1803,7 @@
         "l3": null
       },
       {
-        "rank": 26,
+        "rank": 27,
         "name": "Software & Internet / Data & Analytics",
         "score": 44.4,
         "avg_rs": 93.4,
@@ -1869,7 +1924,7 @@
         "l3": null
       },
       {
-        "rank": 27,
+        "rank": 28,
         "name": "AI / Data Center / Chips & Processors",
         "score": 44.4,
         "avg_rs": 66.8,
@@ -1880,7 +1935,7 @@
             "rs": 100.0,
             "price": 59.71,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -1991,50 +2046,6 @@
         "l3": "Chips & Processors"
       },
       {
-        "rank": 28,
-        "name": "Healthcare / Staffing",
-        "score": 44.4,
-        "avg_rs": 89.7,
-        "tickers": [
-          {
-            "ticker": "RHI",
-            "vars": -2.89,
-            "rs": 100.0,
-            "price": 30.99,
-            "float": "98.4",
-            "eps": "-1",
-            "sales": "-4",
-            "inst": "+15.9",
-            "short": 24.8
-          },
-          {
-            "ticker": "MAN",
-            "vars": -4.96,
-            "rs": 96.2,
-            "price": 32.93,
-            "float": "45.7",
-            "eps": "24",
-            "sales": "10",
-            "inst": "-3.0",
-            "short": 11.8
-          },
-          {
-            "ticker": "AMN",
-            "vars": 4.88,
-            "rs": 73.1,
-            "price": 29.34,
-            "float": "38.4",
-            "eps": "96",
-            "sales": "100",
-            "inst": "+13.5",
-            "short": 6.7
-          }
-        ],
-        "l1": "Healthcare",
-        "l2": "Staffing",
-        "l3": null
-      },
-      {
         "rank": 29,
         "name": "AI / Data Center / Components",
         "score": 44.1,
@@ -2046,7 +2057,7 @@
             "rs": 100.0,
             "price": 59.71,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -2124,7 +2135,7 @@
             "rs": 96.2,
             "price": 226.1,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -2262,7 +2273,7 @@
           "id": "Logistics / Freight Brokerage & Trucking",
           "kind": "leaf",
           "parent": "Logistics",
-          "ticker_count": 6
+          "ticker_count": 7
         },
         {
           "id": "AI / Software & Analytics",
@@ -2341,6 +2352,16 @@
           "ticker_count": 9
         },
         {
+          "id": "Healthcare",
+          "kind": "l1"
+        },
+        {
+          "id": "Healthcare / Staffing",
+          "kind": "leaf",
+          "parent": "Healthcare",
+          "ticker_count": 3
+        },
+        {
           "id": "Software & Internet / BPO & IT Services",
           "kind": "leaf",
           "parent": "Software & Internet",
@@ -2405,16 +2426,6 @@
           "kind": "leaf",
           "parent": "AI",
           "ticker_count": 10
-        },
-        {
-          "id": "Healthcare",
-          "kind": "l1"
-        },
-        {
-          "id": "Healthcare / Staffing",
-          "kind": "leaf",
-          "parent": "Healthcare",
-          "ticker_count": 3
         },
         {
           "id": "AI / Data Center / Components",
@@ -2525,6 +2536,11 @@
           "kind": "is_a"
         },
         {
+          "source": "Healthcare / Staffing",
+          "target": "Healthcare",
+          "kind": "is_a"
+        },
+        {
           "source": "Software & Internet / BPO & IT Services",
           "target": "Software & Internet",
           "kind": "is_a"
@@ -2567,11 +2583,6 @@
         {
           "source": "AI / Data Center / Chips & Processors",
           "target": "AI",
-          "kind": "is_a"
-        },
-        {
-          "source": "Healthcare / Staffing",
-          "target": "Healthcare",
           "kind": "is_a"
         },
         {
@@ -2797,7 +2808,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 6.81,
-            "price": 71.82,
+            "price": 71.65,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -3212,7 +3223,7 @@
             "vars": 8.15,
             "price": 55.83,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -3405,7 +3416,7 @@
             "rs": 100.0,
             "vars": 2.36,
             "price": 247.35,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -3537,7 +3548,7 @@
             "eps": "2",
             "sales": "-1",
             "inst": "-3.9",
-            "short": 20.1
+            "short": 20.2
           },
           {
             "ticker": "TEM",
@@ -3915,7 +3926,7 @@
             "rs": 88.5,
             "vars": 10.4,
             "price": 84.0,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -3985,19 +3996,6 @@
             "short": 19.0
           },
           {
-            "ticker": "FIG",
-            "score": 43.0,
-            "demand": 93.2,
-            "rs": 100.0,
-            "vars": -14.0,
-            "price": 25.5,
-            "float": "127.1",
-            "eps": "-39",
-            "sales": "46",
-            "inst": "+20.0",
-            "short": 55.2
-          },
-          {
             "ticker": "VYX",
             "score": 17.0,
             "demand": 87.4,
@@ -4009,6 +4007,19 @@
             "sales": "-2",
             "inst": "-0.1",
             "short": 18.6
+          },
+          {
+            "ticker": "FIG",
+            "score": 43.0,
+            "demand": 86.0,
+            "rs": 100.0,
+            "vars": -14.0,
+            "price": 25.5,
+            "float": "192.5",
+            "eps": "-39",
+            "sales": "46",
+            "inst": "+20.0",
+            "short": 36.4
           },
           {
             "ticker": "RNG",
@@ -4478,11 +4489,11 @@
           {
             "ticker": "ODFL",
             "score": 42.1,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 80.8,
             "vars": 3.38,
             "price": 225.15,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -4544,7 +4555,7 @@
             "demand": 46.1,
             "rs": 80.8,
             "vars": 9.41,
-            "price": 32.76,
+            "price": 32.68,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -4557,7 +4568,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 6.81,
-            "price": 71.82,
+            "price": 71.65,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -5138,7 +5149,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 7.18,
-            "price": 71.31,
+            "price": 71.14,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -5461,7 +5472,7 @@
             "vars": 8.51,
             "price": 54.07,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -5678,7 +5689,7 @@
             "rs": 96.2,
             "vars": 10.74,
             "price": 86.85,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -6818,7 +6829,7 @@
             "demand": 46.1,
             "rs": 84.6,
             "vars": 10.67,
-            "price": 33.3,
+            "price": 33.22,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -6831,7 +6842,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 7.18,
-            "price": 71.31,
+            "price": 71.14,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -7211,11 +7222,11 @@
           {
             "ticker": "GH",
             "score": 49.0,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 100.0,
             "vars": -2.02,
             "price": 133.22,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -7697,7 +7708,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 9.25,
-            "price": 70.83,
+            "price": 70.66,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -7890,7 +7901,7 @@
             "vars": 10.15,
             "price": 54.44,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -8174,7 +8185,7 @@
             "rs": 100.0,
             "vars": 12.65,
             "price": 86.69,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -9271,7 +9282,7 @@
             "demand": 46.1,
             "rs": 96.2,
             "vars": 11.21,
-            "price": 33.66,
+            "price": 33.58,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -9284,7 +9295,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 9.25,
-            "price": 70.83,
+            "price": 70.66,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -9637,11 +9648,11 @@
           {
             "ticker": "ODFL",
             "score": 34.9,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 65.4,
             "vars": 4.4,
             "price": 219.45,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -9666,7 +9677,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": -2.32,
-            "price": 161.51,
+            "price": 160.68,
             "float": null,
             "eps": null,
             "sales": null,
@@ -10401,7 +10412,7 @@
             "vars": 10.38,
             "price": 54.95,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -10798,7 +10809,7 @@
             "rs": 100.0,
             "vars": 12.63,
             "price": 83.88,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -11652,7 +11663,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 11.85,
-            "price": 33.9,
+            "price": 33.82,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -11665,7 +11676,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 8.52,
-            "price": 68.26,
+            "price": 68.1,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -11758,7 +11769,7 @@
             "rs": 100.0,
             "vars": 12.63,
             "price": 83.88,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -11781,12 +11792,12 @@
           {
             "ticker": "MOD",
             "score": 53.0,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 5.93,
             "price": 295.88,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -13155,7 +13166,7 @@
             "vars": 10.82,
             "price": 53.21,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -14080,7 +14091,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Telecom",
@@ -14253,7 +14265,7 @@
             "demand": 46.1,
             "rs": 96.2,
             "vars": 12.04,
-            "price": 33.29,
+            "price": 33.21,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -14266,7 +14278,7 @@
             "demand": 46.0,
             "rs": 92.3,
             "vars": 8.41,
-            "price": 65.82,
+            "price": 65.66,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -14626,7 +14638,7 @@
             "vars": 10.82,
             "price": 53.21,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -14718,7 +14730,7 @@
             "vars": 0.95,
             "price": 218.41,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -15897,7 +15909,7 @@
             "vars": 10.2,
             "price": 48.81,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -16489,8 +16501,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "IART",
@@ -16691,7 +16702,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -16726,7 +16738,7 @@
             "demand": 38.2,
             "rs": 100.0,
             "vars": -0.65,
-            "price": 988.17,
+            "price": 983.83,
             "float": "293.3",
             "eps": "16",
             "sales": "9",
@@ -17267,7 +17279,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 13.3,
-            "price": 33.22,
+            "price": 33.14,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -17280,7 +17292,7 @@
             "demand": 46.0,
             "rs": 88.5,
             "vars": 8.64,
-            "price": 63.55,
+            "price": 63.4,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -17560,7 +17572,7 @@
             "vars": 0.56,
             "price": 24.14,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -17693,7 +17705,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Telecom",
@@ -18254,7 +18267,7 @@
             "vars": 10.26,
             "price": 47.63,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -18697,7 +18710,7 @@
             "demand": 46.1,
             "rs": 88.5,
             "vars": 11.64,
-            "price": 30.7,
+            "price": 30.63,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -18710,7 +18723,7 @@
             "demand": 46.0,
             "rs": 80.8,
             "vars": 8.77,
-            "price": 62.95,
+            "price": 62.8,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -19557,8 +19570,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "IART",
@@ -19608,7 +19620,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -19630,7 +19643,7 @@
             "demand": 38.2,
             "rs": 96.2,
             "vars": -0.87,
-            "price": 982.12,
+            "price": 977.81,
             "float": "293.3",
             "eps": "16",
             "sales": "9",
@@ -19896,11 +19909,11 @@
           {
             "ticker": "ODFL",
             "score": 25.5,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 46.2,
             "vars": 4.92,
             "price": 209.83,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -19925,7 +19938,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": -1.51,
-            "price": 158.42,
+            "price": 157.61,
             "float": null,
             "eps": null,
             "sales": null,
@@ -19965,7 +19978,7 @@
             "vars": 0.75,
             "price": 23.76,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -20217,11 +20230,11 @@
           {
             "ticker": "MRVI",
             "score": 45.1,
-            "demand": 68.9,
+            "demand": 69.0,
             "rs": 88.5,
             "vars": 1.74,
             "price": 4.43,
-            "float": "105.4",
+            "float": "105.1",
             "eps": "60",
             "sales": "41",
             "inst": "-2.0",
@@ -20292,19 +20305,6 @@
             "short": 19.0
           },
           {
-            "ticker": "FIG",
-            "score": 37.2,
-            "demand": 93.2,
-            "rs": 88.5,
-            "vars": -14.14,
-            "price": 22.58,
-            "float": "127.1",
-            "eps": "-39",
-            "sales": "46",
-            "inst": "+20.0",
-            "short": 55.2
-          },
-          {
             "ticker": "BL",
             "score": 10.1,
             "demand": 87.4,
@@ -20316,6 +20316,19 @@
             "sales": "10",
             "inst": "-1.9",
             "short": 14.9
+          },
+          {
+            "ticker": "FIG",
+            "score": 37.2,
+            "demand": 86.0,
+            "rs": 88.5,
+            "vars": -14.14,
+            "price": 22.58,
+            "float": "192.5",
+            "eps": "-39",
+            "sales": "46",
+            "inst": "+20.0",
+            "short": 36.4
           },
           {
             "ticker": "RNG",
@@ -20867,7 +20880,7 @@
             "vars": -0.42,
             "price": 15.24,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -21096,7 +21109,7 @@
             "demand": 39.8,
             "rs": 92.3,
             "vars": 13.44,
-            "price": 12.73,
+            "price": 12.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -21465,7 +21478,7 @@
             "vars": 10.51,
             "price": 46.27,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -21655,15 +21668,15 @@
           {
             "ticker": "CLOV",
             "score": 49.2,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 96.2,
             "vars": 2.2,
             "price": 3.5,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "ELV",
@@ -21911,7 +21924,7 @@
             "demand": 39.8,
             "rs": 92.3,
             "vars": 13.44,
-            "price": 12.73,
+            "price": 12.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -22298,8 +22311,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "IART",
@@ -22672,19 +22684,6 @@
             "short": 19.0
           },
           {
-            "ticker": "FIG",
-            "score": 41.7,
-            "demand": 93.2,
-            "rs": 96.2,
-            "vars": -12.8,
-            "price": 23.27,
-            "float": "127.1",
-            "eps": "-39",
-            "sales": "46",
-            "inst": "+20.0",
-            "short": 55.2
-          },
-          {
             "ticker": "BL",
             "score": 4.4,
             "demand": 87.4,
@@ -22696,6 +22695,19 @@
             "sales": "10",
             "inst": "-1.9",
             "short": 14.9
+          },
+          {
+            "ticker": "FIG",
+            "score": 41.7,
+            "demand": 86.0,
+            "rs": 96.2,
+            "vars": -12.8,
+            "price": 23.27,
+            "float": "192.5",
+            "eps": "-39",
+            "sales": "46",
+            "inst": "+20.0",
+            "short": 36.4
           },
           {
             "ticker": "RNG",
@@ -22870,7 +22882,7 @@
             "demand": 60.5,
             "rs": 88.5,
             "vars": 11.32,
-            "price": 54.16,
+            "price": 53.9,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -23453,7 +23465,7 @@
             "vars": 0.82,
             "price": 15.23,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -23557,7 +23569,7 @@
             "rs": 69.2,
             "vars": 7.94,
             "price": 40.15,
-            "float": "351.8",
+            "float": "351.7",
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
@@ -23594,7 +23606,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 12.55,
-            "price": 12.85,
+            "price": 12.74,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -24353,7 +24365,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 12.55,
-            "price": 12.85,
+            "price": 12.74,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -24723,15 +24735,15 @@
           {
             "ticker": "CLOV",
             "score": 44.1,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 88.5,
             "vars": -0.25,
             "price": 3.39,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "ELV",
@@ -24934,7 +24946,7 @@
             "vars": 0.43,
             "price": 24.0,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -24997,7 +25009,7 @@
             "demand": 46.1,
             "rs": 88.5,
             "vars": 10.17,
-            "price": 30.38,
+            "price": 30.31,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -25010,7 +25022,7 @@
             "demand": 46.0,
             "rs": 80.8,
             "vars": 7.87,
-            "price": 61.82,
+            "price": 61.67,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -25357,8 +25369,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -25392,7 +25403,7 @@
             "vars": 9.66,
             "price": 45.71,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -26205,7 +26216,7 @@
             "vars": 9.62,
             "price": 46.82,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -26361,7 +26372,7 @@
             "vars": 0.71,
             "price": 24.48,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -26655,7 +26666,7 @@
             "demand": 60.5,
             "rs": 92.3,
             "vars": 9.06,
-            "price": 54.49,
+            "price": 54.23,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -26748,7 +26759,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -26783,7 +26795,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 3.47,
-            "price": 87.0,
+            "price": 86.91,
             "float": null,
             "eps": null,
             "sales": null,
@@ -26834,7 +26846,7 @@
             "demand": 46.1,
             "rs": 92.3,
             "vars": 10.5,
-            "price": 30.98,
+            "price": 30.9,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -26847,7 +26859,7 @@
             "demand": 46.0,
             "rs": 88.5,
             "vars": 8.0,
-            "price": 63.21,
+            "price": 63.06,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -27170,7 +27182,7 @@
             "rs": 61.5,
             "vars": 10.62,
             "price": 73.06,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -27695,15 +27707,15 @@
           {
             "ticker": "CLOV",
             "score": 47.9,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 96.2,
             "vars": -0.45,
             "price": 3.47,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -28067,7 +28079,7 @@
             "demand": 39.8,
             "rs": 84.6,
             "vars": 11.19,
-            "price": 12.42,
+            "price": 12.31,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -28655,7 +28667,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 9.16,
-            "price": 31.87,
+            "price": 31.79,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -28668,7 +28680,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 7.19,
-            "price": 67.42,
+            "price": 67.26,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -28888,7 +28900,7 @@
             "vars": 8.22,
             "price": 49.44,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -29146,7 +29158,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -29181,7 +29194,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 2.49,
-            "price": 88.28,
+            "price": 88.19,
             "float": null,
             "eps": null,
             "sales": null,
@@ -29492,7 +29505,7 @@
             "vars": 0.07,
             "price": 26.13,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -29584,7 +29597,7 @@
             "rs": 42.3,
             "vars": 8.36,
             "price": 71.49,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -30321,7 +30334,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Telecom",
@@ -30505,15 +30519,15 @@
           {
             "ticker": "CLOV",
             "score": 46.8,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 96.2,
             "vars": -2.59,
             "price": 3.49,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "UNH",
@@ -30726,7 +30740,7 @@
             "vars": 8.22,
             "price": 49.44,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -30818,7 +30832,7 @@
             "vars": -2.98,
             "price": 184.54,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -31822,7 +31836,7 @@
             "vars": 7.72,
             "price": 48.27,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -32297,7 +32311,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 9.95,
-            "price": 31.35,
+            "price": 31.27,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -32310,7 +32324,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 7.49,
-            "price": 66.87,
+            "price": 66.71,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -32517,7 +32531,7 @@
             "rs": 46.2,
             "vars": 8.27,
             "price": 70.97,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -32862,7 +32876,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -33133,7 +33148,7 @@
             "vars": -0.89,
             "price": 25.89,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -33295,15 +33310,15 @@
           {
             "ticker": "CLOV",
             "score": 48.7,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -2.52,
             "price": 3.55,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -33523,7 +33538,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Telecom",
@@ -33822,11 +33838,11 @@
           {
             "ticker": "GH",
             "score": 40.7,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 88.5,
             "vars": -7.08,
             "price": 98.47,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -34547,7 +34563,7 @@
             "vars": 8.58,
             "price": 44.13,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -34703,7 +34719,7 @@
             "vars": 1.67,
             "price": 27.02,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -34739,7 +34755,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 10.53,
-            "price": 29.57,
+            "price": 29.5,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -34752,7 +34768,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 8.35,
-            "price": 63.74,
+            "price": 63.59,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -34895,7 +34911,7 @@
             "rs": 50.0,
             "vars": 10.23,
             "price": 70.73,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -34904,12 +34920,12 @@
           {
             "ticker": "MOD",
             "score": 46.7,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 88.5,
             "vars": 4.96,
             "price": 276.27,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -35119,7 +35135,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "BEN",
@@ -35278,15 +35295,15 @@
           {
             "ticker": "CLOV",
             "score": 48.9,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -2.25,
             "price": 3.28,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "GRAL",
@@ -36003,7 +36020,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Telecom",
@@ -36061,7 +36079,7 @@
             "vars": 8.58,
             "price": 44.13,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -36153,7 +36171,7 @@
             "vars": -0.22,
             "price": 198.57,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -36380,11 +36398,11 @@
           {
             "ticker": "GH",
             "score": 41.5,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 88.5,
             "vars": -5.37,
             "price": 99.94,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -36632,7 +36650,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "NG",
@@ -37776,7 +37795,7 @@
             "vars": 7.89,
             "price": 43.54,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -38022,7 +38041,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -38108,7 +38128,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 10.27,
-            "price": 29.14,
+            "price": 29.07,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -38121,7 +38141,7 @@
             "demand": 46.0,
             "rs": 100.0,
             "vars": 7.8,
-            "price": 63.15,
+            "price": 63.0,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -38460,7 +38480,7 @@
             "vars": 1.06,
             "price": 26.71,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -38552,7 +38572,7 @@
             "rs": 69.2,
             "vars": 10.9,
             "price": 74.16,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -38561,12 +38581,12 @@
           {
             "ticker": "MOD",
             "score": 52.6,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 5.28,
             "price": 284.8,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -38895,7 +38915,7 @@
             "rs": 69.2,
             "vars": 10.9,
             "price": 74.16,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -39235,7 +39255,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -39282,7 +39303,7 @@
             "vars": 7.89,
             "price": 43.54,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -39374,7 +39395,7 @@
             "vars": 0.51,
             "price": 210.22,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -39469,15 +39490,15 @@
           {
             "ticker": "CLOV",
             "score": 48.8,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -2.38,
             "price": 3.2,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "GRAL",
@@ -40214,7 +40235,7 @@
             "vars": 7.75,
             "price": 44.23,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -40795,7 +40816,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 10.06,
-            "price": 29.0,
+            "price": 28.93,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -40808,7 +40829,7 @@
             "demand": 46.0,
             "rs": 96.2,
             "vars": 7.71,
-            "price": 61.32,
+            "price": 61.17,
             "float": "203.6",
             "eps": "6",
             "sales": "1",
@@ -41150,15 +41171,15 @@
           {
             "ticker": "CLOV",
             "score": 48.4,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -3.26,
             "price": 3.12,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "GRAL",
@@ -41285,7 +41306,7 @@
             "rs": 69.2,
             "vars": 10.98,
             "price": 73.1,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -41294,12 +41315,12 @@
           {
             "ticker": "MOD",
             "score": 44.9,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 84.6,
             "vars": 5.09,
             "price": 273.0,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -41491,7 +41512,7 @@
             "rs": 69.2,
             "vars": 10.98,
             "price": 73.1,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -41673,7 +41694,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -42206,11 +42228,11 @@
           {
             "ticker": "GH",
             "score": 37.3,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 80.8,
             "vars": -6.16,
             "price": 95.7,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -42502,7 +42524,7 @@
             "vars": 7.75,
             "price": 44.23,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -42594,7 +42616,7 @@
             "vars": -0.71,
             "price": 188.51,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -42705,15 +42727,15 @@
           {
             "ticker": "U",
             "score": 43.8,
-            "demand": 56.0,
+            "demand": 56.3,
             "rs": 96.2,
             "vars": -8.58,
             "price": 28.16,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           },
           {
             "ticker": "TBLA",
@@ -43218,7 +43240,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 10.42,
-            "price": 27.03,
+            "price": 26.96,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -43244,7 +43266,7 @@
             "vars": 6.48,
             "price": 38.98,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -43896,7 +43918,7 @@
             "rs": 92.3,
             "vars": 9.81,
             "price": 97.44,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -44441,7 +44463,7 @@
             "rs": 65.4,
             "vars": 12.09,
             "price": 71.65,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -44450,12 +44472,12 @@
           {
             "ticker": "MOD",
             "score": 44.6,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 84.6,
             "vars": 4.6,
             "price": 269.65,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -44810,11 +44832,11 @@
           {
             "ticker": "GH",
             "score": 26.6,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 57.7,
             "vars": -4.58,
             "price": 92.26,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -44941,7 +44963,7 @@
             "vars": 1.9,
             "price": 35.58,
             "float": "78.5",
-            "eps": "-26",
+            "eps": "-22",
             "sales": null,
             "inst": "-4.1",
             "short": 13.2
@@ -45107,7 +45129,7 @@
             "rs": 100.0,
             "vars": -3.67,
             "price": 188.73,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -45323,7 +45345,7 @@
             "vars": 6.48,
             "price": 38.98,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -45415,7 +45437,7 @@
             "vars": 0.64,
             "price": 188.29,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -45484,19 +45506,6 @@
             "short": 19.0
           },
           {
-            "ticker": "FIG",
-            "score": 27.4,
-            "demand": 93.2,
-            "rs": 69.2,
-            "vars": -14.52,
-            "price": 20.56,
-            "float": "127.1",
-            "eps": "-39",
-            "sales": "46",
-            "inst": "+20.0",
-            "short": 55.2
-          },
-          {
             "ticker": "VYX",
             "score": 46.3,
             "demand": 87.4,
@@ -45508,6 +45517,19 @@
             "sales": "-2",
             "inst": "-0.1",
             "short": 18.6
+          },
+          {
+            "ticker": "FIG",
+            "score": 27.4,
+            "demand": 86.0,
+            "rs": 69.2,
+            "vars": -14.52,
+            "price": 20.56,
+            "float": "192.5",
+            "eps": "-39",
+            "sales": "46",
+            "inst": "+20.0",
+            "short": 36.4
           },
           {
             "ticker": "RNG",
@@ -45596,7 +45618,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -45781,15 +45804,15 @@
           {
             "ticker": "U",
             "score": 26.4,
-            "demand": 56.0,
+            "demand": 56.3,
             "rs": 61.5,
             "vars": -8.66,
             "price": 26.73,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           },
           {
             "ticker": "GOOGL",
@@ -46320,7 +46343,7 @@
             "rs": 100.0,
             "vars": 12.63,
             "price": 78.04,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -46513,7 +46536,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 10.7,
-            "price": 26.95,
+            "price": 26.88,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -46875,7 +46898,7 @@
             "rs": 100.0,
             "vars": 12.63,
             "price": 78.04,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -46884,12 +46907,12 @@
           {
             "ticker": "MOD",
             "score": 48.4,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 92.3,
             "vars": 4.55,
             "price": 274.22,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -47121,7 +47144,7 @@
             "vars": 5.12,
             "price": 38.99,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47378,7 +47401,7 @@
             "rs": 100.0,
             "vars": 10.36,
             "price": 102.27,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -47563,7 +47586,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WT",
@@ -47598,7 +47622,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 3.87,
-            "price": 87.04,
+            "price": 86.95,
             "float": null,
             "eps": null,
             "sales": null,
@@ -47701,7 +47725,7 @@
             "vars": 5.12,
             "price": 38.99,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47793,7 +47817,7 @@
             "vars": 0.52,
             "price": 198.29,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -48111,7 +48135,7 @@
             "vars": -1.53,
             "price": 23.4,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -48175,7 +48199,7 @@
             "vars": -0.16,
             "price": 5.99,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -48552,8 +48576,7 @@
             "eps": "45",
             "sales": "15",
             "inst": "+6.7",
-            "short": 21.8,
-            "ticker_color": "green"
+            "short": 21.8
           },
           {
             "ticker": "REAL",
@@ -48630,8 +48653,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -49175,7 +49197,7 @@
             "rs": 100.0,
             "vars": 9.63,
             "price": 99.38,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -49369,7 +49391,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 11.3,
-            "price": 26.14,
+            "price": 26.08,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -49819,7 +49841,7 @@
             "rs": 100.0,
             "vars": 14.12,
             "price": 76.89,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -49828,12 +49850,12 @@
           {
             "ticker": "MOD",
             "score": 53.1,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 6.19,
             "price": 271.6,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -50271,7 +50293,7 @@
             "demand": 39.8,
             "rs": 88.5,
             "vars": 11.65,
-            "price": 12.41,
+            "price": 12.3,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -50415,7 +50437,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "BEN",
@@ -50450,7 +50473,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.03,
-            "price": 83.91,
+            "price": 83.83,
             "float": null,
             "eps": null,
             "sales": null,
@@ -50685,7 +50708,7 @@
             "vars": 5.53,
             "price": 36.45,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -50936,12 +50959,12 @@
           {
             "ticker": "MOD",
             "score": 53.1,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 6.19,
             "price": 271.6,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -51021,8 +51044,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -51059,8 +51081,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -51226,7 +51247,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -51260,7 +51282,7 @@
             "vars": 5.53,
             "price": 36.45,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -51352,7 +51374,7 @@
             "vars": 0.3,
             "price": 193.57,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -51863,7 +51885,7 @@
             "rs": 100.0,
             "vars": 9.12,
             "price": 91.41,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -52582,7 +52604,7 @@
             "vars": 4.08,
             "price": 32.4,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -52764,7 +52786,7 @@
             "rs": 88.5,
             "vars": 13.46,
             "price": 72.67,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -52773,12 +52795,12 @@
           {
             "ticker": "MOD",
             "score": 47.3,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 88.5,
             "vars": 6.18,
             "price": 259.76,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -52979,7 +53001,7 @@
             "demand": 39.8,
             "rs": 84.6,
             "vars": 12.6,
-            "price": 12.29,
+            "price": 12.18,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -53009,7 +53031,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -53265,8 +53288,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -53430,7 +53452,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -53491,7 +53514,7 @@
             "vars": 5.05,
             "price": 14.5,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -53568,7 +53591,7 @@
             "rs": 69.2,
             "vars": 9.86,
             "price": 42.02,
-            "float": "351.8",
+            "float": "351.7",
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
@@ -53620,7 +53643,7 @@
             "vars": 4.08,
             "price": 32.4,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -53712,7 +53735,7 @@
             "vars": -0.29,
             "price": 180.06,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -54906,7 +54929,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 11.75,
-            "price": 25.87,
+            "price": 25.81,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -54972,7 +54995,7 @@
             "rs": 92.3,
             "vars": 13.98,
             "price": 73.14,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -54981,12 +55004,12 @@
           {
             "ticker": "MOD",
             "score": 50.9,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 96.2,
             "vars": 5.66,
             "price": 266.83,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -55393,7 +55416,7 @@
             "vars": 3.88,
             "price": 31.24,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -55737,12 +55760,12 @@
           {
             "ticker": "MOD",
             "score": 50.9,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 96.2,
             "vars": 5.66,
             "price": 266.83,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -55922,8 +55945,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -55957,7 +55979,7 @@
             "vars": 3.88,
             "price": 31.24,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -56049,7 +56071,7 @@
             "vars": 0.08,
             "price": 184.38,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -56232,7 +56254,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -56541,8 +56564,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -56649,15 +56671,15 @@
           {
             "ticker": "U",
             "score": 47.0,
-            "demand": 56.0,
+            "demand": 56.3,
             "rs": 100.0,
             "vars": -5.97,
             "price": 27.13,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           },
           {
             "ticker": "GOOG",
@@ -56756,7 +56778,7 @@
             "vars": 0.29,
             "price": 5.71,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -57396,7 +57418,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 11.24,
-            "price": 25.61,
+            "price": 25.55,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -57485,7 +57507,7 @@
             "rs": 92.3,
             "vars": 13.95,
             "price": 72.53,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -57556,19 +57578,6 @@
             "short": 8.7
           },
           {
-            "ticker": "FDX",
-            "score": 56.6,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 13.25,
-            "price": 403.31,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "UPS",
             "score": 50.6,
             "demand": 50.0,
@@ -57580,6 +57589,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "FDX",
+            "score": 56.6,
+            "demand": 39.7,
+            "rs": 100.0,
+            "vars": 13.25,
+            "price": 324.99,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -57679,8 +57701,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -57754,7 +57775,7 @@
             "rs": 92.3,
             "vars": 13.95,
             "price": 72.53,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -57763,12 +57784,12 @@
           {
             "ticker": "MOD",
             "score": 39.2,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 73.1,
             "vars": 5.26,
             "price": 254.63,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -58372,7 +58393,7 @@
             "demand": 39.8,
             "rs": 80.8,
             "vars": 11.73,
-            "price": 12.22,
+            "price": 12.11,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -58399,7 +58420,7 @@
             "vars": 3.42,
             "price": 30.41,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -59090,15 +59111,15 @@
           {
             "ticker": "CLOV",
             "score": 49.1,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -1.8,
             "price": 2.75,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -59174,8 +59195,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -59455,8 +59475,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -59542,7 +59561,7 @@
             "vars": 0.22,
             "price": 5.73,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -59644,7 +59663,7 @@
             "vars": 3.42,
             "price": 30.41,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -59736,7 +59755,7 @@
             "vars": -0.8,
             "price": 174.01,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -60298,7 +60317,7 @@
             "demand": 39.8,
             "rs": 88.5,
             "vars": 13.61,
-            "price": 12.35,
+            "price": 12.24,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -60337,7 +60356,7 @@
             "demand": 39.8,
             "rs": 88.5,
             "vars": 13.61,
-            "price": 12.35,
+            "price": 12.24,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -60470,8 +60489,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "FLR",
@@ -60684,7 +60702,7 @@
             "vars": 3.5,
             "price": 28.51,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -60979,7 +60997,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -61480,8 +61499,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -61708,7 +61726,7 @@
             "rs": 84.6,
             "vars": 14.46,
             "price": 69.52,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -61717,12 +61735,12 @@
           {
             "ticker": "MOD",
             "score": 10.2,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 15.4,
             "vars": 5.0,
             "price": 233.39,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -61849,7 +61867,7 @@
             "vars": 6.21,
             "price": 13.94,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -61940,7 +61958,7 @@
             "rs": 46.2,
             "vars": 9.03,
             "price": 40.32,
-            "float": "351.8",
+            "float": "351.7",
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
@@ -62636,8 +62654,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -62733,7 +62750,7 @@
             "demand": 39.8,
             "rs": 69.2,
             "vars": 13.69,
-            "price": 11.82,
+            "price": 11.71,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -62801,8 +62818,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -63280,15 +63296,15 @@
           {
             "ticker": "CLOV",
             "score": 49.8,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -0.34,
             "price": 2.64,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -63850,7 +63866,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.86,
-            "price": 22.06,
+            "price": 21.97,
             "float": null,
             "eps": null,
             "sales": null,
@@ -63892,7 +63908,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -63926,7 +63943,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 7.14,
-            "price": 100.06,
+            "price": 99.27,
             "float": null,
             "eps": null,
             "sales": null,
@@ -63966,7 +63983,7 @@
             "vars": 3.76,
             "price": 28.12,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -64342,7 +64359,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -64440,8 +64458,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "NOK",
@@ -65367,7 +65384,7 @@
             "rs": 88.5,
             "vars": 15.71,
             "price": 70.45,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -65459,8 +65476,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "PWR",
@@ -65607,7 +65623,7 @@
             "vars": 4.3,
             "price": 29.05,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -65932,7 +65948,7 @@
             "rs": 88.5,
             "vars": 15.71,
             "price": 70.45,
-            "float": "54.6",
+            "float": "54.7",
             "eps": "6",
             "sales": "3",
             "inst": "+5.5",
@@ -65941,12 +65957,12 @@
           {
             "ticker": "MOD",
             "score": 27.4,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 50.0,
             "vars": 4.82,
             "price": 244.95,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -66039,8 +66055,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -66241,7 +66256,7 @@
             "vars": 4.3,
             "price": 29.05,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -66333,7 +66348,7 @@
             "vars": 0.29,
             "price": 180.5,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -66562,7 +66577,7 @@
             "demand": 39.8,
             "rs": 53.8,
             "vars": 12.71,
-            "price": 11.46,
+            "price": 11.36,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -66679,7 +66694,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -66713,7 +66729,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 6.24,
-            "price": 99.74,
+            "price": 98.95,
             "float": null,
             "eps": null,
             "sales": null,
@@ -66930,15 +66946,15 @@
           {
             "ticker": "CLOV",
             "score": 49.0,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 100.0,
             "vars": -2.1,
             "price": 2.52,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -67074,7 +67090,7 @@
             "vars": -0.57,
             "price": 5.25,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -68300,7 +68316,7 @@
             "vars": 5.79,
             "price": 30.69,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -68747,7 +68763,7 @@
             "vars": 5.79,
             "price": 30.69,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -68839,7 +68855,7 @@
             "vars": 1.38,
             "price": 195.04,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -69119,12 +69135,12 @@
           {
             "ticker": "MOD",
             "score": 37.3,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 69.2,
             "vars": 5.46,
             "price": 251.7,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -69293,8 +69309,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -69443,7 +69458,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 7.84,
-            "price": 21.01,
+            "price": 20.96,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -69660,7 +69675,7 @@
             "demand": 39.8,
             "rs": 50.0,
             "vars": 13.48,
-            "price": 11.33,
+            "price": 11.23,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -69690,7 +69705,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -69811,7 +69827,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 8.7,
-            "price": 56.78,
+            "price": 56.64,
             "float": null,
             "eps": null,
             "sales": null,
@@ -69898,15 +69914,15 @@
           {
             "ticker": "CLOV",
             "score": 46.9,
-            "demand": 52.1,
+            "demand": 51.5,
             "rs": 96.2,
             "vars": -2.28,
             "price": 2.43,
-            "float": "397.9",
+            "float": "404.9",
             "eps": "7",
             "sales": "62",
             "inst": "-0.7",
-            "short": 9.4
+            "short": 9.2
           },
           {
             "ticker": "MOH",
@@ -70830,11 +70846,11 @@
           {
             "ticker": "ODFL",
             "score": 53.6,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 92.3,
             "vars": 14.81,
             "price": 222.78,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -71476,12 +71492,12 @@
           {
             "ticker": "MOD",
             "score": 39.5,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 73.1,
             "vars": 6.02,
             "price": 250.57,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -71584,7 +71600,7 @@
             "vars": 3.88,
             "price": 27.61,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -71944,7 +71960,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -72290,7 +72307,7 @@
             "vars": 3.88,
             "price": 27.61,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -72382,7 +72399,7 @@
             "vars": 1.95,
             "price": 185.54,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -72504,15 +72521,15 @@
           {
             "ticker": "AMPX",
             "score": 51.9,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 96.2,
             "vars": 7.71,
             "price": 21.73,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "ENVX",
@@ -72662,7 +72679,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 7.18,
-            "price": 20.54,
+            "price": 20.49,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -74151,11 +74168,11 @@
           {
             "ticker": "ODFL",
             "score": 53.0,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 92.3,
             "vars": 13.74,
             "price": 219.98,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -74180,7 +74197,7 @@
             "vars": 4.26,
             "price": 27.58,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -74632,7 +74649,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -74666,7 +74684,7 @@
             "vars": 4.26,
             "price": 27.58,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -74758,7 +74776,7 @@
             "vars": 2.14,
             "price": 189.49,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -74993,15 +75011,15 @@
           {
             "ticker": "AMPX",
             "score": 53.8,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 100.0,
             "vars": 7.54,
             "price": 22.69,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "ENVX",
@@ -75813,11 +75831,11 @@
           {
             "ticker": "ODFL",
             "score": 57.6,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 100.0,
             "vars": 15.2,
             "price": 224.42,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -75837,19 +75855,6 @@
             "short": 5.6
           },
           {
-            "ticker": "FDX",
-            "score": 56.9,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 13.85,
-            "price": 394.59,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "CHRW",
             "score": 51.6,
             "demand": 50.0,
@@ -75861,6 +75866,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "FDX",
+            "score": 56.9,
+            "demand": 39.7,
+            "rs": 100.0,
+            "vars": 13.85,
+            "price": 317.96,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -76743,7 +76761,7 @@
             "vars": 5.81,
             "price": 27.92,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -77054,7 +77072,7 @@
             "vars": 5.81,
             "price": 27.92,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -77146,7 +77164,7 @@
             "vars": 2.22,
             "price": 183.32,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -77543,7 +77561,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -77644,7 +77663,7 @@
             "demand": 50.0,
             "rs": 76.9,
             "vars": -5.4,
-            "price": 41.0,
+            "price": 40.7,
             "float": null,
             "eps": null,
             "sales": null,
@@ -77833,7 +77852,7 @@
             "demand": 79.6,
             "rs": 92.3,
             "vars": 3.11,
-            "price": 31.83,
+            "price": 31.11,
             "float": "45.7",
             "eps": "24",
             "sales": "10",
@@ -78760,11 +78779,11 @@
           {
             "ticker": "ODFL",
             "score": 56.6,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 100.0,
             "vars": 13.11,
             "price": 223.38,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -78784,19 +78803,6 @@
             "short": 5.6
           },
           {
-            "ticker": "FDX",
-            "score": 55.9,
-            "demand": 50.0,
-            "rs": 100.0,
-            "vars": 11.9,
-            "price": 393.76,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          },
-          {
             "ticker": "UPS",
             "score": 47.9,
             "demand": 50.0,
@@ -78808,6 +78814,19 @@
             "sales": null,
             "inst": null,
             "short": null
+          },
+          {
+            "ticker": "FDX",
+            "score": 55.9,
+            "demand": 39.7,
+            "rs": 100.0,
+            "vars": 11.9,
+            "price": 317.29,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -79718,7 +79737,7 @@
             "vars": 4.98,
             "price": 28.1,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -80176,7 +80195,7 @@
             "vars": -0.85,
             "price": 4.98,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -80244,7 +80263,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "UAMY",
@@ -80295,7 +80315,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -80356,7 +80377,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 4.42,
-            "price": 81.25,
+            "price": 81.17,
             "float": null,
             "eps": null,
             "sales": null,
@@ -80396,7 +80417,7 @@
             "demand": 50.0,
             "rs": 84.6,
             "vars": -6.05,
-            "price": 41.64,
+            "price": 41.34,
             "float": null,
             "eps": null,
             "sales": null,
@@ -80511,7 +80532,7 @@
             "vars": 4.98,
             "price": 28.1,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -80603,7 +80624,7 @@
             "vars": 1.15,
             "price": 174.53,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -80745,7 +80766,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -81544,15 +81566,15 @@
           {
             "ticker": "FDX",
             "score": 52.1,
-            "demand": 50.0,
+            "demand": 39.7,
             "rs": 92.3,
             "vars": 11.88,
-            "price": 392.38,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "price": 316.18,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -82046,7 +82068,7 @@
             "vars": 3.13,
             "price": 26.74,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -83056,7 +83078,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -83104,7 +83127,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 3.61,
-            "price": 81.71,
+            "price": 81.63,
             "float": null,
             "eps": null,
             "sales": null,
@@ -83157,7 +83180,7 @@
             "demand": 50.0,
             "rs": 88.5,
             "vars": -5.9,
-            "price": 41.73,
+            "price": 41.43,
             "float": null,
             "eps": null,
             "sales": null,
@@ -83199,7 +83222,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -85030,7 +85054,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -85064,7 +85089,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 3.75,
-            "price": 79.38,
+            "price": 79.3,
             "float": null,
             "eps": null,
             "sales": null,
@@ -85118,7 +85143,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": -3.94,
-            "price": 41.98,
+            "price": 41.68,
             "float": null,
             "eps": null,
             "sales": null,
@@ -85249,8 +85274,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "NOK",
@@ -85323,7 +85347,7 @@
             "vars": 4.37,
             "price": 26.09,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -85825,7 +85849,7 @@
             "vars": -1.38,
             "price": 14.24,
             "float": "33.9",
-            "eps": "83",
+            "eps": "82",
             "sales": "-1",
             "inst": "-3.0",
             "short": 27.5
@@ -87488,7 +87512,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -87536,7 +87561,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.24,
-            "price": 79.69,
+            "price": 79.61,
             "float": null,
             "eps": null,
             "sales": null,
@@ -87563,7 +87588,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": -3.38,
-            "price": 42.0,
+            "price": 41.7,
             "float": null,
             "eps": null,
             "sales": null,
@@ -88136,7 +88161,7 @@
             "vars": 4.33,
             "price": 26.5,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -88265,7 +88290,7 @@
             "vars": 4.33,
             "price": 26.5,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -88357,7 +88382,7 @@
             "vars": 1.31,
             "price": 168.35,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -89478,7 +89503,7 @@
             "demand": 60.5,
             "rs": 96.2,
             "vars": 11.96,
-            "price": 51.28,
+            "price": 51.03,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -90023,7 +90048,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -90071,7 +90097,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.46,
-            "price": 77.1,
+            "price": 77.02,
             "float": null,
             "eps": null,
             "sales": null,
@@ -90392,8 +90418,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -90565,7 +90590,7 @@
             "vars": 4.44,
             "price": 25.72,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -90657,7 +90682,7 @@
             "vars": 1.21,
             "price": 159.52,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -90812,7 +90837,7 @@
             "vars": 4.44,
             "price": 25.72,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -92354,7 +92379,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 12.37,
-            "price": 50.89,
+            "price": 50.65,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -93020,8 +93045,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -93365,7 +93389,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -93412,7 +93437,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.17,
-            "price": 74.55,
+            "price": 74.47,
             "float": null,
             "eps": null,
             "sales": null,
@@ -93593,7 +93618,7 @@
             "vars": 4.53,
             "price": 24.38,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -93672,7 +93697,7 @@
             "vars": 0.1,
             "price": 134.36,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -93786,7 +93811,7 @@
             "vars": 4.53,
             "price": 24.38,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -93964,12 +93989,12 @@
           {
             "ticker": "MOD",
             "score": 55.3,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 10.54,
             "price": 256.99,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -95314,8 +95339,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -95832,7 +95856,7 @@
             "vars": 4.17,
             "price": 23.02,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -95898,7 +95922,7 @@
             "vars": -0.87,
             "price": 119.59,
             "float": "165.3",
-            "eps": "51",
+            "eps": "60",
             "sales": "201",
             "inst": "-1.6",
             "short": 6.8
@@ -96104,7 +96128,7 @@
             "demand": 50.0,
             "rs": 73.1,
             "vars": 8.42,
-            "price": 218.75,
+            "price": 218.21,
             "float": null,
             "eps": null,
             "sales": null,
@@ -96426,7 +96450,7 @@
             "demand": 38.2,
             "rs": 96.2,
             "vars": 6.84,
-            "price": 907.8,
+            "price": 903.82,
             "float": "293.3",
             "eps": "16",
             "sales": "9",
@@ -96544,7 +96568,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -96630,7 +96655,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 3.38,
-            "price": 71.21,
+            "price": 71.14,
             "float": null,
             "eps": null,
             "sales": null,
@@ -96683,7 +96708,7 @@
             "vars": 4.17,
             "price": 23.02,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -96863,7 +96888,7 @@
             "demand": 46.1,
             "rs": 100.0,
             "vars": 6.86,
-            "price": 19.48,
+            "price": 19.43,
             "float": "176.6",
             "eps": "16",
             "sales": "12",
@@ -97878,8 +97903,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -98204,7 +98228,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -98290,7 +98315,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 2.82,
-            "price": 71.93,
+            "price": 71.86,
             "float": null,
             "eps": null,
             "sales": null,
@@ -98341,7 +98366,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 12.84,
-            "price": 49.66,
+            "price": 49.42,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -98380,7 +98405,7 @@
             "demand": 38.2,
             "rs": 96.2,
             "vars": 6.54,
-            "price": 903.72,
+            "price": 899.75,
             "float": "293.3",
             "eps": "16",
             "sales": "9",
@@ -98581,11 +98606,11 @@
           {
             "ticker": "ODFL",
             "score": 54.3,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 92.3,
             "vars": 16.25,
             "price": 209.5,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -98594,15 +98619,15 @@
           {
             "ticker": "FDX",
             "score": 54.3,
-            "demand": 50.0,
+            "demand": 39.7,
             "rs": 92.3,
             "vars": 16.28,
-            "price": 377.0,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
+            "price": 303.79,
+            "float": "218.1",
+            "eps": "10",
+            "sales": "8",
+            "inst": "+0.5",
+            "short": 1.8
           }
         ],
         "l1": "Logistics",
@@ -98816,7 +98841,7 @@
             "vars": 3.33,
             "price": 22.85,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -99450,12 +99475,12 @@
           {
             "ticker": "MOD",
             "score": 55.1,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 10.21,
             "price": 241.52,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -100238,8 +100263,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "KEYS",
@@ -100429,7 +100453,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "WLTH",
@@ -100515,7 +100540,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 8.93,
-            "price": 94.2,
+            "price": 93.45,
             "float": null,
             "eps": null,
             "sales": null,
@@ -100528,7 +100553,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 4.07,
-            "price": 72.31,
+            "price": 72.24,
             "float": null,
             "eps": null,
             "sales": null,
@@ -100974,11 +100999,11 @@
           {
             "ticker": "ODFL",
             "score": 54.2,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 92.3,
             "vars": 16.14,
             "price": 207.53,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -101014,7 +101039,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 13.04,
-            "price": 48.94,
+            "price": 48.71,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -101053,7 +101078,7 @@
             "demand": 38.2,
             "rs": 100.0,
             "vars": 8.29,
-            "price": 905.75,
+            "price": 901.78,
             "float": "293.3",
             "eps": "16",
             "sales": "9",
@@ -101234,7 +101259,7 @@
             "vars": 2.85,
             "price": 22.12,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -102084,12 +102109,12 @@
           {
             "ticker": "MOD",
             "score": 49.1,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 88.5,
             "vars": 9.67,
             "price": 234.84,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -102297,7 +102322,7 @@
             "demand": 50.0,
             "rs": 61.5,
             "vars": 10.01,
-            "price": 215.59,
+            "price": 215.06,
             "float": null,
             "eps": null,
             "sales": null,
@@ -102492,7 +102517,7 @@
             "demand": 50.0,
             "rs": 46.2,
             "vars": 16.62,
-            "price": 74.22,
+            "price": 73.45,
             "float": null,
             "eps": null,
             "sales": null,
@@ -103016,7 +103041,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 13.09,
-            "price": 47.66,
+            "price": 47.43,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -103244,7 +103269,7 @@
             "demand": 50.0,
             "rs": 88.5,
             "vars": 19.89,
-            "price": 80.26,
+            "price": 79.43,
             "float": null,
             "eps": null,
             "sales": null,
@@ -103321,7 +103346,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 16.15,
-            "price": 85.33,
+            "price": 85.13,
             "float": null,
             "eps": null,
             "sales": null,
@@ -103497,7 +103522,7 @@
             "vars": 11.91,
             "price": 14.35,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -104682,7 +104707,7 @@
             "vars": 0.86,
             "price": 20.63,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -104960,11 +104985,11 @@
           {
             "ticker": "GH",
             "score": 48.0,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 92.3,
             "vars": 3.67,
             "price": 93.3,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -105680,7 +105705,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 11.94,
-            "price": 47.49,
+            "price": 47.26,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -106026,7 +106051,7 @@
             "demand": 50.0,
             "rs": 80.8,
             "vars": 17.99,
-            "price": 78.62,
+            "price": 77.81,
             "float": null,
             "eps": null,
             "sales": null,
@@ -106230,11 +106255,11 @@
           {
             "ticker": "ODFL",
             "score": 53.8,
-            "demand": 51.9,
+            "demand": 51.8,
             "rs": 92.3,
             "vars": 15.29,
             "price": 202.18,
-            "float": "183.4",
+            "float": "183.7",
             "eps": "11",
             "sales": "-3",
             "inst": "-3.0",
@@ -106362,7 +106387,7 @@
             "vars": 0.19,
             "price": 20.27,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -106528,7 +106553,7 @@
             "vars": 10.89,
             "price": 14.18,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -106668,7 +106693,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 14.8,
-            "price": 55.75,
+            "price": 55.47,
             "float": null,
             "eps": null,
             "sales": null,
@@ -106750,8 +106775,7 @@
             "eps": "18",
             "sales": null,
             "inst": "+7.1",
-            "short": 16.5,
-            "ticker_color": "green"
+            "short": 16.5
           },
           {
             "ticker": "TSHA",
@@ -107581,11 +107605,11 @@
           {
             "ticker": "GH",
             "score": 31.6,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 61.5,
             "vars": 1.76,
             "price": 89.66,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -107654,8 +107678,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "RLMD",
@@ -107849,11 +107872,11 @@
           {
             "ticker": "CYTK",
             "score": 42.1,
-            "demand": 79.7,
+            "demand": 79.8,
             "rs": 80.8,
             "vars": 3.47,
             "price": 64.94,
-            "float": "119.2",
+            "float": "119.1",
             "eps": "2",
             "sales": "1126",
             "inst": "+5.0",
@@ -108487,7 +108510,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 16.93,
-            "price": 85.46,
+            "price": 85.26,
             "float": null,
             "eps": null,
             "sales": null,
@@ -108537,7 +108560,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 11.73,
-            "price": 46.22,
+            "price": 46.0,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -108625,7 +108648,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 11.87,
-            "price": 64.63,
+            "price": 64.09,
             "float": null,
             "eps": null,
             "sales": null,
@@ -108871,7 +108894,7 @@
             "demand": 50.0,
             "rs": 88.5,
             "vars": 18.79,
-            "price": 79.6,
+            "price": 78.78,
             "float": null,
             "eps": null,
             "sales": null,
@@ -108971,11 +108994,11 @@
           {
             "ticker": "GH",
             "score": 51.5,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 100.0,
             "vars": 2.91,
             "price": 93.83,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -109070,8 +109093,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -109145,8 +109167,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -109566,7 +109587,7 @@
             "vars": 12.14,
             "price": 15.37,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -110901,7 +110922,7 @@
             "demand": 60.5,
             "rs": 96.2,
             "vars": 12.32,
-            "price": 44.39,
+            "price": 44.18,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -111049,11 +111070,11 @@
           {
             "ticker": "GH",
             "score": 46.1,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 88.5,
             "vars": 3.69,
             "price": 91.15,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -111148,8 +111169,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           }
         ],
         "l1": "Biotech",
@@ -111413,7 +111433,7 @@
             "demand": 50.0,
             "rs": 80.8,
             "vars": 18.28,
-            "price": 76.71,
+            "price": 75.92,
             "float": null,
             "eps": null,
             "sales": null,
@@ -111633,8 +111653,7 @@
             "eps": "165",
             "sales": "120",
             "inst": "-7.3",
-            "short": 19.7,
-            "ticker_color": "green"
+            "short": 19.7
           },
           {
             "ticker": "AXGN",
@@ -112123,7 +112142,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "XENE",
@@ -113103,7 +113123,7 @@
             "vars": 13.36,
             "price": 16.52,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -113402,7 +113422,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 19.1,
-            "price": 80.56,
+            "price": 79.73,
             "float": null,
             "eps": null,
             "sales": null,
@@ -113528,7 +113548,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 12.41,
-            "price": 64.07,
+            "price": 63.53,
             "float": null,
             "eps": null,
             "sales": null,
@@ -113565,7 +113585,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 17.74,
-            "price": 83.71,
+            "price": 83.52,
             "float": null,
             "eps": null,
             "sales": null,
@@ -113639,7 +113659,7 @@
             "demand": 60.5,
             "rs": 96.2,
             "vars": 11.66,
-            "price": 43.98,
+            "price": 43.77,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -113876,11 +113896,11 @@
           {
             "ticker": "GH",
             "score": 49.8,
-            "demand": 68.6,
+            "demand": 68.7,
             "rs": 96.2,
             "vars": 3.53,
             "price": 92.37,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -113962,8 +113982,7 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null,
-            "ticker_color": "green"
+            "short": null
           },
           {
             "ticker": "TGTX",
@@ -114023,7 +114042,7 @@
             "vars": 12.27,
             "price": 21.23,
             "float": "112.8",
-            "eps": "-122",
+            "eps": "-117",
             "sales": "-3",
             "inst": "+1.2",
             "short": 19.6
@@ -114368,7 +114387,7 @@
             "demand": 79.6,
             "rs": 96.2,
             "vars": 5.7,
-            "price": 29.46,
+            "price": 28.79,
             "float": "45.7",
             "eps": "24",
             "sales": "10",
@@ -115005,7 +115024,7 @@
             "vars": 2.69,
             "price": 163.62,
             "float": "301.1",
-            "eps": "72",
+            "eps": "74",
             "sales": "87",
             "inst": "-2.2",
             "short": 7.1
@@ -115494,7 +115513,7 @@
             "vars": 16.2,
             "price": 17.84,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -115766,7 +115785,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 21.3,
-            "price": 82.38,
+            "price": 81.53,
             "float": null,
             "eps": null,
             "sales": null,
@@ -115905,7 +115924,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 15.49,
-            "price": 63.76,
+            "price": 63.23,
             "float": null,
             "eps": null,
             "sales": null,
@@ -116030,7 +116049,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 20.57,
-            "price": 82.95,
+            "price": 82.76,
             "float": null,
             "eps": null,
             "sales": null,
@@ -116375,7 +116394,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 16.19,
-            "price": 54.08,
+            "price": 53.81,
             "float": null,
             "eps": null,
             "sales": null,
@@ -116570,7 +116589,7 @@
             "demand": 79.6,
             "rs": 100.0,
             "vars": 8.64,
-            "price": 29.73,
+            "price": 29.05,
             "float": "45.7",
             "eps": "24",
             "sales": "10",
@@ -116823,7 +116842,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 20.19,
-            "price": 11.05,
+            "price": 10.95,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -117344,15 +117363,15 @@
           {
             "ticker": "U",
             "score": 51.1,
-            "demand": 56.0,
+            "demand": 56.3,
             "rs": 100.0,
             "vars": 2.2,
             "price": 20.54,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           },
           {
             "ticker": "ZD",
@@ -118043,7 +118062,7 @@
             "vars": 14.45,
             "price": 18.45,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -118380,7 +118399,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 20.24,
-            "price": 80.45,
+            "price": 79.62,
             "float": null,
             "eps": null,
             "sales": null,
@@ -118788,7 +118807,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 16.37,
-            "price": 55.03,
+            "price": 54.75,
             "float": null,
             "eps": null,
             "sales": null,
@@ -118852,7 +118871,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 15.39,
-            "price": 63.92,
+            "price": 63.39,
             "float": null,
             "eps": null,
             "sales": null,
@@ -118977,7 +118996,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 20.22,
-            "price": 81.99,
+            "price": 81.8,
             "float": null,
             "eps": null,
             "sales": null,
@@ -119054,7 +119073,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 20.83,
-            "price": 11.36,
+            "price": 11.26,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -119337,7 +119356,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 20.83,
-            "price": 11.36,
+            "price": 11.26,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -119426,7 +119445,7 @@
             "demand": 79.6,
             "rs": 100.0,
             "vars": 6.85,
-            "price": 28.42,
+            "price": 27.77,
             "float": "45.7",
             "eps": "24",
             "sales": "10",
@@ -120412,7 +120431,7 @@
             "vars": 11.44,
             "price": 17.92,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -120773,7 +120792,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 18.89,
-            "price": 77.72,
+            "price": 76.92,
             "float": null,
             "eps": null,
             "sales": null,
@@ -120876,7 +120895,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 19.17,
-            "price": 11.26,
+            "price": 11.16,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -121028,7 +121047,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 19.0,
-            "price": 82.73,
+            "price": 82.54,
             "float": null,
             "eps": null,
             "sales": null,
@@ -121129,7 +121148,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 13.46,
-            "price": 62.96,
+            "price": 62.43,
             "float": null,
             "eps": null,
             "sales": null,
@@ -121242,7 +121261,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 14.95,
-            "price": 54.06,
+            "price": 53.79,
             "float": null,
             "eps": null,
             "sales": null,
@@ -121641,7 +121660,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 19.17,
-            "price": 11.26,
+            "price": 11.16,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -122894,7 +122913,7 @@
             "vars": 10.76,
             "price": 17.69,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -123292,7 +123311,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 17.44,
-            "price": 77.19,
+            "price": 76.39,
             "float": null,
             "eps": null,
             "sales": null,
@@ -123615,7 +123634,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 12.64,
-            "price": 43.74,
+            "price": 43.53,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -124048,7 +124067,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 14.07,
-            "price": 53.09,
+            "price": 52.82,
             "float": null,
             "eps": null,
             "sales": null,
@@ -124213,7 +124232,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 16.89,
-            "price": 82.03,
+            "price": 81.84,
             "float": null,
             "eps": null,
             "sales": null,
@@ -124559,7 +124578,7 @@
             "demand": 39.8,
             "rs": 92.3,
             "vars": 17.65,
-            "price": 10.93,
+            "price": 10.83,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -125574,7 +125593,7 @@
             "vars": 10.8,
             "price": 16.81,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -125886,7 +125905,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 16.91,
-            "price": 76.01,
+            "price": 75.22,
             "float": null,
             "eps": null,
             "sales": null,
@@ -126040,7 +126059,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 18.6,
-            "price": 10.89,
+            "price": 10.79,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -126247,7 +126266,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 14.87,
-            "price": 54.51,
+            "price": 54.24,
             "float": null,
             "eps": null,
             "sales": null,
@@ -126543,7 +126562,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 12.49,
-            "price": 43.33,
+            "price": 43.12,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -126860,7 +126879,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 16.26,
-            "price": 80.58,
+            "price": 80.39,
             "float": null,
             "eps": null,
             "sales": null,
@@ -127190,7 +127209,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 18.6,
-            "price": 10.89,
+            "price": 10.79,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -127657,12 +127676,12 @@
           {
             "ticker": "MOD",
             "score": 55.4,
-            "demand": 66.2,
+            "demand": 66.3,
             "rs": 100.0,
             "vars": 10.84,
             "price": 228.58,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -128288,7 +128307,7 @@
             "vars": 10.01,
             "price": 15.81,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -128493,7 +128512,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 16.96,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -128721,7 +128740,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 13.21,
-            "price": 52.8,
+            "price": 52.53,
             "float": null,
             "eps": null,
             "sales": null,
@@ -129203,7 +129222,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 16.96,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -129455,15 +129474,15 @@
           {
             "ticker": "AMPX",
             "score": 49.9,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 88.5,
             "vars": 11.26,
             "price": 18.68,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -130022,7 +130041,7 @@
             "demand": 50.0,
             "rs": 80.8,
             "vars": 14.39,
-            "price": 71.47,
+            "price": 70.73,
             "float": null,
             "eps": null,
             "sales": null,
@@ -130242,7 +130261,7 @@
             "demand": 79.6,
             "rs": 84.6,
             "vars": 3.39,
-            "price": 27.85,
+            "price": 27.22,
             "float": "45.7",
             "eps": "24",
             "sales": "10",
@@ -130680,7 +130699,7 @@
             "vars": 9.73,
             "price": 16.28,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -130835,7 +130854,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.92,
-            "price": 10.91,
+            "price": 10.81,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -130874,7 +130893,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.92,
-            "price": 10.91,
+            "price": 10.81,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -130987,7 +131006,7 @@
             "demand": 60.5,
             "rs": 100.0,
             "vars": 12.09,
-            "price": 41.63,
+            "price": 41.43,
             "float": "82.5",
             "eps": "11",
             "sales": "43",
@@ -131193,7 +131212,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 15.51,
-            "price": 52.67,
+            "price": 52.41,
             "float": null,
             "eps": null,
             "sales": null,
@@ -132004,7 +132023,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 8.0,
-            "price": 205.62,
+            "price": 204.54,
             "float": null,
             "eps": null,
             "sales": null,
@@ -132192,15 +132211,15 @@
           {
             "ticker": "AMPX",
             "score": 49.5,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 88.5,
             "vars": 10.58,
             "price": 18.2,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -132260,7 +132279,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 15.66,
-            "price": 73.32,
+            "price": 72.56,
             "float": null,
             "eps": null,
             "sales": null,
@@ -133083,7 +133102,7 @@
             "vars": 8.18,
             "price": 17.14,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -133479,7 +133498,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 14.55,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -133518,7 +133537,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 14.55,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -133570,7 +133589,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 12.79,
-            "price": 50.96,
+            "price": 50.7,
             "float": null,
             "eps": null,
             "sales": null,
@@ -133924,15 +133943,15 @@
           {
             "ticker": "AMPX",
             "score": 55.2,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 100.0,
             "vars": 10.36,
             "price": 19.11,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -134724,7 +134743,7 @@
             "score": 50.1,
             "demand": 28.8,
             "rs": 92.3,
-            "vars": 7.86,
+            "vars": 7.87,
             "price": 78.09,
             "float": "3930.0",
             "eps": "12",
@@ -134814,7 +134833,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 14.94,
-            "price": 74.57,
+            "price": 73.8,
             "float": null,
             "eps": null,
             "sales": null,
@@ -134905,7 +134924,7 @@
             "demand": 49.4,
             "rs": 50.0,
             "vars": 9.01,
-            "price": 31.8,
+            "price": 31.74,
             "float": "228.0",
             "eps": "19",
             "sales": "41",
@@ -135794,7 +135813,7 @@
             "vars": 8.68,
             "price": 16.86,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -135948,7 +135967,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.05,
-            "price": 10.74,
+            "price": 10.64,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -135987,7 +136006,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.05,
-            "price": 10.74,
+            "price": 10.64,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -136203,7 +136222,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 10.87,
-            "price": 47.98,
+            "price": 47.74,
             "float": null,
             "eps": null,
             "sales": null,
@@ -136452,7 +136471,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 15.51,
-            "price": 75.2,
+            "price": 74.42,
             "float": null,
             "eps": null,
             "sales": null,
@@ -136896,15 +136915,15 @@
           {
             "ticker": "AMPX",
             "score": 53.0,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 96.2,
             "vars": 9.76,
             "price": 18.9,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -136936,7 +136955,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 13.02,
-            "price": 79.34,
+            "price": 79.16,
             "float": null,
             "eps": null,
             "sales": null,
@@ -138559,7 +138578,7 @@
             "vars": 8.04,
             "price": 17.23,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -138776,7 +138795,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 15.71,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -138815,7 +138834,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 15.71,
-            "price": 10.72,
+            "price": 10.62,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -139327,7 +139346,7 @@
             "demand": 50.0,
             "rs": 88.5,
             "vars": 13.91,
-            "price": 71.2,
+            "price": 70.46,
             "float": null,
             "eps": null,
             "sales": null,
@@ -139681,15 +139700,15 @@
           {
             "ticker": "AMPX",
             "score": 54.5,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 100.0,
             "vars": 9.1,
             "price": 19.38,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -140080,7 +140099,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -140280,7 +140300,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 9.44,
-            "price": 46.31,
+            "price": 46.08,
             "float": null,
             "eps": null,
             "sales": null,
@@ -140383,7 +140403,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 13.8,
-            "price": 80.05,
+            "price": 79.87,
             "float": null,
             "eps": null,
             "sales": null,
@@ -140433,7 +140453,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 11.5,
-            "price": 39.98,
+            "price": 39.53,
             "float": null,
             "eps": null,
             "sales": null,
@@ -140488,7 +140508,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -141070,7 +141091,7 @@
             "vars": 7.46,
             "price": 16.13,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -141223,7 +141244,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 15.57,
-            "price": 10.14,
+            "price": 10.05,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -141262,7 +141283,7 @@
             "demand": 39.8,
             "rs": 96.2,
             "vars": 15.57,
-            "price": 10.14,
+            "price": 10.05,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -141437,7 +141458,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 13.43,
-            "price": 79.04,
+            "price": 78.86,
             "float": null,
             "eps": null,
             "sales": null,
@@ -142013,7 +142034,7 @@
             "demand": 50.0,
             "rs": 92.3,
             "vars": 13.76,
-            "price": 71.08,
+            "price": 70.34,
             "float": null,
             "eps": null,
             "sales": null,
@@ -142124,15 +142145,15 @@
           {
             "ticker": "AMPX",
             "score": 54.0,
-            "demand": 88.3,
+            "demand": 88.5,
             "rs": 100.0,
             "vars": 7.95,
             "price": 18.69,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           },
           {
             "ticker": "NRGV",
@@ -142220,7 +142241,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -142282,7 +142304,8 @@
             "eps": "63",
             "sales": "1516",
             "inst": "+81.1",
-            "short": 20.5
+            "short": 20.5,
+            "ticker_color": "green"
           },
           {
             "ticker": "MSTR",
@@ -143573,7 +143596,7 @@
             "vars": 8.13,
             "price": 16.83,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -143727,7 +143750,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.62,
-            "price": 10.29,
+            "price": 10.2,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -143766,7 +143789,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 16.62,
-            "price": 10.29,
+            "price": 10.2,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -144264,7 +144287,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 13.54,
-            "price": 72.3,
+            "price": 71.55,
             "float": null,
             "eps": null,
             "sales": null,
@@ -145233,7 +145256,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 13.64,
-            "price": 79.21,
+            "price": 79.03,
             "float": null,
             "eps": null,
             "sales": null,
@@ -145389,7 +145412,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "GRND",
@@ -146077,7 +146101,7 @@
             "vars": 6.87,
             "price": 17.45,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -146231,7 +146255,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 14.42,
-            "price": 9.85,
+            "price": 9.76,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -146435,7 +146459,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 13.54,
-            "price": 74.33,
+            "price": 73.56,
             "float": null,
             "eps": null,
             "sales": null,
@@ -146974,7 +146998,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 13.3,
-            "price": 79.75,
+            "price": 79.57,
             "float": null,
             "eps": null,
             "sales": null,
@@ -147566,7 +147590,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -148042,7 +148067,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 14.42,
-            "price": 9.85,
+            "price": 9.76,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -148648,7 +148673,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 13.47,
-            "price": 9.82,
+            "price": 9.73,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -148688,7 +148713,7 @@
             "vars": 5.33,
             "price": 16.58,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -149298,7 +149323,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 13.47,
-            "price": 9.82,
+            "price": 9.73,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -149840,7 +149865,7 @@
             "vars": 10.19,
             "price": 30.99,
             "float": "78.5",
-            "eps": "-26",
+            "eps": "-22",
             "sales": null,
             "inst": "-4.1",
             "short": 13.2
@@ -150631,7 +150656,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 10.39,
-            "price": 67.37,
+            "price": 66.67,
             "float": null,
             "eps": null,
             "sales": null,
@@ -150683,7 +150708,7 @@
             "demand": 49.4,
             "rs": 53.8,
             "vars": 7.39,
-            "price": 32.59,
+            "price": 32.53,
             "float": "228.0",
             "eps": "19",
             "sales": "41",
@@ -151327,8 +151352,7 @@
             "eps": "18",
             "sales": null,
             "inst": "+7.1",
-            "short": 16.5,
-            "ticker_color": "green"
+            "short": 16.5
           },
           {
             "ticker": "SLDB",
@@ -151363,7 +151387,7 @@
             "vars": 1.59,
             "price": 14.41,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -153441,7 +153465,7 @@
             "vars": 0.82,
             "price": 14.17,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -153720,7 +153744,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 11.95,
-            "price": 9.27,
+            "price": 9.19,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -154392,7 +154416,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 11.95,
-            "price": 9.27,
+            "price": 9.19,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -154484,7 +154508,7 @@
             "demand": 50.0,
             "rs": 96.2,
             "vars": 10.11,
-            "price": 66.82,
+            "price": 66.13,
             "float": null,
             "eps": null,
             "sales": null,
@@ -154665,7 +154689,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "ALM",
@@ -155889,7 +155914,7 @@
             "vars": 0.08,
             "price": 14.37,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -156299,7 +156324,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 8.8,
-            "price": 671.77,
+            "price": 667.4,
             "float": null,
             "eps": null,
             "sales": null,
@@ -156452,7 +156477,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 5.48,
-            "price": 20.68,
+            "price": 20.46,
             "float": null,
             "eps": null,
             "sales": null,
@@ -156685,7 +156710,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 11.29,
-            "price": 8.97,
+            "price": 8.89,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",
@@ -156760,7 +156785,7 @@
             "demand": 50.0,
             "rs": 100.0,
             "vars": 6.23,
-            "price": 46.83,
+            "price": 46.59,
             "float": null,
             "eps": null,
             "sales": null,
@@ -157216,7 +157241,7 @@
             "demand": 39.8,
             "rs": 100.0,
             "vars": 11.29,
-            "price": 8.97,
+            "price": 8.89,
             "float": "364.2",
             "eps": "29",
             "sales": "-13",

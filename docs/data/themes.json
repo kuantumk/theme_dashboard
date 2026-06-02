@@ -448,7 +448,7 @@
     {
       "rank": 8,
       "name": "Logistics / Freight Brokerage & Trucking",
-      "score": 47.5,
+      "score": 47.6,
       "avg_rs": 92.9,
       "tickers": [
         {
@@ -500,7 +500,7 @@
           "vars": 2.91,
           "rs": 84.6,
           "price": 228.53,
-          "float": "183.4",
+          "float": "183.7",
           "eps": "11",
           "sales": "-3",
           "inst": "-3.0",
@@ -516,6 +516,17 @@
           "sales": "1",
           "inst": "-3.2",
           "short": 5.6
+        },
+        {
+          "ticker": "FDX",
+          "vars": 4.67,
+          "rs": 92.3,
+          "price": 338.49,
+          "float": "218.1",
+          "eps": "10",
+          "sales": "8",
+          "inst": "+0.5",
+          "short": 1.8
         }
       ],
       "l1": "Logistics",
@@ -548,7 +559,7 @@
           "eps": "2",
           "sales": "-1",
           "inst": "-3.9",
-          "short": 20.1
+          "short": 20.2
         },
         {
           "ticker": "TEM",
@@ -698,7 +709,7 @@
           "vars": 4.47,
           "rs": 100.0,
           "price": 277.49,
-          "float": "323.2",
+          "float": "323.3",
           "eps": "18",
           "sales": "32",
           "inst": "+0.4",
@@ -742,11 +753,11 @@
           "vars": -5.15,
           "rs": 80.8,
           "price": 1.66,
-          "float": "26.4",
+          "float": "25.9",
           "eps": "N/A",
           "sales": "-12",
           "inst": "-0.3",
-          "short": 14.4,
+          "short": 14.6,
           "ticker_color": "green"
         },
         {
@@ -882,17 +893,6 @@
           "short": 18.5
         },
         {
-          "ticker": "FIG",
-          "vars": -12.92,
-          "rs": 100.0,
-          "price": 27.12,
-          "float": "127.1",
-          "eps": "-39",
-          "sales": "46",
-          "inst": "+20.0",
-          "short": 55.2
-        },
-        {
           "ticker": "VYX",
           "vars": -11.61,
           "rs": 65.4,
@@ -913,6 +913,17 @@
           "sales": "10",
           "inst": "-1.9",
           "short": 14.9
+        },
+        {
+          "ticker": "FIG",
+          "vars": -12.92,
+          "rs": 100.0,
+          "price": 27.12,
+          "float": "192.5",
+          "eps": "-39",
+          "sales": "46",
+          "inst": "+20.0",
+          "short": 36.4
         },
         {
           "ticker": "RNG",
@@ -1104,7 +1115,7 @@
         },
         {
           "ticker": "BWA",
-          "vars": 6.71,
+          "vars": 6.77,
           "rs": 88.5,
           "price": 71.06,
           "float": "203.6",
@@ -1249,7 +1260,7 @@
           "ticker": "GSIT",
           "vars": -0.29,
           "rs": 84.6,
-          "price": 10.9,
+          "price": 10.91,
           "float": "29.5",
           "eps": "N/A",
           "sales": "7",
@@ -1340,6 +1351,50 @@
     },
     {
       "rank": 19,
+      "name": "Healthcare / Staffing",
+      "score": 45.1,
+      "avg_rs": 91.0,
+      "tickers": [
+        {
+          "ticker": "RHI",
+          "vars": -2.89,
+          "rs": 100.0,
+          "price": 30.99,
+          "float": "98.4",
+          "eps": "-1",
+          "sales": "-4",
+          "inst": "+15.9",
+          "short": 24.8
+        },
+        {
+          "ticker": "MAN",
+          "vars": -4.51,
+          "rs": 100.0,
+          "price": 32.93,
+          "float": "45.7",
+          "eps": "24",
+          "sales": "10",
+          "inst": "-3.0",
+          "short": 11.8
+        },
+        {
+          "ticker": "AMN",
+          "vars": 4.88,
+          "rs": 73.1,
+          "price": 29.34,
+          "float": "38.4",
+          "eps": "96",
+          "sales": "100",
+          "inst": "+13.5",
+          "short": 6.7
+        }
+      ],
+      "l1": "Healthcare",
+      "l2": "Staffing",
+      "l3": null
+    },
+    {
+      "rank": 20,
       "name": "Software & Internet / BPO & IT Services",
       "score": 45.1,
       "avg_rs": 86.3,
@@ -1364,7 +1419,7 @@
           "eps": "2",
           "sales": "-1",
           "inst": "-3.9",
-          "short": 20.1
+          "short": 20.2
         },
         {
           "ticker": "RXT",
@@ -1460,7 +1515,7 @@
       "l3": null
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "Biotech / Specialty Pharma",
       "score": 45.0,
       "avg_rs": 90.4,
@@ -1493,7 +1548,7 @@
       "l3": null
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "Clean Energy / Solar / Thin-Film",
       "score": 45.0,
       "avg_rs": 94.2,
@@ -1526,7 +1581,7 @@
       "l3": "Thin-Film"
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "Clean Energy / Renewable Fuels",
       "score": 44.6,
       "avg_rs": 82.7,
@@ -1559,7 +1614,7 @@
       "l3": null
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "Fintech & Crypto / Crypto / Mining",
       "score": 44.5,
       "avg_rs": 91.0,
@@ -1670,7 +1725,7 @@
       "l3": "Mining"
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "Industrials / Additive Manufacturing",
       "score": 44.5,
       "avg_rs": 89.7,
@@ -1714,7 +1769,7 @@
       "l3": null
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "Travel & Leisure / Theme Parks",
       "score": 44.5,
       "avg_rs": 92.3,
@@ -1747,7 +1802,7 @@
       "l3": null
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "Software & Internet / Data & Analytics",
       "score": 44.4,
       "avg_rs": 93.4,
@@ -1868,7 +1923,7 @@
       "l3": null
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "AI / Data Center / Chips & Processors",
       "score": 44.4,
       "avg_rs": 66.8,
@@ -1879,7 +1934,7 @@
           "rs": 100.0,
           "price": 59.71,
           "float": "48.5",
-          "eps": "15",
+          "eps": "16",
           "sales": "-6",
           "inst": "+3.1",
           "short": 19.6
@@ -1990,50 +2045,6 @@
       "l3": "Chips & Processors"
     },
     {
-      "rank": 28,
-      "name": "Healthcare / Staffing",
-      "score": 44.4,
-      "avg_rs": 89.7,
-      "tickers": [
-        {
-          "ticker": "RHI",
-          "vars": -2.89,
-          "rs": 100.0,
-          "price": 30.99,
-          "float": "98.4",
-          "eps": "-1",
-          "sales": "-4",
-          "inst": "+15.9",
-          "short": 24.8
-        },
-        {
-          "ticker": "MAN",
-          "vars": -4.96,
-          "rs": 96.2,
-          "price": 32.93,
-          "float": "45.7",
-          "eps": "24",
-          "sales": "10",
-          "inst": "-3.0",
-          "short": 11.8
-        },
-        {
-          "ticker": "AMN",
-          "vars": 4.88,
-          "rs": 73.1,
-          "price": 29.34,
-          "float": "38.4",
-          "eps": "96",
-          "sales": "100",
-          "inst": "+13.5",
-          "short": 6.7
-        }
-      ],
-      "l1": "Healthcare",
-      "l2": "Staffing",
-      "l3": null
-    },
-    {
       "rank": 29,
       "name": "AI / Data Center / Components",
       "score": 44.1,
@@ -2045,7 +2056,7 @@
           "rs": 100.0,
           "price": 59.71,
           "float": "48.5",
-          "eps": "15",
+          "eps": "16",
           "sales": "-6",
           "inst": "+3.1",
           "short": 19.6
@@ -2123,7 +2134,7 @@
           "rs": 96.2,
           "price": 226.1,
           "float": "165.3",
-          "eps": "51",
+          "eps": "60",
           "sales": "201",
           "inst": "-1.6",
           "short": 6.8
@@ -2261,7 +2272,7 @@
         "id": "Logistics / Freight Brokerage & Trucking",
         "kind": "leaf",
         "parent": "Logistics",
-        "ticker_count": 6
+        "ticker_count": 7
       },
       {
         "id": "AI / Software & Analytics",
@@ -2340,6 +2351,16 @@
         "ticker_count": 9
       },
       {
+        "id": "Healthcare",
+        "kind": "l1"
+      },
+      {
+        "id": "Healthcare / Staffing",
+        "kind": "leaf",
+        "parent": "Healthcare",
+        "ticker_count": 3
+      },
+      {
         "id": "Software & Internet / BPO & IT Services",
         "kind": "leaf",
         "parent": "Software & Internet",
@@ -2404,16 +2425,6 @@
         "kind": "leaf",
         "parent": "AI",
         "ticker_count": 10
-      },
-      {
-        "id": "Healthcare",
-        "kind": "l1"
-      },
-      {
-        "id": "Healthcare / Staffing",
-        "kind": "leaf",
-        "parent": "Healthcare",
-        "ticker_count": 3
       },
       {
         "id": "AI / Data Center / Components",
@@ -2524,6 +2535,11 @@
         "kind": "is_a"
       },
       {
+        "source": "Healthcare / Staffing",
+        "target": "Healthcare",
+        "kind": "is_a"
+      },
+      {
         "source": "Software & Internet / BPO & IT Services",
         "target": "Software & Internet",
         "kind": "is_a"
@@ -2566,11 +2582,6 @@
       {
         "source": "AI / Data Center / Chips & Processors",
         "target": "AI",
-        "kind": "is_a"
-      },
-      {
-        "source": "Healthcare / Staffing",
-        "target": "Healthcare",
         "kind": "is_a"
       },
       {

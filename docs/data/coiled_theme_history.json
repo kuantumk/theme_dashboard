@@ -42,11 +42,11 @@
           {
             "ticker": "AMLX",
             "score": 100.0,
-            "flags": "tight; NR20; volDry=0.80; 50SMA=-7.7%; 252H=0.76x; prior=4.0x; blind=1m/RS/VARS",
+            "flags": "tight; NR20; volDry=0.81; 50SMA=-7.7%; 252H=0.76x; prior=4.0x; blind=1m/RS/VARS",
             "rs": 23.1,
             "vars": -2.41,
             "price": 14.07,
-            "vol_dry": 0.8,
+            "vol_dry": 0.81,
             "dist50": -7.7,
             "high252": 0.76,
             "range10": 13.7,
@@ -97,16 +97,16 @@
         "theme_score": 100.0,
         "avg_setup_score": 92.0,
         "coiled_count": 1,
-        "other_screened_count": 5,
+        "other_screened_count": 6,
         "tickers": [
           {
             "ticker": "SA",
             "score": 92.0,
-            "flags": "inside; tight; volDry=0.87; 50SMA=+11.2%; 252H=0.83x; prior=3.3x; blind=VARS",
+            "flags": "inside; tight; volDry=0.89; 50SMA=+11.2%; 252H=0.83x; prior=3.3x; blind=VARS",
             "rs": 84.6,
             "vars": -6.12,
             "price": 33.29,
-            "vol_dry": 0.87,
+            "vol_dry": 0.89,
             "dist50": 11.2,
             "high252": 0.83,
             "range10": 22.0,
@@ -122,36 +122,6 @@
         "l3": null
       },
       {
-        "name": "Metals & Mining / Lithium / Hard Rock",
-        "theme_score": 100.0,
-        "avg_setup_score": 100.0,
-        "coiled_count": 1,
-        "other_screened_count": 0,
-        "tickers": [
-          {
-            "ticker": "SGML",
-            "score": 100.0,
-            "flags": "inside; tight; NR7; volDry=0.93; 50SMA=-3.9%; 252H=0.67x; prior=5.8x; blind=1m/RS/VARS",
-            "rs": 30.8,
-            "vars": -6.96,
-            "price": 16.36,
-            "vol_dry": 0.93,
-            "dist50": -3.9,
-            "high252": 0.67,
-            "range10": 26.0,
-            "float": "106.8",
-            "eps": "391",
-            "sales": "-11",
-            "inst": "-31.8",
-            "short": 2.6,
-            "ticker_color": "green"
-          }
-        ],
-        "l1": "Metals & Mining",
-        "l2": "Lithium",
-        "l3": "Hard Rock"
-      },
-      {
         "name": "Nuclear / Uranium Mining",
         "theme_score": 100.0,
         "avg_setup_score": 100.0,
@@ -161,11 +131,11 @@
           {
             "ticker": "DNN",
             "score": 100.0,
-            "flags": "inside; tight; volDry=0.78; 50SMA=-4.6%; 252H=0.77x; prior=2.9x; blind=1m/RS/VARS",
+            "flags": "inside; tight; volDry=0.79; 50SMA=-4.6%; 252H=0.77x; prior=2.9x; blind=1m/RS/VARS",
             "rs": 34.6,
             "vars": -5.57,
             "price": 3.43,
-            "vol_dry": 0.78,
+            "vol_dry": 0.79,
             "dist50": -4.6,
             "high252": 0.77,
             "range10": 11.7,
@@ -221,12 +191,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Metals & Mining / Lithium / Hard Rock",
-          "kind": "leaf",
-          "parent": "Metals & Mining",
-          "ticker_count": 1
-        },
-        {
           "id": "Nuclear",
           "kind": "l1"
         },
@@ -259,11 +223,6 @@
           "kind": "is_a"
         },
         {
-          "source": "Metals & Mining / Lithium / Hard Rock",
-          "target": "Metals & Mining",
-          "kind": "is_a"
-        },
-        {
           "source": "Nuclear / Uranium Mining",
           "target": "Nuclear",
           "kind": "is_a"
@@ -284,16 +243,16 @@
           {
             "ticker": "SOC",
             "score": 100.0,
-            "flags": "inside; tight; volDry=0.86; 50SMA=+0.8%; 252H=0.46x; prior=8.7x; blind=1m/RS/VARS",
+            "flags": "inside; tight; volDry=0.87; 50SMA=+0.8%; 252H=0.46x; prior=8.7x; blind=1m/RS/VARS",
             "rs": 46.2,
             "vars": -4.15,
             "price": 14.65,
-            "vol_dry": 0.86,
+            "vol_dry": 0.87,
             "dist50": 0.8,
             "high252": 0.46,
             "range10": 19.0,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -309,7 +268,7 @@
             "dist50": -6.6,
             "high252": 0.8,
             "range10": 16.0,
-            "float": "351.8",
+            "float": "351.7",
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
@@ -367,7 +326,7 @@
             "dist50": 11.8,
             "high252": 0.96,
             "range10": 8.0,
-            "float": "119.2",
+            "float": "119.1",
             "eps": "2",
             "sales": "1126",
             "inst": "+5.0",
@@ -541,7 +500,7 @@
             "dist50": 11.8,
             "high252": 0.96,
             "range10": 8.0,
-            "float": "119.2",
+            "float": "119.1",
             "eps": "2",
             "sales": "1126",
             "inst": "+5.0",
@@ -3081,7 +3040,7 @@
             "high252": 0.62,
             "range10": 18.1,
             "float": "257.9",
-            "eps": "148",
+            "eps": "141",
             "sales": "50",
             "inst": "+4.4",
             "short": 2.7
@@ -4777,7 +4736,7 @@
             "high252": 0.61,
             "range10": 18.2,
             "float": "257.9",
-            "eps": "148",
+            "eps": "141",
             "sales": "50",
             "inst": "+4.4",
             "short": 2.7
@@ -4973,7 +4932,7 @@
             "flags": "inside; tight; volDry=0.69; 50SMA=+10.0%; 252H=0.94x; prior=2.6x; blind=RS",
             "rs": 61.5,
             "vars": 10.88,
-            "price": 12.31,
+            "price": 12.2,
             "vol_dry": 0.69,
             "dist50": 10.0,
             "high252": 0.94,
@@ -5438,7 +5397,7 @@
             "flags": "inside; tight; volDry=0.69; 50SMA=+10.0%; 252H=0.94x; prior=2.6x; blind=RS",
             "rs": 61.5,
             "vars": 10.88,
-            "price": 12.31,
+            "price": 12.2,
             "vol_dry": 0.69,
             "dist50": 10.0,
             "high252": 0.94,
@@ -5999,7 +5958,7 @@
             "dist50": -0.6,
             "high252": 0.62,
             "range10": 18.4,
-            "float": "358.9",
+            "float": "359.5",
             "eps": "21",
             "sales": "28",
             "inst": "+10.1",
@@ -6468,7 +6427,7 @@
             "high252": 0.82,
             "range10": 15.9,
             "float": "78.5",
-            "eps": "-26",
+            "eps": "-22",
             "sales": null,
             "inst": "-4.1",
             "short": 13.2
@@ -6728,11 +6687,11 @@
             "dist50": 7.8,
             "high252": 0.49,
             "range10": 12.3,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           }
         ],
         "l1": "Software & Internet",
@@ -6815,11 +6774,11 @@
             "dist50": 7.8,
             "high252": 0.49,
             "range10": 12.3,
-            "float": "359.6",
+            "float": "356.9",
             "eps": "2",
             "sales": "17",
             "inst": "+1.0",
-            "short": 10.4
+            "short": 10.5
           }
         ],
         "l1": "Software & Internet",
@@ -8160,7 +8119,7 @@
             "dist50": 7.2,
             "high252": 0.79,
             "range10": 13.8,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -8189,7 +8148,7 @@
             "dist50": 7.2,
             "high252": 0.79,
             "range10": 13.8,
-            "float": "127.3",
+            "float": "127.0",
             "eps": "12",
             "sales": "48",
             "inst": "+3.8",
@@ -8736,7 +8695,7 @@
             "flags": "tight; NR20; volDry=0.69; 50SMA=-0.3%; 252H=0.87x; prior=2.1x; blind=1m/RS",
             "rs": 19.2,
             "vars": 5.46,
-            "price": 73.27,
+            "price": 72.51,
             "vol_dry": 0.69,
             "dist50": -0.3,
             "high252": 0.87,
@@ -10404,7 +10363,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -11138,7 +11098,7 @@
             "high252": 0.37,
             "range10": 21.8,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -11510,11 +11470,11 @@
             "dist50": -6.9,
             "high252": 0.73,
             "range10": 41.7,
-            "float": "126.4",
+            "float": "126.0",
             "eps": "82",
             "sales": "153",
             "inst": "+13.9",
-            "short": 17.9
+            "short": 18.0
           }
         ],
         "l1": "Clean Energy",
@@ -13440,7 +13400,7 @@
             "high252": 0.41,
             "range10": 14.4,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -14196,7 +14156,7 @@
             "high252": 0.94,
             "range10": 8.5,
             "float": "2060.0",
-            "eps": "89",
+            "eps": "92",
             "sales": "-1",
             "inst": "-87.4",
             "short": 0.6
@@ -14986,7 +14946,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -15175,7 +15136,7 @@
             "high252": 0.4,
             "range10": 25.9,
             "float": "284.6",
-            "eps": "-77",
+            "eps": "-78",
             "sales": "145",
             "inst": "+1.4",
             "short": 9.1
@@ -15353,7 +15314,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -15528,7 +15490,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -16035,8 +15998,7 @@
             "eps": "18",
             "sales": null,
             "inst": "+7.1",
-            "short": 16.5,
-            "ticker_color": "green"
+            "short": 16.5
           }
         ],
         "l1": "Biotech",
@@ -20338,7 +20300,7 @@
             "high252": 0.42,
             "range10": 17.7,
             "float": "284.6",
-            "eps": "-77",
+            "eps": "-78",
             "sales": "145",
             "inst": "+1.4",
             "short": 9.1
@@ -21718,8 +21680,8 @@
             "dist50": 13.6,
             "high252": 0.97,
             "range10": 11.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -21776,8 +21738,8 @@
             "dist50": 13.6,
             "high252": 0.97,
             "range10": 11.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -24273,7 +24235,7 @@
             "dist50": 9.0,
             "high252": 0.84,
             "range10": 16.8,
-            "float": "351.8",
+            "float": "351.7",
             "eps": "68",
             "sales": "-12",
             "inst": "+1.0",
@@ -24873,7 +24835,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Biotech",
@@ -26234,7 +26197,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -26808,7 +26772,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -27594,7 +27559,7 @@
             "dist50": 6.0,
             "high252": 0.63,
             "range10": 22.1,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -30536,7 +30501,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -30556,7 +30522,7 @@
             "flags": "inside; tight; NR20; volDry=0.92; 50SMA=+9.8%; 252H=0.87x; prior=2.1x; blind=1m/RS",
             "rs": 11.5,
             "vars": 11.24,
-            "price": 73.13,
+            "price": 72.37,
             "vol_dry": 0.92,
             "dist50": 9.8,
             "high252": 0.87,
@@ -31047,7 +31013,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -31190,7 +31157,7 @@
             "high252": 0.6,
             "range10": 15.1,
             "float": "176.6",
-            "eps": "-9",
+            "eps": "-10",
             "sales": "-2",
             "inst": "+3.9",
             "short": 12.4,
@@ -31785,7 +31752,7 @@
             "dist50": 3.8,
             "high252": 0.93,
             "range10": 7.4,
-            "float": "119.2",
+            "float": "119.1",
             "eps": "2",
             "sales": "1126",
             "inst": "+5.0",
@@ -32078,7 +32045,7 @@
             "dist50": 3.8,
             "high252": 0.93,
             "range10": 7.4,
-            "float": "119.2",
+            "float": "119.1",
             "eps": "2",
             "sales": "1126",
             "inst": "+5.0",
@@ -33350,7 +33317,7 @@
             "flags": "inside; tight; volDry=0.81; 50SMA=+3.1%; 252H=0.86x; prior=2.5x; blind=1m",
             "rs": 73.1,
             "vars": 8.42,
-            "price": 218.75,
+            "price": 218.21,
             "vol_dry": 0.81,
             "dist50": 3.1,
             "high252": 0.86,
@@ -33373,11 +33340,11 @@
             "dist50": -2.3,
             "high252": 0.79,
             "range10": 19.3,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "1260.0",
+            "eps": "63",
+            "sales": "118",
+            "inst": "-5.4",
+            "short": 4.4,
             "ticker_color": "green"
           },
           {
@@ -33553,7 +33520,7 @@
             "high252": 0.38,
             "range10": 51.0,
             "float": "131.0",
-            "eps": "124",
+            "eps": "116",
             "sales": null,
             "inst": "+7.5",
             "short": 19.0
@@ -33896,7 +33863,7 @@
             "high252": 0.83,
             "range10": 19.1,
             "float": "420.8",
-            "eps": "83",
+            "eps": "93",
             "sales": "49",
             "inst": "-4.3",
             "short": 0.8,
@@ -34837,7 +34804,7 @@
             "high252": 0.67,
             "range10": 15.9,
             "float": "100.9",
-            "eps": "29",
+            "eps": "35",
             "sales": "8",
             "inst": "+1.2",
             "short": 11.9,
@@ -35447,7 +35414,7 @@
             "flags": "inside; tight; volDry=0.85; 50SMA=+2.0%; 252H=0.85x; prior=2.6x; blind=1m/RS",
             "rs": 61.5,
             "vars": 8.9,
-            "price": 216.44,
+            "price": 215.91,
             "vol_dry": 0.85,
             "dist50": 2.0,
             "high252": 0.85,
@@ -35504,11 +35471,11 @@
             "dist50": -3.6,
             "high252": 0.78,
             "range10": 20.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "1260.0",
+            "eps": "63",
+            "sales": "118",
+            "inst": "-5.4",
+            "short": 4.4,
             "ticker_color": "green"
           },
           {
@@ -35608,7 +35575,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -36101,7 +36069,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -36247,7 +36216,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Software & Internet",
@@ -36872,8 +36842,8 @@
             "dist50": 3.3,
             "high252": 0.88,
             "range10": 18.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -37148,8 +37118,8 @@
             "dist50": 3.3,
             "high252": 0.88,
             "range10": 18.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -37522,7 +37492,7 @@
             "flags": "tight; NR20; volDry=0.67; 50SMA=-3.8%; 252H=0.55x; prior=2.0x; blind=1m/RS",
             "rs": 65.4,
             "vars": 6.78,
-            "price": 28.3,
+            "price": 27.66,
             "vol_dry": 0.67,
             "dist50": -3.8,
             "high252": 0.55,
@@ -38269,7 +38239,7 @@
             "high252": 0.7,
             "range10": 17.5,
             "float": "257.9",
-            "eps": "148",
+            "eps": "141",
             "sales": "50",
             "inst": "+4.4",
             "short": 2.7
@@ -38384,7 +38354,7 @@
             "flags": "inside; tight; NR20; volDry=0.99; 50SMA=-1.8%; 252H=0.82x; prior=2.7x; blind=1m/RS",
             "rs": 50.0,
             "vars": 10.39,
-            "price": 208.5,
+            "price": 207.99,
             "vol_dry": 0.99,
             "dist50": -1.8,
             "high252": 0.82,
@@ -38754,7 +38724,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Metals & Mining",
@@ -39231,7 +39202,7 @@
             "high252": 0.53,
             "range10": 22.4,
             "float": "184.5",
-            "eps": "26",
+            "eps": "27",
             "sales": "24",
             "inst": "-2.4",
             "short": 4.1
@@ -39682,7 +39653,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           },
           {
             "ticker": "LAC",
@@ -39696,7 +39668,7 @@
             "high252": 0.38,
             "range10": 11.9,
             "float": "184.5",
-            "eps": "71",
+            "eps": "72",
             "sales": null,
             "inst": "+6.7",
             "short": 15.5
@@ -39725,7 +39697,7 @@
             "high252": 0.8,
             "range10": 19.1,
             "float": "420.8",
-            "eps": "83",
+            "eps": "93",
             "sales": "49",
             "inst": "-4.3",
             "short": 0.8,
@@ -39876,7 +39848,7 @@
             "flags": "inside; tight; NR20; volDry=0.90; 50SMA=+16.7%; 252H=0.90x; prior=2.4x; blind=RS",
             "rs": 57.7,
             "vars": 15.96,
-            "price": 10.59,
+            "price": 10.5,
             "vol_dry": 0.9,
             "dist50": 16.7,
             "high252": 0.9,
@@ -40744,7 +40716,7 @@
             "dist50": -4.5,
             "high252": 0.58,
             "range10": 15.4,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -40768,7 +40740,7 @@
             "flags": "inside; tight; volDry=0.92; 50SMA=+4.8%; 252H=0.90x; prior=2.3x; blind=1m/RS",
             "rs": 69.2,
             "vars": 7.66,
-            "price": 33.94,
+            "price": 33.88,
             "vol_dry": 0.92,
             "dist50": 4.8,
             "high252": 0.9,
@@ -40915,7 +40887,7 @@
             "flags": "inside; tight; NR20; volDry=0.90; 50SMA=+16.7%; 252H=0.90x; prior=2.4x; blind=RS",
             "rs": 57.7,
             "vars": 15.96,
-            "price": 10.59,
+            "price": 10.5,
             "vol_dry": 0.9,
             "dist50": 16.7,
             "high252": 0.9,
@@ -41883,8 +41855,8 @@
             "dist50": 9.9,
             "high252": 0.91,
             "range10": 21.4,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -41987,8 +41959,8 @@
             "dist50": 9.9,
             "high252": 0.91,
             "range10": 21.4,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -42789,7 +42761,7 @@
             "high252": 0.84,
             "range10": 22.8,
             "float": "112.8",
-            "eps": "-122",
+            "eps": "-117",
             "sales": "-3",
             "inst": "+1.2",
             "short": 19.6
@@ -43079,7 +43051,7 @@
             "dist50": -5.3,
             "high252": 0.57,
             "range10": 18.1,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -44395,7 +44367,7 @@
             "high252": 0.96,
             "range10": 12.4,
             "float": "78.5",
-            "eps": "-26",
+            "eps": "-22",
             "sales": null,
             "inst": "-4.1",
             "short": 13.2
@@ -44713,7 +44685,7 @@
             "dist50": 6.5,
             "high252": 0.66,
             "range10": 11.1,
-            "float": "358.9",
+            "float": "359.5",
             "eps": "21",
             "sales": "28",
             "inst": "+10.1",
@@ -44746,7 +44718,8 @@
             "eps": null,
             "sales": null,
             "inst": null,
-            "short": null
+            "short": null,
+            "ticker_color": "green"
           }
         ],
         "l1": "Travel & Leisure",
@@ -45933,7 +45906,7 @@
             "high252": 0.6,
             "range10": 10.6,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -46025,7 +45998,7 @@
             "high252": 0.6,
             "range10": 10.6,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47229,7 +47202,7 @@
             "high252": 0.59,
             "range10": 10.8,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47258,7 +47231,7 @@
             "high252": 0.59,
             "range10": 10.8,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -47999,7 +47972,7 @@
             "high252": 0.59,
             "range10": 14.2,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -48075,7 +48048,7 @@
             "high252": 0.59,
             "range10": 14.2,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -48420,7 +48393,7 @@
             "flags": "tight; NR20; volDry=0.84; 50SMA=-5.3%; 252H=0.87x; prior=2.4x; blind=1m/RS",
             "rs": 42.3,
             "vars": 4.84,
-            "price": 68.45,
+            "price": 68.38,
             "vol_dry": 0.84,
             "dist50": -5.3,
             "high252": 0.87,
@@ -49050,11 +49023,11 @@
             "dist50": -6.5,
             "high252": 0.77,
             "range10": 17.5,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "1260.0",
+            "eps": "63",
+            "sales": "118",
+            "inst": "-5.4",
+            "short": 4.4,
             "ticker_color": "green"
           }
         ],
@@ -49822,7 +49795,7 @@
             "dist50": 5.1,
             "high252": 0.9,
             "range10": 19.4,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -50725,7 +50698,7 @@
             "high252": 0.94,
             "range10": 15.3,
             "float": "78.5",
-            "eps": "-26",
+            "eps": "-22",
             "sales": null,
             "inst": "-4.1",
             "short": 13.2
@@ -51952,7 +51925,7 @@
             "dist50": 2.6,
             "high252": 0.63,
             "range10": 20.7,
-            "float": "323.2",
+            "float": "323.3",
             "eps": "18",
             "sales": "32",
             "inst": "+0.4",
@@ -52728,7 +52701,7 @@
             "high252": 0.6,
             "range10": 17.4,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -52774,7 +52747,7 @@
             "high252": 0.6,
             "range10": 17.4,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -53023,7 +52996,7 @@
             "dist50": 2.6,
             "high252": 0.88,
             "range10": 20.2,
-            "float": "53.2",
+            "float": "53.4",
             "eps": "352",
             "sales": "89",
             "inst": "+2.7",
@@ -54179,8 +54152,8 @@
             "dist50": 11.5,
             "high252": 0.82,
             "range10": 29.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -54237,8 +54210,8 @@
             "dist50": 11.5,
             "high252": 0.82,
             "range10": 29.1,
-            "float": "51.9",
-            "eps": "65",
+            "float": "51.6",
+            "eps": "55",
             "sales": "47",
             "inst": "-6.4",
             "short": 6.5
@@ -54354,7 +54327,7 @@
             "high252": 0.87,
             "range10": 17.8,
             "float": "112.8",
-            "eps": "-122",
+            "eps": "-117",
             "sales": "-3",
             "inst": "+1.2",
             "short": 19.6
@@ -55345,7 +55318,7 @@
             "high252": 0.62,
             "range10": 19.3,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -55391,7 +55364,7 @@
             "high252": 0.62,
             "range10": 19.3,
             "float": "48.5",
-            "eps": "15",
+            "eps": "16",
             "sales": "-6",
             "inst": "+3.1",
             "short": 19.6
@@ -55730,11 +55703,11 @@
             "dist50": 4.6,
             "high252": 0.86,
             "range10": 24.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null,
+            "float": "1260.0",
+            "eps": "63",
+            "sales": "118",
+            "inst": "-5.4",
+            "short": 4.4,
             "ticker_color": "green"
           }
         ],

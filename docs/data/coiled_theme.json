@@ -41,11 +41,11 @@
         {
           "ticker": "AMLX",
           "score": 100.0,
-          "flags": "tight; NR20; volDry=0.80; 50SMA=-7.7%; 252H=0.76x; prior=4.0x; blind=1m/RS/VARS",
+          "flags": "tight; NR20; volDry=0.81; 50SMA=-7.7%; 252H=0.76x; prior=4.0x; blind=1m/RS/VARS",
           "rs": 23.1,
           "vars": -2.41,
           "price": 14.07,
-          "vol_dry": 0.8,
+          "vol_dry": 0.81,
           "dist50": -7.7,
           "high252": 0.76,
           "range10": 13.7,
@@ -96,16 +96,16 @@
       "theme_score": 100.0,
       "avg_setup_score": 92.0,
       "coiled_count": 1,
-      "other_screened_count": 5,
+      "other_screened_count": 6,
       "tickers": [
         {
           "ticker": "SA",
           "score": 92.0,
-          "flags": "inside; tight; volDry=0.87; 50SMA=+11.2%; 252H=0.83x; prior=3.3x; blind=VARS",
+          "flags": "inside; tight; volDry=0.89; 50SMA=+11.2%; 252H=0.83x; prior=3.3x; blind=VARS",
           "rs": 84.6,
           "vars": -6.12,
           "price": 33.29,
-          "vol_dry": 0.87,
+          "vol_dry": 0.89,
           "dist50": 11.2,
           "high252": 0.83,
           "range10": 22.0,
@@ -121,36 +121,6 @@
       "l3": null
     },
     {
-      "name": "Metals & Mining / Lithium / Hard Rock",
-      "theme_score": 100.0,
-      "avg_setup_score": 100.0,
-      "coiled_count": 1,
-      "other_screened_count": 0,
-      "tickers": [
-        {
-          "ticker": "SGML",
-          "score": 100.0,
-          "flags": "inside; tight; NR7; volDry=0.93; 50SMA=-3.9%; 252H=0.67x; prior=5.8x; blind=1m/RS/VARS",
-          "rs": 30.8,
-          "vars": -6.96,
-          "price": 16.36,
-          "vol_dry": 0.93,
-          "dist50": -3.9,
-          "high252": 0.67,
-          "range10": 26.0,
-          "float": "106.8",
-          "eps": "391",
-          "sales": "-11",
-          "inst": "-31.8",
-          "short": 2.6,
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Lithium",
-      "l3": "Hard Rock"
-    },
-    {
       "name": "Nuclear / Uranium Mining",
       "theme_score": 100.0,
       "avg_setup_score": 100.0,
@@ -160,11 +130,11 @@
         {
           "ticker": "DNN",
           "score": 100.0,
-          "flags": "inside; tight; volDry=0.78; 50SMA=-4.6%; 252H=0.77x; prior=2.9x; blind=1m/RS/VARS",
+          "flags": "inside; tight; volDry=0.79; 50SMA=-4.6%; 252H=0.77x; prior=2.9x; blind=1m/RS/VARS",
           "rs": 34.6,
           "vars": -5.57,
           "price": 3.43,
-          "vol_dry": 0.78,
+          "vol_dry": 0.79,
           "dist50": -4.6,
           "high252": 0.77,
           "range10": 11.7,
@@ -220,12 +190,6 @@
         "ticker_count": 1
       },
       {
-        "id": "Metals & Mining / Lithium / Hard Rock",
-        "kind": "leaf",
-        "parent": "Metals & Mining",
-        "ticker_count": 1
-      },
-      {
         "id": "Nuclear",
         "kind": "l1"
       },
@@ -254,11 +218,6 @@
       },
       {
         "source": "Metals & Mining / Gold",
-        "target": "Metals & Mining",
-        "kind": "is_a"
-      },
-      {
-        "source": "Metals & Mining / Lithium / Hard Rock",
         "target": "Metals & Mining",
         "kind": "is_a"
       },

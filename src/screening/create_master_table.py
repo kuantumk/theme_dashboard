@@ -16,7 +16,6 @@ try:
     import src.stock_utils as su
     from config.settings import PRICE_DATA_TA_FILE, SCREENING_OUTPUT_DIR
     from src.indicators.calculate_rs_score import calculate_rs_sts_for_tickers
-    from src.screening.coiled_theme import add_coiled_theme_metrics
 
 except Exception as e:
     print(f"IMPORT ERROR: {e}", flush=True)
@@ -78,10 +77,6 @@ def create_master_table(offset_days, daily_price, date_list):
     price_data_as_of = {t: d[:run_date] for t, d in daily_price.items()}
     rs_sts = calculate_rs_sts_for_tickers(price_data_as_of)
     df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(0)
-
-    # Coiled-theme setup score uses RS_STS%, VARS, price/volume compression,
-    # and prior-leader memory. It is calculated as-of run_date only.
-    df = add_coiled_theme_metrics(df)
 
     # Re-arrange columns
     cols_to_pop = ['ticker']

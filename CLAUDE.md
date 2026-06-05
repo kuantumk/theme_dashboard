@@ -47,7 +47,7 @@ cd tests && python backtest_theme_scoring.py
 2. **Indicators** pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
 3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`
 4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/`
-5. **Screeners** 7 pattern filters run in parallel → per-screener CSVs
+5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener CSVs
 6. **Consolidate** union all screener tickers → `screening_output/consolidated/`
 7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
 8. **AI Tagging** Gemini 3 Flash classifies new tickers into themes → `data/ticker_themes.json`
@@ -89,7 +89,9 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
 
-### Eight Screeners (`src/screening/screeners/`)
+### Screeners (`src/screening/screeners/`)
+
+The daily workflow runs the screeners listed under `screeners:` in `config/workflow_config.yaml`:
 
 | Screener | Pattern | ADR | Key Filter |
 |----------|---------|-----|------------|
@@ -101,6 +103,14 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `momentum_136` | 1/3/6-mo leaders | ≥4% | 25%+/50%+/100%+ over 1/3/6mo, $15M dollar vol, 750k shares |
 | `parabolic` | Parabolic short watch | ≥4% | $10M dollar vol, price ≥ $5, ATR multiple from 50SMA ≥ 10, no-overlap up candle, volume expansion |
 | `vars` | Volatility-adjusted RS leaders | ≥3.3% | $40M dollar vol, 1M shares, price > $2, VARS > 2, VARS 20EMA > 1 |
+| `volspike` | Highest-volume spike | ≥4% | `days_since_highest_volume` ≤ 30, `up_dollar_vol_max` ≥ $40M, `vol_sma50` ≥ 1M, price ≥ $2, close ≥ SMA200 |
+| `denvol` | Dense up-volume breakout | ≥4% | `up_dollar_vol_max` ≥ $40M, volume ≥ 300k, price ≥ $2, close ≥ SMA200, and the highest-volume day (within 30 days) is also the highest up-dollar-volume day |
+
+**Volume-spike indicators** (`create_technical_indicators.py`, **trailing 365-calendar-day** rolling window via `VOL_SPIKE_WINDOW = '365D'`, point-in-time safe): `highest_volume` (today's volume is the highest in the trailing year), `days_since_highest_volume` / `days_since_vol_max`, `up_dollar_vol_max` (trailing-1yr max of signed dollar volume), `days_since_up_vol_max`. **Do not use a full-download / expanding window** — a stock's record bar from >1 year ago would suppress a fresh in-window spike (the FLNC bug). The 365-day window + the ≤30-day recency gate in the screeners surfaces both fresh all-time highs and recent 1-year highs (e.g. NVDA `days_since` went 403→8 after the fix).
+
+**Volume / Volume Viz dashboard tabs** show the **union of `volspike` + `denvol`**, grouped by theme and ranked by VARS (mirrors the VARS tab; each ticker carries a `scan` tag of `volspike`/`denvol`/`both` + `days_since_hv`). They replaced the former **Coiled / Coiled Viz** tabs. Export: `export_volume` / `_build_volume_snapshot` in `export_dashboard_data.py` → `docs/data/volume.json` + `volume_history.json`.
+
+`coiled_theme` (`src/screening/coiled_theme.py` scoring module + `screeners/coiled_theme.py`) is **retained as a standalone screener but is no longer in the daily workflow** (dropped from the `screeners` config list, and `add_coiled_theme_metrics` is no longer called in `create_master_table.py`, so `coiled_theme_score`/`coiled_is_candidate`/`coiled_flags` are not in the master table). Run it manually via `run_screener.py --screener coiled_theme`; it computes its score on demand from the precomputed setup-feature columns.
 
 ### VARS — Volatility-Adjusted Relative Strength
 

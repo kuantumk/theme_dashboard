@@ -396,12 +396,12 @@ td.l {
   text-align: left;
 }
 
-.coiled-table .flags-cell {
-  max-width: 360px;
-  white-space: normal;
-  line-height: 1.35;
+.scan-cell {
+  font-size: 11px;
   color: var(--text2);
-  font-size: 12px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .tn {

@@ -30,6 +30,27 @@ def compute_spx_cum_norm_100(spx_df):
     return norm_change.rolling(window=100, min_periods=1).sum()
 
 
+VOL_SPIKE_WINDOW = '365D'  # trailing 1-year (calendar) lookback for volume-spike detection
+
+
+def _days_since_window_high(series, index, window=VOL_SPIKE_WINDOW):
+    """Calendar days since the most recent bar that printed a high of the trailing ``window``.
+
+    ``window`` is a pandas time offset (e.g. ``'365D'``). A bar counts as a window-high when
+    its value equals the trailing-window rolling max as of that bar, so a stock's record
+    volume that has aged out of the window no longer suppresses a fresh in-window spike.
+    Point-in-time safe (rolling only looks back) and fully vectorized.
+
+    Returns ``(days_since, rolling_max)``.
+    """
+    roll_max = series.rolling(window, min_periods=1).max()
+    is_high = (series >= roll_max).to_numpy()
+    pos = np.where(is_high, np.arange(len(index)), np.nan)
+    last_pos = pd.Series(pos, index=index).ffill().fillna(0).astype(int)
+    last_high_date = index[last_pos.to_numpy()]
+    return (index - last_high_date).days.to_numpy(), roll_max
+
+
 def calculate_technical_indicators():
     """
     Calculate only the technical indicators that are actually used.
@@ -81,6 +102,20 @@ def calculate_technical_indicators():
             # Average dollar volume
             daily['avg_dollar_vol'] = (daily['volume'] * daily['close']).rolling(window=20, min_periods=10).mean()
 
+            # Volume-spike indicators (trailing 365-calendar-day window).
+            # highest_volume = today's volume is the highest in the trailing ~1 year.
+            # up_dollar_vol_max = trailing-1yr max of signed dollar volume (up days positive).
+            daily['price_up_down'] = np.where(daily['price_chg_pct0'] > 0, 1, -1)
+            vol = daily['volume']
+            days_since_vol, vol_roll_max = _days_since_window_high(vol, daily.index)
+            daily['highest_volume'] = vol >= vol_roll_max
+            daily['days_since_highest_volume'] = days_since_vol
+            daily['days_since_vol_max'] = days_since_vol  # denvol alias (same series)
+            up_dollar_vol = daily['volume'] * daily['price_up_down'] * daily['close']
+            days_since_udv, udv_roll_max = _days_since_window_high(up_dollar_vol, daily.index)
+            daily['up_dollar_vol_max'] = udv_roll_max
+            daily['days_since_up_vol_max'] = days_since_udv
+
             # ADR%
             daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=10).mean() - 1
 
@@ -121,6 +156,8 @@ def calculate_technical_indicators():
             )
 
             # Coiled-theme reusable setup features.
+            # Retained so the standalone `coiled_theme` screener (kept but no longer
+            # in the daily workflow) still has its time-series inputs precomputed.
             daily['range_pct'] = (daily['high'] - daily['low']) / daily['close']
             daily['range10_pct'] = (
                 daily['high'].rolling(window=10, min_periods=5).max()

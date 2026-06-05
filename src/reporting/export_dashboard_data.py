@@ -1464,53 +1464,55 @@ def export_vars(day_flags):
     return current
 
 
-def _load_other_screened_tickers(report_date):
-    """Return tickers that passed non-coiled screeners for the same session."""
-    if not report_date:
-        return set()
-    try:
-        txt_date = datetime.strptime(report_date, '%Y-%m-%d').strftime('%m%d%Y')
-    except ValueError:
-        return set()
+def _build_volume_snapshot(date_str, day_flags):
+    """Build a single Volume snapshot from the volspike + denvol CSVs for one date.
 
-    tickers = set()
-    consolidated_dir = SCREENING_OUTPUT_DIR / 'consolidated'
-    for path in consolidated_dir.glob(f'_*_{txt_date}.txt'):
-        name = path.name
-        if name.startswith('_union_') or name.startswith('_coiled_theme_'):
-            continue
-        if path.stat().st_size == 0:
-            continue
-        with open(path, 'r', encoding='utf-8') as fh:
-            for line in fh:
-                tk = line.strip().upper()
-                if tk:
-                    tickers.add(tk)
-    return tickers
-
-
-def _build_coiled_theme_snapshot(csv_file, day_flags):
-    """Build a single coiled-theme snapshot from a screener CSV."""
+    Unions the tickers from both scans (tagging each with which scan matched),
+    groups them by theme, and sorts within each theme by VARS desc and themes by
+    avg VARS desc. ALL themes are shown (no min-ticker filter); Uncategorized and
+    Singleton sink to the bottom. Returns the JSON dict, or None if neither CSV
+    has rows. Pure function.
+    """
     import sqlite3
     import pandas as pd
     from src.themes.theme_registry import load_ticker_themes
-    from src.themes.theme_taxonomy import build_theme_to_tickers
+    from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
 
-    df = pd.read_csv(csv_file).fillna(0)
+    # Union the two scans for this date; tag each ticker with its source scan(s).
+    frames = []
+    scan_for_ticker = {}
+    for scan_name in ('volspike', 'denvol'):
+        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.csv'
+        if not csv_file.exists():
+            continue
+        sdf = pd.read_csv(csv_file).fillna(0)
+        if sdf.empty:
+            continue
+        frames.append(sdf)
+        for t in sdf['ticker'].astype(str).str.upper():
+            prev = scan_for_ticker.get(t)
+            scan_for_ticker[t] = 'both' if (prev and prev != scan_name) else scan_name
+
+    if not frames:
+        return None
+
+    df = pd.concat(frames, ignore_index=True).drop_duplicates(subset='ticker')
     if df.empty:
         return None
 
-    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
+    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else date_str
+
     ticker_themes = load_ticker_themes()
     screener_tickers = df['ticker'].astype(str).str.upper().tolist()
     filtered_map = {
         t: ticker_themes.get(t) or ['Uncategorized']
         for t in screener_tickers
     }
-    theme_to_tickers = build_theme_to_tickers(filtered_map, {})
-    full_theme_to_tickers = build_theme_to_tickers(ticker_themes, {})
-    other_screened = _load_other_screened_tickers(csv_date)
+    # Apply theme_groups consolidation (mirrors the VARS tab).
+    theme_groups = load_theme_groups()
+    theme_to_tickers = build_theme_to_tickers(filtered_map, theme_groups)
 
+    # Single-shot fundamentals lookup
     fundamentals = {}
     if FUNDAMENTALS_DB.exists() and screener_tickers:
         conn = sqlite3.connect(FUNDAMENTALS_DB)
@@ -1538,15 +1540,12 @@ def _build_coiled_theme_snapshot(csv_file, day_flags):
         short_val = f.get('short_interest')
         per_ticker[t] = {
             'ticker': t,
-            'score': round(float(row.get('coiled_theme_score', 0) or 0), 1),
-            'flags': str(row.get('coiled_flags', '') or ''),
-            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
+            'scan': scan_for_ticker.get(t, ''),
+            'days_since_hv': _int_or_none(row.get('days_since_highest_volume')),
             'vars': round(float(row.get('vars', 0) or 0), 2),
+            'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
+            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
             'price': round(float(row.get('close', 0) or 0), 2),
-            'vol_dry': round(float(row.get('vol_dry_10_50', 0) or 0), 2),
-            'dist50': round(float(row.get('dist_sma50_pct', 0) or 0) * 100, 1),
-            'high252': round(float(row.get('close_vs_252h', 0) or 0), 2),
-            'range10': round(float(row.get('range10_pct', 0) or 0) * 100, 1),
             'float': _fmt_float_m(f.get('shares_float')),
             'eps': _fmt_growth(f.get('eps_growth_yoy')),
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
@@ -1554,28 +1553,27 @@ def _build_coiled_theme_snapshot(csv_file, day_flags):
             'short': round(float(short_val), 1) if short_val is not None else None,
         }
 
-    hidden_themes = {'Uncategorized', 'Singleton'}
+    # Build theme list — show ALL themes (no min-ticker filter); sort by avg VARS desc.
+    # Uncategorized/Singleton sink to the bottom regardless of avg VARS.
+    catchall_themes = {'Uncategorized', 'Singleton'}
     themes_list = []
     for theme_name, tickers in theme_to_tickers.items():
-        if theme_name in hidden_themes:
-            continue
         ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
         if not ticker_dicts:
             continue
-        ticker_dicts.sort(key=lambda x: -x['score'])
-        avg_score = sum(t['score'] for t in ticker_dicts) / len(ticker_dicts)
-        other_count = len(set(full_theme_to_tickers.get(theme_name, [])) & other_screened)
-        theme_score = min(100.0, avg_score + min(len(ticker_dicts), 5) * 3.0 + min(other_count, 6) * 2.0)
+        ticker_dicts.sort(key=lambda x: -x['vars'])
+        avg_vars = sum(td['vars'] for td in ticker_dicts) / len(ticker_dicts)
         themes_list.append({
             'name': theme_name,
-            'theme_score': round(theme_score, 1),
-            'avg_setup_score': round(avg_score, 1),
-            'coiled_count': len(ticker_dicts),
-            'other_screened_count': other_count,
+            'avg_vars': round(avg_vars, 2),
             'tickers': ticker_dicts,
         })
 
-    themes_list.sort(key=lambda th: (-th['theme_score'], -th['coiled_count'], th['name']))
+    themes_list.sort(key=lambda th: (
+        th['name'] in catchall_themes,
+        -th['avg_vars'],
+        th['name'],
+    ))
 
     if day_flags:
         for th in themes_list:
@@ -1590,29 +1588,36 @@ def _build_coiled_theme_snapshot(csv_file, day_flags):
     }
 
 
-def export_coiled_theme(day_flags):
-    """Export coiled-theme setup data and history."""
-    csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'coiled_theme').glob('coiled_theme_*.csv'),
-        reverse=True,
-    )
-    if not csvs:
-        print("   No coiled_theme CSVs found, skipping coiled-theme export")
+def export_volume(day_flags):
+    """Export the Volume tab — union of the volspike + denvol scans.
+
+    Rebuilds the full THEMES_HISTORY_MAX-session history every run (same pattern
+    as export_vars): collects every date for which either scan produced a CSV,
+    newest first, and writes both the current snapshot and the history file.
+    """
+    dates = set()
+    for scan_name in ('volspike', 'denvol'):
+        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.csv'):
+            # filename pattern: <scan>_YYYY-MM-DD.csv
+            dates.add(csv_file.stem[len(scan_name) + 1:])
+
+    if not dates:
+        print("   No volspike/denvol CSVs found, skipping volume export")
         return None
 
     history = []
-    for csv_file in csvs[:THEMES_HISTORY_MAX]:
-        snap = _build_coiled_theme_snapshot(csv_file, day_flags)
+    for date_str in sorted(dates, reverse=True)[:THEMES_HISTORY_MAX]:
+        snap = _build_volume_snapshot(date_str, day_flags)
         if snap is None:
             continue
         history.append(snap)
 
     if not history:
-        print("   All coiled_theme CSVs were empty, skipping coiled-theme export")
+        print("   All volspike/denvol CSVs were empty, skipping volume export")
         return None
 
     current = history[0]
-    out = OUTPUT_DIR / "coiled_theme.json"
+    out = OUTPUT_DIR / "volume.json"
     with open(out, 'w', encoding='utf-8') as fh:
         json.dump(current, fh, indent=2)
     total_tickers = sum(len(th['tickers']) for th in current['themes'])
@@ -1621,55 +1626,12 @@ def export_coiled_theme(day_flags):
         f"{total_tickers} tickers, date {current['report_date']})"
     )
 
-    history_out = OUTPUT_DIR / "coiled_theme_history.json"
+    history_out = OUTPUT_DIR / "volume_history.json"
     with open(history_out, 'w', encoding='utf-8') as fh:
         json.dump(history, fh, indent=2)
-    dates = [h['report_date'] for h in history]
-    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
+    dates_sorted = [h['report_date'] for h in history]
+    print(f"   -> {history_out} (history: {len(history)} sessions, {dates_sorted[-1]} -> {dates_sorted[0]})")
     return current
-
-
-def backfill_screener_history(day_flags):
-    """Iterate every per-day CSV and rebuild momentum_136 / coiled / vars history JSONs.
-
-    Use after running master_table + run_screener with --days N to populate up
-    to N sessions of dropdown history without rerunning the daily workflow N
-    times.
-    """
-    momentum_csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv')
-    )
-    vars_csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv')
-    )
-    coiled_csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'coiled_theme').glob('coiled_theme_*.csv')
-    )
-
-    history_path_momentum = OUTPUT_DIR / 'momentum_136_history.json'
-    history_path_vars = OUTPUT_DIR / 'vars_history.json'
-    history_path_coiled = OUTPUT_DIR / 'coiled_theme_history.json'
-
-    print(f"   Backfilling momentum_136 history from {len(momentum_csvs)} CSVs")
-    for csv_file in momentum_csvs:
-        snap = _build_momentum_136_snapshot(csv_file, day_flags)
-        if snap is None:
-            continue
-        _update_history_file(history_path_momentum, snap['report_date'], snap)
-
-    print(f"   Backfilling vars history from {len(vars_csvs)} CSVs")
-    for csv_file in vars_csvs:
-        snap = _build_vars_snapshot(csv_file, day_flags)
-        if snap is None:
-            continue
-        _update_history_file(history_path_vars, snap['report_date'], snap)
-
-    print(f"   Backfilling coiled_theme history from {len(coiled_csvs)} CSVs")
-    for csv_file in coiled_csvs:
-        snap = _build_coiled_theme_snapshot(csv_file, day_flags)
-        if snap is None:
-            continue
-        _update_history_file(history_path_coiled, snap['report_date'], snap)
 
 
 def _numeric_series(df, column):
@@ -1900,7 +1862,7 @@ def export_all():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     day_flags = None  # Lazy-loaded day pattern flags
     parabolic_data = None
-    coiled_theme_data = None
+    volume_data = None
 
     # 1. Parse latest report
     report_file = find_latest_report()
@@ -1949,9 +1911,9 @@ def export_all():
     print("\n1b. Exporting momentum_136 data")
     export_momentum_136(day_flags)
 
-    # 1c. Export coiled-theme setup data (independent of daily report)
-    print("\n1c. Exporting coiled_theme data")
-    coiled_theme_data = export_coiled_theme(day_flags)
+    # 1c. Export Volume tab (union of volspike + denvol scans, independent of daily report)
+    print("\n1c. Exporting volume data")
+    volume_data = export_volume(day_flags)
 
     # 1d. Export VARS screener (independent of daily report)
     print("\n1d. Exporting vars data")
@@ -2038,7 +2000,7 @@ def export_all():
         'export_timestamp': datetime.now().isoformat(),
         'report_date': theme_data.get('report_date') if theme_data else None,
         'theme_count': len(theme_data.get('themes', [])) if theme_data else 0,
-        'coiled_theme_count': sum(len(th.get('tickers', [])) for th in coiled_theme_data.get('themes', [])) if coiled_theme_data else 0,
+        'volume_count': sum(len(th.get('tickers', [])) for th in volume_data.get('themes', [])) if volume_data else 0,
         'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
         'etf_count': len(etf_data) if etf_data else 0,
         'industry_etf_count': len(industry_data) if industry_data else 0,

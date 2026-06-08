@@ -23,7 +23,7 @@ try:
     FINVIZ_AVAILABLE = True
 except ImportError:
     FINVIZ_AVAILABLE = False
-    print("Warning: finvizfinance not installed. Install with: pip install finvizfinance")
+    print("Warning: finvizfinance not installed. Install with: uv sync")
 
 # Output path
 PROJECT_ROOT = Path(__file__).parent.parent.parent

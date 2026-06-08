@@ -292,7 +292,7 @@ def fetch_yahoo_macro_data():
     try:
         import yfinance as yf
     except ImportError:
-        print("  Warning: yfinance not installed. Run: pip install yfinance")
+        print("  Warning: yfinance not installed. Run: uv sync")
         return None
 
     all_tickers = []
@@ -439,7 +439,7 @@ def fetch_barchart_breadth():
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        print("  Warning: Playwright not installed. Run: pip install playwright && playwright install chromium")
+        print("  Warning: Playwright not installed. Run: uv sync && uv run playwright install chromium")
         return None
 
     result = {}

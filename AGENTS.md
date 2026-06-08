@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -8,7 +8,7 @@ Theme Dashboard is a momentum trading stock screening platform that identifies c
 
 ## Commands
 
-Dependencies are managed with **[uv](https://docs.astral.sh/uv/)**: `pyproject.toml` is the source of truth and `uv.lock` is committed for reproducible installs. Python 3.11 is pinned via `.python-version` and provisioned by uv itself — no system Python required. CI installs with `uv sync --locked`.
+Dependencies are managed with **[uv](https://docs.astral.sh/uv/)**: `pyproject.toml` is the source of truth and `uv.lock` is committed for reproducible installs. Python 3.11 is pinned via `.python-version` and provisioned by uv itself. CI installs with `uv sync --locked`.
 
 ```bash
 # One-time setup: provision Python 3.11 + create .venv from the lockfile
@@ -43,8 +43,6 @@ uv run python src/screening/run_screener.py --screener steady_trend --test --tic
 cd tests && uv run python backtest_theme_scoring.py
 ```
 
-**PR convention** — code-fix PRs do NOT include regenerated `docs/data/*.json` files (the daily workflow rewrites them). After running `uv run python -m src.reporting.export_dashboard_data` locally to verify a fix, reset the noise with `git checkout -- docs/data/` before committing.
-
 ## Architecture
 
 ### Data Flow (10-Step Daily Pipeline)
@@ -72,7 +70,6 @@ Separate from the daily theme pipeline, two workflows scan for earnings-driven s
 Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **RVol at time**: uses Alpaca Market Data API (SIP feed) for 5-min extended-hours bars. Treats 4 AM–8 PM ET as one continuous session, computes cumulative volume ratio vs 10-session historical average. yfinance does NOT provide usable extended-hours volume at 5m intervals.
 - **Discord notification**: sends webhook alert with ticker summaries on scan completion.
-- **Local diagnostic runs**: both scan scripts accept `--out-dir <path>` (defaults to `docs/data/`) and `--no-discord`. The Windows Task Scheduler launcher `scripts/ep_scan_morning_local.bat` passes `--out-dir scripts/local_runs --no-discord` so local runs write to a gitignored sandbox and never dirty the CI-published `docs/data/ep_scan_*.json` files.
 
 ### Key Data Stores
 
@@ -154,24 +151,6 @@ The Sheet is *not* synced to the new taxonomy. Live code translates its labels t
 
 **Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy` / `_build_network` and mirrored in `docs/app.js`'s `l1Of`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI hub instead of becoming an orphan node. Strict callers (Gemini validation, retag CLI) should still use `validate_path`; `resolve_l1` is for rendering only.
 
-**Bare-L1 paths: when valid** — A one-segment path like `"Quantum Computing"` is valid *only* for L1s with no children in `theme_taxonomy.yaml` (currently `Quantum Computing` and `Singleton`). For any L1 with children — `Space`, `Cybersecurity`, `Nuclear`, `AI`, etc. — a bare-L1 path is a **tagging bug**, even though `validate_path` accepts it (the validator returns True whenever L2 is `None`, regardless of whether the L1 has children). Symptom: the network viz renders an orphan L2 circle with the same label as the L1 hexagon hub (two "Space" nodes). Cytoscape doesn't error because front-end IDs are prefixed (`l1::Space` vs `theme::Space`).
-
-When auto-tagging, retagging, or hand-editing an L1-with-children ticker, the classifier MUST pick an L2. If no existing L2 fits, add one to `theme_taxonomy.yaml` or fall back to `Singleton`. **Never write a bare-L1 path for an L1 with children.** Audit existing tags with:
-
-```python
-from src.themes.theme_taxonomy import load_taxonomy, _children, split_path
-tax = load_taxonomy()
-for ticker, paths in ticker_themes.items():
-    for p in paths:
-        l1, l2, _ = split_path(p)
-        if l2 is None and _children(tax.get(l1, {})):
-            print(f"BUG: {ticker} bare-L1 {p!r} but {l1} has children")
-```
-
-`_build_network` (`src/reporting/export_dashboard_data.py`) and the matching loop in `docs/app.js` drop the duplicate leaf as a defensive backstop — but it's just rendering hygiene. Fix the tag, don't rely on the guard.
-
-**Periodic audit** — run `uv run python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings, suitable for CI) for mechanical checks; invoke the `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) for the full workflow including AI-judgment passes for narrative shifts and business pivots.
-
 **Auto-tagging vs locking** — `git_locked_themes: true` originally only short-circuited the 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock now also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass.
 
 The old `config/theme_groups.yaml` consolidator is archived as `theme_groups.legacy.yaml` and no longer loaded.
@@ -183,39 +162,13 @@ Per-ticker green highlighting in dashboard tables marks entry-ready setups. A ti
 - `tight_day` = `|close − open| / close < 0.2 × adr_pct` (fractional body smaller than 20% of ADR%)
 - `close_to_ma` = `|close − EMA10| < 0.5 × ATR14` OR `|close − EMA20| < 0.5 × ATR14`
 
-Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_metrics` (ETF tabs, recomputes color + VARS on-the-fly from yfinance OHLC).
+Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_ticker_colors` (ETF tabs, recomputes on-the-fly from yfinance OHLC).
 
 ### Dashboard Time Travel
 
 Each tab's session bar shows the last 5 trading days as clickable date buttons plus a `+ older sessions…` dropdown that exposes up to 55 additional days (60 total). `THEMES_HISTORY_MAX = 60` in `export_dashboard_data.py` controls retention.
 
 **Every workflow run produces a fresh 60-session history**: `run_daily_workflow.py` calls `create_master_table.py --days 60` and each `run_screener.py --days 60`, so back-dated master + screener CSVs always carry today's full indicator schema (e.g. when `vars` was added, all 60 dropdown sessions get the new column on the very next workflow run instead of having to wait 60 days). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` all iterate up to 60 per-day CSVs and rewrite `*_history.json` from scratch each run — no append-only drift. Tabs without per-day source data (themes, industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and reach the 60-cap naturally.
-
-### Dashboard Chart (TradingView Free Embed Widget)
-
-The right-hand chart in [docs/app.js](docs/app.js)'s `openChart()` function uses the **free** TradingView embed widget loaded from `https://s3.tradingview.com/tv.js`. This is NOT the paid Charting Library — it is severely limited and several documented overrides silently no-op. Past mistakes to avoid:
-
-**No runtime chart API.** The widget instance exposes only `create / ready / render / generateUrl / image / imageCanvas / subscribeToQuote / getSymbolInfo / remove / reload`. `widget.activeChart()`, `getPanes()`, `setHeight()`, `applyOverrides()`, `setInputValues()`, `onChartReady()` are all undefined. Anything you want must be expressible in the constructor object. Do not write `onChartReady` callbacks — they fail silently. Pane heights cannot be controlled; the volume pane settles at ~1/3 of total chart height.
-
-**The `studies` array is type-sensitive.** When any entry is an object (e.g. `{ id, inputs }` to set a per-instance length), **every** entry must be object form. Mixing `{ id: "MAExp@tv-basicstudies", inputs: { length: 10 } }` with a trailing `"STD;Volume"` (string) silently drops the string and that study never registers. Always wrap bare IDs as `{ id: "STD;Volume" }`. This was the root cause of the volume-pane disappearance in [#23](https://github.com/kuantumk/theme_dashboard/pull/23).
-
-**Per-instance study styles are ignored.** `studies_overrides` is global per study type — two `MAExp@tv-basicstudies` instances both pick up `"moving average exponential.ma.color"`. The per-study `styles` field inside study objects (e.g. `{ id, inputs, styles: { plot_0: { color } } }`) is silently ignored by the free widget — that pattern only works in the paid Charting Library's `createStudy()`. To differentiate two EMA lines by color, you'd need to swap one for a different study type (e.g. WMA) and accept the formula change, or accept grouped colors.
-
-**Volume study identifier matters.** Use `STD;Volume`, not `Volume@tv-basicstudies`. `STD;Volume` renders volume bars **and** the Volume MA overlay (blue gradient area); `Volume@tv-basicstudies` only renders bars in the free embed. `hide_volume: true` hides the built-in candle-overlay volume — it is independent of the separate Volume study.
-
-**`hide_legend` is all-or-nothing — do not use it.** Setting `hide_legend: true` removes the entire upper-left panel: the OHLC values, the daily change %, the volume readout, AND the study legend rows. Swing traders need OHLC + change % + volume at a glance, so leave `hide_legend: false` and use the per-element legend overrides instead:
-
-```js
-"overrides": {
-  "paneProperties.legendProperties.showStudyTitles": false,
-  "paneProperties.legendProperties.showStudyValues": false,
-  "paneProperties.legendProperties.showStudyArguments": false
-}
-```
-
-These suppress only the EMA/SMA rows while keeping the main series title, OHLC, change %, and volume value intact. Other useful legend toggles in the same family: `showSeriesOHLC`, `showVolume`, `showBarChange`, `showLastDayChange`, `showSeriesTitle` — see [TradingView's legend overrides docs](https://www.tradingview.com/charting-library-docs/latest/customization/overrides/chart-overrides).
-
-**Other safe constructor options:** `hide_volume: true` (only affects the candle-overlay volume; the separate Volume study still renders), `overrides: { "scalesProperties.scaleSeriesOnly": true }` (auto-scales the price axis to candles instead of stretching to fit the lowest MA).
 
 ## Configuration
 

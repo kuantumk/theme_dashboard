@@ -1,0 +1,37 @@
+[project]
+name = "theme-dashboard"
+version = "0.1.0"
+description = "Momentum trading stock screening platform that identifies correlated stock themes (group moves) for Qullamaggie-style trading."
+requires-python = ">=3.11"
+dependencies = [
+    # Core data processing
+    "numpy",
+    "pandas",
+    "tqdm",
+    "pqdm",
+    # Data sources
+    "yfinance",
+    "finvizfinance",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    # Technical analysis
+    "scipy",
+    # LLM for theme tagging
+    "google-genai",
+    # Config & utilities
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "tabulate>=0.9.0",
+    # Browser automation (market breadth scraping)
+    "playwright",
+    # Selenium fallback for market breadth
+    "selenium",
+    "webdriver-manager",
+]
+
+[tool.uv]
+# This is a runnable application, not an installable library: scripts are run via
+# `uv run python src/...` with the repo root on sys.path, never imported as a wheel.
+# `package = false` tells uv to install only the dependencies, not the project itself.
+package = false

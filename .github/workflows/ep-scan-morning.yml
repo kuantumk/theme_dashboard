@@ -39,18 +39,16 @@ jobs:
         run: |
           python3 -m src.ci.daily_screening_schedule_guard
 
-      - name: Set up Python
+      - name: Install uv
         if: steps.schedule-guard.outputs.should_run == 'true'
-        uses: actions/setup-python@v4
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          enable-cache: true
 
       - name: Install dependencies
         if: steps.schedule-guard.outputs.should_run == 'true'
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          uv sync --locked
 
       - name: Run morning EP scan
         if: steps.schedule-guard.outputs.should_run == 'true'
@@ -60,7 +58,7 @@ jobs:
           DISCORD_EP_SCAN_WEBHOOK_URL: ${{ secrets.DISCORD_EP_SCAN_WEBHOOK_URL }}
           PYTHONPATH: .
         run: |
-          python src/reporting/ep_scan_morning.py || echo "EP scan failed - continuing"
+          uv run python src/reporting/ep_scan_morning.py || echo "EP scan failed - continuing"
 
       - name: Commit and push results
         if: steps.schedule-guard.outputs.should_run == 'true'

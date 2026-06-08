@@ -27,32 +27,29 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          enable-cache: true
 
       - name: Install Python dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install playwright
-          playwright install --with-deps chromium
+          uv sync --locked
+          uv run playwright install --with-deps chromium
 
       - name: Run daily workflow
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: |
-          python run_daily_workflow.py
+          uv run python run_daily_workflow.py
 
       - name: Export dashboard data
         env:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           PYTHONPATH: .
         run: |
-          python src/reporting/export_dashboard_data.py
+          uv run python src/reporting/export_dashboard_data.py
 
       - name: Commit and push results
         env:

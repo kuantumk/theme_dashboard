@@ -12,7 +12,7 @@ import csv
 import io
 import urllib.request
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
@@ -846,7 +846,26 @@ def load_spx_cum_norm_100():
     return compute_spx_cum_norm_100(spx)
 
 
-THEMES_HISTORY_MAX = 60  # Keep last N trading sessions (5 visible as buttons, rest in dropdown)
+THEMES_HISTORY_DAYS = 180  # Time-travel retention window in calendar days.
+# The dashboard shows the 5 most-recent sessions as buttons and the rest in a
+# dropdown; every session whose date falls within the last 180 calendar days is
+# retained. (Generating the back-dated source CSVs that far back is driven by
+# the `--days` argument in run_daily_workflow.py.)
+
+
+def _history_cutoff(date_strings):
+    """Inclusive lower-bound ``YYYY-MM-DD`` for the time-travel retention window.
+
+    Anchored to the newest date present (not wall-clock today) so the window is
+    reproducible and robust to the export running on a stale/holiday day.
+    Returns ``None`` when there are no valid dates. Callers keep entries whose
+    date is ``>=`` the returned cutoff.
+    """
+    valid = [d for d in date_strings if d]
+    if not valid:
+        return None
+    anchor = date.fromisoformat(max(valid))
+    return (anchor - timedelta(days=THEMES_HISTORY_DAYS)).isoformat()
 
 
 def _update_history_file(history_file, report_date, entry):
@@ -866,9 +885,11 @@ def _update_history_file(history_file, report_date, entry):
     history = [h for h in history if h.get('report_date') != report_date]
     history.append(entry)
 
-    # Sort descending by date, keep only last N
+    # Sort descending by date, keep only sessions within the retention window
     history.sort(key=lambda x: x.get('report_date', ''), reverse=True)
-    history = history[:THEMES_HISTORY_MAX]
+    cutoff = _history_cutoff([h.get('report_date', '') for h in history])
+    if cutoff is not None:
+        history = [h for h in history if h.get('report_date', '') >= cutoff]
 
     with open(history_file, 'w', encoding='utf-8') as f:
         json.dump(history, f, indent=2)
@@ -1049,7 +1070,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
 
 
 def export_themes_history(day_flags, current_themes_data=None):
-    """Rewrite themes_history.json with up to N sessions backfilled from master CSVs.
+    """Rewrite themes_history.json with the retention-window sessions from master CSVs.
 
     Mirrors `export_momentum_136` / `export_vars` / `export_parabolic`: every
     workflow run produces a fresh full-history file rather than appending one
@@ -1064,8 +1085,14 @@ def export_themes_history(day_flags, current_themes_data=None):
 
     consolidated = SCREENING_OUTPUT_DIR / 'consolidated'
 
+    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+    recent_masters = [
+        f for f in master_files
+        if cutoff is None or f.stem.replace('master_', '') >= cutoff
+    ]
+
     history = []
-    for master_file in master_files[:THEMES_HISTORY_MAX]:
+    for master_file in recent_masters:
         date_str = master_file.stem.replace('master_', '')  # YYYY-MM-DD
         try:
             yyyy, mm, dd = date_str.split('-')
@@ -1246,12 +1273,12 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
 def export_momentum_136(day_flags):
     """Export momentum_136 — rebuilds full N-session history from CSVs every run.
 
-    Like `export_parabolic`, this iterates the most-recent THEMES_HISTORY_MAX
-    per-day momentum_136 CSVs and writes both the current snapshot (newest
-    date) and the history file from scratch. Replaces the old append-only
-    behavior so every workflow run produces a complete dropdown history,
-    even when the daily workflow re-runs `--days N` and regenerates back-
-    dated CSVs (e.g. after a new indicator was added).
+    Like `export_parabolic`, this iterates the per-day momentum_136 CSVs within
+    the retention window (last THEMES_HISTORY_DAYS calendar days) and writes both
+    the current snapshot (newest date) and the history file from scratch.
+    Replaces the old append-only behavior so every workflow run produces a
+    complete dropdown history, even when the daily workflow re-runs `--days N`
+    and regenerates back-dated CSVs (e.g. after a new indicator was added).
     """
     csvs = sorted(
         (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv'),
@@ -1261,8 +1288,12 @@ def export_momentum_136(day_flags):
         print("   No momentum_136 CSVs found, skipping momentum export")
         return
 
+    cutoff = _history_cutoff([f.stem.replace('momentum_136_', '') for f in csvs])
+
     history = []
-    for csv_file in csvs[:THEMES_HISTORY_MAX]:
+    for csv_file in csvs:
+        if cutoff is not None and csv_file.stem.replace('momentum_136_', '') < cutoff:
+            continue
         snap = _build_momentum_136_snapshot(csv_file, day_flags)
         if snap is None:
             continue
@@ -1418,9 +1449,10 @@ def write_vars_artifact(snapshot, artifact_dir=None):
 def export_vars(day_flags):
     """Export VARS — rebuilds full N-session history from CSVs every run.
 
-    Mirrors `export_momentum_136` / `export_parabolic`: iterates the most
-    recent THEMES_HISTORY_MAX per-day vars_*.csv files and writes both the
-    current snapshot and the history file from scratch.
+    Mirrors `export_momentum_136` / `export_parabolic`: iterates the per-day
+    vars_*.csv files within the retention window (last THEMES_HISTORY_DAYS
+    calendar days) and writes both the current snapshot and the history file
+    from scratch.
     """
     csvs = sorted(
         (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv'),
@@ -1430,8 +1462,12 @@ def export_vars(day_flags):
         print("   No vars CSVs found, skipping vars export")
         return None
 
+    cutoff = _history_cutoff([f.stem.replace('vars_', '') for f in csvs])
+
     history = []
-    for csv_file in csvs[:THEMES_HISTORY_MAX]:
+    for csv_file in csvs:
+        if cutoff is not None and csv_file.stem.replace('vars_', '') < cutoff:
+            continue
         snap = _build_vars_snapshot(csv_file, day_flags)
         if snap is None:
             continue
@@ -1591,9 +1627,10 @@ def _build_volume_snapshot(date_str, day_flags):
 def export_volume(day_flags):
     """Export the Volume tab — union of the volspike + denvol scans.
 
-    Rebuilds the full THEMES_HISTORY_MAX-session history every run (same pattern
-    as export_vars): collects every date for which either scan produced a CSV,
-    newest first, and writes both the current snapshot and the history file.
+    Rebuilds the full retention-window history every run (same pattern as
+    export_vars): collects every date within the last THEMES_HISTORY_DAYS
+    calendar days for which either scan produced a CSV, newest first, and writes
+    both the current snapshot and the history file.
     """
     dates = set()
     for scan_name in ('volspike', 'denvol'):
@@ -1605,8 +1642,12 @@ def export_volume(day_flags):
         print("   No volspike/denvol CSVs found, skipping volume export")
         return None
 
+    cutoff = _history_cutoff(dates)
+
     history = []
-    for date_str in sorted(dates, reverse=True)[:THEMES_HISTORY_MAX]:
+    for date_str in sorted(dates, reverse=True):
+        if cutoff is not None and date_str < cutoff:
+            continue
         snap = _build_volume_snapshot(date_str, day_flags)
         if snap is None:
             continue
@@ -1803,7 +1844,7 @@ def _parabolic_snapshot(report_date, candidates, fundamentals):
 
 
 def export_parabolic():
-    """Export parabolic scanner data and a last-5-session history."""
+    """Export parabolic scanner data and the retention-window session history."""
     import pandas as pd
 
     master_dir = SCREENING_OUTPUT_DIR / 'master'
@@ -1814,7 +1855,11 @@ def export_parabolic():
 
     candidate_sets = []
     all_tickers = set()
-    current_files = master_files[:THEMES_HISTORY_MAX]
+    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+    current_files = [
+        f for f in master_files
+        if cutoff is None or f.stem.replace('master_', '') >= cutoff
+    ]
 
     for idx, master_file in enumerate(current_files):
         previous_file = master_files[idx + 1] if idx + 1 < len(master_files) else None

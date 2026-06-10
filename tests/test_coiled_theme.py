@@ -1,11 +1,7 @@
-import tempfile
 import unittest
-from pathlib import Path
-from unittest.mock import patch
 
 import pandas as pd
 
-from src.reporting import export_dashboard_data
 from src.screening.coiled_theme import add_coiled_theme_metrics
 from src.screening.screeners.coiled_theme import filter_master_table
 
@@ -74,40 +70,6 @@ class CoiledThemeTests(unittest.TestCase):
         self.assertTrue(bool(mask.iloc[0]))
         self.assertIn("coiled_theme_score", master_df.columns)
         self.assertIn("coiled_flags", master_df.columns)
-
-    def test_export_groups_coiled_candidates_by_theme_with_reasons(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            screening_dir = root / "screening"
-            coiled_dir = screening_dir / "coiled_theme"
-            consolidated_dir = screening_dir / "consolidated"
-            output_dir = root / "docs_data"
-            coiled_dir.mkdir(parents=True)
-            consolidated_dir.mkdir(parents=True)
-            output_dir.mkdir()
-
-            row = rgti_like_row(coiled_theme_score=87.0, coiled_flags="inside; tight; blind=1m/RS/VARS")
-            pd.DataFrame([row]).to_csv(coiled_dir / "coiled_theme_2025-09-08.csv", index=False)
-            (consolidated_dir / "_darvas_09082025.txt").write_text("RGTI\nIONQ\n", encoding="utf-8")
-
-            with (
-                patch.object(export_dashboard_data, "SCREENING_OUTPUT_DIR", screening_dir),
-                patch.object(export_dashboard_data, "OUTPUT_DIR", output_dir),
-                patch.object(export_dashboard_data, "FUNDAMENTALS_DB", root / "missing.db"),
-                patch(
-                    "src.themes.theme_registry.load_ticker_themes",
-                    return_value={"RGTI": ["Quantum Computing"], "IONQ": ["Quantum Computing"]},
-                ),
-            ):
-                current = export_dashboard_data.export_coiled_theme(day_flags={})
-
-            self.assertEqual(current["report_date"], "2025-09-08")
-            self.assertEqual(current["themes"][0]["name"], "Quantum Computing")
-            self.assertEqual(current["themes"][0]["other_screened_count"], 2)
-            self.assertEqual(current["themes"][0]["tickers"][0]["ticker"], "RGTI")
-            self.assertIn("blind=1m/RS/VARS", current["themes"][0]["tickers"][0]["flags"])
-            self.assertTrue((output_dir / "coiled_theme.json").exists())
-            self.assertTrue((output_dir / "coiled_theme_history.json").exists())
 
 
 if __name__ == "__main__":

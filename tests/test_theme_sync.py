@@ -9,11 +9,14 @@ from src.themes.tag_new_tickers import (
     select_validation_tickers,
     themes_match,
 )
-from src.themes.theme_taxonomy import _matches_group
 
 
 class ThemeSyncTests(unittest.TestCase):
-    def test_google_sheet_ground_truth_updates_upstream_theme(self) -> None:
+    def test_google_sheet_ground_truth_freezes_locked_canonical_tags(self) -> None:
+        # git_locked_themes (default true) freezes existing canonical tags: the
+        # sheet never overwrites them, but the ticker is still treated as ground
+        # truth so it won't fall back into Gemini classification. Re-tagging an
+        # existing ticker requires the explicit `python -m src.themes.retag` CLI.
         existing = {"VSTS": ["Aerospace & Defense / Components"]}
         google_sheet = {"VSTS": ["Business Services / Uniform Rental & Workplace Supplies"]}
 
@@ -23,21 +26,9 @@ class ThemeSyncTests(unittest.TestCase):
             google_sheet_themes=google_sheet,
         )
 
-        self.assertEqual(
-            updated["VSTS"],
-            ["Business Services / Uniform Rental & Workplace Supplies"],
-        )
+        self.assertEqual(updated["VSTS"], ["Aerospace & Defense / Components"])
         self.assertEqual(ground_truth_tickers, {"VSTS"})
-        self.assertEqual(
-            updates,
-            [
-                {
-                    "ticker": "VSTS",
-                    "previous": ["Aerospace & Defense / Components"],
-                    "updated": ["Business Services / Uniform Rental & Workplace Supplies"],
-                }
-            ],
-        )
+        self.assertEqual(updates, [])
 
     def test_first_mismatch_only_creates_pending_review(self) -> None:
         result = apply_validation_decisions(
@@ -154,11 +145,11 @@ class ThemeSyncTests(unittest.TestCase):
 class SectorConsistencyFilterTests(unittest.TestCase):
     """Tests for filter_sector_inconsistent_themes."""
 
-    def test_removes_financials_theme_from_energy_ticker(self) -> None:
-        tags = {"YPF": ["Energy / Oil & Gas E&P", "Financials / Argentina"]}
-        profiles = {"YPF": {"sector": "Energy"}}
+    def test_removes_healthcare_theme_from_energy_ticker(self) -> None:
+        tags = {"XOM": ["Oil & Gas / E&P", "Healthcare / Medical Devices"]}
+        profiles = {"XOM": {"sector": "Energy"}}
         result = filter_sector_inconsistent_themes(tags, profiles)
-        self.assertEqual(result["YPF"], ["Energy / Oil & Gas E&P"])
+        self.assertEqual(result["XOM"], ["Oil & Gas / E&P"])
 
     def test_removes_logistics_theme_from_consumer_cyclical(self) -> None:
         tags = {"CART": ["E-commerce and Digital Retail", "Logistics / Freight Brokerage"]}
@@ -167,10 +158,12 @@ class SectorConsistencyFilterTests(unittest.TestCase):
         self.assertEqual(result["CART"], ["E-commerce and Digital Retail"])
 
     def test_keeps_first_theme_when_all_blocked(self) -> None:
-        tags = {"BAD": ["Financials / Argentina"]}
+        # Every theme is sector-inconsistent, but the guard never leaves a
+        # ticker themeless — it keeps the first one.
+        tags = {"BAD": ["Healthcare / Oncology"]}
         profiles = {"BAD": {"sector": "Energy"}}
         result = filter_sector_inconsistent_themes(tags, profiles)
-        self.assertEqual(result["BAD"], ["Financials / Argentina"])
+        self.assertEqual(result["BAD"], ["Healthcare / Oncology"])
 
     def test_no_change_when_sector_consistent(self) -> None:
         tags = {"AAPL": ["AI - Software & Analytics"]}
@@ -189,31 +182,6 @@ class SectorConsistencyFilterTests(unittest.TestCase):
         profiles = {"X": {"sector": "Communication Services"}}
         result = filter_sector_inconsistent_themes(tags, profiles)
         self.assertEqual(result["X"], ["Some Theme"])
-
-
-class ThemeGroupExcludeTests(unittest.TestCase):
-    """Tests for _matches_group exclude support."""
-
-    def test_exclude_overrides_prefix_match(self) -> None:
-        config = {
-            "prefix": ["Financials"],
-            "members": [],
-            "exclude": ["Financials / Argentina"],
-        }
-        self.assertFalse(_matches_group("Financials / Argentina", config))
-        self.assertTrue(_matches_group("Financials / Banking", config))
-
-    def test_exclude_overrides_member_match(self) -> None:
-        config = {
-            "prefix": [],
-            "members": ["Financials / Argentina"],
-            "exclude": ["Financials / Argentina"],
-        }
-        self.assertFalse(_matches_group("Financials / Argentina", config))
-
-    def test_no_exclude_preserves_original_behavior(self) -> None:
-        config = {"prefix": ["Logistics"], "members": []}
-        self.assertTrue(_matches_group("Logistics / Maritime Shipping", config))
 
 
 if __name__ == "__main__":

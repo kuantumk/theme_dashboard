@@ -174,23 +174,26 @@ def run_daily_workflow():
         logger.info(f"OK Market breadth saved\n")
 
         # Step 4: Create master table (includes RS_STS% calculation).
-        # `--days 60` so historical master CSVs always carry today's full
-        # indicator schema (e.g. when a new column like `vars` is added,
-        # all 60 dropdown sessions get backfilled in one workflow run
-        # rather than waiting 60 days to accumulate naturally).
+        # `--days 130` (~180 calendar days of trading sessions) so historical
+        # master CSVs always carry today's full indicator schema AND span the
+        # full time-travel retention window (THEMES_HISTORY_DAYS = 180). When a
+        # new column like `vars` is added, every dropdown session gets backfilled
+        # in one workflow run rather than accumulating naturally. The exporter
+        # prunes anything older than 180 calendar days, so a few extra sessions
+        # here are harmless padding that guarantees the window is always full.
         run_script(
             'src/screening/create_master_table.py',
-            args=['--days', '60'],
-            description="Create master table with RS_STS% (60 sessions for time-travel history)"
+            args=['--days', '130'],
+            description="Create master table with RS_STS% (130 sessions ~ 180 calendar days for time-travel history)"
         )
 
-        # Step 5: Run all screeners (`--days 60` so dashboard time-travel
-        # has a full 60-session history per screener every run, not just today).
+        # Step 5: Run all screeners (`--days 130` so dashboard time-travel
+        # has a full ~180-calendar-day history per screener every run, not just today).
         for screener in CONFIG['screeners']:
             run_script(
                 'src/screening/run_screener.py',
-                args=['--screener', screener, '--days', '60'],
-                description=f"Run {screener} screener (60 sessions)"
+                args=['--screener', screener, '--days', '130'],
+                description=f"Run {screener} screener (130 sessions ~ 180 calendar days)"
             )
 
         # Step 6: Consolidate screener results

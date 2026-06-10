@@ -31,7 +31,10 @@
   const ETF_FALLBACK_URL = 'data/etf_data.json';
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
   const PAGE_LOAD_CACHE_KEY = Date.now();
-  const SESSION_HISTORY_LIMIT = 60;
+  // Time-travel retention window in calendar days. The server-side exporters
+  // already prune every *_history.json to this window; this client-side bound
+  // mirrors it so EP history (which it caps directly) stays consistent.
+  const SESSION_HISTORY_DAYS = 180;
 
   // Symbols that need a different symbol for TradingView widget vs data fetch.
   // NOTE: TVC/CAPITALCOM/CBOE treasury yield symbols are all restricted in the
@@ -847,8 +850,9 @@
 
   /**
    * Render a time-travel date-selector bar.
-   * Shows the last 5 sessions as clickable buttons and the rest (up to 60 total)
-   * in a dropdown to the right so users can jump farther back without clutter.
+   * Shows the last 5 sessions as clickable buttons and the rest (every session
+   * within the last 180 calendar days) in a dropdown to the right so users can
+   * jump farther back without clutter.
    *
    * @param {string} containerId  - DOM id of the .time-travel-dates element
    * @param {Array}  dates        - ordered list of report_date strings (newest first)
@@ -2194,9 +2198,16 @@
       byDate[currentSnap.report_date] = currentSnap;
     }
 
-    return Object.values(byDate)
-      .sort((a, b) => b.report_date.localeCompare(a.report_date))
-      .slice(0, SESSION_HISTORY_LIMIT);
+    const sorted = Object.values(byDate)
+      .sort((a, b) => b.report_date.localeCompare(a.report_date));
+
+    // Keep snapshots within the last SESSION_HISTORY_DAYS calendar days,
+    // anchored to the newest snapshot (mirrors the server-side prune).
+    if (sorted.length === 0) return sorted;
+    const anchor = new Date(sorted[0].report_date + 'T12:00:00');
+    const cutoff = new Date(anchor);
+    cutoff.setDate(cutoff.getDate() - SESSION_HISTORY_DAYS);
+    return sorted.filter(s => new Date(s.report_date + 'T12:00:00') >= cutoff);
   }
 
   function refreshEPAllTickers() {

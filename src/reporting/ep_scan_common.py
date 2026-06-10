@@ -468,11 +468,11 @@ def send_discord_notification(
 
 # ── JSON export helper ───────────────────────────────────────────────────────
 
-SCAN_HISTORY_MAX = 60  # Match dashboard time-travel dropdown (5 buttons + 55 in dropdown).
+SCAN_HISTORY_DAYS = 180  # Match dashboard time-travel window (last 180 calendar days).
 # EP scans can't be backfilled (Finviz earnings calendar + Alpaca real-time
 # extended-hours volume + per-ticker news are all snapshot-at-scan-time data),
-# so history just accumulates as the workflow runs. Two scans per weekday means
-# the dropdown fills out in ~6 weeks of business days.
+# so history just accumulates as the workflow runs and fills out the 180-day
+# window over ~6 months of business days.
 
 
 def _scan_history_path(output_filename: str, out_dir: Optional[Path] = None) -> Path:
@@ -520,7 +520,15 @@ def update_scan_history(
     history = [h for h in history if h.get('report_date') != report_date]
     history.append(current)
     history.sort(key=lambda h: h.get('report_date', ''), reverse=True)
-    history = history[:SCAN_HISTORY_MAX]
+
+    # Keep only snapshots within the last SCAN_HISTORY_DAYS calendar days,
+    # anchored to the newest snapshot (reproducible, robust to stale runs).
+    valid_dates = [h.get('report_date', '') for h in history if h.get('report_date')]
+    if valid_dates:
+        cutoff = (
+            date.fromisoformat(max(valid_dates)) - timedelta(days=SCAN_HISTORY_DAYS)
+        ).isoformat()
+        history = [h for h in history if h.get('report_date', '') >= cutoff]
 
     with open(history_path, 'w', encoding='utf-8') as f:
         json.dump(history, f, indent=2)

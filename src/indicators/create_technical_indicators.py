@@ -15,18 +15,18 @@ import src.stock_utils as su
 from config.settings import PRICE_DATA_FILE, PRICE_DATA_TA_FILE
 
 
-def compute_spx_cum_norm_100(spx_df):
-    """Return the 100-session rolling sum of SPX's ATR14-normalized daily change.
+def compute_spy_cum_norm_100(spy_df):
+    """Return the 100-session rolling sum of SPY's ATR14-normalized daily change.
 
     Shared by stock VARS (calculate_technical_indicators) and ETF VARS
     (export_dashboard_data.fetch_etf_metrics) so the baseline can't drift.
     """
-    high_low = spx_df['high'] - spx_df['low']
-    high_prev = (spx_df['high'] - spx_df['close'].shift(1)).abs()
-    low_prev = (spx_df['low'] - spx_df['close'].shift(1)).abs()
+    high_low = spy_df['high'] - spy_df['low']
+    high_prev = (spy_df['high'] - spy_df['close'].shift(1)).abs()
+    low_prev = (spy_df['low'] - spy_df['close'].shift(1)).abs()
     tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
     atr14 = tr.rolling(window=14, min_periods=1).mean()
-    norm_change = (spx_df['close'] - spx_df['close'].shift(1)) / atr14
+    norm_change = (spy_df['close'] - spy_df['close'].shift(1)) / atr14
     return norm_change.rolling(window=100, min_periods=1).sum()
 
 
@@ -69,7 +69,7 @@ def calculate_technical_indicators():
         spx[f'perf_{month}mo'] = spx['close'] / spx['close'].shift(periods=dt) - 1
 
     # SPY ATR14 + cumulative normalized change for VARS calculation (computed once)
-    spx_cum_norm_100 = compute_spx_cum_norm_100(spx)
+    spy_cum_norm_100 = compute_spy_cum_norm_100(daily_price['SPY'])
 
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
@@ -134,8 +134,8 @@ def calculate_technical_indicators():
             # Each leg is normalized by its own ATR before summing, so values are comparable across tickers.
             daily['vars_norm_change'] = (daily['close'] - daily['close'].shift(1)) / daily['atr14']
             ticker_cum_norm_100 = daily['vars_norm_change'].rolling(window=100, min_periods=1).sum()
-            spx_aligned = spx_cum_norm_100.reindex(daily.index)
-            daily['vars'] = ticker_cum_norm_100 - spx_aligned
+            spy_aligned = spy_cum_norm_100.reindex(daily.index)
+            daily['vars'] = ticker_cum_norm_100 - spy_aligned
             daily['vars_20ema'] = daily['vars'].ewm(span=20, adjust=False, min_periods=1).mean()
 
             # Previous-session fields for gap/no-overlap screeners.

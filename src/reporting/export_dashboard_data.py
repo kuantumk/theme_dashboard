@@ -21,7 +21,7 @@ from config.settings import (
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
-from src.indicators.create_technical_indicators import compute_spx_cum_norm_100
+from src.indicators.create_technical_indicators import compute_spy_cum_norm_100
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
 
@@ -738,14 +738,14 @@ def enrich_etf_with_metrics(data_list, metrics, ticker_key='ticker'):
     return vars_count, color_count
 
 
-def fetch_etf_metrics(tickers, spx_cum_norm_100):
+def fetch_etf_metrics(tickers, spy_cum_norm_100):
     """Download recent OHLC for ETF tickers and compute VARS + ticker color.
 
     Standalone fetch that does NOT pollute the main price data pipeline.
     Returns ``{ticker: {'vars': float|None, 'color': 'green'|None}}``.
     VARS uses the same formula as :mod:`create_technical_indicators` so values
-    are comparable to the stock VARS leaderboard; the SPX baseline series is
-    passed in by the caller (sourced from price_daily_ta.pkl's ^GSPC).
+    are comparable to the stock VARS leaderboard; the SPY baseline series is
+    passed in by the caller (sourced from price_daily_ta.pkl's SPY).
     """
     if not tickers:
         return {}
@@ -799,8 +799,8 @@ def fetch_etf_metrics(tickers, spx_cum_norm_100):
             if len(df) >= 50:
                 norm_change = (close - close.shift(1)) / atr14
                 cum_norm_100 = norm_change.rolling(window=100, min_periods=1).sum()
-                spx_aligned = spx_cum_norm_100.reindex(df.index)
-                vars_series = cum_norm_100 - spx_aligned
+                spy_aligned = spy_cum_norm_100.reindex(df.index)
+                vars_series = cum_norm_100 - spy_aligned
                 last_vars = vars_series.iloc[-1]
                 if pd.notna(last_vars):
                     vars_value = float(last_vars)
@@ -832,18 +832,18 @@ def fetch_etf_metrics(tickers, spx_cum_norm_100):
     return metrics
 
 
-def load_spx_cum_norm_100():
-    """Load ^GSPC from price_daily_ta.pkl and compute the VARS baseline series."""
+def load_spy_cum_norm_100():
+    """Load SPY from price_daily_ta.pkl and compute the VARS baseline series."""
     try:
         daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
     except Exception as e:
-        print(f"   Warning: Could not load price data for SPX VARS baseline: {e}")
+        print(f"   Warning: Could not load price data for SPY VARS baseline: {e}")
         return None
-    spx = daily_price.get('^GSPC')
-    if spx is None or spx.empty:
-        print("   Warning: ^GSPC not found in price_daily_ta.pkl; ETF VARS will be skipped")
+    spy = daily_price.get('SPY')
+    if spy is None or spy.empty:
+        print("   Warning: SPY not found in price_daily_ta.pkl; ETF VARS will be skipped")
         return None
-    return compute_spx_cum_norm_100(spx)
+    return compute_spy_cum_norm_100(spy)
 
 
 THEMES_HISTORY_DAYS = 180  # Time-travel retention window in calendar days.
@@ -1998,8 +1998,8 @@ def export_all():
         all_etf_tickers += [e['ticker'] for e in industry_data]
     if all_etf_tickers:
         print("\n   Computing VARS + ticker colors for ETFs...")
-        spx_baseline = load_spx_cum_norm_100()
-        etf_metrics = fetch_etf_metrics(all_etf_tickers, spx_baseline) if spx_baseline is not None else {}
+        spy_baseline = load_spy_cum_norm_100()
+        etf_metrics = fetch_etf_metrics(all_etf_tickers, spy_baseline) if spy_baseline is not None else {}
         if etf_metrics:
             if etf_data:
                 etf_v, etf_c = enrich_etf_with_metrics(etf_data, etf_metrics)

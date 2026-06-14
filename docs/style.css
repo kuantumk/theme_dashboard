@@ -507,15 +507,6 @@ td.l {
   border: 1px solid var(--border);
 }
 
-.time-travel-label {
-  font-family: var(--display);
-  font-size: 10px;
-  font-weight: 300;
-  color: var(--text3);
-  letter-spacing: 0;
-  white-space: nowrap;
-}
-
 .time-travel-dates {
   display: flex;
   gap: 4px;
@@ -1010,12 +1001,15 @@ tbody tr.nav-active {
     width: 100% !important;
     min-width: unset;
     border-right: none;
-    border-bottom: 1px solid var(--border);
-    max-height: 50vh;
+    border-bottom: none;
+    max-height: none;
+    flex: 1;
   }
 
+  /* Mobile: hide the chart panel — it blocks half the screen.
+     Tickers list (and viz networks, which live in .left-panel) fill the view. */
   .right-panel {
-    min-height: 50vh;
+    display: none;
   }
 
   .resize-handle {

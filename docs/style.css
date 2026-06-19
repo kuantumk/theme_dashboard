@@ -244,12 +244,17 @@ body {
 }
 
 .left-panel {
-  width: 42%;
+  width: 25%;  /* table:chart = 1:3 default (right-panel flex:1 fills the other 75%) */
   min-width: 320px;
   overflow-y: auto;
   padding: 14px;
   border-right: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+/* Overview keeps its wider left panel; the 1:3 default applies to the table tabs only. */
+#macro-left {
+  width: 42%;
 }
 
 .right-panel {

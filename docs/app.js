@@ -885,7 +885,7 @@
       const selectedDate = activeInDropdown ? activeSessionDate : '';
       const selectLabel = activeInDropdown
         ? (() => { const { label, wd } = fmt(activeSessionDate); return `${label} ${wd}`; })()
-        : '+ older sessions…';
+        : '+ more';
       const options = dropdown.map(rd => {
         const { label, wd } = fmt(rd);
         const sel = rd === activeSessionDate ? ' selected' : '';

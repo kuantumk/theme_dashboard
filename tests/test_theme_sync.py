@@ -1,13 +1,23 @@
+import json
 import unittest
 from datetime import datetime
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from unittest.mock import patch
 
+import src.themes.tag_new_tickers as tagger
 from src.themes.tag_new_tickers import (
+    CLASSIFICATION_BATCH_SIZE,
+    GeminiJSONError,
+    ThemeClassificationResult,
     apply_google_sheet_ground_truth,
     apply_validation_decisions,
+    classify_tickers_with_retries,
     filter_sector_inconsistent_themes,
     prune_theme_review_state,
     select_validation_tickers,
     themes_match,
+    write_classification_audit,
 )
 
 
@@ -140,6 +150,114 @@ class ThemeSyncTests(unittest.TestCase):
                 ["AI - Infra / Power/Cooling", "AI - Infra / Optics"],
             )
         )
+
+
+class ThemeClassificationBatchTests(unittest.TestCase):
+    def test_config_uses_smaller_llm_batch_size(self) -> None:
+        self.assertEqual(CLASSIFICATION_BATCH_SIZE, 20)
+
+    def test_failed_batch_splits_and_retries_halves(self) -> None:
+        calls = []
+
+        def fake_classify(tickers, existing_themes, profiles):
+            del existing_themes, profiles
+            calls.append(tuple(tickers))
+            if len(tickers) > 2:
+                raise GeminiJSONError(
+                    "Gemini returned invalid JSON",
+                    finish_reason="MAX_TOKENS",
+                    response_chars=1175,
+                    preview="truncated",
+                )
+            return {ticker: ["Singleton"] for ticker in tickers}
+
+        with patch.object(tagger, "classify_tickers_with_gemini", side_effect=fake_classify):
+            tags, failures = classify_tickers_with_retries(
+                ["AIM", "AMH", "AMRX", "AMSS"],
+                [],
+                {},
+                batch_num=1,
+                total_batches=1,
+            )
+
+        self.assertEqual(
+            calls,
+            [
+                ("AIM", "AMH", "AMRX", "AMSS"),
+                ("AIM", "AMH"),
+                ("AMRX", "AMSS"),
+            ],
+        )
+        self.assertEqual(
+            tags,
+            {
+                "AIM": ["Singleton"],
+                "AMH": ["Singleton"],
+                "AMRX": ["Singleton"],
+                "AMSS": ["Singleton"],
+            },
+        )
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0]["tickers"], ["AIM", "AMH", "AMRX", "AMSS"])
+        self.assertTrue(failures[0]["retried"])
+        self.assertFalse(failures[0]["terminal"])
+        self.assertEqual(failures[0]["finish_reason"], "MAX_TOKENS")
+
+    def test_terminal_batch_failure_is_recorded(self) -> None:
+        def fake_classify(tickers, existing_themes, profiles):
+            del tickers, existing_themes, profiles
+            raise GeminiJSONError(
+                "Gemini returned invalid JSON",
+                finish_reason="MAX_TOKENS",
+                response_chars=1175,
+                preview="truncated",
+            )
+
+        with patch.object(tagger, "classify_tickers_with_gemini", side_effect=fake_classify):
+            tags, failures = classify_tickers_with_retries(
+                ["AIM"],
+                [],
+                {},
+                batch_num=2,
+                total_batches=3,
+            )
+
+        self.assertEqual(tags, {})
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0]["batch_num"], 2)
+        self.assertEqual(failures[0]["total_batches"], 3)
+        self.assertEqual(failures[0]["tickers"], ["AIM"])
+        self.assertFalse(failures[0]["retried"])
+        self.assertTrue(failures[0]["terminal"])
+
+    def test_classification_audit_includes_failed_batches(self) -> None:
+        result = ThemeClassificationResult(
+            ticker_themes={},
+            google_sheet_tickers=[],
+            google_sheet_updates=[],
+            classification_candidates=["AIM"],
+            classified_tickers=[],
+            new_tickers=[],
+            unresolved_tickers=["AIM"],
+            failed_batches=[
+                {
+                    "batch_num": 1,
+                    "total_batches": 1,
+                    "size": 1,
+                    "tickers": ["AIM"],
+                    "error_type": "GeminiJSONError",
+                    "error": "Gemini returned invalid JSON",
+                    "retried": False,
+                    "terminal": True,
+                }
+            ],
+        )
+
+        with TemporaryDirectory() as tmp_dir, patch.object(tagger, "LOG_DIR", Path(tmp_dir)):
+            audit_path = write_classification_audit(result, screened_ticker_count=1)
+            payload = json.loads(Path(audit_path).read_text(encoding="utf-8"))
+
+        self.assertEqual(payload["failed_batches"], result.failed_batches)
 
 
 class SectorConsistencyFilterTests(unittest.TestCase):

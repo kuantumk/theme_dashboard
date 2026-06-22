@@ -21,6 +21,23 @@ VALIDATION_STALE_DAYS = CONFIG["themes"].get("validation_stale_days", 30)
 VALIDATION_CONFIRMATION_THRESHOLD = CONFIG["themes"].get("validation_confirmation_threshold", 2)
 
 
+class GeminiJSONError(ValueError):
+    """Gemini returned text that could not be parsed as a complete JSON object."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        finish_reason: str = "",
+        response_chars: int = 0,
+        preview: str = "",
+    ) -> None:
+        super().__init__(message)
+        self.finish_reason = finish_reason
+        self.response_chars = response_chars
+        self.preview = preview
+
+
 @dataclass
 class ThemeClassificationResult:
     ticker_themes: Dict[str, List[str]]
@@ -30,6 +47,7 @@ class ThemeClassificationResult:
     classified_tickers: List[str]
     new_tickers: List[str]
     unresolved_tickers: List[str]
+    failed_batches: List[Dict[str, object]]
     audit_report_path: str | None = None
 
 
@@ -97,6 +115,13 @@ def _clean_note(value: object) -> str:
     return " ".join(str(value).split())[:140].strip()
 
 
+def _response_finish_reason(response: object) -> str:
+    candidates = getattr(response, "candidates", None) or []
+    if not candidates:
+        return ""
+    return str(getattr(candidates[0], "finish_reason", "") or "")
+
+
 def _call_gemini_json(prompt: str) -> Dict[str, object]:
     if not GOOGLE_API_KEY:
         raise ValueError("GOOGLE_API_KEY environment variable not set")
@@ -115,7 +140,20 @@ def _call_gemini_json(prompt: str) -> Dict[str, object]:
         ),
     )
 
-    parsed = json.loads(response.text.strip())
+    text = (response.text or "").strip()
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        finish_reason = _response_finish_reason(response)
+        raise GeminiJSONError(
+            (
+                "Gemini returned invalid JSON "
+                f"(finish_reason={finish_reason or 'unknown'}, chars={len(text)}): {exc}"
+            ),
+            finish_reason=finish_reason,
+            response_chars=len(text),
+            preview=text[-500:],
+        ) from exc
     if not isinstance(parsed, dict):
         raise ValueError("Gemini response must be a JSON object")
     return parsed
@@ -374,6 +412,164 @@ def classify_tickers_with_gemini(
     return normalized_tags
 
 
+def _failure_payload(
+    *,
+    batch: Sequence[str],
+    batch_num: int,
+    total_batches: int,
+    error: Exception,
+    retried: bool,
+    terminal: bool,
+) -> Dict[str, object]:
+    payload: Dict[str, object] = {
+        "batch_num": batch_num,
+        "total_batches": total_batches,
+        "size": len(batch),
+        "tickers": list(batch),
+        "error_type": type(error).__name__,
+        "error": str(error),
+        "retried": retried,
+        "terminal": terminal,
+    }
+    if isinstance(error, GeminiJSONError):
+        payload["finish_reason"] = error.finish_reason
+        payload["response_chars"] = error.response_chars
+        payload["response_tail"] = error.preview
+    return payload
+
+
+def _missing_response_error(missing: Sequence[str]) -> GeminiJSONError:
+    return GeminiJSONError(
+        f"Gemini response omitted {len(missing)} ticker(s): {list(missing)}",
+        finish_reason="missing_tickers",
+    )
+
+
+def _split_and_retry_classification(
+    tickers: List[str],
+    existing_themes: List[str],
+    profiles: Mapping[str, Mapping[str, str]],
+    *,
+    batch_num: int,
+    total_batches: int,
+    failure: Dict[str, object],
+) -> tuple[Dict[str, List[str]], List[Dict[str, object]]]:
+    midpoint = len(tickers) // 2
+    left_tags, left_failures = classify_tickers_with_retries(
+        tickers[:midpoint],
+        existing_themes,
+        profiles,
+        batch_num=batch_num,
+        total_batches=total_batches,
+    )
+    right_tags, right_failures = classify_tickers_with_retries(
+        tickers[midpoint:],
+        existing_themes,
+        profiles,
+        batch_num=batch_num,
+        total_batches=total_batches,
+    )
+    return {**left_tags, **right_tags}, [failure, *left_failures, *right_failures]
+
+
+def classify_tickers_with_retries(
+    tickers: List[str],
+    existing_themes: List[str],
+    profiles: Mapping[str, Mapping[str, str]],
+    *,
+    batch_num: int,
+    total_batches: int,
+) -> tuple[Dict[str, List[str]], List[Dict[str, object]]]:
+    """Classify a batch, splitting retryable failures into smaller batches."""
+    if not tickers:
+        return {}, []
+
+    try:
+        tags = classify_tickers_with_gemini(tickers, existing_themes, profiles)
+    except GeminiJSONError as exc:
+        if len(tickers) == 1:
+            return {}, [
+                _failure_payload(
+                    batch=tickers,
+                    batch_num=batch_num,
+                    total_batches=total_batches,
+                    error=exc,
+                    retried=False,
+                    terminal=True,
+                )
+            ]
+
+        failure = _failure_payload(
+            batch=tickers,
+            batch_num=batch_num,
+            total_batches=total_batches,
+            error=exc,
+            retried=True,
+            terminal=False,
+        )
+        return _split_and_retry_classification(
+            tickers,
+            existing_themes,
+            profiles,
+            batch_num=batch_num,
+            total_batches=total_batches,
+            failure=failure,
+        )
+
+    missing = sorted(set(tickers) - set(tags.keys()))
+    if not missing:
+        return tags, []
+
+    missing_error = _missing_response_error(missing)
+    if len(missing) == len(tickers):
+        if len(tickers) == 1:
+            return tags, [
+                _failure_payload(
+                    batch=missing,
+                    batch_num=batch_num,
+                    total_batches=total_batches,
+                    error=missing_error,
+                    retried=False,
+                    terminal=True,
+                )
+            ]
+
+        failure = _failure_payload(
+            batch=missing,
+            batch_num=batch_num,
+            total_batches=total_batches,
+            error=missing_error,
+            retried=True,
+            terminal=False,
+        )
+        retry_tags, retry_failures = _split_and_retry_classification(
+            tickers,
+            existing_themes,
+            profiles,
+            batch_num=batch_num,
+            total_batches=total_batches,
+            failure=failure,
+        )
+        return {**tags, **retry_tags}, retry_failures
+
+    failure = _failure_payload(
+        batch=missing,
+        batch_num=batch_num,
+        total_batches=total_batches,
+        error=missing_error,
+        retried=True,
+        terminal=False,
+    )
+    retry_tags, retry_failures = classify_tickers_with_retries(
+        missing,
+        existing_themes,
+        profiles,
+        batch_num=batch_num,
+        total_batches=total_batches,
+    )
+    return {**tags, **retry_tags}, [failure, *retry_failures]
+
+
 # Sector → blocked L1 narratives. L1 names from config/theme_taxonomy.yaml.
 # Conservative: only blocks obviously wrong cross-sector assignments.
 SECTOR_THEME_BLOCKLIST: Dict[str, Set[str]] = {
@@ -458,6 +654,7 @@ def write_classification_audit(
         "classified_tickers": result.classified_tickers,
         "new_tickers": result.new_tickers,
         "unresolved_tickers": result.unresolved_tickers,
+        "failed_batches": result.failed_batches,
     }
     with audit_path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
@@ -489,6 +686,7 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
         google_sheet_tickers,
     )
     classified_tags: Dict[str, List[str]] = {}
+    failed_batches: List[Dict[str, object]] = []
 
     if classification_candidates:
         profiles = ensure_company_profiles(classification_candidates)
@@ -498,11 +696,37 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
             batch_num = start // CLASSIFICATION_BATCH_SIZE + 1
             existing_themes = get_existing_theme_taxonomy({**ticker_themes, **classified_tags})
             try:
-                batch_tags = classify_tickers_with_gemini(batch, existing_themes, profiles)
+                batch_tags, batch_failures = classify_tickers_with_retries(
+                    batch,
+                    existing_themes,
+                    profiles,
+                    batch_num=batch_num,
+                    total_batches=total_batches,
+                )
                 batch_tags = filter_sector_inconsistent_themes(batch_tags, profiles)
                 classified_tags.update(batch_tags)
+                failed_batches.extend(batch_failures)
+                for failure in batch_failures:
+                    status = "terminal" if failure.get("terminal") else "retried"
+                    print(
+                        "  Classification batch "
+                        f"{failure.get('batch_num')}/{failure.get('total_batches')} {status}: "
+                        f"{failure.get('error')}"
+                    )
             except Exception as exc:
-                print(f"  Warning: classification batch {batch_num}/{total_batches} failed ({len(batch)} tickers): {exc}")
+                failure = _failure_payload(
+                    batch=batch,
+                    batch_num=batch_num,
+                    total_batches=total_batches,
+                    error=exc,
+                    retried=False,
+                    terminal=True,
+                )
+                failed_batches.append(failure)
+                print(
+                    f"  Warning: classification batch {batch_num}/{total_batches} failed "
+                    f"({len(batch)} tickers): {exc}"
+                )
 
         for ticker, themes in classified_tags.items():
             if not themes_match(ticker_themes.get(ticker), themes):
@@ -533,6 +757,7 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
         classified_tickers=sorted(classified_tags.keys()),
         new_tickers=sorted(new_tickers),
         unresolved_tickers=unresolved_tickers,
+        failed_batches=failed_batches,
     )
     result.audit_report_path = write_classification_audit(result, screened_ticker_count=len(screened_tickers))
 

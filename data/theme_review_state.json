@@ -10,6 +10,66 @@
       ],
       "reason": "Narrative-shift audit: rebranded from New Era Helium to New Era Energy & Digital Aug 2025 (ticker change PSTG... wait NUAI Aug 13 2025); pivoted from helium exploration to AI data center campus development (Texas Critical Data Centers); existing 'AI / Software & Analytics' tag misrepresents \u2014 they are a powered-land/data-center developer, peers are SLNH/BTDR/HUT (crypto miners pivoting to AI compute hosting)",
       "at": "2026-05-25T22:48:23"
+    },
+    {
+      "ticker": "NKTR",
+      "old_paths": [
+        "Biotech / Immunology",
+        "Biotech / Oncology / General"
+      ],
+      "new_paths": [
+        "Biotech / Immunology"
+      ],
+      "reason": "Narrative-shift audit: Nektar abandoned oncology after the 2022 bempeg/BMS failure; now a pure autoimmune/immunology company (lead rezpegaldesleukin, a Treg stimulator, for atopic dermatitis/alopecia areata/T1D). Dropping stale 'Oncology / General' tag.",
+      "at": "2026-06-24T22:43:33"
+    },
+    {
+      "ticker": "TGTX",
+      "old_paths": [
+        "Biotech / Immunology",
+        "Biotech / Oncology / General"
+      ],
+      "new_paths": [
+        "Biotech / Neuroscience",
+        "Biotech / Immunology"
+      ],
+      "reason": "Narrative-shift audit: TG Therapeutics is a one-drug MS company (BRIUMVI/ublituximab for relapsing MS; SC Phase 3 + MG expansion). Withdrew oncology drug Ukoniq in 2022. Reclassifying primary to Neuroscience (MS), keeping Immunology (anti-CD20 mechanism + myasthenia gravis), dropping stale Oncology.",
+      "at": "2026-06-24T22:43:33"
+    },
+    {
+      "ticker": "TEM",
+      "old_paths": [
+        "AI / Software & Analytics",
+        "Healthcare / Managed Care"
+      ],
+      "new_paths": [
+        "AI / Software & Analytics",
+        "Biotech / Genomics & Diagnostics Platforms"
+      ],
+      "reason": "Narrative-shift audit: Tempus AI is an AI-powered genomic diagnostics + data-licensing platform (oncology/cardiology), not a health insurer. Replacing wrong 'Healthcare / Managed Care' tag (grouped it with insurers MOH/OSCR/CNC) with 'Biotech / Genomics & Diagnostics Platforms'; keeping AI / Software & Analytics.",
+      "at": "2026-06-24T22:43:34"
+    },
+    {
+      "ticker": "GEO",
+      "old_paths": [
+        "Real Estate / Diversified REIT"
+      ],
+      "new_paths": [
+        "Corrections & Detention / Private Prisons"
+      ],
+      "reason": "Narrative-shift audit: GEO Group terminated REIT status Jan 1 2021 (now a C-corp), so 'Real Estate / Diversified REIT' is factually wrong. It is a private-prison/ICE immigration-detention operator (record $254M 2025 profit on new ICE contracts). Moved to new L1 'Corrections & Detention' (peer: CXW).",
+      "at": "2026-06-24T22:49:50"
+    },
+    {
+      "ticker": "CXW",
+      "old_paths": [
+        "Cybersecurity / Surveillance & IoT"
+      ],
+      "new_paths": [
+        "Corrections & Detention / Private Prisons"
+      ],
+      "reason": "Narrative-shift audit: CoreCivic is a private-prison/detention operator (Safety/Community/Properties segments; ICE/USMS/BOP contracts; ~$2.2B rev; C-corp since 2021), NOT a cybersecurity company. Replacing wrong 'Cybersecurity / Surveillance & IoT' tag; moved to new L1 'Corrections & Detention' (peer: GEO).",
+      "at": "2026-06-24T22:49:50"
     }
   ]
 }

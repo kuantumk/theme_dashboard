@@ -471,7 +471,12 @@
       .then(r => r.json())
       .then(data => {
         if (data.export_timestamp) {
-          const dt = new Date(data.export_timestamp);
+          // export_timestamp is UTC (written by the CI runner). Older exports omit a
+          // timezone suffix, which new Date() would misread as local time — coerce those
+          // to UTC so the refresh renders in the viewer's local zone, matching the header clock.
+          const raw = data.export_timestamp;
+          const hasTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(raw);
+          const dt = new Date(hasTz ? raw : raw + 'Z');
           document.getElementById('dataRefresh').textContent =
             'Last refresh: ' + dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
@@ -850,7 +855,7 @@
 
   /**
    * Render a time-travel date-selector bar.
-   * Shows the last 5 sessions as clickable buttons and the rest (every session
+   * Shows the last 3 sessions as clickable buttons and the rest (every session
    * within the last 180 calendar days) in a dropdown to the right so users can
    * jump farther back without clutter.
    *
@@ -863,7 +868,7 @@
     if (!container || dates.length === 0) return;
 
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const VISIBLE = 5;  // first N as buttons; remainder go in the dropdown
+    const VISIBLE = 3;  // first N as buttons; remainder go in the dropdown
     const fmt = (rd) => {
       const d = new Date(rd + 'T12:00:00');
       const wd = weekdays[d.getDay()];

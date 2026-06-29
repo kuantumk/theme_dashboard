@@ -70,7 +70,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 5px 20px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   position: relative;
@@ -86,19 +86,22 @@ body {
 
 .logo {
   font-family: var(--display);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 200;
   letter-spacing: -0.5px;
   color: var(--text);
 }
 
 .hdr-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-family: var(--display);
   font-size: 11px;
   font-weight: 300;
   color: var(--text2);
   letter-spacing: 0;
-  line-height: 1.6;
+  line-height: 1.2;
 }
 
 .hdr-meta strong {
@@ -106,7 +109,6 @@ body {
   font-size: 13px;
   font-weight: 400;
   color: var(--text);
-  display: block;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -207,7 +209,7 @@ body {
 }
 
 .tab-btn {
-  padding: 12px 18px;
+  padding: 6px 18px;
   border: none;
   border-bottom: 1px solid transparent;
   background: transparent;
@@ -244,8 +246,8 @@ body {
 }
 
 .left-panel {
-  width: 25%;  /* table:chart = 1:3 default (right-panel flex:1 fills the other 75%) */
-  min-width: 320px;
+  width: 20%;  /* table:chart default, ~20% narrower than the former 25% (right-panel flex:1 fills the rest) */
+  min-width: 256px;
   overflow-y: auto;
   padding: 14px;
   border-right: 1px solid var(--border);
@@ -835,7 +837,7 @@ th.sorted-asc::after {
 }
 
 .events-button {
-  padding: 7px 14px;
+  padding: 4px 14px;
   border: 0;
   background: var(--white);
   color: #000;

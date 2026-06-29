@@ -12,7 +12,7 @@ import csv
 import io
 import urllib.request
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
@@ -2042,7 +2042,7 @@ def export_all():
     # 7. Report meta
     print("\n7. Writing report meta")
     meta = {
-        'export_timestamp': datetime.now().isoformat(),
+        'export_timestamp': datetime.now(timezone.utc).isoformat(),
         'report_date': theme_data.get('report_date') if theme_data else None,
         'theme_count': len(theme_data.get('themes', [])) if theme_data else 0,
         'volume_count': sum(len(th.get('tickers', [])) for th in volume_data.get('themes', [])) if volume_data else 0,

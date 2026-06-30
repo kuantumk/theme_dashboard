@@ -89,19 +89,25 @@ def get_fundamental_data(ticker: str) -> Optional[Dict]:
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            table = soup.find('table', class_='snapshot-table2')
-            if not table:
+            # Finviz renders the quote snapshot as SEVERAL
+            # <table class="snapshot-table2"> blocks (one per column group), not
+            # a single table. soup.find() would grab only the first block
+            # (Index..IPO) and miss Shs Float / P/E / EPS this Y / Sales Q/Q /
+            # Short Float / Inst Own / Inst Trans, leaving every fundamental but
+            # Market Cap NULL. Merge label->value pairs from every block.
+            tables = soup.find_all('table', class_='snapshot-table2')
+            if not tables:
                 return None
 
             data_dict = {}
-            rows = table.find_all('tr')
-            for row in rows:
-                cells = row.find_all('td')
-                for i in range(0, len(cells), 2):
-                    if i + 1 < len(cells):
-                        key = cells[i].get_text(strip=True)
-                        value = cells[i + 1].get_text(strip=True)
-                        data_dict[key] = value
+            for table in tables:
+                for row in table.find_all('tr'):
+                    cells = row.find_all('td')
+                    for i in range(0, len(cells), 2):
+                        if i + 1 < len(cells):
+                            key = cells[i].get_text(strip=True)
+                            value = cells[i + 1].get_text(strip=True)
+                            data_dict[key] = value
 
             fundamentals = {
                 'market_cap': parse_finviz_value(data_dict.get('Market Cap')),

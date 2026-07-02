@@ -36,8 +36,10 @@ from src.themes.theme_registry import (
 )
 
 
-GENERIC_SHEET_THEMES = {"Uncategorized", "Singleton"}
-GENERIC_CLASSIFICATION_THEMES = {"Uncategorized", "Singleton"}
+# Generic placeholder tags, not real themes: a ticker whose tags are all
+# generic can inherit from the Sheet and gets its profile warmed for the
+# audit routine.
+GENERIC_THEMES = {"Uncategorized", "Singleton"}
 
 
 @dataclass
@@ -96,7 +98,7 @@ def _canonicalize_sheet_themes(raw_themes: Iterable[str]) -> tuple[List[str], Li
     seen: Set[str] = set()
 
     for raw in normalize_theme_list(raw_themes):
-        if raw in GENERIC_SHEET_THEMES:
+        if raw in GENERIC_THEMES:
             continue
         # First try: is the sheet label already a canonical taxonomy path?
         candidate = raw if validate_path(raw, taxonomy) else None
@@ -156,7 +158,7 @@ def apply_google_sheet_ground_truth(
 
         previous = normalize_theme_list(merged.get(ticker))
         previous_is_canonical = bool(previous) and all(
-            theme not in GENERIC_SHEET_THEMES for theme in previous
+            theme not in GENERIC_THEMES for theme in previous
         )
 
         if git_locked and previous_is_canonical:
@@ -199,7 +201,7 @@ def identify_tickers_needing_classification(
         if ticker in google_sheet_tickers:
             continue
         current = normalize_theme_list(ticker_themes.get(ticker))
-        if not current or all(theme in GENERIC_CLASSIFICATION_THEMES for theme in current):
+        if not current or all(theme in GENERIC_THEMES for theme in current):
             candidates.append(ticker)
     return candidates
 

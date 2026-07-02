@@ -102,7 +102,7 @@ def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, 
     return f"""## Executive Summary
 - **Total stocks screened**: {total_stocks}
 - **Hot themes identified**: {hot_themes} (avg RS_STS% > {CONFIG['themes']['hot_theme_rs_threshold']}%)
-- **Untagged tickers awaiting audit**: {len(untagged_tickers)}{' (' + ', '.join(untagged_tickers[:15]) + ')' if untagged_tickers else ''}
+- **Untagged tickers awaiting audit**: {len(untagged_tickers)}{' (' + ', '.join(untagged_tickers[:15]) + (', ...' if len(untagged_tickers) > 15 else '') + ')' if untagged_tickers else ''}
 """
 
 

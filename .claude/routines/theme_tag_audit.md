@@ -24,7 +24,7 @@ git checkout main
 git pull --ff-only
 ```
 
-If a branch `theme-tags/<today>` already exists (a prior run failed midway), check it out, rebase it on main, and continue from where it stopped instead of starting over.
+If a branch `theme-tags/<today>` already exists (a prior run failed midway; "today" is the Pacific-time date), check it out, rebase it on main, and continue from where it stopped instead of starting over.
 
 ## Step 3 — Run the audit skill
 
@@ -56,11 +56,14 @@ git status --porcelain data/ticker_themes.json data/theme_review_state.json conf
 ## Step 5 — Ship: branch → commit → PR → merge → cleanup
 
 ```bash
-git checkout -b theme-tags/$(date +%Y-%m-%d)
+# Pin the trading date to Pacific time — the sandbox clock is UTC, which is
+# already "tomorrow" during the 5:30 PM PT run window.
+AUDIT_DATE=$(TZ=America/Los_Angeles date +%Y-%m-%d)
+git checkout -b theme-tags/$AUDIT_DATE
 git add data/ticker_themes.json data/theme_review_state.json config/theme_taxonomy.yaml
-git commit -m "Theme tag audit $(date +%Y-%m-%d): <N> bug fixes, <M> retags, <K> new classifications"
-git push -u origin theme-tags/$(date +%Y-%m-%d)
-gh pr create --title "Theme tag audit $(date +%Y-%m-%d)" --body "<summary>"
+git commit -m "Theme tag audit $AUDIT_DATE: <N> bug fixes, <M> retags, <K> new classifications"
+git push -u origin theme-tags/$AUDIT_DATE
+gh pr create --title "Theme tag audit $AUDIT_DATE" --body "<summary>"
 gh pr merge --squash --delete-branch
 ```
 

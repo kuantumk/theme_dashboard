@@ -39,6 +39,12 @@ uv run python src/reporting/ep_scan_morning.py
 # Test a screener against a single ticker
 uv run python src/screening/run_screener.py --screener steady_trend --test --ticker AAPL
 
+# Mechanical theme-tag audit (exit 1 on [BUG]; also the tag-audit routine's first step)
+uv run python tools/audit_theme_tags.py
+
+# Run the unit tests
+uv run python -m unittest discover -s tests
+
 # Run scoring backtests
 cd tests && uv run python backtest_theme_scoring.py
 ```
@@ -58,9 +64,9 @@ cd tests && uv run python backtest_theme_scoring.py
 5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener CSVs
 6. **Consolidate** union all screener tickers → `screening_output/consolidated/`
 7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
-8. **AI Tagging** Gemini 3 Flash classifies new tickers into themes → `data/ticker_themes.json`
+8. **Theme Sync** Google Sheet ground truth + profile-cache warming + untagged surfacing → `data/ticker_themes.json` (no LLM here — classification happens in the weekday tag-audit routine, see Theme Taxonomy below)
 9. **Theme Scoring** dual-metric (strength + confirmation) with actionability overlay
-10. **Report** markdown daily report → `reports/`
+10. **Report** markdown daily report → `reports/` (includes "Untagged tickers awaiting audit")
 
 ### EP Scan Pipeline (Earnings Pivot Scanner)
 
@@ -93,7 +99,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **`src/data_collection/`** — external data: yfinance prices, Finviz fundamentals, barchart breadth
 - **`src/indicators/`** — technical indicator calculation and RS_STS% (PERCENTRANK vs SPY)
 - **`src/screening/`** — master table generation + screeners in `screeners/` subdir
-- **`src/themes/`** — Gemini AI tagging, theme strength scoring, Google Sheets import
+- **`src/themes/`** — Sheet ground-truth sync (`tag_new_tickers.py`), retag CLI, theme strength scoring, Google Sheets import
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
 
@@ -157,12 +163,13 @@ The Sheet is *not* synced to the new taxonomy. Live code translates its labels t
 **`apply_google_sheet_ground_truth` defences** (`src/themes/tag_new_tickers.py`):
 1. Alias-remap every incoming label via `legacy_aliases.normalize_legacy_theme`.
 2. Validate the result against `theme_taxonomy.validate_path`; drop on failure.
-3. Honour `git_locked_themes: true` — never overwrite a ticker that already has canonical tags. Brand-new tickers and ones whose only existing tag is `Uncategorized`/`Singleton` *do* accept the sheet's value (so onboarding still works). To re-tag an existing canonical ticker, use the explicit CLI:
+3. Honour `git_locked_themes: true` — never overwrite a ticker that already has canonical tags. Brand-new tickers and ones whose only existing tag is `Uncategorized`/`Singleton` *do* accept the sheet's value (so onboarding still works). To re-tag an existing canonical ticker, use the explicit CLI (`--paths` is required — the caller supplies the judgment):
    ```bash
-   uv run python -m src.themes.retag --ticker NVDA --reason "Announced AI infra pivot"
+   uv run python -m src.themes.retag --ticker NVDA --reason "Announced AI infra pivot" \
+     --paths "AI / Data Center / Cloud & Hyperscalers"
    ```
 
-**Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy` / `_build_network` and mirrored in `docs/app.js`'s `l1Of`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI hub instead of becoming an orphan node. Strict callers (Gemini validation, retag CLI) should still use `validate_path`; `resolve_l1` is for rendering only.
+**Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy` / `_build_network` and mirrored in `docs/app.js`'s `l1Of`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI hub instead of becoming an orphan node. Strict callers (the retag CLI, audit tooling) should still use `validate_path`; `resolve_l1` is for rendering only.
 
 **Bare-L1 paths: when valid** — A one-segment path like `"Quantum Computing"` is valid *only* for L1s with no children in `theme_taxonomy.yaml` (currently `Quantum Computing` and `Singleton`). For any L1 with children — `Space`, `Cybersecurity`, `Nuclear`, `AI`, etc. — a bare-L1 path is a **tagging bug**, even though `validate_path` accepts it (the validator returns True whenever L2 is `None`, regardless of whether the L1 has children). Symptom: the network viz renders an orphan L2 circle with the same label as the L1 hexagon hub (two "Space" nodes). Cytoscape doesn't error because front-end IDs are prefixed (`l1::Space` vs `theme::Space`).
 
@@ -180,9 +187,11 @@ for ticker, paths in ticker_themes.items():
 
 `_build_network` (`src/reporting/export_dashboard_data.py`) and the matching loop in `docs/app.js` drop the duplicate leaf as a defensive backstop — but it's just rendering hygiene. Fix the tag, don't rely on the guard.
 
-**Periodic audit** — run `uv run python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings, suitable for CI) for mechanical checks; invoke the `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) for the full workflow including AI-judgment passes for narrative shifts and business pivots.
+**Weekday tag-audit routine (all LLM tagging lives here)** — the daily pipeline does no LLM classification. A Claude Code cloud routine (weekdays 5:30 PM Pacific, Sonnet 5) executes `.claude/routines/theme_tag_audit.md`: sync main → run the `audit-theme-tags` skill in full (fix `[BUG]`s, web-verified narrative-shift corrections, classify every `[UNTAGGED]` ticker, capped Singleton rescue) → if tag files changed, branch `theme-tags/YYYY-MM-DD` → commit → PR → squash-merge → delete branch; otherwise report no-op. The 5:30 PM slot sits after the daily workflow's results commit (observed landing 4:01–4:57 PM PT), so the routine tags the same day's discoveries and the next 1:30 PM run scores them — a new ticker is themeless in the report for at most one session. All writes go through the retag CLI.
 
-**Auto-tagging vs locking** — `git_locked_themes: true` originally only short-circuited the 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock now also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass.
+**Audit tooling** — `uv run python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings only) covers the mechanical checks plus the `[UNTAGGED]` worklist (newest `screening_output/consolidated/_union_*.txt` diffed against `data/ticker_themes.json` via `theme_registry.is_untagged`: missing/empty/`Uncategorized`-only; `Singleton`-only excluded). The `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) wraps it with the AI-judgment phases — it's both the routine's playbook and the interactive one.
+
+**Auto-tagging vs locking** — `git_locked_themes: true` originally short-circuited the (since-removed) 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass — used by humans and by the tag-audit routine alike.
 
 The old `config/theme_groups.yaml` consolidator is archived as `theme_groups.legacy.yaml` and no longer loaded.
 
@@ -229,9 +238,9 @@ These suppress only the EMA/SMA rows while keeping the main series title, OHLC, 
 
 ## Configuration
 
-All workflow parameters live in `config/workflow_config.yaml` (lookback windows, RS thresholds, screener list, scoring coefficients, LLM settings).
+All workflow parameters live in `config/workflow_config.yaml` (lookback windows, RS thresholds, screener list, scoring coefficients, theme settings).
 
-Environment variables (`.env`): `GOOGLE_API_KEY` (Gemini), `GOOGLE_SHEET_ID` (theme taxonomy), `ALPACA_API_KEY` + `ALPACA_API_SECRET` (extended-hours volume for RVol), `IBKR_FLEX_TOKEN` (optional).
+Environment variables (`.env`): `GOOGLE_SHEET_ID` (theme taxonomy sheet), `ALPACA_API_KEY` + `ALPACA_API_SECRET` (extended-hours volume for RVol), `IBKR_FLEX_TOKEN` (optional).
 
 ## CI/CD
 
@@ -247,4 +256,4 @@ Three GitHub Actions workflows:
 
 ## Tech Stack
 
-Python 3.11+, pandas/numpy/scipy, yfinance, Selenium (breadth scraping), google-genai (Gemini 3 Flash), finvizfinance + BeautifulSoup (fundamentals), Alpaca Market Data API (extended-hours volume). No TA-Lib — all indicators are pure pandas.
+Python 3.11+, pandas/numpy/scipy, yfinance, Selenium (breadth scraping), finvizfinance + BeautifulSoup (fundamentals), Alpaca Market Data API (extended-hours volume). No TA-Lib — all indicators are pure pandas. Theme tagging uses no API-based LLM: the weekday Claude Code routine does the classification.

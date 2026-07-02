@@ -77,63 +77,6 @@ def format_inst_trans(value):
     return f"{val:.1f}"
 
 
-def select_dashboard_theme_tickers(
-    theme_df: pd.DataFrame,
-    master_df: pd.DataFrame,
-    screened_tickers: Set[str],
-    *,
-    max_themes: int = DASHBOARD_THEME_LIMIT,
-    max_tickers_per_theme: int = DASHBOARD_TICKERS_PER_THEME,
-) -> List[str]:
-    """Select the exact screened tickers that can appear in the dashboard theme tab."""
-    if theme_df.empty or not screened_tickers:
-        return []
-
-    screened_set = {str(ticker).strip().upper() for ticker in screened_tickers if str(ticker).strip()}
-    screened_df = master_df.copy()
-    screened_df['ticker'] = screened_df['ticker'].astype(str).str.upper()
-    screened_df = screened_df[screened_df['ticker'].isin(screened_set)].copy()
-
-    if screened_df.empty:
-        return []
-
-    selected: List[str] = []
-    seen = set()
-    theme_count = 0
-
-    for _, theme_row in theme_df.iterrows():
-        if theme_count >= max_themes:
-            break
-
-        theme_name = str(theme_row.get('theme', '')).strip()
-        if theme_name in SPECIAL_THEME_NAMES:
-            continue
-
-        theme_tickers_in_db = {
-            str(ticker).strip().upper()
-            for ticker in theme_row.get('tickers', [])
-            if str(ticker).strip()
-        }
-        active_theme_tickers = list(theme_tickers_in_db.intersection(screened_set))
-        if not active_theme_tickers:
-            continue
-
-        theme_count += 1
-        theme_stocks_df = screened_df[screened_df['ticker'].isin(active_theme_tickers)].copy()
-        theme_stocks_df = theme_stocks_df.sort_values(
-            ['rs_sts_pct', 'adr_pct'],
-            ascending=[False, False],
-        )
-
-        for ticker in theme_stocks_df['ticker'].head(max_tickers_per_theme):
-            if ticker in seen:
-                continue
-            seen.add(ticker)
-            selected.append(ticker)
-
-    return selected
-
-
 def generate_market_context(market_breadth: Dict) -> str:
     """Generate market context section."""
     ncfd = market_breadth.get('ncfd')
@@ -151,7 +94,7 @@ def generate_market_context(market_breadth: Dict) -> str:
 """
 
 
-def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, new_tickers: List[str]) -> str:
+def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, untagged_tickers: List[str]) -> str:
     """Generate executive summary section."""
     total_stocks = len(master_df)
     hot_themes = theme_df[theme_df['is_hot']].shape[0] if 'is_hot' in theme_df.columns else 0
@@ -159,7 +102,7 @@ def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, 
     return f"""## Executive Summary
 - **Total stocks screened**: {total_stocks}
 - **Hot themes identified**: {hot_themes} (avg RS_STS% > {CONFIG['themes']['hot_theme_rs_threshold']}%)
-- **New tickers tagged**: {len(new_tickers)}
+- **Untagged tickers awaiting audit**: {len(untagged_tickers)}{' (' + ', '.join(untagged_tickers[:15]) + (', ...' if len(untagged_tickers) > 15 else '') + ')' if untagged_tickers else ''}
 """
 
 
@@ -430,7 +373,7 @@ def generate_daily_report(
     market_breadth: Dict,
     screener_results: Dict[str, pd.DataFrame] = None,
     screened_tickers: Set[str] = None,
-    new_tickers: List[str] = None
+    untagged_tickers: List[str] = None
 ) -> str:
     """
     Generate complete daily report in markdown.
@@ -442,13 +385,13 @@ def generate_daily_report(
         market_breadth: Dict with NCFD, MMFI values
         screener_results: Dict mapping screener name -> results DataFrame
         screened_tickers: Set of tickers from all screeners
-        new_tickers: List of newly tagged tickers
+        untagged_tickers: Screened tickers awaiting classification by the audit routine
 
     Returns:
         Markdown report string
     """
-    if new_tickers is None:
-        new_tickers = []
+    if untagged_tickers is None:
+        untagged_tickers = []
 
     report = f"# Daily Stock Screening Report - {date_str}\n\n"
 
@@ -457,7 +400,7 @@ def generate_daily_report(
     report += "\n"
 
     # Executive summary
-    report += generate_executive_summary(master_df, theme_df, new_tickers)
+    report += generate_executive_summary(master_df, theme_df, untagged_tickers)
     report += "\n"
 
     # Theme Report (The Main Body)
@@ -510,7 +453,7 @@ if __name__ == '__main__':
             master_df=master_df,
             theme_df=theme_df,
             market_breadth=market_breadth,
-            new_tickers=[]
+            untagged_tickers=[]
         )
 
         # Save report

@@ -1,13 +1,17 @@
 ---
 name: audit-theme-tags
-description: Audit data/ticker_themes.json for tagging quality — mechanical defects (bare-L1, invalid paths, duplicates) plus AI-judgment passes for business pivots and L2 selection. Use when running a periodic tag review, before merging a taxonomy change, or when investigating viz/scoring oddities.
+description: Audit and maintain data/ticker_themes.json — mechanical defects (bare-L1, invalid paths, duplicates), AI-judgment passes for business pivots and L2 selection, first-time classification of untagged screened tickers, and evidence-based Singleton rescue. Use for the weekday tag-audit routine, periodic tag reviews, before merging a taxonomy change, or when investigating viz/scoring oddities.
 ---
 
 # Audit theme tags
 
-Periodic quality review of `data/ticker_themes.json`. Triggers:
+Quality review and upkeep of `data/ticker_themes.json`. This skill is the complete tagging playbook: the daily GitHub Actions pipeline only *surfaces* untagged tickers (it does no LLM classification), and this skill — run by the weekday Claude Code routine (`.claude/routines/theme_tag_audit.md`) or interactively — does all the judgment work.
 
-- It's been a while since the last audit (weekly–monthly cadence)
+Triggers:
+
+- The weekday tag-audit routine invokes this skill on schedule (its git PR/merge tail lives in the routine prompt, not here)
+- It's been a while since the last audit
+- The daily report shows "Untagged tickers awaiting audit" > 0
 - A taxonomy edit in `config/theme_taxonomy.yaml` removed or renamed an L2 — downstream paths may now be invalid
 - The network viz shows orphan or duplicate nodes
 - Theme scoring produces unexpected leaders
@@ -20,19 +24,19 @@ Periodic quality review of `data/ticker_themes.json`. Triggers:
 | 1 | L1 is the **trading narrative**, L2 is the application, L3 is the specialty. Sibling L1s are first-class (`Clean Energy` and `Oil & Gas` are separate; never `Energy / Clean` and `Energy / Fossil`). | `theme_taxonomy.yaml` |
 | 2 | **Bare-L1 paths** are valid ONLY for L1s with empty `children:` (currently `Quantum Computing` and `Singleton`). Every other L1 requires at least L2. | `tools/audit_theme_tags.py` — `validate_path` does NOT catch this |
 | 3 | **1–3 paths per ticker.** Use multiple paths for genuinely diversified businesses (AMZN = `Software & Internet / E-commerce` + `AI / Data Center / Cloud & Hyperscalers`). | `tools/audit_theme_tags.py` flags >3 |
-| 4 | **`Singleton` is the escape hatch** for tickers with no peer group. Don't shoehorn a Singleton into a generic L1 just to avoid the label. | Human judgment |
-| 5 | **Existing tags are git-locked.** Sheet sync, Gemini revalidation, and any other automated path WILL NOT overwrite a canonical tag. The `retag` CLI is the only sanctioned path. | `tag_new_tickers.py:apply_google_sheet_ground_truth` |
+| 4 | **`Singleton` is the escape hatch** for tickers with no peer group. Don't shoehorn a Singleton into a generic L1 just to avoid the label. | Human/AI judgment |
+| 5 | **Existing tags are git-locked.** Sheet sync and any other automated path WILL NOT overwrite a canonical tag. The `retag` CLI is the only sanctioned write path — for corrections AND for first-time classification. | `tag_new_tickers.py:apply_google_sheet_ground_truth` |
 
 ## Workflow
 
-> **Hard precondition — always run Phase 1 first.** Do NOT skip ahead to AI-judgment phases, even when the user's request sounds narrow ("just check ASTS for a pivot"). Mechanical defects corrupt the inputs that AI judgments depend on: a bare-`Cybersecurity` tag will mislead "is this still a cybersecurity company?" because the LLM sees a generic tag and infers generic relevance. If Phase 1 reports any `[BUG]`, you MUST fix every BUG via the printed retag commands before moving to Phase 3. WARN/INFO findings can be triaged in parallel with later phases.
+> **Hard precondition — always run Phase 1 first.** Do NOT skip ahead to AI-judgment phases, even when the request sounds narrow ("just check ASTS for a pivot"). Mechanical defects corrupt the inputs that AI judgments depend on: a bare-`Cybersecurity` tag will mislead "is this still a cybersecurity company?" because the LLM sees a generic tag and infers generic relevance. If Phase 1 reports any `[BUG]`, you MUST fix every BUG via the printed retag commands before moving to Phase 3. WARN/INFO findings can be triaged in parallel with later phases.
 
 ### Phase 1 — Mechanical checks (deterministic, MANDATORY FIRST)
 
 Run the audit script:
 
 ```bash
-python tools/audit_theme_tags.py
+uv run python tools/audit_theme_tags.py
 ```
 
 The script is the canonical source of mechanical-check definitions. Treat its `[BUG]` exit (code 1) as a hard gate. Re-run after each retag batch until exit code is 0 before proceeding to Phase 3.
@@ -43,9 +47,10 @@ Severity levels:
 |---|---|---|
 | `[BUG]` | Defect that produces a viz bug or breaks downstream tooling. | Fix before doing anything else — auto-applicable via retag CLI. |
 | `[WARN]` | Suspicious tagging (too many paths, duplicates within ticker, empty list). | Triage manually. |
+| `[UNTAGGED]` | Screened tickers awaiting first-time classification (no entry / empty / `Uncategorized`-only; `Singleton`-only excluded). | This is Phase 4's worklist, not a defect. Exit code unaffected. |
 | `[INFO]` | Counts of generic tags. | Tracking signal, not a defect. |
 
-Exit code: `1` if any `[BUG]`, else `0`. Suitable for CI.
+Exit code: `1` if any `[BUG]`, else `0`.
 
 ### Phase 2 — Apply mechanical fixes
 
@@ -56,7 +61,7 @@ For each `[BUG]` finding, the script prints a ready-to-run `retag` command templ
 Apply each fix with the `retag` CLI — every retag is logged to `data/theme_review_state.json` under `manual_retags`:
 
 ```bash
-python -m src.themes.retag --ticker RKLB \
+uv run python -m src.themes.retag --ticker RKLB \
   --reason "Bare-L1 audit: RKLB is launch services (Electron rocket)" \
   --paths "Space / Launch"
 ```
@@ -78,27 +83,55 @@ Use the WebFetch / WebSearch tools to verify. Don't try to audit every ticker �
 Apply pivots with explicit reasons:
 
 ```bash
-python -m src.themes.retag --ticker AKAN \
+uv run python -m src.themes.retag --ticker AKAN \
   --reason "Pivoted to LatAm telecom after divesting US assets" \
   --paths "Telecom / Latin America"
 ```
 
-### Phase 4 — Verify
+### Phase 4 — Classify untagged tickers + Singleton rescue (AI judgment)
+
+Work through the `[UNTAGGED]` list from Phase 1. For each ticker:
+
+1. **Get company context.** Check the committed profile cache `data/ticker_company_metadata.json` first (the daily pipeline warms it for exactly these tickers). On a cache miss or a thin `business_summary`, use WebSearch/WebFetch for the company's current business description.
+2. **Pick 1–3 taxonomy paths** using the classification rules below.
+3. **Write via the retag CLI** (never hand-edit the JSON):
 
 ```bash
-python tools/audit_theme_tags.py     # confirm BUG count is 0
-python -m src.reporting.export_dashboard_data  # regenerate viz JSON
+uv run python -m src.themes.retag --ticker XYZ \
+  --reason "New ticker classification: <one-line business summary>" \
+  --paths "<L1 / L2 [/ L3]>"
 ```
 
-Spot-check `docs/index.html` (Theme Viz + Momentum Viz tabs) — one hexagon per L1, proper L2 circles, no duplicate-label nodes.
+**Classification rules** (these carried over from the retired Gemini prompt — they are the discipline, not suggestions):
 
-### Phase 5 — Commit and PR
+1. **Only taxonomy paths.** Every path must exist in `config/theme_taxonomy.yaml`. Pick the MOST specific level that fits (prefer L3 over L2 when applicable). Never invent a path — if a genuinely new L2 is needed, add it to `theme_taxonomy.yaml` first (that file then goes in the same commit), or fall back to `Singleton`.
+2. **L1 = narrative.** Tickers sharing an L1 share a trading thesis. `Clean Energy` and `Oil & Gas` are SEPARATE L1s — a fuel-cell company (BE) must NEVER share L1 with an oilfield-services company (PUMP).
+3. **Sector consistency.** The chosen L1 must align with the company's sector/industry. An Energy (oil/gas) sector company belongs under `Oil & Gas`, not `Clean Energy`; a Healthcare company never lands under `Fintech & Crypto` or `Oil & Gas`; an Internet-Retail company is `Software & Internet / E-commerce`, not `Logistics`.
+4. **Core business only.** Classify by primary revenue source. NOT by headquarters location (use `Geographic / ...` only when geography IS the thesis — YPF is `Oil & Gas / E&P`, not `Geographic / Argentina`), and NOT by customer segment (a grocery-delivery app is `Gig Economy / Delivery`, not `Logistics`).
+5. **Multi-theme (max 3) only for distinct material revenue lines.** AMZN earns both `Software & Internet / E-commerce` and `AI / Data Center / Cloud & Hyperscalers`; a second path is never justified by country or customer type.
+6. **Mandatory L2 for L1s with children.** A bare-L1 path for `Space`, `AI`, `Cybersecurity`, etc. is the exact bug Phase 1 exists to catch — don't create new ones.
+7. **`Singleton` escape hatch.** If the business genuinely has no peer group in the taxonomy, tag `Singleton` with a reason — don't shoehorn.
 
-One commit per logical batch (e.g. "Retag bare-L1 Space cluster", "Audit narrative shifts post-Q1 earnings"). Reference findings in the commit body. **Do NOT include regenerated `docs/data/*.json`** — the daily workflow rewrites them; reset with `git checkout -- docs/data/` before committing.
+**Singleton rescue (same phase, capped).** Cross-reference `Singleton`-only tickers against the current screened pool (the union file Phase 1 used): those are liquid, in-play names whose "no peer group" call may have gone stale. Re-evaluate at most ~10 per run. Rescue a Singleton into a real theme ONLY on clear evidence (sector + industry + business summary all point at an existing theme); when in doubt, leave it. Never force a theme to avoid the label, and never downgrade a themed ticker to `Singleton` without a pivot-grade reason.
+
+### Phase 5 — Verify
+
+```bash
+uv run python tools/audit_theme_tags.py   # BUG count 0; [UNTAGGED] count 0 (or explained)
+```
+
+Optionally regenerate the viz JSON to spot-check (`uv run python -m src.reporting.export_dashboard_data`, then eyeball `docs/index.html` Theme Viz — one hexagon per L1, no duplicate-label nodes). This step needs `GOOGLE_SHEET_ID` and network access for the ETF tabs — **skip it when running unattended** (the daily workflow regenerates all of `docs/data/` anyway, and those files are never committed from an audit).
+
+### Phase 6 — Commit and PR
+
+One commit per logical batch (e.g. "Retag bare-L1 Space cluster", "Classify 2026-07-02 untagged tickers"). Reference findings in the commit body. **Do NOT include regenerated `docs/data/*.json`** — the daily workflow rewrites them; reset with `git checkout -- docs/data/` before committing. Commit only tag files: `data/ticker_themes.json`, `data/theme_review_state.json`, and `config/theme_taxonomy.yaml` when a new L2 was added.
+
+When running interactively, stop at the PR. When running as the weekday routine, the routine prompt (`.claude/routines/theme_tag_audit.md`) owns the PR → squash-merge → branch-cleanup tail.
 
 ## Anti-patterns
 
-- **Don't run during the 1:30 PM PT daily-screening window** — would race with `tag_new_tickers.py` writing to `ticker_themes.json`.
+- **Don't run between 1:30 PM and ~5:00 PM PT on weekdays** — the daily-screening workflow starts at 1:30 PM PT and its results commit lands 4:01–4:57 PM PT (observed range); racing it means rebasing against a moving main and auditing a half-updated worklist. The routine is scheduled at 5:30 PM PT for this reason.
 - **Don't bulk-rewrite after a taxonomy edit** — that's `tools/migrate_themes.py`. This skill is for ongoing quality, not migration.
 - **Don't bypass the retag CLI** by hand-editing `data/ticker_themes.json`. The CLI validates against the taxonomy and appends an audit trail; hand-edits do neither.
 - **Don't `--paths` your way around a bare-L1 finding** without picking a real L2. If no existing L2 fits, add one to `theme_taxonomy.yaml` first, then retag.
+- **Don't churn Singletons.** `Singleton`-only tickers are excluded from `[UNTAGGED]` on purpose — they were deliberately classified. Only the capped, evidence-based rescue pass in Phase 4 revisits them.

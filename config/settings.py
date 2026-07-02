@@ -17,7 +17,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # ─── Environment Variables ──────────────────────────────────────
 load_dotenv(PROJECT_ROOT / ".env")
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 IBKR_FLEX_TOKEN = os.getenv("IBKR_FLEX_TOKEN", "")
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 

@@ -3,15 +3,11 @@
 Tags committed to ``data/ticker_themes.json`` are git-locked. The auto-
 validation loop is disabled so existing tickers never silently change.
 When real life changes (a company announces an AI pivot, divests a segment,
-etc.) use this tool to re-classify just that ticker.
+etc.) use this tool to re-classify just that ticker. This is also the write
+path the weekday audit routine uses for first-time classification of
+untagged tickers — the caller (human or Claude) supplies the judgment.
 
-Examples
---------
-Classify NVDA from scratch with Gemini (consulting the cached profile):
-
-    python -m src.themes.retag --ticker NVDA --reason "Announced AI infra pivot"
-
-Set paths manually without consulting the LLM:
+Example::
 
     python -m src.themes.retag --ticker AMZN --reason "Add cloud after AWS split" \\
         --paths "Software & Internet / E-commerce" "AI / Data Center / Cloud & Hyperscalers"
@@ -35,25 +31,6 @@ if str(ROOT) not in sys.path:
 from config.settings import THEME_REVIEW_STATE_FILE  # noqa: E402
 from src.themes.theme_registry import load_ticker_themes, save_ticker_themes  # noqa: E402
 from src.themes.theme_taxonomy import load_taxonomy, validate_path  # noqa: E402
-
-
-def _classify_with_gemini(ticker: str) -> List[str]:
-    """Run a single-ticker Gemini classification using cached company metadata."""
-    from src.themes.company_profiles import ensure_company_profiles  # noqa: WPS433
-    from src.themes.tag_new_tickers import (  # noqa: WPS433
-        build_classification_prompt,
-        classify_tickers_with_gemini,
-    )
-
-    profiles = ensure_company_profiles([ticker])
-    if ticker not in profiles:
-        raise RuntimeError(f"No company metadata available for {ticker}")
-    # existing_themes is unused by the new prompt — empty list is fine
-    result = classify_tickers_with_gemini([ticker], [], profiles)
-    paths = result.get(ticker, [])
-    if not paths:
-        raise RuntimeError(f"Gemini returned no paths for {ticker}")
-    return paths
 
 
 def _validate(paths: List[str]) -> None:
@@ -98,8 +75,9 @@ def main() -> None:
     parser.add_argument(
         "--paths",
         nargs="+",
+        required=True,
         help=(
-            "Override paths explicitly instead of running Gemini. "
+            "Canonical taxonomy paths to set. "
             'Provide 1-3 paths, e.g. --paths "AI / Data Center / Memory"'
         ),
     )
@@ -112,13 +90,7 @@ def main() -> None:
     ticker_themes = load_ticker_themes()
     old_paths = list(ticker_themes.get(ticker, []))
 
-    if args.paths:
-        new_paths = list(args.paths)[:3]
-        print(f"Using manual paths for {ticker}: {new_paths}")
-    else:
-        new_paths = _classify_with_gemini(ticker)
-        print(f"Gemini classified {ticker} as: {new_paths}")
-
+    new_paths = list(args.paths)[:3]
     _validate(new_paths)
 
     ticker_themes[ticker] = new_paths

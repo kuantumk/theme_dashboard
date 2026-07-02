@@ -1,31 +1,38 @@
 """Audit data/ticker_themes.json for tagging quality.
 
-Mechanical checks that don't require AI judgment. Run periodically (weekly
-is a reasonable cadence) and before merging taxonomy edits. The companion
-skill ./.claude/skills/audit-theme-tags/SKILL.md wraps this with AI-judgment
-passes (business-pivot detection, web-verified L2 selection).
+Mechanical checks that don't require AI judgment. Run periodically (the
+weekday audit routine runs it every session) and before merging taxonomy
+edits. The companion skill ./.claude/skills/audit-theme-tags/SKILL.md wraps
+this with AI-judgment passes (business-pivot detection, web-verified L2
+selection, untagged-ticker classification).
 
 Reads:
   - data/ticker_themes.json
   - config/theme_taxonomy.yaml (via src.themes.theme_taxonomy)
+  - screening_output/consolidated/_union_MMDDYYYY.txt (newest by date) for
+    the [UNTAGGED] screened-ticker worklist
 
 Exit code:
-  0 -> no [BUG] findings (WARN/INFO may still be present)
+  0 -> no [BUG] findings (WARN/INFO/UNTAGGED may still be present)
   1 -> one or more [BUG] findings (mechanical defects that produce viz
        bugs or break downstream tooling)
 """
 from __future__ import annotations
 
+import argparse
 import json
+import re
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.themes.theme_registry import filter_untagged  # noqa: E402
 from src.themes.theme_taxonomy import (  # noqa: E402
     _children,
     load_taxonomy,
@@ -34,11 +41,52 @@ from src.themes.theme_taxonomy import (  # noqa: E402
 )
 
 TICKER_THEMES_FILE = ROOT / "data" / "ticker_themes.json"
+CONSOLIDATED_DIR = ROOT / "screening_output" / "consolidated"
+UNION_STEM_RE = re.compile(r"^_union_(\d{8})$")
 
 
-def load_ticker_themes() -> Dict[str, List[str]]:
-    with open(TICKER_THEMES_FILE, encoding="utf-8") as f:
+def load_ticker_themes(themes_file: Path = TICKER_THEMES_FILE) -> Dict[str, List[str]]:
+    with open(themes_file, encoding="utf-8") as f:
         return json.load(f)
+
+
+def find_latest_union_file(consolidated_dir: Path = CONSOLIDATED_DIR) -> Optional[Path]:
+    """Newest `_union_MMDDYYYY.txt` by parsed date (lexical order gets
+    year boundaries wrong: _union_01022026 > _union_12312025)."""
+    if not consolidated_dir.is_dir():
+        return None
+
+    latest: Optional[Tuple[datetime, Path]] = None
+    for path in consolidated_dir.glob("_union_*.txt"):
+        match = UNION_STEM_RE.match(path.stem)
+        if not match:
+            continue
+        try:
+            stamp = datetime.strptime(match.group(1), "%m%d%Y")
+        except ValueError:
+            continue
+        if latest is None or stamp > latest[0]:
+            latest = (stamp, path)
+    return latest[1] if latest else None
+
+
+def load_union_tickers(union_file: Path) -> List[str]:
+    tickers = set()
+    for line in union_file.read_text(encoding="utf-8").splitlines():
+        clean = line.strip().upper()
+        if clean:
+            tickers.add(clean)
+    return sorted(tickers)
+
+
+def check_untagged_screened(
+    themes: Dict[str, List[str]], union_tickers: List[str]
+) -> List[str]:
+    """Screened tickers awaiting first-time classification: no entry, empty
+    list, or Uncategorized-only. Singleton-only is a deliberate terminal
+    classification and is NOT flagged (the audit skill's rescue pass revisits
+    Singletons on evidence instead)."""
+    return filter_untagged(union_tickers, themes)
 
 
 def check_bare_l1_with_children(
@@ -97,10 +145,36 @@ def count_generic_only(themes: Dict[str, List[str]]) -> Dict[str, int]:
     return out
 
 
-def main() -> int:
-    themes = load_ticker_themes()
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Mechanical audit of ticker theme tags.",
+    )
+    parser.add_argument(
+        "--themes-file",
+        type=Path,
+        default=TICKER_THEMES_FILE,
+        help="Path to ticker_themes.json (default: data/ticker_themes.json)",
+    )
+    parser.add_argument(
+        "--union-file",
+        type=Path,
+        default=None,
+        help=(
+            "Explicit consolidated union file for the [UNTAGGED] check "
+            "(default: newest _union_MMDDYYYY.txt in --consolidated-dir)"
+        ),
+    )
+    parser.add_argument(
+        "--consolidated-dir",
+        type=Path,
+        default=CONSOLIDATED_DIR,
+        help="Directory holding _union_MMDDYYYY.txt files",
+    )
+    args = parser.parse_args(argv)
+
+    themes = load_ticker_themes(args.themes_file)
     tax = load_taxonomy()
-    print(f"Auditing {len(themes)} tickers in {TICKER_THEMES_FILE.name}")
+    print(f"Auditing {len(themes)} tickers in {args.themes_file.name}")
     print("=" * 60)
 
     bug_count = 0
@@ -160,6 +234,35 @@ def main() -> int:
         for ticker, d in dupes[:10]:
             print(f"  {ticker}: {d}")
 
+    # UNTAGGED: screened tickers awaiting first-time classification. This is
+    # the audit routine's tagging worklist, not a defect — a non-empty list is
+    # expected between the daily screen and the routine run, so it never
+    # affects the exit code.
+    untagged: List[str] = []
+    union_file = args.union_file or find_latest_union_file(args.consolidated_dir)
+    if union_file is None or not union_file.exists():
+        print("\n[UNTAGGED] No consolidated union file found - skipping screened-ticker check")
+    else:
+        union_tickers = load_union_tickers(union_file)
+        untagged = check_untagged_screened(themes, union_tickers)
+        match = UNION_STEM_RE.match(union_file.stem)
+        worklist_date = (
+            datetime.strptime(match.group(1), "%m%d%Y").date().isoformat()
+            if match
+            else "unknown date"
+        )
+        print(
+            f"\n[UNTAGGED] Screened tickers awaiting classification: {len(untagged)} "
+            f"(worklist {union_file.name}, session {worklist_date})"
+        )
+        if untagged:
+            print(f"  Tickers: {untagged}")
+            print("  Fix: classify each via the audit-theme-tags skill, writing with")
+            print(
+                '    python -m src.themes.retag --ticker <T> '
+                '--reason "New ticker classification: ..." --paths "<L1 / L2 [/ L3]>"'
+            )
+
     # INFO: generic-only counts
     generic = count_generic_only(themes)
     print(
@@ -169,7 +272,10 @@ def main() -> int:
     )
 
     print("\n" + "=" * 60)
-    print(f"Summary: {bug_count} BUG finding(s), {warn_count} WARN finding(s)")
+    print(
+        f"Summary: {bug_count} BUG finding(s), {warn_count} WARN finding(s), "
+        f"{len(untagged)} untagged screened ticker(s)"
+    )
     return 1 if bug_count > 0 else 0
 
 

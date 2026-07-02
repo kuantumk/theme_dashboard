@@ -67,3 +67,27 @@ def save_ticker_themes(ticker_themes: Mapping[str, Iterable[str] | None]) -> Non
     with TICKER_THEMES_FILE.open("w", encoding="utf-8") as handle:
         json.dump(merged, handle, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def is_untagged(themes: Iterable[str] | None) -> bool:
+    """True when a tag list still needs first-time classification.
+
+    Untagged = no entry, an empty list, or ``Uncategorized``-only.
+    ``Singleton``-only does NOT count: a Singleton is a deliberate terminal
+    classification (no peer group), revisited by the audit routine's
+    evidence-based rescue pass rather than re-classified mechanically.
+    """
+    normalized = normalize_theme_list(themes)
+    if not normalized:
+        return True
+    return all(theme == "Uncategorized" for theme in normalized)
+
+
+def filter_untagged(tickers: Iterable[str], ticker_themes: Mapping[str, Iterable[str] | None]) -> List[str]:
+    """Return the sorted subset of ``tickers`` that is untagged per ``is_untagged``."""
+    untagged = set()
+    for ticker in tickers:
+        clean = str(ticker).strip().upper()
+        if clean and is_untagged(ticker_themes.get(clean)):
+            untagged.add(clean)
+    return sorted(untagged)

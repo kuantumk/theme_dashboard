@@ -29,7 +29,6 @@ from glob import glob
 import pandas as pd
 
 from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR
-import src.stock_utils as su
 from src.data_collection.scrape_market_breadth import get_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
 from src.themes.tag_new_tickers import sync_screened_ticker_themes

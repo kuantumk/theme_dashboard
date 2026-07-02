@@ -10,7 +10,12 @@ from typing import Dict, Iterable, List, Mapping, Sequence, Set
 from config.settings import CONFIG, GOOGLE_API_KEY, LOG_DIR, THEME_REVIEW_STATE_FILE
 from src.themes.company_profiles import ensure_company_profiles
 from src.themes.import_existing_themes import import_google_sheet_themes
-from src.themes.theme_registry import load_ticker_themes, normalize_theme_list, save_ticker_themes
+from src.themes.theme_registry import (
+    filter_untagged,
+    load_ticker_themes,
+    normalize_theme_list,
+    save_ticker_themes,
+)
 
 
 GENERIC_SHEET_THEMES = {"Uncategorized", "Singleton"}
@@ -39,15 +44,21 @@ class GeminiJSONError(ValueError):
 
 
 @dataclass
-class ThemeClassificationResult:
+class ThemeSyncResult:
+    """Outcome of the daily non-LLM theme sync.
+
+    ``untagged_tickers`` is the worklist the weekday audit routine consumes:
+    screened tickers with no entry, an empty list, or ``Uncategorized``-only
+    (``Singleton``-only excluded — see ``theme_registry.is_untagged``).
+    ``profile_candidates`` is the broader generic set (Singleton included)
+    whose company profiles were warmed for the routine.
+    """
+
     ticker_themes: Dict[str, List[str]]
     google_sheet_tickers: List[str]
     google_sheet_updates: List[Dict[str, object]]
-    classification_candidates: List[str]
-    classified_tickers: List[str]
-    new_tickers: List[str]
-    unresolved_tickers: List[str]
-    failed_batches: List[Dict[str, object]]
+    profile_candidates: List[str]
+    untagged_tickers: List[str]
     audit_report_path: str | None = None
 
 
@@ -638,23 +649,20 @@ def identify_tickers_needing_classification(
     return candidates
 
 
-def write_classification_audit(
-    result: ThemeClassificationResult,
+def write_sync_audit(
+    result: ThemeSyncResult,
     *,
     screened_ticker_count: int,
 ) -> str:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    audit_path = LOG_DIR / f"theme_classification_audit_{datetime.now().strftime('%Y-%m-%d')}.json"
+    audit_path = LOG_DIR / f"theme_sync_audit_{datetime.now().strftime('%Y-%m-%d')}.json"
     payload = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "screened_ticker_count": screened_ticker_count,
         "google_sheet_tickers": result.google_sheet_tickers,
         "google_sheet_updates": result.google_sheet_updates,
-        "classification_candidates": result.classification_candidates,
-        "classified_tickers": result.classified_tickers,
-        "new_tickers": result.new_tickers,
-        "unresolved_tickers": result.unresolved_tickers,
-        "failed_batches": result.failed_batches,
+        "profile_candidates": result.profile_candidates,
+        "untagged_tickers": result.untagged_tickers,
     }
     with audit_path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
@@ -662,7 +670,12 @@ def write_classification_audit(
     return str(audit_path)
 
 
-def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificationResult:
+def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeSyncResult:
+    """Daily non-LLM theme sync: Sheet ground truth + profile warming + untagged surfacing.
+
+    LLM classification of the surfaced untagged tickers happens in the weekday
+    Claude Code audit routine (``.claude/routines/theme_tag_audit.md``), not here.
+    """
     screened_tickers = normalize_tickers(screener_tickers)
     previous_themes = load_existing_themes()
     ticker_themes = {ticker: list(themes) for ticker, themes in previous_themes.items()}
@@ -680,94 +693,43 @@ def sync_screened_ticker_themes(screener_tickers: Set[str]) -> ThemeClassificati
     except Exception as exc:
         print(f"Warning: Failed to fetch Google Sheet: {exc}")
 
-    classification_candidates = identify_tickers_needing_classification(
+    # Broader generic set (Singleton included): warm the committed profile
+    # cache so the audit routine has company context for both first-time
+    # classification and Singleton rescue.
+    profile_candidates = identify_tickers_needing_classification(
         screened_tickers,
         ticker_themes,
         google_sheet_tickers,
     )
-    classified_tags: Dict[str, List[str]] = {}
-    failed_batches: List[Dict[str, object]] = []
-
-    if classification_candidates:
-        profiles = ensure_company_profiles(classification_candidates)
-        total_batches = (len(classification_candidates) + CLASSIFICATION_BATCH_SIZE - 1) // CLASSIFICATION_BATCH_SIZE
-        for start in range(0, len(classification_candidates), CLASSIFICATION_BATCH_SIZE):
-            batch = classification_candidates[start:start + CLASSIFICATION_BATCH_SIZE]
-            batch_num = start // CLASSIFICATION_BATCH_SIZE + 1
-            existing_themes = get_existing_theme_taxonomy({**ticker_themes, **classified_tags})
-            try:
-                batch_tags, batch_failures = classify_tickers_with_retries(
-                    batch,
-                    existing_themes,
-                    profiles,
-                    batch_num=batch_num,
-                    total_batches=total_batches,
-                )
-                batch_tags = filter_sector_inconsistent_themes(batch_tags, profiles)
-                classified_tags.update(batch_tags)
-                failed_batches.extend(batch_failures)
-                for failure in batch_failures:
-                    status = "terminal" if failure.get("terminal") else "retried"
-                    print(
-                        "  Classification batch "
-                        f"{failure.get('batch_num')}/{failure.get('total_batches')} {status}: "
-                        f"{failure.get('error')}"
-                    )
-            except Exception as exc:
-                failure = _failure_payload(
-                    batch=batch,
-                    batch_num=batch_num,
-                    total_batches=total_batches,
-                    error=exc,
-                    retried=False,
-                    terminal=True,
-                )
-                failed_batches.append(failure)
-                print(
-                    f"  Warning: classification batch {batch_num}/{total_batches} failed "
-                    f"({len(batch)} tickers): {exc}"
-                )
-
-        for ticker, themes in classified_tags.items():
-            if not themes_match(ticker_themes.get(ticker), themes):
-                print(f"  Classified {ticker}: {ticker_themes.get(ticker)} -> {themes}")
-                ticker_themes[ticker] = themes
+    if profile_candidates:
+        try:
+            ensure_company_profiles(profile_candidates)
+        except Exception as exc:
+            print(f"Warning: profile cache warming failed: {exc}")
     else:
-        print("No screened tickers need new classification")
+        print("No screened tickers need profile warming")
 
     save_ticker_themes(ticker_themes)
     persisted_themes = load_ticker_themes()
 
-    new_tickers = [
-        ticker
-        for ticker in classification_candidates
-        if not normalize_theme_list(previous_themes.get(ticker)) and ticker in classified_tags
-    ]
-    unresolved_tickers = [
-        ticker
-        for ticker in classification_candidates
-        if ticker not in classified_tags
-    ]
+    untagged_tickers = filter_untagged(screened_tickers, persisted_themes)
 
-    result = ThemeClassificationResult(
+    result = ThemeSyncResult(
         ticker_themes=persisted_themes,
         google_sheet_tickers=sorted(google_sheet_tickers),
         google_sheet_updates=google_sheet_updates,
-        classification_candidates=classification_candidates,
-        classified_tickers=sorted(classified_tags.keys()),
-        new_tickers=sorted(new_tickers),
-        unresolved_tickers=unresolved_tickers,
-        failed_batches=failed_batches,
+        profile_candidates=profile_candidates,
+        untagged_tickers=untagged_tickers,
     )
-    result.audit_report_path = write_classification_audit(result, screened_ticker_count=len(screened_tickers))
+    result.audit_report_path = write_sync_audit(result, screened_ticker_count=len(screened_tickers))
 
     print(
-        "\nTheme classification summary: "
-        f"{len(result.classified_tickers)} classified, "
-        f"{len(result.new_tickers)} new, "
-        f"{len(result.unresolved_tickers)} unresolved"
+        "\nTheme sync summary: "
+        f"{len(result.google_sheet_updates)} sheet update(s), "
+        f"{len(result.profile_candidates)} profile(s) warmed, "
+        f"{len(result.untagged_tickers)} untagged awaiting routine"
     )
-    print(f"Classification audit saved to {result.audit_report_path}")
+    print(f"Sync audit saved to {result.audit_report_path}")
     return result
 
 
@@ -1230,11 +1192,8 @@ def validate_dashboard_ticker_themes(dashboard_tickers: Iterable[str]) -> ThemeV
     return result
 
 
-def tag_new_tickers(screener_tickers: Set[str]) -> Dict[str, List[str]]:
-    return sync_screened_ticker_themes(screener_tickers).ticker_themes
-
-
 if __name__ == "__main__":
     test_tickers = {"NVDA", "TSLA", "AAPL", "LUNR", "LMND"}
     result = sync_screened_ticker_themes(test_tickers)
     print(f"\nTotal tickers in database: {len(result.ticker_themes)}")
+    print(f"Untagged awaiting routine: {result.untagged_tickers}")

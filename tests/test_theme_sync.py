@@ -9,7 +9,7 @@ import src.themes.tag_new_tickers as tagger
 from src.themes.tag_new_tickers import (
     CLASSIFICATION_BATCH_SIZE,
     GeminiJSONError,
-    ThemeClassificationResult,
+    ThemeSyncResult,
     apply_google_sheet_ground_truth,
     apply_validation_decisions,
     classify_tickers_with_retries,
@@ -17,8 +17,9 @@ from src.themes.tag_new_tickers import (
     prune_theme_review_state,
     select_validation_tickers,
     themes_match,
-    write_classification_audit,
+    write_sync_audit,
 )
+from src.themes.theme_registry import filter_untagged, is_untagged
 
 
 class ThemeSyncTests(unittest.TestCase):
@@ -230,34 +231,91 @@ class ThemeClassificationBatchTests(unittest.TestCase):
         self.assertFalse(failures[0]["retried"])
         self.assertTrue(failures[0]["terminal"])
 
-    def test_classification_audit_includes_failed_batches(self) -> None:
-        result = ThemeClassificationResult(
+    def test_sync_audit_includes_untagged_and_profile_candidates(self) -> None:
+        result = ThemeSyncResult(
             ticker_themes={},
             google_sheet_tickers=[],
             google_sheet_updates=[],
-            classification_candidates=["AIM"],
-            classified_tickers=[],
-            new_tickers=[],
-            unresolved_tickers=["AIM"],
-            failed_batches=[
-                {
-                    "batch_num": 1,
-                    "total_batches": 1,
-                    "size": 1,
-                    "tickers": ["AIM"],
-                    "error_type": "GeminiJSONError",
-                    "error": "Gemini returned invalid JSON",
-                    "retried": False,
-                    "terminal": True,
-                }
-            ],
+            profile_candidates=["AIM", "SGL"],
+            untagged_tickers=["AIM"],
         )
 
         with TemporaryDirectory() as tmp_dir, patch.object(tagger, "LOG_DIR", Path(tmp_dir)):
-            audit_path = write_classification_audit(result, screened_ticker_count=1)
+            audit_path = write_sync_audit(result, screened_ticker_count=2)
             payload = json.loads(Path(audit_path).read_text(encoding="utf-8"))
 
-        self.assertEqual(payload["failed_batches"], result.failed_batches)
+        self.assertEqual(payload["untagged_tickers"], ["AIM"])
+        self.assertEqual(payload["profile_candidates"], ["AIM", "SGL"])
+        self.assertEqual(payload["screened_ticker_count"], 2)
+
+
+class UntaggedPredicateTests(unittest.TestCase):
+    """The shared untagged definition (theme_registry.is_untagged) drives both
+    the daily report's 'awaiting audit' list and the audit script's [UNTAGGED]
+    check — Singleton-only is a deliberate classification and never counts."""
+
+    def test_missing_empty_and_uncategorized_only_are_untagged(self) -> None:
+        self.assertTrue(is_untagged(None))
+        self.assertTrue(is_untagged([]))
+        self.assertTrue(is_untagged(["Uncategorized"]))
+
+    def test_singleton_only_is_not_untagged(self) -> None:
+        self.assertFalse(is_untagged(["Singleton"]))
+
+    def test_canonical_and_mixed_are_not_untagged(self) -> None:
+        self.assertFalse(is_untagged(["Space / Launch"]))
+        self.assertFalse(is_untagged(["Uncategorized", "Space / Launch"]))
+
+    def test_filter_untagged_sorts_and_normalizes(self) -> None:
+        themes = {"AAA": ["Uncategorized"], "BBB": ["Singleton"], "CCC": ["Space / Launch"]}
+        self.assertEqual(filter_untagged(["ccc", "bbb", "aaa", "ddd"], themes), ["AAA", "DDD"])
+
+
+class SlimmedSyncTests(unittest.TestCase):
+    def test_sync_surfaces_untagged_without_classifying(self) -> None:
+        store = {
+            "OLD": ["AI / Data Center / Memory"],
+            "UNC": ["Uncategorized"],
+            "SGL": ["Singleton"],
+        }
+        warmed = []
+
+        def fake_save(mapping):
+            store.clear()
+            store.update({k: list(v) for k, v in mapping.items()})
+
+        with patch.object(tagger, "load_existing_themes", side_effect=lambda: {k: list(v) for k, v in store.items()}), \
+             patch.object(tagger, "import_google_sheet_themes", return_value={"SHT": ["Space / Launch"]}), \
+             patch.object(tagger, "ensure_company_profiles", side_effect=lambda t: warmed.extend(t) or {}), \
+             patch.object(tagger, "save_ticker_themes", side_effect=fake_save), \
+             patch.object(tagger, "load_ticker_themes", side_effect=lambda: {k: list(v) for k, v in store.items()}), \
+             patch.object(tagger, "write_sync_audit", return_value="unused.json"):
+            result = tagger.sync_screened_ticker_themes({"OLD", "UNC", "SGL", "NEW", "SHT"})
+
+        # Untagged worklist: missing entry + Uncategorized-only; Singleton-only excluded.
+        self.assertEqual(result.untagged_tickers, ["NEW", "UNC"])
+        # Sheet onboarding for a brand-new ticker still works.
+        self.assertEqual(store["SHT"], ["Space / Launch"])
+        # Existing canonical tags untouched.
+        self.assertEqual(store["OLD"], ["AI / Data Center / Memory"])
+        # Profile cache warmed for the broader generic set (Singleton included).
+        self.assertEqual(sorted(warmed), ["NEW", "SGL", "UNC"])
+        # No classification happened: the untagged ticker was not written.
+        self.assertNotIn("NEW", store)
+
+    def test_sync_survives_sheet_failure(self) -> None:
+        store = {"UNC": ["Uncategorized"]}
+
+        with patch.object(tagger, "load_existing_themes", side_effect=lambda: {k: list(v) for k, v in store.items()}), \
+             patch.object(tagger, "import_google_sheet_themes", side_effect=RuntimeError("sheet down")), \
+             patch.object(tagger, "ensure_company_profiles", side_effect=lambda t: {}), \
+             patch.object(tagger, "save_ticker_themes", side_effect=lambda m: None), \
+             patch.object(tagger, "load_ticker_themes", side_effect=lambda: {k: list(v) for k, v in store.items()}), \
+             patch.object(tagger, "write_sync_audit", return_value="unused.json"):
+            result = tagger.sync_screened_ticker_themes({"UNC", "NEW"})
+
+        self.assertEqual(result.untagged_tickers, ["NEW", "UNC"])
+        self.assertEqual(result.google_sheet_tickers, [])
 
 
 class SectorConsistencyFilterTests(unittest.TestCase):

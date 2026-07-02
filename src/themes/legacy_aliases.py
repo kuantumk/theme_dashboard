@@ -7,9 +7,8 @@ and in any cached LLM output) to the canonical hierarchical paths defined in
 The authoritative mapping table lives in ``tools/migrate_themes.py`` — the
 one-shot migration script that produced today's ``data/ticker_themes.json``.
 This module re-exposes that table so live code (``apply_google_sheet_ground_truth``,
-the Gemini classification post-validator, the dashboard exporter, …) can
-translate stale labels into the new taxonomy on the fly without having to
-re-run the migration.
+the dashboard exporter, …) can translate stale labels into the new taxonomy
+on the fly without having to re-run the migration.
 
 When a new stale label appears in the Google Sheet that has no mapping here,
 ``normalize_legacy_theme`` returns ``None`` and the caller drops it. Add the

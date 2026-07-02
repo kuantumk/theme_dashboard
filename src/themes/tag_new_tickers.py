@@ -76,13 +76,6 @@ def themes_match(left: Iterable[str] | None, right: Iterable[str] | None) -> boo
     return sorted(normalize_theme_list(left)) == sorted(normalize_theme_list(right))
 
 
-def get_existing_theme_taxonomy(ticker_themes: Mapping[str, List[str]]) -> List[str]:
-    themes = set()
-    for theme_list in ticker_themes.values():
-        themes.update(normalize_theme_list(theme_list))
-    return sorted(themes)
-
-
 def _canonicalize_sheet_themes(raw_themes: Iterable[str]) -> tuple[List[str], List[str]]:
     """Translate sheet labels into canonical taxonomy paths.
 

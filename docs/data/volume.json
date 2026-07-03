@@ -382,7 +382,7 @@
           "vars_20ema": 5.31,
           "rs": 96.2,
           "price": 31.68,
-          "float": "100.5",
+          "float": "100.4",
           "eps": "62",
           "sales": "41",
           "inst": "+1.6",
@@ -404,7 +404,7 @@
           "vars": 10.11,
           "vars_20ema": 11.58,
           "rs": 0.0,
-          "price": 136.85,
+          "price": 136.86,
           "float": "364.0",
           "eps": "34",
           "sales": "17",
@@ -1226,7 +1226,7 @@
           "rs": 30.8,
           "price": 270.89,
           "float": "266.5",
-          "eps": "182",
+          "eps": "181",
           "sales": "130",
           "inst": "+2.3",
           "short": 11.2
@@ -1249,29 +1249,6 @@
       ],
       "l1": "Clean Energy",
       "l2": "Fuel Cell & Hydrogen",
-      "l3": null
-    },
-    {
-      "name": "Industrials / Heavy Machinery & Components",
-      "avg_vars": 1.74,
-      "tickers": [
-        {
-          "ticker": "NNBR",
-          "scan": "both",
-          "days_since_hv": 3,
-          "vars": 1.74,
-          "vars_20ema": 1.62,
-          "rs": 88.5,
-          "price": 3.49,
-          "float": "46.5",
-          "eps": "350",
-          "sales": "12",
-          "inst": "-1.1",
-          "short": 4.5
-        }
-      ],
-      "l1": "Industrials",
-      "l2": "Heavy Machinery & Components",
       "l3": null
     },
     {
@@ -1664,13 +1641,13 @@
     },
     {
       "name": "Defense & Aerospace / Commercial Aerospace / Manufacturing",
-      "avg_vars": 1.28,
+      "avg_vars": 1.29,
       "tickers": [
         {
           "ticker": "DCO",
           "scan": "denvol",
           "days_since_hv": 6,
-          "vars": 5.46,
+          "vars": 5.47,
           "vars_20ema": 5.44,
           "rs": 96.2,
           "price": 186.6,
@@ -1698,6 +1675,43 @@
       "l1": "Defense & Aerospace",
       "l2": "Commercial Aerospace",
       "l3": "Manufacturing"
+    },
+    {
+      "name": "Industrials / Heavy Machinery & Components",
+      "avg_vars": 1.27,
+      "tickers": [
+        {
+          "ticker": "NNBR",
+          "scan": "both",
+          "days_since_hv": 3,
+          "vars": 1.75,
+          "vars_20ema": 1.62,
+          "rs": 88.5,
+          "price": 3.49,
+          "float": "46.5",
+          "eps": "350",
+          "sales": "12",
+          "inst": "-1.1",
+          "short": 4.5
+        },
+        {
+          "ticker": "FPS",
+          "scan": "volspike",
+          "days_since_hv": 0,
+          "vars": 0.78,
+          "vars_20ema": 3.74,
+          "rs": 0.0,
+          "price": 46.86,
+          "float": "139.7",
+          "eps": null,
+          "sales": "116",
+          "inst": "+77.0",
+          "short": 4.8
+        }
+      ],
+      "l1": "Industrials",
+      "l2": "Heavy Machinery & Components",
+      "l3": null
     },
     {
       "name": "Biotech / Infectious Disease & Vaccines",
@@ -1763,7 +1777,7 @@
           "vars_20ema": -2.94,
           "rs": 96.2,
           "price": 12.86,
-          "float": "253.1",
+          "float": "252.8",
           "eps": "107",
           "sales": "12",
           "inst": "+1.4",
@@ -1823,11 +1837,11 @@
           "vars_20ema": 5.13,
           "rs": 84.6,
           "price": 44.19,
-          "float": "103.6",
+          "float": null,
           "eps": "-9",
           "sales": null,
           "inst": "+8.1",
-          "short": 10.3
+          "short": null
         },
         {
           "ticker": "MGTX",
@@ -1965,31 +1979,8 @@
       "l3": "Optics"
     },
     {
-      "name": "Biotech / Psychedelic Medicine",
-      "avg_vars": 0.23,
-      "tickers": [
-        {
-          "ticker": "ATAI",
-          "scan": "both",
-          "days_since_hv": 6,
-          "vars": 0.23,
-          "vars_20ema": -1.82,
-          "rs": 88.5,
-          "price": 5.19,
-          "float": "294.1",
-          "eps": "85",
-          "sales": "-39",
-          "inst": "+16.3",
-          "short": 8.0
-        }
-      ],
-      "l1": "Biotech",
-      "l2": "Psychedelic Medicine",
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Power & Cooling",
-      "avg_vars": 0.22,
+      "avg_vars": 0.36,
       "tickers": [
         {
           "ticker": "AOSL",
@@ -2004,6 +1995,20 @@
           "sales": "-1",
           "inst": "-1.8",
           "short": 8.7
+        },
+        {
+          "ticker": "FPS",
+          "scan": "volspike",
+          "days_since_hv": 0,
+          "vars": 0.78,
+          "vars_20ema": 3.74,
+          "rs": 0.0,
+          "price": 46.86,
+          "float": "139.7",
+          "eps": null,
+          "sales": "116",
+          "inst": "+77.0",
+          "short": 4.8
         },
         {
           "ticker": "ALGM",
@@ -2037,6 +2042,29 @@
       "l1": "AI",
       "l2": "Data Center",
       "l3": "Power & Cooling"
+    },
+    {
+      "name": "Biotech / Psychedelic Medicine",
+      "avg_vars": 0.23,
+      "tickers": [
+        {
+          "ticker": "ATAI",
+          "scan": "both",
+          "days_since_hv": 6,
+          "vars": 0.23,
+          "vars_20ema": -1.82,
+          "rs": 88.5,
+          "price": 5.19,
+          "float": "294.1",
+          "eps": "85",
+          "sales": "-39",
+          "inst": "+16.3",
+          "short": 8.0
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Psychedelic Medicine",
+      "l3": null
     },
     {
       "name": "Software & Internet / Data & Analytics",
@@ -2251,7 +2279,7 @@
           "rs": 23.1,
           "price": 14.7,
           "float": "2060.0",
-          "eps": "89",
+          "eps": "85",
           "sales": "-1",
           "inst": "-86.4",
           "short": 0.4,
@@ -2270,7 +2298,7 @@
           "ticker": "DCO",
           "scan": "denvol",
           "days_since_hv": 6,
-          "vars": 5.46,
+          "vars": 5.47,
           "vars_20ema": 5.44,
           "rs": 96.2,
           "price": 186.6,
@@ -2646,6 +2674,43 @@
       "l3": "Major"
     },
     {
+      "name": "Metals & Mining / Aluminum",
+      "avg_vars": -1.29,
+      "tickers": [
+        {
+          "ticker": "KALU",
+          "scan": "denvol",
+          "days_since_hv": 6,
+          "vars": 0.31,
+          "vars_20ema": 3.06,
+          "rs": 0.0,
+          "price": 176.27,
+          "float": "15.9",
+          "eps": "71",
+          "sales": "42",
+          "inst": "+0.2",
+          "short": 4.8
+        },
+        {
+          "ticker": "CSTM",
+          "scan": "volspike",
+          "days_since_hv": 6,
+          "vars": -2.89,
+          "vars_20ema": 1.77,
+          "rs": 0.0,
+          "price": 29.49,
+          "float": "124.1",
+          "eps": "171",
+          "sales": "24",
+          "inst": "+0.8",
+          "short": 4.9
+        }
+      ],
+      "l1": "Metals & Mining",
+      "l2": "Aluminum",
+      "l3": null
+    },
+    {
       "name": "Automotive (Legacy) / Components",
       "avg_vars": -1.37,
       "tickers": [
@@ -2653,7 +2718,7 @@
           "ticker": "NNBR",
           "scan": "both",
           "days_since_hv": 3,
-          "vars": 1.74,
+          "vars": 1.75,
           "vars_20ema": 1.62,
           "rs": 88.5,
           "price": 3.49,
@@ -3038,13 +3103,13 @@
     },
     {
       "name": "Industrials / Modular Space",
-      "avg_vars": -2.66,
+      "avg_vars": -2.65,
       "tickers": [
         {
           "ticker": "CVEO",
           "scan": "denvol",
           "days_since_hv": 6,
-          "vars": -2.66,
+          "vars": -2.65,
           "vars_20ema": 3.9,
           "rs": 0.0,
           "price": 30.0,
@@ -3080,29 +3145,6 @@
       ],
       "l1": "EV & Autonomous",
       "l2": "EV Manufacturers",
-      "l3": null
-    },
-    {
-      "name": "Metals & Mining / Aluminum",
-      "avg_vars": -2.89,
-      "tickers": [
-        {
-          "ticker": "CSTM",
-          "scan": "volspike",
-          "days_since_hv": 6,
-          "vars": -2.89,
-          "vars_20ema": 1.77,
-          "rs": 0.0,
-          "price": 29.49,
-          "float": "124.1",
-          "eps": "171",
-          "sales": "24",
-          "inst": "+0.8",
-          "short": 4.9
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Aluminum",
       "l3": null
     },
     {
@@ -3886,12 +3928,6 @@
         "ticker_count": 3
       },
       {
-        "id": "Industrials / Heavy Machinery & Components",
-        "kind": "leaf",
-        "parent": "Industrials",
-        "ticker_count": 1
-      },
-      {
         "id": "Metals & Mining",
         "kind": "l1"
       },
@@ -3952,6 +3988,12 @@
         "ticker_count": 2
       },
       {
+        "id": "Industrials / Heavy Machinery & Components",
+        "kind": "leaf",
+        "parent": "Industrials",
+        "ticker_count": 2
+      },
+      {
         "id": "Biotech / Infectious Disease & Vaccines",
         "kind": "leaf",
         "parent": "Biotech",
@@ -3992,16 +4034,16 @@
         "ticker_count": 3
       },
       {
+        "id": "AI / Data Center / Power & Cooling",
+        "kind": "leaf",
+        "parent": "AI",
+        "ticker_count": 4
+      },
+      {
         "id": "Biotech / Psychedelic Medicine",
         "kind": "leaf",
         "parent": "Biotech",
         "ticker_count": 1
-      },
-      {
-        "id": "AI / Data Center / Power & Cooling",
-        "kind": "leaf",
-        "parent": "AI",
-        "ticker_count": 3
       },
       {
         "id": "Software & Internet / Data & Analytics",
@@ -4118,6 +4160,12 @@
         "ticker_count": 1
       },
       {
+        "id": "Metals & Mining / Aluminum",
+        "kind": "leaf",
+        "parent": "Metals & Mining",
+        "ticker_count": 2
+      },
+      {
         "id": "Automotive (Legacy) / Components",
         "kind": "leaf",
         "parent": "Automotive (Legacy)",
@@ -4207,12 +4255,6 @@
         "id": "EV & Autonomous / EV Manufacturers",
         "kind": "leaf",
         "parent": "EV & Autonomous",
-        "ticker_count": 1
-      },
-      {
-        "id": "Metals & Mining / Aluminum",
-        "kind": "leaf",
-        "parent": "Metals & Mining",
         "ticker_count": 1
       },
       {
@@ -4535,11 +4577,6 @@
         "kind": "is_a"
       },
       {
-        "source": "Industrials / Heavy Machinery & Components",
-        "target": "Industrials",
-        "kind": "is_a"
-      },
-      {
         "source": "Metals & Mining / Rare Earth & Strategic",
         "target": "Metals & Mining",
         "kind": "is_a"
@@ -4580,6 +4617,11 @@
         "kind": "is_a"
       },
       {
+        "source": "Industrials / Heavy Machinery & Components",
+        "target": "Industrials",
+        "kind": "is_a"
+      },
+      {
         "source": "Biotech / Infectious Disease & Vaccines",
         "target": "Biotech",
         "kind": "is_a"
@@ -4610,13 +4652,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Psychedelic Medicine",
-        "target": "Biotech",
+        "source": "AI / Data Center / Power & Cooling",
+        "target": "AI",
         "kind": "is_a"
       },
       {
-        "source": "AI / Data Center / Power & Cooling",
-        "target": "AI",
+        "source": "Biotech / Psychedelic Medicine",
+        "target": "Biotech",
         "kind": "is_a"
       },
       {
@@ -4705,6 +4747,11 @@
         "kind": "is_a"
       },
       {
+        "source": "Metals & Mining / Aluminum",
+        "target": "Metals & Mining",
+        "kind": "is_a"
+      },
+      {
         "source": "Automotive (Legacy) / Components",
         "target": "Automotive (Legacy)",
         "kind": "is_a"
@@ -4767,11 +4814,6 @@
       {
         "source": "EV & Autonomous / EV Manufacturers",
         "target": "EV & Autonomous",
-        "kind": "is_a"
-      },
-      {
-        "source": "Metals & Mining / Aluminum",
-        "target": "Metals & Mining",
         "kind": "is_a"
       },
       {

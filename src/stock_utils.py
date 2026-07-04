@@ -3,6 +3,7 @@ Stock utilities module.
 
 Provides:
 - pickle_object_to_file / load_object_from_pickle
+- save_df_to_parquet / load_df_from_parquet
 - get_tickers_from_nasdaq
 - get_latest_file
 - SCREENING_OUTPUT_DIR (via config)
@@ -12,6 +13,9 @@ import re
 import pickle
 from ftplib import FTP
 from io import StringIO
+from pathlib import Path
+
+import pandas as pd
 
 from config.settings import PROJECT_ROOT, SCREENING_OUTPUT_DIR, DATA_DIR
 
@@ -27,6 +31,52 @@ def load_object_from_pickle(pickle_path):
     with open(pickle_path, 'rb') as handle:
         obj = pickle.load(handle)
     return obj
+
+
+def save_df_to_parquet(df, file_path):
+    """Save a DataFrame to parquet (pyarrow engine), creating parent dirs.
+
+    Screening numeric outputs (master tables, per-screener results) use this
+    instead of CSV — parquet is columnar, ~5-10x smaller on disk, preserves
+    dtypes exactly, and reads faster across the per-day time-travel window.
+    The index is not written (all callers use a default RangeIndex).
+    """
+    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(file_path, engine='pyarrow', index=False)
+
+
+def load_df_from_parquet(parquet_path):
+    """Load a DataFrame from parquet (pyarrow engine).
+
+    On pandas 3.x, string columns come back as the default ``str`` dtype —
+    exactly what ``pd.read_csv`` produces — so the CSV->parquet swap is
+    transparent to the screening consumers (which already run on pandas 3.x).
+    """
+    return pd.read_parquet(parquet_path, engine='pyarrow')
+
+
+def union_tickers_for_date(date_str, screeners, root=SCREENING_OUTPUT_DIR):
+    """Union of screened tickers across per-screener parquet outputs for a date.
+
+    Replaces the removed ``_union_<date>.txt``: each screener writes its passing
+    rows to ``<screener>/<screener>_<date>.parquet``, so the day's screened
+    union is the distinct ``ticker`` values across the given screeners. Missing
+    or empty per-screener files contribute nothing (a 0-match screener still
+    writes a readable empty parquet). ``date_str`` is ``YYYY-MM-DD``.
+    """
+    root = Path(root)
+    tickers = set()
+    for screener in screeners:
+        parquet_file = root / screener / f'{screener}_{date_str}.parquet'
+        if not parquet_file.exists():
+            continue
+        try:
+            df = load_df_from_parquet(parquet_file)
+        except Exception:
+            continue
+        if 'ticker' in df.columns and len(df):
+            tickers.update(str(t) for t in df['ticker'].tolist())
+    return tickers
 
 
 def get_latest_file(file_dir, keyword, file_index=1):

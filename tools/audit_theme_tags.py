@@ -9,8 +9,8 @@ selection, untagged-ticker classification).
 Reads:
   - data/ticker_themes.json
   - config/theme_taxonomy.yaml (via src.themes.theme_taxonomy)
-  - screening_output/consolidated/_union_MMDDYYYY.txt (newest by date) for
-    the [UNTAGGED] screened-ticker worklist
+  - data/screened_union.json ({"date", "tickers"}) written by the daily
+    workflow, for the [UNTAGGED] screened-ticker worklist
 
 Exit code:
   0 -> no [BUG] findings (WARN/INFO/UNTAGGED may still be present)
@@ -21,10 +21,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from collections import Counter
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -41,8 +39,7 @@ from src.themes.theme_taxonomy import (  # noqa: E402
 )
 
 TICKER_THEMES_FILE = ROOT / "data" / "ticker_themes.json"
-CONSOLIDATED_DIR = ROOT / "screening_output" / "consolidated"
-UNION_STEM_RE = re.compile(r"^_union_(\d{8})$")
+SCREENED_UNION_FILE = ROOT / "data" / "screened_union.json"
 
 
 def load_ticker_themes(themes_file: Path = TICKER_THEMES_FILE) -> Dict[str, List[str]]:
@@ -50,33 +47,18 @@ def load_ticker_themes(themes_file: Path = TICKER_THEMES_FILE) -> Dict[str, List
         return json.load(f)
 
 
-def find_latest_union_file(consolidated_dir: Path = CONSOLIDATED_DIR) -> Optional[Path]:
-    """Newest `_union_MMDDYYYY.txt` by parsed date (lexical order gets
-    year boundaries wrong: _union_01022026 > _union_12312025)."""
-    if not consolidated_dir.is_dir():
-        return None
-
-    latest: Optional[Tuple[datetime, Path]] = None
-    for path in consolidated_dir.glob("_union_*.txt"):
-        match = UNION_STEM_RE.match(path.stem)
-        if not match:
-            continue
-        try:
-            stamp = datetime.strptime(match.group(1), "%m%d%Y")
-        except ValueError:
-            continue
-        if latest is None or stamp > latest[0]:
-            latest = (stamp, path)
-    return latest[1] if latest else None
-
-
-def load_union_tickers(union_file: Path) -> List[str]:
-    tickers = set()
-    for line in union_file.read_text(encoding="utf-8").splitlines():
-        clean = line.strip().upper()
-        if clean:
-            tickers.add(clean)
-    return sorted(tickers)
+def load_screened_union(union_file: Path) -> Tuple[Optional[str], List[str]]:
+    """Load the screened-ticker worklist from `data/screened_union.json`
+    (`{"date": "YYYY-MM-DD", "tickers": [...]}`), written each run by the daily
+    workflow. Returns `(session_date, sorted_upper_tickers)`. Replaces the
+    consolidated `_union_MMDDYYYY.txt` files removed with the parquet migration.
+    """
+    with open(union_file, encoding="utf-8") as f:
+        payload = json.load(f)
+    tickers = sorted(
+        {str(t).strip().upper() for t in payload.get("tickers", []) if str(t).strip()}
+    )
+    return payload.get("date"), tickers
 
 
 def check_untagged_screened(
@@ -158,17 +140,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--union-file",
         type=Path,
-        default=None,
+        default=SCREENED_UNION_FILE,
         help=(
-            "Explicit consolidated union file for the [UNTAGGED] check "
-            "(default: newest _union_MMDDYYYY.txt in --consolidated-dir)"
+            "Screened-ticker worklist JSON for the [UNTAGGED] check "
+            "(default: data/screened_union.json)"
         ),
-    )
-    parser.add_argument(
-        "--consolidated-dir",
-        type=Path,
-        default=CONSOLIDATED_DIR,
-        help="Directory holding _union_MMDDYYYY.txt files",
     )
     args = parser.parse_args(argv)
 
@@ -239,21 +215,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     # expected between the daily screen and the routine run, so it never
     # affects the exit code.
     untagged: List[str] = []
-    union_file = args.union_file or find_latest_union_file(args.consolidated_dir)
+    union_file = args.union_file
     if union_file is None or not union_file.exists():
-        print("\n[UNTAGGED] No consolidated union file found - skipping screened-ticker check")
+        print("\n[UNTAGGED] No screened_union.json found - skipping screened-ticker check")
     else:
-        union_tickers = load_union_tickers(union_file)
+        worklist_date, union_tickers = load_screened_union(union_file)
         untagged = check_untagged_screened(themes, union_tickers)
-        match = UNION_STEM_RE.match(union_file.stem)
-        worklist_date = (
-            datetime.strptime(match.group(1), "%m%d%Y").date().isoformat()
-            if match
-            else "unknown date"
-        )
         print(
             f"\n[UNTAGGED] Screened tickers awaiting classification: {len(untagged)} "
-            f"(worklist {union_file.name}, session {worklist_date})"
+            f"(worklist {union_file.name}, session {worklist_date or 'unknown date'})"
         )
         if untagged:
             print(f"  Tickers: {untagged}")

@@ -4,6 +4,10 @@
 price_data:
   lookback_days: 500
 
+# Screening output retention (local scratch; regenerated each run, never committed)
+screening_output:
+  retention_sessions: 10   # keep only the newest N per-day parquet files per subdir
+
 fundamental_data:
   cache_days: 7
   rate_limit_seconds: 2

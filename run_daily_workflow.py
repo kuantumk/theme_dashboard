@@ -28,7 +28,8 @@ import json
 from glob import glob
 import pandas as pd
 
-from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR
+from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR, DATA_DIR
+import src.stock_utils as su
 from src.data_collection.scrape_market_breadth import get_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
 from src.themes.tag_new_tickers import sync_screened_ticker_themes
@@ -98,35 +99,32 @@ def run_script(script_path: str, args: list = None, description: str = None):
 
 
 def consolidate_screener_results(date_str: str):
-    """Consolidate all screener txt files into union file."""
+    """Union screened tickers from the per-screener parquet outputs for ``date_str``.
+
+    The per-screener ``.txt`` files were removed; each screener writes its
+    passing rows to ``<screener>/<screener>_<date>.parquet``, so the day's union
+    is the distinct ``ticker`` values across ``CONFIG['screeners']``. The latest
+    union is written to ``data/screened_union.json`` (committed, tiny) so the
+    weekday tag-audit routine can read the worklist from a clone that no longer
+    carries ``screening_output/``. The set is returned for the in-process theme
+    and report steps.
+    """
     logger.info("Consolidating screener results...")
 
-    consolidated_dir = SCREENING_OUTPUT_DIR / 'consolidated'
-    consolidated_dir.mkdir(exist_ok=True, parents=True)
+    all_tickers = su.union_tickers_for_date(
+        date_str, CONFIG['screeners'], root=SCREENING_OUTPUT_DIR
+    )
 
-    # Find all screener txt files for today
-    txt_date = datetime.strptime(date_str, '%Y-%m-%d').strftime('%m%d%Y')
-    screener_files = sorted(consolidated_dir.glob(f'_*_{txt_date}.txt'))
+    union_file = DATA_DIR / 'screened_union.json'
+    union_file.parent.mkdir(exist_ok=True, parents=True)
+    with union_file.open('w', encoding='utf-8') as f:
+        json.dump({'date': date_str, 'tickers': sorted(all_tickers)}, f, indent=2)
 
-    if not screener_files:
-        logger.warning(f"No screener files found for {txt_date}")
-        return set()
-
-    # Combine all tickers (skip 0-match screeners that produced empty files)
-    all_tickers = set()
-    for f in screener_files:
-        if f.stat().st_size == 0:
-            logger.info(f"  {f.name}: 0 matches (empty file, skipping)")
-            continue
-        df = pd.read_csv(f, header=None)
-        all_tickers.update(df[0].tolist())
-
-    # Save union file
-    union_file = consolidated_dir / f'_union_{txt_date}.txt'
-    pd.DataFrame(sorted(all_tickers)).to_csv(union_file, index=False, header=False)
-
-    logger.info(f"OK Consolidated {len(screener_files)} screeners -> {len(all_tickers)} unique tickers")
-    logger.info(f"  Saved to {union_file}")
+    logger.info(
+        f"OK Consolidated {len(CONFIG['screeners'])} screeners -> "
+        f"{len(all_tickers)} unique tickers"
+    )
+    logger.info(f"  Union written to {union_file}")
 
     return all_tickers
 
@@ -195,7 +193,7 @@ def run_daily_workflow():
         logger.info(f"{'='*80}")
 
         # Get today's date from latest master file
-        master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.csv')))
+        master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
         if not master_files:
             raise FileNotFoundError("No master files found")
 
@@ -244,7 +242,7 @@ def run_daily_workflow():
         logger.info(f"STEP: Analyze theme strength")
         logger.info(f"{'='*80}")
 
-        master_df = pd.read_csv(latest_master)
+        master_df = su.load_df_from_parquet(latest_master)
         theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
         regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'

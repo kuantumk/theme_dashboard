@@ -906,7 +906,7 @@ def update_themes_history(theme_data):
     )
 
 
-def _build_themes_snapshot(master_csv_file, union_file, day_flags):
+def _build_themes_snapshot(master_file, screened_set, day_flags):
     """Build a themes snapshot for one historical day, bypassing the markdown round-trip.
 
     This is the backfill counterpart to `parse_report` — instead of parsing
@@ -938,7 +938,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         DASHBOARD_TICKERS_PER_THEME,
     )
 
-    master_df = pd.read_csv(master_csv_file).fillna(0)
+    master_df = su.load_df_from_parquet(master_file).fillna(0)
     if master_df.empty:
         return None
 
@@ -946,18 +946,9 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
     if not csv_date:
         return None
 
-    # Load screened tickers for this day from union file
-    screened_set = set()
-    if union_file and union_file.exists():
-        try:
-            with open(union_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    t = line.strip()
-                    if t:
-                        screened_set.add(t.upper())
-        except OSError:
-            pass
-
+    # Screened tickers for this day are derived by the caller from that date's
+    # per-screener parquet outputs (the `.txt`/_union files were removed).
+    screened_set = {str(t).upper() for t in screened_set}
     if not screened_set:
         return None
 
@@ -1078,12 +1069,10 @@ def export_themes_history(day_flags, current_themes_data=None):
     swapping it into the history list when the dates match.
     """
     master_dir = SCREENING_OUTPUT_DIR / 'master'
-    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
     if not master_files:
         print("   No master CSVs found, skipping themes history backfill")
         return
-
-    consolidated = SCREENING_OUTPUT_DIR / 'consolidated'
 
     cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
     recent_masters = [
@@ -1094,12 +1083,6 @@ def export_themes_history(day_flags, current_themes_data=None):
     history = []
     for master_file in recent_masters:
         date_str = master_file.stem.replace('master_', '')  # YYYY-MM-DD
-        try:
-            yyyy, mm, dd = date_str.split('-')
-            txt_date = f'{mm}{dd}{yyyy}'  # MMDDYYYY (consolidated file format)
-        except ValueError:
-            continue
-        union_file = consolidated / f'_union_{txt_date}.txt'
 
         # Reuse today's report-parsed snapshot when it covers the same date —
         # this preserves NCFD/MMFI and any report-only fields for the latest
@@ -1109,7 +1092,12 @@ def export_themes_history(day_flags, current_themes_data=None):
             history.append(current_themes_data)
             continue
 
-        snap = _build_themes_snapshot(master_file, union_file, day_flags)
+        # The per-screener `.txt`/_union files were removed; the day's screened
+        # union is derived from that date's per-screener parquet outputs.
+        screened_set = su.union_tickers_for_date(
+            date_str, CONFIG['screeners'], root=SCREENING_OUTPUT_DIR
+        )
+        snap = _build_themes_snapshot(master_file, screened_set, day_flags)
         if snap is None:
             continue
         history.append(snap)
@@ -1183,7 +1171,7 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers
 
-    df = pd.read_csv(csv_file).fillna(0)
+    df = su.load_df_from_parquet(csv_file).fillna(0)
     if df.empty:
         return None
 
@@ -1281,7 +1269,7 @@ def export_momentum_136(day_flags):
     and regenerates back-dated CSVs (e.g. after a new indicator was added).
     """
     csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv'),
+        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.parquet'),
         reverse=True,  # newest first
     )
     if not csvs:
@@ -1336,7 +1324,7 @@ def _build_vars_snapshot(csv_file, day_flags):
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
 
-    df = pd.read_csv(csv_file).fillna(0)
+    df = su.load_df_from_parquet(csv_file).fillna(0)
     if df.empty:
         return None
 
@@ -1450,12 +1438,12 @@ def export_vars(day_flags):
     """Export VARS — rebuilds full N-session history from CSVs every run.
 
     Mirrors `export_momentum_136` / `export_parabolic`: iterates the per-day
-    vars_*.csv files within the retention window (last THEMES_HISTORY_DAYS
+    vars_*.parquet files within the retention window (last THEMES_HISTORY_DAYS
     calendar days) and writes both the current snapshot and the history file
     from scratch.
     """
     csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv'),
+        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.parquet'),
         reverse=True,
     )
     if not csvs:
@@ -1518,10 +1506,10 @@ def _build_volume_snapshot(date_str, day_flags):
     frames = []
     scan_for_ticker = {}
     for scan_name in ('volspike', 'denvol'):
-        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.csv'
+        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.parquet'
         if not csv_file.exists():
             continue
-        sdf = pd.read_csv(csv_file).fillna(0)
+        sdf = su.load_df_from_parquet(csv_file).fillna(0)
         if sdf.empty:
             continue
         frames.append(sdf)
@@ -1634,8 +1622,8 @@ def export_volume(day_flags):
     """
     dates = set()
     for scan_name in ('volspike', 'denvol'):
-        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.csv'):
-            # filename pattern: <scan>_YYYY-MM-DD.csv
+        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.parquet'):
+            # filename pattern: <scan>_YYYY-MM-DD.parquet
             dates.add(csv_file.stem[len(scan_name) + 1:])
 
     if not dates:
@@ -1848,7 +1836,7 @@ def export_parabolic():
     import pandas as pd
 
     master_dir = SCREENING_OUTPUT_DIR / 'master'
-    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
     if not master_files:
         print("   No master CSVs found, skipping parabolic export")
         return None
@@ -1863,8 +1851,8 @@ def export_parabolic():
 
     for idx, master_file in enumerate(current_files):
         previous_file = master_files[idx + 1] if idx + 1 < len(master_files) else None
-        master_df = pd.read_csv(master_file)
-        previous_df = pd.read_csv(previous_file) if previous_file else None
+        master_df = su.load_df_from_parquet(master_file)
+        previous_df = su.load_df_from_parquet(previous_file) if previous_file else None
         report_date = (
             str(master_df['date'].iloc[0])
             if 'date' in master_df.columns and not master_df.empty
@@ -2056,6 +2044,14 @@ def export_all():
     print(f"\n{'=' * 60}")
     print("EXPORT COMPLETE")
     print(f"{'=' * 60}")
+
+    # Retention prune: screening_output/ is local scratch regenerated each run.
+    # Runs LAST — after every history JSON above has read the full window — so it
+    # only trims what the next run will regenerate (no-op in CI; nothing persists).
+    from src.screening.prune_screening_output import prune_screening_output
+    pruned = prune_screening_output()
+    if pruned:
+        print(f"Pruned {pruned} old screening_output parquet file(s)")
 
 
 if __name__ == '__main__':

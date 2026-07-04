@@ -2045,6 +2045,14 @@ def export_all():
     print("EXPORT COMPLETE")
     print(f"{'=' * 60}")
 
+    # Retention prune: screening_output/ is local scratch regenerated each run.
+    # Runs LAST — after every history JSON above has read the full window — so it
+    # only trims what the next run will regenerate (no-op in CI; nothing persists).
+    from src.screening.prune_screening_output import prune_screening_output
+    pruned = prune_screening_output()
+    if pruned:
+        print(f"Pruned {pruned} old screening_output parquet file(s)")
+
 
 if __name__ == '__main__':
     export_all()

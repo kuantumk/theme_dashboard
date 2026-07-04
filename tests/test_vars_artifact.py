@@ -53,16 +53,16 @@ class VarsArtifactTests(unittest.TestCase):
             screening_dir = root / "screening_output"
             vars_dir = screening_dir / "vars"
             vars_dir.mkdir(parents=True)
-            (vars_dir / "vars_2026-05-07.csv").write_text("placeholder", encoding="utf-8")
-            (vars_dir / "vars_2026-05-08.csv").write_text("placeholder", encoding="utf-8")
+            (vars_dir / "vars_2026-05-07.parquet").write_text("placeholder", encoding="utf-8")
+            (vars_dir / "vars_2026-05-08.parquet").write_text("placeholder", encoding="utf-8")
 
             output_dir = root / "docs" / "data"
             output_dir.mkdir(parents=True)
             artifact_dir = root / "artifacts" / "vars"
 
             snapshots = {
-                "vars_2026-05-08.csv": latest,
-                "vars_2026-05-07.csv": previous,
+                "vars_2026-05-08.parquet": latest,
+                "vars_2026-05-07.parquet": previous,
             }
 
             def fake_build_snapshot(csv_file, day_flags):

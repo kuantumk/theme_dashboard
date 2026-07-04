@@ -1183,7 +1183,7 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers
 
-    df = pd.read_csv(csv_file).fillna(0)
+    df = su.load_df_from_parquet(csv_file).fillna(0)
     if df.empty:
         return None
 
@@ -1281,7 +1281,7 @@ def export_momentum_136(day_flags):
     and regenerates back-dated CSVs (e.g. after a new indicator was added).
     """
     csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.csv'),
+        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.parquet'),
         reverse=True,  # newest first
     )
     if not csvs:
@@ -1336,7 +1336,7 @@ def _build_vars_snapshot(csv_file, day_flags):
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
 
-    df = pd.read_csv(csv_file).fillna(0)
+    df = su.load_df_from_parquet(csv_file).fillna(0)
     if df.empty:
         return None
 
@@ -1450,12 +1450,12 @@ def export_vars(day_flags):
     """Export VARS — rebuilds full N-session history from CSVs every run.
 
     Mirrors `export_momentum_136` / `export_parabolic`: iterates the per-day
-    vars_*.csv files within the retention window (last THEMES_HISTORY_DAYS
+    vars_*.parquet files within the retention window (last THEMES_HISTORY_DAYS
     calendar days) and writes both the current snapshot and the history file
     from scratch.
     """
     csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.csv'),
+        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.parquet'),
         reverse=True,
     )
     if not csvs:
@@ -1518,10 +1518,10 @@ def _build_volume_snapshot(date_str, day_flags):
     frames = []
     scan_for_ticker = {}
     for scan_name in ('volspike', 'denvol'):
-        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.csv'
+        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.parquet'
         if not csv_file.exists():
             continue
-        sdf = pd.read_csv(csv_file).fillna(0)
+        sdf = su.load_df_from_parquet(csv_file).fillna(0)
         if sdf.empty:
             continue
         frames.append(sdf)
@@ -1634,8 +1634,8 @@ def export_volume(day_flags):
     """
     dates = set()
     for scan_name in ('volspike', 'denvol'):
-        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.csv'):
-            # filename pattern: <scan>_YYYY-MM-DD.csv
+        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.parquet'):
+            # filename pattern: <scan>_YYYY-MM-DD.parquet
             dates.add(csv_file.stem[len(scan_name) + 1:])
 
     if not dates:

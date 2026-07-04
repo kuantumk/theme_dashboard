@@ -58,7 +58,7 @@ if __name__ == '__main__':
         filtered_master_df = master_df[filter_conditions]
 
         output_date = master_df['date'].values[0]
-        filtered_master_df.to_csv(output_dir / f'{screener_name}_{output_date}.csv', index=False)
+        su.save_df_to_parquet(filtered_master_df, output_dir / f'{screener_name}_{output_date}.parquet')
 
         txt_date = dt.datetime.strptime(output_date, '%Y-%m-%d').strftime('%m%d%Y')
         output_tickers = filtered_master_df['ticker']

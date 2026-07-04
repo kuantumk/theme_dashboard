@@ -906,7 +906,7 @@ def update_themes_history(theme_data):
     )
 
 
-def _build_themes_snapshot(master_csv_file, union_file, day_flags):
+def _build_themes_snapshot(master_file, union_file, day_flags):
     """Build a themes snapshot for one historical day, bypassing the markdown round-trip.
 
     This is the backfill counterpart to `parse_report` — instead of parsing
@@ -938,7 +938,7 @@ def _build_themes_snapshot(master_csv_file, union_file, day_flags):
         DASHBOARD_TICKERS_PER_THEME,
     )
 
-    master_df = pd.read_csv(master_csv_file).fillna(0)
+    master_df = su.load_df_from_parquet(master_file).fillna(0)
     if master_df.empty:
         return None
 
@@ -1078,7 +1078,7 @@ def export_themes_history(day_flags, current_themes_data=None):
     swapping it into the history list when the dates match.
     """
     master_dir = SCREENING_OUTPUT_DIR / 'master'
-    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
     if not master_files:
         print("   No master CSVs found, skipping themes history backfill")
         return
@@ -1848,7 +1848,7 @@ def export_parabolic():
     import pandas as pd
 
     master_dir = SCREENING_OUTPUT_DIR / 'master'
-    master_files = sorted(master_dir.glob('master_*.csv'), reverse=True)
+    master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
     if not master_files:
         print("   No master CSVs found, skipping parabolic export")
         return None
@@ -1863,8 +1863,8 @@ def export_parabolic():
 
     for idx, master_file in enumerate(current_files):
         previous_file = master_files[idx + 1] if idx + 1 < len(master_files) else None
-        master_df = pd.read_csv(master_file)
-        previous_df = pd.read_csv(previous_file) if previous_file else None
+        master_df = su.load_df_from_parquet(master_file)
+        previous_df = su.load_df_from_parquet(previous_file) if previous_file else None
         report_date = (
             str(master_df['date'].iloc[0])
             if 'date' in master_df.columns and not master_df.empty

@@ -26,13 +26,13 @@ args = parser.parse_args()
 
 def load_master_table(offset_days):
     if args.test:
-        master_file = su.get_latest_file(SCREENING_OUTPUT_DIR / 'master_test', 'master_*.csv', 1)
-        master_df = pd.read_csv(master_file).fillna(0)
+        master_file = su.get_latest_file(SCREENING_OUTPUT_DIR / 'master_test', 'master_*.parquet', 1)
+        master_df = su.load_df_from_parquet(master_file).fillna(0)
         master_df = master_df[master_df['ticker'] == args.ticker]
     else:
         file_index = offset_days + 1
-        master_file = su.get_latest_file(SCREENING_OUTPUT_DIR / 'master', 'master_*.csv', file_index)
-        master_df = pd.read_csv(master_file).fillna(0)
+        master_file = su.get_latest_file(SCREENING_OUTPUT_DIR / 'master', 'master_*.parquet', file_index)
+        master_df = su.load_df_from_parquet(master_file).fillna(0)
 
     return master_df
 

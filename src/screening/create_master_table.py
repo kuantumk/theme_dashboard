@@ -94,8 +94,8 @@ def create_master_table(offset_days, daily_price, date_list):
     output_dir = SCREENING_OUTPUT_DIR / 'master'
     output_dir.mkdir(exist_ok=True, parents=True)
 
-    output_file = output_dir / f'master_{run_date_str}.csv'
-    df.to_csv(output_file, index=False, date_format='%Y-%m-%d')
+    output_file = output_dir / f'master_{run_date_str}.parquet'
+    su.save_df_to_parquet(df, output_file)
     print(f"OK Master table saved for {run_date_str} to {output_file}")
 
 

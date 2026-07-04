@@ -251,13 +251,13 @@ def get_hot_themes(theme_df: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.csv')))
+    master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
     if not master_files:
         print("No master tables found. Run create_master_table.py first.")
     else:
         latest_master = master_files[-1]
         print(f"Loading {latest_master}")
-        master_df = pd.read_csv(latest_master)
+        master_df = su.load_df_from_parquet(latest_master)
         theme_df = analyze_theme_strength(master_df)
 
         print(f"\n{'='*80}")

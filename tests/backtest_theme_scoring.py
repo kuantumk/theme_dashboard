@@ -194,11 +194,11 @@ def score_theme_new(theme, tickers, master_df, screened_tickers, weights):
 
 def load_day_data(date_str):
     """Load master_df and screened_tickers for a given date."""
-    # Master CSV
-    master_file = MASTER_DIR / f"master_{date_str}.csv"
+    # Master table (parquet)
+    master_file = MASTER_DIR / f"master_{date_str}.parquet"
     if not master_file.exists():
         return None, None
-    master_df = pd.read_csv(master_file).fillna(0)
+    master_df = pd.read_parquet(master_file).fillna(0)
 
     # Union file (screened tickers)
     mmddyyyy = datetime.strptime(date_str, '%Y-%m-%d').strftime('%m%d%Y')
@@ -211,8 +211,8 @@ def load_day_data(date_str):
 
 
 def get_available_dates():
-    """Get all dates with master CSVs."""
-    files = sorted(MASTER_DIR.glob("master_*.csv"))
+    """Get all dates with master tables."""
+    files = sorted(MASTER_DIR.glob("master_*.parquet"))
     return [f.stem.replace("master_", "") for f in files]
 
 

@@ -195,7 +195,7 @@ def run_daily_workflow():
         logger.info(f"{'='*80}")
 
         # Get today's date from latest master file
-        master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.csv')))
+        master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
         if not master_files:
             raise FileNotFoundError("No master files found")
 
@@ -244,7 +244,7 @@ def run_daily_workflow():
         logger.info(f"STEP: Analyze theme strength")
         logger.info(f"{'='*80}")
 
-        master_df = pd.read_csv(latest_master)
+        master_df = su.load_df_from_parquet(latest_master)
         theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
         regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'

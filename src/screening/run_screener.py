@@ -4,8 +4,6 @@ Run a stock screener against the master table.
 
 import argparse
 import importlib
-import pandas as pd
-import datetime as dt
 
 import src.stock_utils as su
 from config.settings import SCREENING_OUTPUT_DIR
@@ -42,8 +40,6 @@ if __name__ == '__main__':
     screener_name = args.screener
     output_dir = SCREENING_OUTPUT_DIR / screener_name
     output_dir.mkdir(exist_ok=True)
-    consolidated_dir = SCREENING_OUTPUT_DIR / 'consolidated'
-    consolidated_dir.mkdir(exist_ok=True)
 
     screener_module = f'src.screening.screeners.{screener_name}'
     screener = importlib.import_module(screener_module)
@@ -59,8 +55,3 @@ if __name__ == '__main__':
 
         output_date = master_df['date'].values[0]
         su.save_df_to_parquet(filtered_master_df, output_dir / f'{screener_name}_{output_date}.parquet')
-
-        txt_date = dt.datetime.strptime(output_date, '%Y-%m-%d').strftime('%m%d%Y')
-        output_tickers = filtered_master_df['ticker']
-        pd.DataFrame(output_tickers).to_csv(output_dir / f'{screener_name}_{txt_date}.txt', index=False, header=False)
-        pd.DataFrame(output_tickers).to_csv(SCREENING_OUTPUT_DIR / 'consolidated' / f'_{screener_name}_{txt_date}.txt', index=False, header=False)

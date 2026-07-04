@@ -55,6 +55,30 @@ def load_df_from_parquet(parquet_path):
     return pd.read_parquet(parquet_path, engine='pyarrow')
 
 
+def union_tickers_for_date(date_str, screeners, root=SCREENING_OUTPUT_DIR):
+    """Union of screened tickers across per-screener parquet outputs for a date.
+
+    Replaces the removed ``_union_<date>.txt``: each screener writes its passing
+    rows to ``<screener>/<screener>_<date>.parquet``, so the day's screened
+    union is the distinct ``ticker`` values across the given screeners. Missing
+    or empty per-screener files contribute nothing (a 0-match screener still
+    writes a readable empty parquet). ``date_str`` is ``YYYY-MM-DD``.
+    """
+    root = Path(root)
+    tickers = set()
+    for screener in screeners:
+        parquet_file = root / screener / f'{screener}_{date_str}.parquet'
+        if not parquet_file.exists():
+            continue
+        try:
+            df = load_df_from_parquet(parquet_file)
+        except Exception:
+            continue
+        if 'ticker' in df.columns and len(df):
+            tickers.update(str(t) for t in df['ticker'].tolist())
+    return tickers
+
+
 def get_latest_file(file_dir, keyword, file_index=1):
     """
     Get the latest file in a folder matching a keyword pattern.

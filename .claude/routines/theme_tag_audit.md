@@ -38,7 +38,7 @@ Read `.claude/skills/audit-theme-tags/SKILL.md` and execute its workflow complet
 
 Worklist notes:
 
-- If the newest `_union_*.txt` is not from today (holiday, CI failure), proceed anyway and say so in your report — the audit of existing tags is still worth doing; the stale worklist date goes in the PR body.
+- The `[UNTAGGED]` worklist comes from `data/screened_union.json` (committed by the daily workflow — `screening_output/` itself is no longer committed). If its `date` is not today (holiday, CI failure), proceed anyway and say so in your report — the audit of existing tags is still worth doing; the stale worklist date goes in the PR body.
 - If Phase 4 needs an L2 that doesn't exist, add it to `config/theme_taxonomy.yaml` in the same working tree; it ships in the same PR.
 - All writes go through `uv run python -m src.themes.retag ... --paths ...` — never hand-edit `data/ticker_themes.json`.
 

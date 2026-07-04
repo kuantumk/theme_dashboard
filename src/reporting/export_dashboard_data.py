@@ -906,7 +906,7 @@ def update_themes_history(theme_data):
     )
 
 
-def _build_themes_snapshot(master_file, union_file, day_flags):
+def _build_themes_snapshot(master_file, screened_set, day_flags):
     """Build a themes snapshot for one historical day, bypassing the markdown round-trip.
 
     This is the backfill counterpart to `parse_report` — instead of parsing
@@ -946,18 +946,9 @@ def _build_themes_snapshot(master_file, union_file, day_flags):
     if not csv_date:
         return None
 
-    # Load screened tickers for this day from union file
-    screened_set = set()
-    if union_file and union_file.exists():
-        try:
-            with open(union_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    t = line.strip()
-                    if t:
-                        screened_set.add(t.upper())
-        except OSError:
-            pass
-
+    # Screened tickers for this day are derived by the caller from that date's
+    # per-screener parquet outputs (the `.txt`/_union files were removed).
+    screened_set = {str(t).upper() for t in screened_set}
     if not screened_set:
         return None
 
@@ -1083,8 +1074,6 @@ def export_themes_history(day_flags, current_themes_data=None):
         print("   No master CSVs found, skipping themes history backfill")
         return
 
-    consolidated = SCREENING_OUTPUT_DIR / 'consolidated'
-
     cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
     recent_masters = [
         f for f in master_files
@@ -1094,12 +1083,6 @@ def export_themes_history(day_flags, current_themes_data=None):
     history = []
     for master_file in recent_masters:
         date_str = master_file.stem.replace('master_', '')  # YYYY-MM-DD
-        try:
-            yyyy, mm, dd = date_str.split('-')
-            txt_date = f'{mm}{dd}{yyyy}'  # MMDDYYYY (consolidated file format)
-        except ValueError:
-            continue
-        union_file = consolidated / f'_union_{txt_date}.txt'
 
         # Reuse today's report-parsed snapshot when it covers the same date —
         # this preserves NCFD/MMFI and any report-only fields for the latest
@@ -1109,7 +1092,12 @@ def export_themes_history(day_flags, current_themes_data=None):
             history.append(current_themes_data)
             continue
 
-        snap = _build_themes_snapshot(master_file, union_file, day_flags)
+        # The per-screener `.txt`/_union files were removed; the day's screened
+        # union is derived from that date's per-screener parquet outputs.
+        screened_set = su.union_tickers_for_date(
+            date_str, CONFIG['screeners'], root=SCREENING_OUTPUT_DIR
+        )
+        snap = _build_themes_snapshot(master_file, screened_set, day_flags)
         if snap is None:
             continue
         history.append(snap)

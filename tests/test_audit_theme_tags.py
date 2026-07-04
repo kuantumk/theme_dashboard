@@ -27,40 +27,25 @@ def _load_audit_module():
 audit = _load_audit_module()
 
 
-class FindLatestUnionFileTests(unittest.TestCase):
-    def test_picks_newest_by_parsed_date_not_lexical(self) -> None:
+def _write_union(path: Path, date: str, tickers) -> None:
+    path.write_text(json.dumps({"date": date, "tickers": tickers}), encoding="utf-8")
+
+
+class LoadScreenedUnionTests(unittest.TestCase):
+    def test_normalizes_and_sorts_tickers(self) -> None:
         with TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            (tmp_path / "_union_12312025.txt").write_text("OLD\n", encoding="utf-8")
-            (tmp_path / "_union_01022026.txt").write_text("NEW\n", encoding="utf-8")
-            (tmp_path / "_union_garbage.txt").write_text("X\n", encoding="utf-8")
-            (tmp_path / "_volspike_01032026.txt").write_text("X\n", encoding="utf-8")
+            union = Path(tmp) / "screened_union.json"
+            _write_union(union, "2026-01-02", ["nvda", "", " TSLA ", "NVDA"])
+            date, tickers = audit.load_screened_union(union)
+        self.assertEqual(date, "2026-01-02")
+        self.assertEqual(tickers, ["NVDA", "TSLA"])
 
-            latest = audit.find_latest_union_file(tmp_path)
-
-        self.assertIsNotNone(latest)
-        self.assertEqual(latest.name, "_union_01022026.txt")
-
-    def test_returns_none_when_no_union_files(self) -> None:
+    def test_empty_union_yields_no_findings(self) -> None:
         with TemporaryDirectory() as tmp:
-            self.assertIsNone(audit.find_latest_union_file(Path(tmp)))
-
-    def test_returns_none_for_missing_directory(self) -> None:
-        self.assertIsNone(audit.find_latest_union_file(Path("does/not/exist")))
-
-
-class UnionTickerTests(unittest.TestCase):
-    def test_load_union_tickers_normalizes_and_sorts(self) -> None:
-        with TemporaryDirectory() as tmp:
-            union = Path(tmp) / "_union_01022026.txt"
-            union.write_text("nvda\n\n TSLA \nNVDA\n", encoding="utf-8")
-            self.assertEqual(audit.load_union_tickers(union), ["NVDA", "TSLA"])
-
-    def test_empty_union_file_yields_no_findings(self) -> None:
-        with TemporaryDirectory() as tmp:
-            union = Path(tmp) / "_union_01022026.txt"
-            union.write_text("", encoding="utf-8")
-            self.assertEqual(audit.load_union_tickers(union), [])
+            union = Path(tmp) / "screened_union.json"
+            _write_union(union, "2026-01-02", [])
+            _, tickers = audit.load_screened_union(union)
+            self.assertEqual(tickers, [])
             self.assertEqual(audit.check_untagged_screened({}, []), [])
 
 
@@ -76,13 +61,13 @@ class CheckUntaggedScreenedTests(unittest.TestCase):
 
 
 class MainExitCodeTests(unittest.TestCase):
-    def _run_main(self, themes: dict, union_lines: str) -> tuple[int, str]:
+    def _run_main(self, themes: dict, union_tickers) -> tuple[int, str]:
         with TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             themes_file = tmp_path / "ticker_themes.json"
             themes_file.write_text(json.dumps(themes), encoding="utf-8")
-            union_file = tmp_path / "_union_01022026.txt"
-            union_file.write_text(union_lines, encoding="utf-8")
+            union_file = tmp_path / "screened_union.json"
+            _write_union(union_file, "2026-01-02", union_tickers)
 
             buffer = io.StringIO()
             with redirect_stdout(buffer):
@@ -99,7 +84,7 @@ class MainExitCodeTests(unittest.TestCase):
     def test_untagged_alone_exits_zero(self) -> None:
         code, output = self._run_main(
             {"SGL": ["Singleton"], "CAN": ["Space / Launch"]},
-            "NEW\nCAN\nSGL\n",
+            ["NEW", "CAN", "SGL"],
         )
         self.assertEqual(code, 0)
         self.assertIn("[UNTAGGED] Screened tickers awaiting classification: 1", output)
@@ -109,7 +94,7 @@ class MainExitCodeTests(unittest.TestCase):
         # Bare-L1 path for an L1 with children (Space) is a [BUG].
         code, output = self._run_main(
             {"BARE": ["Space"], "CAN": ["Space / Launch"]},
-            "CAN\n",
+            ["CAN"],
         )
         self.assertEqual(code, 1)
         self.assertIn("[BUG]", output)
@@ -118,7 +103,9 @@ class MainExitCodeTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             themes_file = tmp_path / "ticker_themes.json"
-            themes_file.write_text(json.dumps({"CAN": ["Space / Launch"]}), encoding="utf-8")
+            themes_file.write_text(
+                json.dumps({"CAN": ["Space / Launch"]}), encoding="utf-8"
+            )
 
             buffer = io.StringIO()
             with redirect_stdout(buffer):
@@ -126,13 +113,13 @@ class MainExitCodeTests(unittest.TestCase):
                     [
                         "--themes-file",
                         str(themes_file),
-                        "--consolidated-dir",
-                        str(tmp_path / "nonexistent"),
+                        "--union-file",
+                        str(tmp_path / "nonexistent.json"),
                     ]
                 )
 
         self.assertEqual(code, 0)
-        self.assertIn("No consolidated union file found", buffer.getvalue())
+        self.assertIn("No screened_union.json found", buffer.getvalue())
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ and compares rankings, score distributions, and specific theme behavior.
 import sys
 from pathlib import Path
 from collections import defaultdict, Counter
-from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -17,10 +16,11 @@ if str(ROOT) not in sys.path:
 import numpy as np
 import pandas as pd
 from src.themes.theme_registry import load_ticker_themes
+import src.stock_utils as su
+from config.settings import CONFIG
 
 # ── Paths ────────────────────────────────────────────────────────
 MASTER_DIR = ROOT / "screening_output" / "master"
-CONSOLIDATED_DIR = ROOT / "screening_output" / "consolidated"
 
 # ── Load themes ──────────────────────────────────────────────────
 TICKER_THEMES = load_ticker_themes()
@@ -200,12 +200,11 @@ def load_day_data(date_str):
         return None, None
     master_df = pd.read_parquet(master_file).fillna(0)
 
-    # Union file (screened tickers)
-    mmddyyyy = datetime.strptime(date_str, '%Y-%m-%d').strftime('%m%d%Y')
-    union_file = CONSOLIDATED_DIR / f"_union_{mmddyyyy}.txt"
-    if not union_file.exists():
-        return master_df, set()
-    screened = set(pd.read_csv(union_file, header=None)[0].tolist())
+    # Screened tickers: union of the day's per-screener parquet outputs
+    # (the consolidated _union_*.txt files were removed with the parquet migration).
+    screened = su.union_tickers_for_date(
+        date_str, CONFIG['screeners'], root=MASTER_DIR.parent
+    )
 
     return master_df, screened
 

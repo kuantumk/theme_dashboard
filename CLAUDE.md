@@ -49,7 +49,7 @@ uv run python -m unittest discover -s tests
 cd tests && uv run python backtest_theme_scoring.py
 ```
 
-**PR convention** — code-fix PRs do NOT include regenerated `docs/data/*.json` files (the daily workflow rewrites them). After running `uv run python -m src.reporting.export_dashboard_data` locally to verify a fix, reset the noise with `git checkout -- docs/data/` before committing.
+**PR convention** — code-fix PRs do NOT include regenerated `docs/data/*.json` files (the daily workflow rewrites them). After running `uv run python -m src.reporting.export_dashboard_data` locally to verify a fix, reset the noise with `git checkout -- docs/data/` before committing. `screening_output/` is **never committed** — it is per-run local scratch (parquet), regenerated every run and pruned to the newest `screening_output.retention_sessions` (10) per subdir at the tail of `export_all()`.
 
 ## Architecture
 
@@ -60,9 +60,9 @@ cd tests && uv run python backtest_theme_scoring.py
 1. **Download** ~8000 stocks × 500 days OHLCV via yfinance → `data/price_daily.pkl`
 2. **Indicators** pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
 3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`
-4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/`
-5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener CSVs
-6. **Consolidate** union all screener tickers → `screening_output/consolidated/`
+4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/*.parquet`
+5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener `*.parquet`
+6. **Consolidate** union all screener tickers (derived from the per-screener parquet) → committed `data/screened_union.json` (`{date, tickers}`, the tag-audit routine's worklist). No `.txt` is written.
 7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
 8. **Theme Sync** Google Sheet ground truth + profile-cache warming + untagged surfacing → `data/ticker_themes.json` (no LLM here — classification happens in the weekday tag-audit routine, see Theme Taxonomy below)
 9. **Theme Scoring** dual-metric (strength + confirmation) with actionability overlay
@@ -88,6 +88,8 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `data/price_daily_ta.pkl` | Pickle | Price data + technical indicators |
 | `data/fundamentals.db` | SQLite | Finviz fundamentals with 7-day TTL |
 | `data/ticker_themes.json` | JSON | `{ticker: [theme1, theme2]}` mapping |
+| `data/screened_union.json` | JSON | `{date, tickers}` — latest screened union; the tag-audit routine's worklist (committed) |
+| `screening_output/**/*.parquet` | Parquet | Per-run master + per-screener numeric outputs (local scratch; regenerated each run, never committed, pruned to newest 10) |
 | `config/workflow_config.yaml` | YAML | All tunable parameters |
 | `docs/data/ep_scan_afternoon.json` | JSON | Afternoon EP scan results |
 | `docs/data/ep_scan_morning.json` | JSON | Morning EP scan results |
@@ -189,7 +191,7 @@ for ticker, paths in ticker_themes.items():
 
 **Weekday tag-audit routine (all LLM tagging lives here)** — the daily pipeline does no LLM classification. A Claude Code cloud routine (weekdays 5:30 PM Pacific, Sonnet 5) executes `.claude/routines/theme_tag_audit.md`: sync main → run the `audit-theme-tags` skill in full (fix `[BUG]`s, web-verified narrative-shift corrections, classify every `[UNTAGGED]` ticker, capped Singleton rescue) → if tag files changed, branch `theme-tags/YYYY-MM-DD` → commit → PR → squash-merge → delete branch; otherwise report no-op. The 5:30 PM slot sits after the daily workflow's results commit (observed landing 4:01–4:57 PM PT), so the routine tags the same day's discoveries and the next 1:30 PM run scores them — a new ticker is themeless in the report for at most one session. All writes go through the retag CLI.
 
-**Audit tooling** — `uv run python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings only) covers the mechanical checks plus the `[UNTAGGED]` worklist (newest `screening_output/consolidated/_union_*.txt` diffed against `data/ticker_themes.json` via `theme_registry.is_untagged`: missing/empty/`Uncategorized`-only; `Singleton`-only excluded). The `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) wraps it with the AI-judgment phases — it's both the routine's playbook and the interactive one.
+**Audit tooling** — `uv run python tools/audit_theme_tags.py` (exit 1 on `[BUG]` findings only) covers the mechanical checks plus the `[UNTAGGED]` worklist (`data/screened_union.json` — the committed `{date, tickers}` the daily workflow writes — diffed against `data/ticker_themes.json` via `theme_registry.is_untagged`: missing/empty/`Uncategorized`-only; `Singleton`-only excluded). The `audit-theme-tags` skill (`.claude/skills/audit-theme-tags/SKILL.md`) wraps it with the AI-judgment phases — it's both the routine's playbook and the interactive one.
 
 **Auto-tagging vs locking** — `git_locked_themes: true` originally short-circuited the (since-removed) 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass — used by humans and by the tag-audit routine alike.
 
@@ -208,7 +210,7 @@ Tickers that fail any condition stay default-colored. Logic lives in `src/report
 
 Each tab's session bar (every tab except Overview) shows the last 5 trading days as clickable date buttons plus a `+ more` dropdown that exposes every remaining session within the last **180 calendar days**. Retention is calendar-day-based, not a fixed session count: `THEMES_HISTORY_DAYS = 180` in `export_dashboard_data.py` (mirrored by `SCAN_HISTORY_DAYS` in `ep_scan_common.py` and `SESSION_HISTORY_DAYS` in `docs/app.js`) controls the window. The shared `_history_cutoff` helper anchors the cutoff to the newest available session date (not wall-clock today) so the window is reproducible and robust to stale/holiday export runs.
 
-**Every workflow run produces a fresh 180-calendar-day history**: `run_daily_workflow.py` calls `create_master_table.py --days 130` and each `run_screener.py --days 130` (~180 calendar days of trading sessions, with a few sessions of padding so the window is always full), so back-dated master + screener CSVs always carry today's full indicator schema (e.g. when `vars` was added, every dropdown session gets the new column on the very next workflow run instead of accumulating naturally). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` / `export_themes_history` / `export_volume` all iterate the per-day CSVs whose date falls within the 180-day window and rewrite `*_history.json` from scratch each run — no append-only drift; sessions older than 180 calendar days are pruned. Tabs without per-day source data (themes' NCFD/MMFI, industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and are pruned to the same window.
+**Every workflow run produces a fresh 180-calendar-day history**: `run_daily_workflow.py` calls `create_master_table.py --days 130` and each `run_screener.py --days 130` (~180 calendar days of trading sessions, with a few sessions of padding so the window is always full), so back-dated master + screener **parquet** files always carry today's full indicator schema (e.g. when `vars` was added, every dropdown session gets the new column on the very next workflow run instead of accumulating naturally). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` / `export_themes_history` / `export_volume` all iterate the per-day **parquet** files whose date falls within the 180-day window (and `export_themes_history` derives each date's screened union from the per-screener parquet via `stock_utils.union_tickers_for_date`) and rewrite `*_history.json` from scratch each run — no append-only drift; sessions older than 180 calendar days are pruned from the JSON. The on-disk parquet is separately pruned to the newest 10 sessions per subdir after export (`prune_screening_output`), so the docs JSON keeps the full window while local scratch stays small. Tabs without per-day source data (themes' NCFD/MMFI, industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and are pruned to the same window.
 
 ### Dashboard Chart (TradingView Free Embed Widget)
 
@@ -256,4 +258,4 @@ Three GitHub Actions workflows:
 
 ## Tech Stack
 
-Python 3.11+, pandas/numpy/scipy, yfinance, Selenium (breadth scraping), finvizfinance + BeautifulSoup (fundamentals), Alpaca Market Data API (extended-hours volume). No TA-Lib — all indicators are pure pandas. Theme tagging uses no API-based LLM: the weekday Claude Code routine does the classification.
+Python 3.11+, pandas/numpy/scipy, pyarrow (parquet screening outputs), yfinance, Selenium (breadth scraping), finvizfinance + BeautifulSoup (fundamentals), Alpaca Market Data API (extended-hours volume). No TA-Lib — all indicators are pure pandas. Theme tagging uses no API-based LLM: the weekday Claude Code routine does the classification.

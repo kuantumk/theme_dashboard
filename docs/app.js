@@ -205,7 +205,6 @@
 
       const sym = link.dataset.sym;
       const chartSym = link.dataset.chartSym || sym;
-      const name = link.dataset.nm || sym;
       if (!sym) return;
 
       const tabContent = link.closest('.tab-content');
@@ -227,24 +226,14 @@
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
       link.classList.add('active-ticker');
 
-      openChart(tabId, chartSym, name);
+      openChart(tabId, chartSym);
     });
   }
 
-  function openChart(tabId, sym, name) {
-    const headerEl = document.getElementById(tabId + '-chart-header');
-    const symEl = document.getElementById(tabId + '-chart-sym');
-    const nameEl = document.getElementById(tabId + '-chart-name');
-    const alertEl = document.getElementById(tabId + '-alert-link');
+  function openChart(tabId, sym) {
     const areaEl = document.getElementById(tabId + '-chart-area');
 
-    if (!headerEl || !areaEl) return;
-
-    headerEl.style.display = 'flex';
-    symEl.textContent = sym;
-    nameEl.textContent = name;
-
-    alertEl.href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(sym) + '&interval=D';
+    if (!areaEl) return;
 
     const containerId = 'tv_container_' + tabId;
     // Pin the widget container with absolute positioning so it always fills
@@ -310,7 +299,7 @@
         script.onload = renderWidget;
         document.head.appendChild(script);
       } else {
-        setTimeout(() => openChart(tabId, sym, name), 300);
+        setTimeout(() => openChart(tabId, sym), 300);
       }
     }
 
@@ -366,7 +355,6 @@
       navIndices[tabId] = idx;
       const link = links[idx];
       const sym = link.dataset.sym;
-      const name = link.dataset.nm || sym;
 
       // Clear all active states in this tab
       const container = document.getElementById('content-' + tabId);
@@ -382,7 +370,7 @@
       }
 
       // Open chart
-      openChart(tabId, link.dataset.chartSym || sym, name);
+      openChart(tabId, link.dataset.chartSym || sym);
     });
 
     // Sync nav index when user clicks a ticker
@@ -525,14 +513,14 @@
                 });
 
                 tr.style.cursor = 'pointer';
-                tr.onclick = () => openChart('macro', TV_CHART_SYM_MAP[item.tv] || item.tv, item.name);
+                tr.onclick = () => openChart('macro', TV_CHART_SYM_MAP[item.tv] || item.tv);
               }
             }
           }
         });
 
         // By default open OANDA:SPX500USD
-        openChart('macro', 'OANDA:SPX500USD', 'S&P 500 Futures');
+        openChart('macro', 'OANDA:SPX500USD');
       })
       .catch(err => console.error('Error loading macro data:', err));
   }
@@ -1577,7 +1565,7 @@
       evt.target.addClass('active-ticker');
       const tabIdMap = { themes: 'themeviz', momentum: 'momentumviz', volume: 'volumeviz', vars: 'varsviz' };
       const tabId = tabIdMap[mode] || 'momentumviz';
-      if (typeof openChart === 'function') openChart(tabId, ticker, ticker);
+      if (typeof openChart === 'function') openChart(tabId, ticker);
     });
   }
 

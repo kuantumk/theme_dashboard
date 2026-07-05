@@ -697,55 +697,6 @@ td.l {
   font-size: 9px;
 }
 
-/* ── CHART HEADER BAR ───────────────────────────────────── */
-.chart-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.chart-symbol {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0;
-}
-
-.chart-name {
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 300;
-  color: var(--text3);
-  letter-spacing: 0;
-}
-
-.chart-alert-btn {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid var(--amber);
-  background: transparent;
-  color: var(--amber);
-  font-family: var(--display);
-  font-size: 10px;
-  font-weight: 300;
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0;
-  text-decoration: none;
-}
-
-.chart-alert-btn:hover {
-  background: var(--adim2);
-}
-
 /* ── TABLE SORT ─────────────────────────────────────────── */
 th.sortable {
   cursor: pointer;

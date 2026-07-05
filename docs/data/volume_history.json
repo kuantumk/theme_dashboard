@@ -221,11 +221,11 @@
             "vars_20ema": 15.51,
             "rs": 0.0,
             "price": 45.92,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -679,7 +679,7 @@
             "vars_20ema": 0.51,
             "rs": 0.0,
             "price": 84.64,
-            "float": "531.3",
+            "float": "531.2",
             "eps": "92",
             "sales": "35",
             "inst": "-0.3",
@@ -1906,29 +1906,6 @@
         "l3": null
       },
       {
-        "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 0.54,
-        "tickers": [
-          {
-            "ticker": "ADI",
-            "scan": "volspike",
-            "days_since_hv": 6,
-            "vars": 0.54,
-            "vars_20ema": 3.69,
-            "rs": 0.0,
-            "price": 377.16,
-            "float": "485.7",
-            "eps": "58",
-            "sales": "37",
-            "inst": "-1.3",
-            "short": 2.5
-          }
-        ],
-        "l1": "Semiconductors",
-        "l2": "Power & Discrete",
-        "l3": null
-      },
-      {
         "name": "AI / Data Center / Optics",
         "avg_vars": 0.53,
         "tickers": [
@@ -1980,6 +1957,29 @@
         "l3": "Optics"
       },
       {
+        "name": "Semiconductors / Power & Discrete",
+        "avg_vars": 0.49,
+        "tickers": [
+          {
+            "ticker": "ADI",
+            "scan": "volspike",
+            "days_since_hv": 6,
+            "vars": 0.49,
+            "vars_20ema": 3.64,
+            "rs": 0.0,
+            "price": 377.16,
+            "float": "485.7",
+            "eps": "58",
+            "sales": "37",
+            "inst": "-1.3",
+            "short": 2.5
+          }
+        ],
+        "l1": "Semiconductors",
+        "l2": "Power & Discrete",
+        "l3": null
+      },
+      {
         "name": "AI / Data Center / Power & Cooling",
         "avg_vars": 0.36,
         "tickers": [
@@ -2019,7 +2019,7 @@
             "vars_20ema": 3.6,
             "rs": 65.4,
             "price": 55.49,
-            "float": "124.5",
+            "float": "125.0",
             "eps": "84",
             "sales": "26",
             "inst": "+1.4",
@@ -4023,16 +4023,16 @@
           "ticker_count": 5
         },
         {
-          "id": "Semiconductors / Power & Discrete",
-          "kind": "leaf",
-          "parent": "Semiconductors",
-          "ticker_count": 1
-        },
-        {
           "id": "AI / Data Center / Optics",
           "kind": "leaf",
           "parent": "AI",
           "ticker_count": 3
+        },
+        {
+          "id": "Semiconductors / Power & Discrete",
+          "kind": "leaf",
+          "parent": "Semiconductors",
+          "ticker_count": 1
         },
         {
           "id": "AI / Data Center / Power & Cooling",
@@ -4643,13 +4643,13 @@
           "kind": "is_a"
         },
         {
-          "source": "Semiconductors / Power & Discrete",
-          "target": "Semiconductors",
+          "source": "AI / Data Center / Optics",
+          "target": "AI",
           "kind": "is_a"
         },
         {
-          "source": "AI / Data Center / Optics",
-          "target": "AI",
+          "source": "Semiconductors / Power & Discrete",
+          "target": "Semiconductors",
           "kind": "is_a"
         },
         {
@@ -5091,11 +5091,11 @@
             "vars_20ema": 15.85,
             "rs": 11.5,
             "price": 51.21,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -5313,7 +5313,7 @@
             "vars_20ema": 0.73,
             "rs": 0.0,
             "price": 88.69,
-            "float": "531.3",
+            "float": "531.2",
             "eps": "92",
             "sales": "35",
             "inst": "-0.3",
@@ -6567,7 +6567,7 @@
             "vars_20ema": 3.97,
             "rs": 92.3,
             "price": 63.2,
-            "float": "124.5",
+            "float": "125.0",
             "eps": "84",
             "sales": "26",
             "inst": "+1.4",
@@ -7091,29 +7091,6 @@
         "l3": null
       },
       {
-        "name": "Semiconductors / Power & Discrete",
-        "avg_vars": -0.58,
-        "tickers": [
-          {
-            "ticker": "ADI",
-            "scan": "volspike",
-            "days_since_hv": 5,
-            "vars": -0.58,
-            "vars_20ema": 4.02,
-            "rs": 0.0,
-            "price": 388.98,
-            "float": "485.7",
-            "eps": "58",
-            "sales": "37",
-            "inst": "-1.3",
-            "short": 2.5
-          }
-        ],
-        "l1": "Semiconductors",
-        "l2": "Power & Discrete",
-        "l3": null
-      },
-      {
         "name": "Travel & Leisure / Cruise Lines",
         "avg_vars": -0.58,
         "tickers": [
@@ -7134,6 +7111,29 @@
         ],
         "l1": "Travel & Leisure",
         "l2": "Cruise Lines",
+        "l3": null
+      },
+      {
+        "name": "Semiconductors / Power & Discrete",
+        "avg_vars": -0.63,
+        "tickers": [
+          {
+            "ticker": "ADI",
+            "scan": "volspike",
+            "days_since_hv": 5,
+            "vars": -0.63,
+            "vars_20ema": 3.97,
+            "rs": 0.0,
+            "price": 388.98,
+            "float": "485.7",
+            "eps": "58",
+            "sales": "37",
+            "inst": "-1.3",
+            "short": 2.5
+          }
+        ],
+        "l1": "Semiconductors",
+        "l2": "Power & Discrete",
         "l3": null
       },
       {
@@ -9021,12 +9021,6 @@
           "ticker_count": 5
         },
         {
-          "id": "Semiconductors / Power & Discrete",
-          "kind": "leaf",
-          "parent": "Semiconductors",
-          "ticker_count": 1
-        },
-        {
           "id": "Travel & Leisure",
           "kind": "l1"
         },
@@ -9034,6 +9028,12 @@
           "id": "Travel & Leisure / Cruise Lines",
           "kind": "leaf",
           "parent": "Travel & Leisure",
+          "ticker_count": 1
+        },
+        {
+          "id": "Semiconductors / Power & Discrete",
+          "kind": "leaf",
+          "parent": "Semiconductors",
           "ticker_count": 1
         },
         {
@@ -9638,13 +9638,13 @@
           "kind": "is_a"
         },
         {
-          "source": "Semiconductors / Power & Discrete",
-          "target": "Semiconductors",
+          "source": "Travel & Leisure / Cruise Lines",
+          "target": "Travel & Leisure",
           "kind": "is_a"
         },
         {
-          "source": "Travel & Leisure / Cruise Lines",
-          "target": "Travel & Leisure",
+          "source": "Semiconductors / Power & Discrete",
+          "target": "Semiconductors",
           "kind": "is_a"
         },
         {
@@ -10173,11 +10173,11 @@
             "vars_20ema": 16.28,
             "rs": 23.1,
             "price": 53.78,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -10280,7 +10280,7 @@
             "vars_20ema": 1.11,
             "rs": 19.2,
             "price": 91.2,
-            "float": "531.3",
+            "float": "531.2",
             "eps": "92",
             "sales": "35",
             "inst": "-0.3",
@@ -11140,7 +11140,7 @@
             "vars_20ema": 4.26,
             "rs": 100.0,
             "price": 69.62,
-            "float": "124.5",
+            "float": "125.0",
             "eps": "84",
             "sales": "26",
             "inst": "+1.4",
@@ -11656,15 +11656,15 @@
       },
       {
         "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 1.0,
+        "avg_vars": 0.95,
         "tickers": [
           {
             "ticker": "ADI",
             "scan": "volspike",
             "days_since_hv": 4,
-            "vars": 1.0,
-            "vars_20ema": 4.5,
-            "rs": 15.4,
+            "vars": 0.95,
+            "vars_20ema": 4.45,
+            "rs": 11.5,
             "price": 397.17,
             "float": "485.7",
             "eps": "58",
@@ -14990,11 +14990,11 @@
             "vars_20ema": 16.62,
             "rs": 38.5,
             "price": 56.28,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -15106,7 +15106,7 @@
             "vars_20ema": 1.4,
             "rs": 3.8,
             "price": 89.06,
-            "float": "531.3",
+            "float": "531.2",
             "eps": "92",
             "sales": "35",
             "inst": "-0.3",
@@ -16135,7 +16135,7 @@
             "vars_20ema": 4.32,
             "rs": 100.0,
             "price": 66.37,
-            "float": "124.5",
+            "float": "125.0",
             "eps": "84",
             "sales": "26",
             "inst": "+1.4",
@@ -16236,14 +16236,14 @@
       },
       {
         "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 2.62,
+        "avg_vars": 2.56,
         "tickers": [
           {
             "ticker": "ADI",
             "scan": "volspike",
             "days_since_hv": 3,
-            "vars": 2.62,
-            "vars_20ema": 4.87,
+            "vars": 2.56,
+            "vars_20ema": 4.82,
             "rs": 3.8,
             "price": 391.78,
             "float": "485.7",
@@ -19816,11 +19816,11 @@
             "vars_20ema": 16.95,
             "rs": 42.3,
             "price": 56.35,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -20095,7 +20095,7 @@
             "vars_20ema": 1.6,
             "rs": 3.8,
             "price": 87.93,
-            "float": "531.3",
+            "float": "531.2",
             "eps": "92",
             "sales": "35",
             "inst": "-0.3",
@@ -21017,7 +21017,7 @@
             "vars_20ema": 4.4,
             "rs": 92.3,
             "price": 57.89,
-            "float": "124.5",
+            "float": "125.0",
             "eps": "84",
             "sales": "26",
             "inst": "+1.4",
@@ -21412,29 +21412,6 @@
         "l3": null
       },
       {
-        "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 3.52,
-        "tickers": [
-          {
-            "ticker": "ADI",
-            "scan": "volspike",
-            "days_since_hv": 0,
-            "vars": 3.52,
-            "vars_20ema": 5.11,
-            "rs": 3.8,
-            "price": 386.91,
-            "float": "485.7",
-            "eps": "58",
-            "sales": "37",
-            "inst": "-1.3",
-            "short": 2.5
-          }
-        ],
-        "l1": "Semiconductors",
-        "l2": "Power & Discrete",
-        "l3": null
-      },
-      {
         "name": "Clean Energy / Fuel Cell & Hydrogen",
         "avg_vars": 3.48,
         "tickers": [
@@ -21484,6 +21461,29 @@
         ],
         "l1": "Clean Energy",
         "l2": "Fuel Cell & Hydrogen",
+        "l3": null
+      },
+      {
+        "name": "Semiconductors / Power & Discrete",
+        "avg_vars": 3.47,
+        "tickers": [
+          {
+            "ticker": "ADI",
+            "scan": "volspike",
+            "days_since_hv": 0,
+            "vars": 3.47,
+            "vars_20ema": 5.06,
+            "rs": 3.8,
+            "price": 386.91,
+            "float": "485.7",
+            "eps": "58",
+            "sales": "37",
+            "inst": "-1.3",
+            "short": 2.5
+          }
+        ],
+        "l1": "Semiconductors",
+        "l2": "Power & Discrete",
         "l3": null
       },
       {
@@ -22157,11 +22157,11 @@
             "vars_20ema": 0.55,
             "rs": 19.2,
             "price": 9.31,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -24227,16 +24227,16 @@
           "ticker_count": 3
         },
         {
-          "id": "Semiconductors / Power & Discrete",
-          "kind": "leaf",
-          "parent": "Semiconductors",
-          "ticker_count": 1
-        },
-        {
           "id": "Clean Energy / Fuel Cell & Hydrogen",
           "kind": "leaf",
           "parent": "Clean Energy",
           "ticker_count": 3
+        },
+        {
+          "id": "Semiconductors / Power & Discrete",
+          "kind": "leaf",
+          "parent": "Semiconductors",
+          "ticker_count": 1
         },
         {
           "id": "Travel & Leisure / Airlines / Major",
@@ -24918,13 +24918,13 @@
           "kind": "is_a"
         },
         {
-          "source": "Semiconductors / Power & Discrete",
-          "target": "Semiconductors",
+          "source": "Clean Energy / Fuel Cell & Hydrogen",
+          "target": "Clean Energy",
           "kind": "is_a"
         },
         {
-          "source": "Clean Energy / Fuel Cell & Hydrogen",
-          "target": "Clean Energy",
+          "source": "Semiconductors / Power & Discrete",
+          "target": "Semiconductors",
           "kind": "is_a"
         },
         {
@@ -25419,11 +25419,11 @@
             "vars_20ema": 17.11,
             "rs": 76.9,
             "price": 59.91,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -26527,7 +26527,7 @@
             "vars_20ema": 1.13,
             "rs": 69.2,
             "price": 40.02,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -26828,11 +26828,11 @@
             "vars_20ema": 0.14,
             "rs": 23.1,
             "price": 10.0,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -29062,11 +29062,11 @@
             "vars_20ema": 17.28,
             "rs": 46.2,
             "price": 55.59,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -30207,7 +30207,7 @@
             "vars_20ema": 1.05,
             "rs": 53.8,
             "price": 39.37,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -30339,11 +30339,11 @@
             "vars_20ema": -0.2,
             "rs": 26.9,
             "price": 10.2,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -30677,43 +30677,6 @@
         "l3": null
       },
       {
-        "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 0.16,
-        "tickers": [
-          {
-            "ticker": "ADI",
-            "scan": "both",
-            "days_since_hv": 6,
-            "vars": 4.0,
-            "vars_20ema": 5.33,
-            "rs": 65.4,
-            "price": 413.16,
-            "float": "485.7",
-            "eps": "58",
-            "sales": "37",
-            "inst": "-1.3",
-            "short": 2.5
-          },
-          {
-            "ticker": "IPWR",
-            "scan": "denvol",
-            "days_since_hv": 28,
-            "vars": -3.68,
-            "vars_20ema": -2.12,
-            "rs": 0.0,
-            "price": 5.26,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Semiconductors",
-        "l2": "Power & Discrete",
-        "l3": null
-      },
-      {
         "name": "Specialty Chemicals / Specialty Materials",
         "avg_vars": 0.16,
         "tickers": [
@@ -30748,6 +30711,43 @@
         ],
         "l1": "Specialty Chemicals",
         "l2": "Specialty Materials",
+        "l3": null
+      },
+      {
+        "name": "Semiconductors / Power & Discrete",
+        "avg_vars": 0.13,
+        "tickers": [
+          {
+            "ticker": "ADI",
+            "scan": "both",
+            "days_since_hv": 6,
+            "vars": 3.94,
+            "vars_20ema": 5.28,
+            "rs": 65.4,
+            "price": 413.16,
+            "float": "485.7",
+            "eps": "58",
+            "sales": "37",
+            "inst": "-1.3",
+            "short": 2.5
+          },
+          {
+            "ticker": "IPWR",
+            "scan": "denvol",
+            "days_since_hv": 28,
+            "vars": -3.68,
+            "vars_20ema": -2.12,
+            "rs": 0.0,
+            "price": 5.26,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null
+          }
+        ],
+        "l1": "Semiconductors",
+        "l2": "Power & Discrete",
         "l3": null
       },
       {
@@ -31906,12 +31906,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Semiconductors / Power & Discrete",
-          "kind": "leaf",
-          "parent": "Semiconductors",
-          "ticker_count": 2
-        },
-        {
           "id": "Specialty Chemicals",
           "kind": "l1"
         },
@@ -31919,6 +31913,12 @@
           "id": "Specialty Chemicals / Specialty Materials",
           "kind": "leaf",
           "parent": "Specialty Chemicals",
+          "ticker_count": 2
+        },
+        {
+          "id": "Semiconductors / Power & Discrete",
+          "kind": "leaf",
+          "parent": "Semiconductors",
           "ticker_count": 2
         },
         {
@@ -32398,13 +32398,13 @@
           "kind": "is_a"
         },
         {
-          "source": "Semiconductors / Power & Discrete",
-          "target": "Semiconductors",
+          "source": "Specialty Chemicals / Specialty Materials",
+          "target": "Specialty Chemicals",
           "kind": "is_a"
         },
         {
-          "source": "Specialty Chemicals / Specialty Materials",
-          "target": "Specialty Chemicals",
+          "source": "Semiconductors / Power & Discrete",
+          "target": "Semiconductors",
           "kind": "is_a"
         },
         {
@@ -32577,11 +32577,11 @@
             "vars_20ema": 17.49,
             "rs": 69.2,
             "price": 58.96,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -33614,7 +33614,7 @@
             "vars_20ema": 0.97,
             "rs": 65.4,
             "price": 39.75,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -33919,11 +33919,11 @@
             "vars_20ema": -0.54,
             "rs": 34.6,
             "price": 11.78,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -34170,14 +34170,14 @@
       },
       {
         "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 0.77,
+        "avg_vars": 0.75,
         "tickers": [
           {
             "ticker": "ADI",
             "scan": "both",
             "days_since_hv": 5,
-            "vars": 4.01,
-            "vars_20ema": 5.47,
+            "vars": 3.96,
+            "vars_20ema": 5.42,
             "rs": 34.6,
             "price": 407.26,
             "float": "485.7",
@@ -36176,11 +36176,11 @@
             "vars_20ema": 17.52,
             "rs": 96.2,
             "price": 64.27,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -37120,7 +37120,7 @@
             "vars_20ema": 0.81,
             "rs": 57.7,
             "price": 40.02,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -37542,11 +37542,11 @@
             "vars_20ema": -0.88,
             "rs": 34.6,
             "price": 11.27,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -39655,11 +39655,11 @@
             "vars_20ema": 17.47,
             "rs": 100.0,
             "price": 64.9,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "ALAB",
@@ -40613,14 +40613,14 @@
       },
       {
         "name": "Semiconductors / Power & Discrete",
-        "avg_vars": 1.91,
+        "avg_vars": 1.88,
         "tickers": [
           {
             "ticker": "ADI",
             "scan": "both",
             "days_since_hv": 0,
-            "vars": 5.31,
-            "vars_20ema": 5.53,
+            "vars": 5.25,
+            "vars_20ema": 5.48,
             "rs": 96.2,
             "price": 434.46,
             "float": "485.7",
@@ -40813,7 +40813,7 @@
             "vars_20ema": 0.72,
             "rs": 65.4,
             "price": 40.35,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -41555,11 +41555,11 @@
             "vars_20ema": -1.09,
             "rs": 38.5,
             "price": 13.65,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -43647,11 +43647,11 @@
             "vars_20ema": 17.39,
             "rs": 84.6,
             "price": 60.23,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -44718,7 +44718,7 @@
             "vars_20ema": 0.69,
             "rs": 34.6,
             "price": 38.75,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -45152,11 +45152,11 @@
             "vars_20ema": -1.35,
             "rs": 46.2,
             "price": 14.63,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -46872,11 +46872,11 @@
             "vars_20ema": 17.43,
             "rs": 84.6,
             "price": 60.31,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -47971,7 +47971,7 @@
             "vars_20ema": 0.76,
             "rs": 30.8,
             "price": 38.45,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -48598,11 +48598,11 @@
             "vars_20ema": -1.64,
             "rs": 50.0,
             "price": 16.08,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "ASTS",
@@ -49995,11 +49995,11 @@
             "vars_20ema": 17.65,
             "rs": 96.2,
             "price": 63.61,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -51078,7 +51078,7 @@
             "vars_20ema": 0.98,
             "rs": 7.7,
             "price": 36.7,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -51512,11 +51512,11 @@
             "vars_20ema": -1.79,
             "rs": 53.8,
             "price": 16.91,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -53229,11 +53229,11 @@
             "vars_20ema": 17.95,
             "rs": 88.5,
             "price": 59.28,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -54116,7 +54116,7 @@
             "vars_20ema": 3.26,
             "rs": 19.2,
             "price": 19.08,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -54237,7 +54237,7 @@
             "vars_20ema": 1.35,
             "rs": 42.3,
             "price": 39.14,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -54419,7 +54419,7 @@
             "vars_20ema": -7.47,
             "rs": 92.3,
             "price": 19.75,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -54907,11 +54907,11 @@
             "vars_20ema": -1.86,
             "rs": 57.7,
             "price": 19.01,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -55503,7 +55503,7 @@
             "vars_20ema": -7.47,
             "rs": 92.3,
             "price": 19.75,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -56656,11 +56656,11 @@
             "vars_20ema": 18.16,
             "rs": 84.6,
             "price": 58.5,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -57620,7 +57620,7 @@
             "vars_20ema": 3.49,
             "rs": 15.4,
             "price": 18.79,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -57703,7 +57703,7 @@
             "vars_20ema": 1.56,
             "rs": 80.8,
             "price": 40.78,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -57763,7 +57763,7 @@
             "vars_20ema": -7.34,
             "rs": 96.2,
             "price": 20.24,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -58215,11 +58215,11 @@
             "vars_20ema": -1.98,
             "rs": 69.2,
             "price": 26.5,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -58851,7 +58851,7 @@
             "vars_20ema": -7.34,
             "rs": 96.2,
             "price": 20.24,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -60041,11 +60041,11 @@
             "vars_20ema": 18.18,
             "rs": 76.9,
             "price": 54.56,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -60277,52 +60277,6 @@
         "l1": "AI",
         "l2": "Data Center",
         "l3": "Memory"
-      },
-      {
-        "name": "Education / EdTech & Online Learning",
-        "avg_vars": 10.81,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 14,
-            "vars": 10.81,
-            "vars_20ema": 0.44,
-            "rs": 100.0,
-            "price": 2.91,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Education",
-        "l2": "EdTech & Online Learning",
-        "l3": null
-      },
-      {
-        "name": "Software & Internet / EdTech",
-        "avg_vars": 10.81,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 14,
-            "vars": 10.81,
-            "vars_20ema": 0.44,
-            "rs": 100.0,
-            "price": 2.91,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Software & Internet",
-        "l2": "EdTech",
-        "l3": null
       },
       {
         "name": "Semiconductors / Display Drivers",
@@ -61120,7 +61074,7 @@
             "vars_20ema": 3.51,
             "rs": 0.0,
             "price": 18.04,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -61157,7 +61111,7 @@
             "vars_20ema": 1.46,
             "rs": 76.9,
             "price": 39.75,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -61218,7 +61172,7 @@
             "vars_20ema": -7.57,
             "rs": 100.0,
             "price": 20.56,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -61752,11 +61706,11 @@
             "vars_20ema": -2.46,
             "rs": 65.4,
             "price": 24.0,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -62276,7 +62230,7 @@
             "vars_20ema": -7.57,
             "rs": 100.0,
             "price": 20.56,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -62531,26 +62485,6 @@
           "ticker_count": 2
         },
         {
-          "id": "Education",
-          "kind": "l1"
-        },
-        {
-          "id": "Education / EdTech & Online Learning",
-          "kind": "leaf",
-          "parent": "Education",
-          "ticker_count": 1
-        },
-        {
-          "id": "Software & Internet",
-          "kind": "l1"
-        },
-        {
-          "id": "Software & Internet / EdTech",
-          "kind": "leaf",
-          "parent": "Software & Internet",
-          "ticker_count": 1
-        },
-        {
           "id": "Semiconductors / Display Drivers",
           "kind": "leaf",
           "parent": "Semiconductors",
@@ -62639,6 +62573,10 @@
           "kind": "leaf",
           "parent": "Biotech",
           "ticker_count": 1
+        },
+        {
+          "id": "Software & Internet",
+          "kind": "l1"
         },
         {
           "id": "Software & Internet / Streaming",
@@ -62751,6 +62689,10 @@
           "kind": "leaf",
           "parent": "Fintech & Crypto",
           "ticker_count": 2
+        },
+        {
+          "id": "Education",
+          "kind": "l1"
         },
         {
           "id": "Education / Higher Education",
@@ -63124,16 +63066,6 @@
         {
           "source": "AI / Data Center / Memory",
           "target": "AI",
-          "kind": "is_a"
-        },
-        {
-          "source": "Education / EdTech & Online Learning",
-          "target": "Education",
-          "kind": "is_a"
-        },
-        {
-          "source": "Software & Internet / EdTech",
-          "target": "Software & Internet",
           "kind": "is_a"
         },
         {
@@ -63537,11 +63469,11 @@
             "vars_20ema": 18.05,
             "rs": 88.5,
             "price": 58.48,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -63818,52 +63750,6 @@
         ],
         "l1": "Semiconductors",
         "l2": "Display Drivers",
-        "l3": null
-      },
-      {
-        "name": "Education / EdTech & Online Learning",
-        "avg_vars": 8.74,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 13,
-            "vars": 8.74,
-            "vars_20ema": -0.66,
-            "rs": 100.0,
-            "price": 2.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Education",
-        "l2": "EdTech & Online Learning",
-        "l3": null
-      },
-      {
-        "name": "Software & Internet / EdTech",
-        "avg_vars": 8.74,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 13,
-            "vars": 8.74,
-            "vars_20ema": -0.66,
-            "rs": 100.0,
-            "price": 2.8,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Software & Internet",
-        "l2": "EdTech",
         "l3": null
       },
       {
@@ -64591,7 +64477,7 @@
             "vars_20ema": 1.25,
             "rs": 57.7,
             "price": 39.28,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -64638,7 +64524,7 @@
             "vars_20ema": 3.49,
             "rs": 0.0,
             "price": 18.36,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -64713,7 +64599,7 @@
             "vars_20ema": -8.01,
             "rs": 92.3,
             "price": 19.2,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -65130,11 +65016,11 @@
             "vars_20ema": -3.11,
             "rs": 69.2,
             "price": 25.58,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -65760,7 +65646,7 @@
             "vars_20ema": -8.01,
             "rs": 92.3,
             "price": 19.2,
-            "float": "195.5",
+            "float": "195.6",
             "eps": null,
             "sales": "33",
             "inst": "+6.0",
@@ -65995,26 +65881,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Education",
-          "kind": "l1"
-        },
-        {
-          "id": "Education / EdTech & Online Learning",
-          "kind": "leaf",
-          "parent": "Education",
-          "ticker_count": 1
-        },
-        {
-          "id": "Software & Internet",
-          "kind": "l1"
-        },
-        {
-          "id": "Software & Internet / EdTech",
-          "kind": "leaf",
-          "parent": "Software & Internet",
-          "ticker_count": 1
-        },
-        {
           "id": "Cybersecurity",
           "kind": "l1"
         },
@@ -66111,6 +65977,10 @@
           "ticker_count": 1
         },
         {
+          "id": "Software & Internet",
+          "kind": "l1"
+        },
+        {
           "id": "Software & Internet / Streaming",
           "kind": "leaf",
           "parent": "Software & Internet",
@@ -66187,6 +66057,10 @@
           "kind": "leaf",
           "parent": "Industrials",
           "ticker_count": 3
+        },
+        {
+          "id": "Education",
+          "kind": "l1"
         },
         {
           "id": "Education / Higher Education",
@@ -66567,16 +66441,6 @@
           "kind": "is_a"
         },
         {
-          "source": "Education / EdTech & Online Learning",
-          "target": "Education",
-          "kind": "is_a"
-        },
-        {
-          "source": "Software & Internet / EdTech",
-          "target": "Software & Internet",
-          "kind": "is_a"
-        },
-        {
           "source": "Cybersecurity / Generalist",
           "target": "Cybersecurity",
           "kind": "is_a"
@@ -66952,11 +66816,11 @@
             "vars_20ema": 17.87,
             "rs": 84.6,
             "price": 57.13,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -67371,52 +67235,6 @@
         ],
         "l1": "Telecom",
         "l2": "Fiber",
-        "l3": null
-      },
-      {
-        "name": "Education / EdTech & Online Learning",
-        "avg_vars": 7.85,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 12,
-            "vars": 7.85,
-            "vars_20ema": -1.64,
-            "rs": 100.0,
-            "price": 2.36,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Education",
-        "l2": "EdTech & Online Learning",
-        "l3": null
-      },
-      {
-        "name": "Software & Internet / EdTech",
-        "avg_vars": 7.85,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 12,
-            "vars": 7.85,
-            "vars_20ema": -1.64,
-            "rs": 100.0,
-            "price": 2.36,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Software & Internet",
-        "l2": "EdTech",
         "l3": null
       },
       {
@@ -67909,7 +67727,7 @@
             "vars_20ema": 3.53,
             "rs": 0.0,
             "price": 18.45,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -68307,11 +68125,11 @@
             "vars_20ema": -3.7,
             "rs": 76.9,
             "price": 29.13,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -69391,26 +69209,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Education",
-          "kind": "l1"
-        },
-        {
-          "id": "Education / EdTech & Online Learning",
-          "kind": "leaf",
-          "parent": "Education",
-          "ticker_count": 1
-        },
-        {
-          "id": "Software & Internet",
-          "kind": "l1"
-        },
-        {
-          "id": "Software & Internet / EdTech",
-          "kind": "leaf",
-          "parent": "Software & Internet",
-          "ticker_count": 1
-        },
-        {
           "id": "AI / Data Center / Networking & Connectivity",
           "kind": "leaf",
           "parent": "AI",
@@ -69449,6 +69247,10 @@
           "kind": "leaf",
           "parent": "AI",
           "ticker_count": 1
+        },
+        {
+          "id": "Software & Internet",
+          "kind": "l1"
         },
         {
           "id": "Software & Internet / Streaming",
@@ -69925,16 +69727,6 @@
           "kind": "is_a"
         },
         {
-          "source": "Education / EdTech & Online Learning",
-          "target": "Education",
-          "kind": "is_a"
-        },
-        {
-          "source": "Software & Internet / EdTech",
-          "target": "Software & Internet",
-          "kind": "is_a"
-        },
-        {
           "source": "AI / Data Center / Networking & Connectivity",
           "target": "AI",
           "kind": "is_a"
@@ -70399,11 +70191,11 @@
             "vars_20ema": 17.45,
             "rs": 88.5,
             "price": 57.11,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -70717,52 +70509,6 @@
         ],
         "l1": "Semiconductors",
         "l2": "IP Licensing",
-        "l3": null
-      },
-      {
-        "name": "Education / EdTech & Online Learning",
-        "avg_vars": 7.38,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 9,
-            "vars": 7.38,
-            "vars_20ema": -2.64,
-            "rs": 100.0,
-            "price": 2.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Education",
-        "l2": "EdTech & Online Learning",
-        "l3": null
-      },
-      {
-        "name": "Software & Internet / EdTech",
-        "avg_vars": 7.38,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 9,
-            "vars": 7.38,
-            "vars_20ema": -2.64,
-            "rs": 100.0,
-            "price": 2.1,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Software & Internet",
-        "l2": "EdTech",
         "l3": null
       },
       {
@@ -71794,11 +71540,11 @@
             "vars_20ema": -4.46,
             "rs": 80.8,
             "price": 33.5,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -71905,7 +71651,7 @@
             "vars_20ema": 3.46,
             "rs": 0.0,
             "price": 18.77,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -73024,26 +72770,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Education",
-          "kind": "l1"
-        },
-        {
-          "id": "Education / EdTech & Online Learning",
-          "kind": "leaf",
-          "parent": "Education",
-          "ticker_count": 1
-        },
-        {
-          "id": "Software & Internet",
-          "kind": "l1"
-        },
-        {
-          "id": "Software & Internet / EdTech",
-          "kind": "leaf",
-          "parent": "Software & Internet",
-          "ticker_count": 1
-        },
-        {
           "id": "AI / Data Center / Cloud & Hyperscalers",
           "kind": "leaf",
           "parent": "AI",
@@ -73058,6 +72784,10 @@
           "kind": "leaf",
           "parent": "Cybersecurity",
           "ticker_count": 3
+        },
+        {
+          "id": "Software & Internet",
+          "kind": "l1"
         },
         {
           "id": "Software & Internet / Ads & Marketing Tech",
@@ -73586,16 +73316,6 @@
           "kind": "is_a"
         },
         {
-          "source": "Education / EdTech & Online Learning",
-          "target": "Education",
-          "kind": "is_a"
-        },
-        {
-          "source": "Software & Internet / EdTech",
-          "target": "Software & Internet",
-          "kind": "is_a"
-        },
-        {
           "source": "AI / Data Center / Cloud & Hyperscalers",
           "target": "AI",
           "kind": "is_a"
@@ -74011,11 +73731,11 @@
             "vars_20ema": 16.95,
             "rs": 96.2,
             "price": 63.56,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -74654,29 +74374,6 @@
         "l3": null
       },
       {
-        "name": "Education / EdTech & Online Learning",
-        "avg_vars": 4.17,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 8,
-            "vars": 4.17,
-            "vars_20ema": -3.7,
-            "rs": 100.0,
-            "price": 2.11,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Education",
-        "l2": "EdTech & Online Learning",
-        "l3": null
-      },
-      {
         "name": "Industrials / Electronic Manufacturing",
         "avg_vars": 4.17,
         "tickers": [
@@ -74697,29 +74394,6 @@
         ],
         "l1": "Industrials",
         "l2": "Electronic Manufacturing",
-        "l3": null
-      },
-      {
-        "name": "Software & Internet / EdTech",
-        "avg_vars": 4.17,
-        "tickers": [
-          {
-            "ticker": "NTCL",
-            "scan": "volspike",
-            "days_since_hv": 8,
-            "vars": 4.17,
-            "vars_20ema": -3.7,
-            "rs": 100.0,
-            "price": 2.11,
-            "float": null,
-            "eps": null,
-            "sales": null,
-            "inst": null,
-            "short": null
-          }
-        ],
-        "l1": "Software & Internet",
-        "l2": "EdTech",
         "l3": null
       },
       {
@@ -75587,11 +75261,11 @@
             "vars_20ema": -5.46,
             "rs": 88.5,
             "price": 38.45,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -75849,7 +75523,7 @@
             "vars_20ema": 3.27,
             "rs": 3.8,
             "price": 19.81,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -76804,16 +76478,6 @@
           "ticker_count": 1
         },
         {
-          "id": "Education",
-          "kind": "l1"
-        },
-        {
-          "id": "Education / EdTech & Online Learning",
-          "kind": "leaf",
-          "parent": "Education",
-          "ticker_count": 1
-        },
-        {
           "id": "Industrials",
           "kind": "l1"
         },
@@ -76826,12 +76490,6 @@
         {
           "id": "Software & Internet",
           "kind": "l1"
-        },
-        {
-          "id": "Software & Internet / EdTech",
-          "kind": "leaf",
-          "parent": "Software & Internet",
-          "ticker_count": 1
         },
         {
           "id": "Software & Internet / Ads & Marketing Tech",
@@ -77353,18 +77011,8 @@
           "kind": "is_a"
         },
         {
-          "source": "Education / EdTech & Online Learning",
-          "target": "Education",
-          "kind": "is_a"
-        },
-        {
           "source": "Industrials / Electronic Manufacturing",
           "target": "Industrials",
-          "kind": "is_a"
-        },
-        {
-          "source": "Software & Internet / EdTech",
-          "target": "Software & Internet",
           "kind": "is_a"
         },
         {
@@ -77721,11 +77369,11 @@
             "vars_20ema": 16.59,
             "rs": 100.0,
             "price": 63.86,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -79330,11 +78978,11 @@
             "vars_20ema": -6.37,
             "rs": 92.3,
             "price": 40.3,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -79418,7 +79066,7 @@
             "vars_20ema": 3.38,
             "rs": 0.0,
             "price": 19.73,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -81355,11 +81003,11 @@
             "vars_20ema": 16.23,
             "rs": 100.0,
             "price": 62.39,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -82942,11 +82590,11 @@
             "vars_20ema": -7.19,
             "rs": 96.2,
             "price": 45.5,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MDA",
@@ -83030,7 +82678,7 @@
             "vars_20ema": 3.54,
             "rs": 0.0,
             "price": 20.07,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -84912,11 +84560,11 @@
             "vars_20ema": 15.97,
             "rs": 100.0,
             "price": 55.9,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -86057,7 +85705,7 @@
             "vars_20ema": 3.76,
             "rs": 15.4,
             "price": 21.03,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -86366,11 +86014,11 @@
             "vars_20ema": -8.04,
             "rs": 96.2,
             "price": 35.4,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -87325,12 +86973,12 @@
           },
           {
             "ticker": "JZ",
-            "scan": "both",
+            "scan": "denvol",
             "days_since_hv": 0,
-            "vars": -1.59,
+            "vars": -1.61,
             "vars_20ema": -8.78,
             "rs": 100.0,
-            "price": 3.1,
+            "price": 93.0,
             "float": null,
             "eps": null,
             "sales": null,
@@ -88539,11 +88187,11 @@
             "vars_20ema": 15.87,
             "rs": 96.2,
             "price": 51.96,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -89833,7 +89481,7 @@
             "vars_20ema": 3.78,
             "rs": 0.0,
             "price": 20.02,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -89893,11 +89541,11 @@
             "vars_20ema": -8.95,
             "rs": 100.0,
             "price": 49.8,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "MNTS",
@@ -90288,11 +89936,11 @@
             "vars_20ema": -3.52,
             "rs": 100.0,
             "price": 6.05,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -90376,7 +90024,7 @@
             "vars": -6.39,
             "vars_20ema": -4.12,
             "rs": 73.1,
-            "price": 33.75,
+            "price": 33.83,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -92433,11 +92081,11 @@
             "vars_20ema": 15.66,
             "rs": 100.0,
             "price": 52.15,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -93453,11 +93101,11 @@
             "vars_20ema": -10.08,
             "rs": 100.0,
             "price": 29.43,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           },
           {
             "ticker": "ASTS",
@@ -93652,7 +93300,7 @@
             "vars_20ema": 3.88,
             "rs": 0.0,
             "price": 20.0,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -94009,11 +93657,11 @@
             "vars_20ema": -3.59,
             "rs": 96.2,
             "price": 5.79,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -96063,11 +95711,11 @@
             "vars_20ema": 15.45,
             "rs": 96.2,
             "price": 48.82,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -97407,11 +97055,11 @@
             "vars_20ema": -10.93,
             "rs": 100.0,
             "price": 13.81,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           }
         ],
         "l1": "Space",
@@ -97491,7 +97139,7 @@
             "vars_20ema": 4.09,
             "rs": 0.0,
             "price": 20.12,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -97620,11 +97268,11 @@
             "vars_20ema": -3.65,
             "rs": 100.0,
             "price": 5.8,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -99604,11 +99252,11 @@
             "vars_20ema": 15.1,
             "rs": 100.0,
             "price": 50.29,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -100935,7 +100583,7 @@
             "vars_20ema": 4.41,
             "rs": 0.0,
             "price": 20.39,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -101264,11 +100912,11 @@
             "vars_20ema": -3.7,
             "rs": 92.3,
             "price": 5.31,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -102925,11 +102573,11 @@
             "vars_20ema": 14.65,
             "rs": 100.0,
             "price": 47.17,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -104048,7 +103696,7 @@
             "vars_20ema": 1.03,
             "rs": 88.5,
             "price": 40.06,
-            "float": "53.0",
+            "float": "53.1",
             "eps": "-32",
             "sales": "7",
             "inst": "+9.7",
@@ -104117,7 +103765,7 @@
             "vars_20ema": 4.67,
             "rs": 15.4,
             "price": 21.58,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -104643,11 +104291,11 @@
             "vars_20ema": -3.71,
             "rs": 84.6,
             "price": 4.95,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -104726,7 +104374,7 @@
             "vars_20ema": -0.4,
             "rs": 26.9,
             "price": 7.39,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -106205,11 +105853,11 @@
             "vars_20ema": 14.21,
             "rs": 100.0,
             "price": 42.1,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -107327,7 +106975,7 @@
             "vars_20ema": 4.79,
             "rs": 23.1,
             "price": 21.57,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -107779,11 +107427,11 @@
             "vars_20ema": -3.7,
             "rs": 84.6,
             "price": 4.88,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -107862,7 +107510,7 @@
             "vars_20ema": -0.14,
             "rs": 34.6,
             "price": 7.46,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -109202,11 +108850,11 @@
             "vars_20ema": 13.86,
             "rs": 100.0,
             "price": 40.09,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -110208,7 +109856,7 @@
             "vars_20ema": 4.88,
             "rs": 26.9,
             "price": 21.58,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -110716,7 +110364,7 @@
             "vars_20ema": 0.06,
             "rs": 53.8,
             "price": 7.68,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -110813,11 +110461,11 @@
             "vars_20ema": -3.75,
             "rs": 61.5,
             "price": 4.69,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -112037,11 +111685,11 @@
             "vars_20ema": 13.53,
             "rs": 92.3,
             "price": 36.98,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -112261,7 +111909,7 @@
             "scan": "both",
             "days_since_hv": 12,
             "vars": 5.27,
-            "vars_20ema": 1.8,
+            "vars_20ema": 1.81,
             "rs": 73.1,
             "price": 130.18,
             "float": null,
@@ -113168,7 +112816,7 @@
             "vars_20ema": 4.98,
             "rs": 19.2,
             "price": 20.87,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -113477,7 +113125,7 @@
             "vars_20ema": 0.18,
             "rs": 76.9,
             "price": 7.73,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -114740,11 +114388,11 @@
             "vars_20ema": 13.23,
             "rs": 88.5,
             "price": 36.89,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -115704,7 +115352,7 @@
             "vars_20ema": 5.11,
             "rs": 26.9,
             "price": 21.44,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -115999,7 +115647,7 @@
             "vars_20ema": 0.23,
             "rs": 84.6,
             "price": 7.8,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -116220,11 +115868,11 @@
             "vars_20ema": -3.68,
             "rs": 61.5,
             "price": 4.63,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -117450,11 +117098,11 @@
             "vars_20ema": 13.02,
             "rs": 92.3,
             "price": 37.17,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -118506,7 +118154,7 @@
             "vars_20ema": 5.36,
             "rs": 57.7,
             "price": 22.59,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -118861,7 +118509,7 @@
             "vars_20ema": 0.37,
             "rs": 61.5,
             "price": 7.65,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -119004,11 +118652,11 @@
             "vars_20ema": -3.53,
             "rs": 76.9,
             "price": 4.75,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -120237,11 +119885,11 @@
             "vars_20ema": 12.84,
             "rs": 96.2,
             "price": 37.93,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -121560,7 +121208,7 @@
             "vars_20ema": 0.65,
             "rs": 84.6,
             "price": 7.89,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -121818,11 +121466,11 @@
             "vars_20ema": -3.37,
             "rs": 80.8,
             "price": 4.85,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -121896,6 +121544,30 @@
         ],
         "l1": "Oil & Gas",
         "l2": "E&P",
+        "l3": null
+      },
+      {
+        "name": "Software & Internet / Gaming",
+        "avg_vars": -13.15,
+        "tickers": [
+          {
+            "ticker": "SNAL",
+            "scan": "both",
+            "days_since_hv": 30,
+            "vars": -13.15,
+            "vars_20ema": -11.98,
+            "rs": 96.2,
+            "price": 5.4,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Software & Internet",
+        "l2": "Gaming",
         "l3": null
       },
       {
@@ -122519,6 +122191,12 @@
           "ticker_count": 1
         },
         {
+          "id": "Software & Internet / Gaming",
+          "kind": "leaf",
+          "parent": "Software & Internet",
+          "ticker_count": 1
+        },
+        {
           "id": "Singleton",
           "kind": "l1"
         },
@@ -122847,6 +122525,11 @@
           "kind": "is_a"
         },
         {
+          "source": "Software & Internet / Gaming",
+          "target": "Software & Internet",
+          "kind": "is_a"
+        },
+        {
           "source": "Uncategorized",
           "target": "Singleton",
           "kind": "is_a"
@@ -123035,11 +122718,11 @@
             "vars_20ema": 12.83,
             "rs": 100.0,
             "price": 38.44,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "PENG",
@@ -124233,7 +123916,7 @@
             "vars_20ema": 6.01,
             "rs": 76.9,
             "price": 23.75,
-            "float": "177.0",
+            "float": "177.1",
             "eps": "107",
             "sales": "25",
             "inst": "+6.1",
@@ -124547,7 +124230,7 @@
             "vars_20ema": 1.08,
             "rs": 96.2,
             "price": 8.1,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -124745,11 +124428,11 @@
             "vars_20ema": -2.96,
             "rs": 73.1,
             "price": 4.72,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -126082,11 +125765,11 @@
             "vars_20ema": 12.74,
             "rs": 88.5,
             "price": 33.57,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "OSS",
@@ -127141,7 +126824,7 @@
             "vars": -2.98,
             "vars_20ema": 0.71,
             "rs": 61.5,
-            "price": 35.45,
+            "price": 35.53,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -127469,11 +127152,11 @@
             "vars_20ema": -2.45,
             "rs": 76.9,
             "price": 4.72,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -128744,11 +128427,11 @@
             "vars_20ema": 12.76,
             "rs": 100.0,
             "price": 34.77,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "OSS",
@@ -130024,7 +129707,7 @@
             "vars": -3.48,
             "vars_20ema": 1.09,
             "rs": 53.8,
-            "price": 34.32,
+            "price": 34.4,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -130275,11 +129958,11 @@
             "vars_20ema": -2.08,
             "rs": 92.3,
             "price": 5.03,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -131464,11 +131147,11 @@
             "vars_20ema": 12.74,
             "rs": 100.0,
             "price": 34.2,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "OSS",
@@ -132845,7 +132528,7 @@
             "vars": -3.47,
             "vars_20ema": 1.58,
             "rs": 50.0,
-            "price": 34.07,
+            "price": 34.15,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -133021,11 +132704,11 @@
             "vars_20ema": -1.6,
             "rs": 96.2,
             "price": 5.29,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -134361,11 +134044,11 @@
             "vars_20ema": 12.75,
             "rs": 96.2,
             "price": 32.54,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "OSS",
@@ -135687,11 +135370,11 @@
             "vars_20ema": -1.18,
             "rs": 100.0,
             "price": 5.43,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -137167,11 +136850,11 @@
             "vars_20ema": 12.75,
             "rs": 100.0,
             "price": 33.5,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           },
           {
             "ticker": "OSS",
@@ -138429,11 +138112,11 @@
             "vars_20ema": -0.95,
             "rs": 96.2,
             "price": 4.78,
-            "float": "88.2",
+            "float": "85.9",
             "eps": "-48",
             "sales": "9",
             "inst": "+0.1",
-            "short": 27.1
+            "short": 27.8
           }
         ],
         "l1": "Travel & Leisure",
@@ -139504,11 +139187,11 @@
             "vars_20ema": 12.74,
             "rs": 100.0,
             "price": 32.04,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -141815,11 +141498,11 @@
             "vars_20ema": 12.67,
             "rs": 100.0,
             "price": 30.52,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -144073,11 +143756,11 @@
             "vars_20ema": 12.6,
             "rs": 100.0,
             "price": 29.53,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -146382,11 +146065,11 @@
             "vars_20ema": 12.59,
             "rs": 100.0,
             "price": 28.92,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -148635,11 +148318,11 @@
             "vars_20ema": 12.61,
             "rs": 96.2,
             "price": 27.75,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -150656,11 +150339,11 @@
             "vars_20ema": 12.6,
             "rs": 80.8,
             "price": 26.7,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -152493,11 +152176,11 @@
             "vars_20ema": 12.51,
             "rs": 96.2,
             "price": 27.72,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -154241,11 +153924,11 @@
             "vars_20ema": 12.35,
             "rs": 100.0,
             "price": 28.14,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -155249,7 +154932,7 @@
             "vars_20ema": -3.69,
             "rs": 88.5,
             "price": 15.6,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -155272,7 +154955,7 @@
             "vars_20ema": -3.69,
             "rs": 88.5,
             "price": 15.6,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -156139,11 +155822,11 @@
             "vars_20ema": 12.07,
             "rs": 100.0,
             "price": 27.28,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -157074,7 +156757,7 @@
             "vars_20ema": -3.64,
             "rs": 92.3,
             "price": 15.49,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -157097,7 +156780,7 @@
             "vars_20ema": -3.64,
             "rs": 92.3,
             "price": 15.49,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -158010,11 +157693,11 @@
             "vars_20ema": 11.76,
             "rs": 96.2,
             "price": 26.9,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -158932,7 +158615,7 @@
             "vars_20ema": -3.63,
             "rs": 96.2,
             "price": 15.58,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -158955,7 +158638,7 @@
             "vars_20ema": -3.63,
             "rs": 96.2,
             "price": 15.58,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -159969,11 +159652,11 @@
             "vars_20ema": 11.5,
             "rs": 100.0,
             "price": 26.87,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -160845,7 +160528,7 @@
             "vars_20ema": -3.67,
             "rs": 100.0,
             "price": 15.44,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -160868,7 +160551,7 @@
             "vars_20ema": -3.67,
             "rs": 100.0,
             "price": 15.44,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -161848,11 +161531,11 @@
             "vars_20ema": 11.11,
             "rs": 96.2,
             "price": 26.29,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -162733,7 +162416,7 @@
             "vars_20ema": -3.7,
             "rs": 100.0,
             "price": 15.35,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -162756,7 +162439,7 @@
             "vars_20ema": -3.7,
             "rs": 100.0,
             "price": 15.35,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -163621,11 +163304,11 @@
             "vars_20ema": 10.84,
             "rs": 96.2,
             "price": 25.88,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -164879,13 +164562,13 @@
       },
       {
         "name": "AI / Data Center / Chips & Processors",
-        "avg_vars": -4.19,
+        "avg_vars": -4.2,
         "tickers": [
           {
             "ticker": "ARM",
             "scan": "both",
             "days_since_hv": 23,
-            "vars": -4.19,
+            "vars": -4.2,
             "vars_20ema": -2.97,
             "rs": 88.5,
             "price": 166.73,
@@ -164958,7 +164641,7 @@
             "vars_20ema": -3.59,
             "rs": 100.0,
             "price": 15.06,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -165004,7 +164687,7 @@
             "vars_20ema": -3.59,
             "rs": 100.0,
             "price": 15.06,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -166016,11 +165699,11 @@
             "vars_20ema": 10.55,
             "rs": 100.0,
             "price": 26.21,
-            "float": "122.8",
+            "float": null,
             "eps": "1581",
             "sales": "17",
             "inst": "-0.3",
-            "short": 13.5
+            "short": null
           }
         ],
         "l1": "AI",
@@ -167406,7 +167089,7 @@
             "vars_20ema": -3.42,
             "rs": 100.0,
             "price": 14.62,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -167429,7 +167112,7 @@
             "vars_20ema": -3.42,
             "rs": 100.0,
             "price": 14.62,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -169796,7 +169479,7 @@
             "vars_20ema": -3.4,
             "rs": 100.0,
             "price": 14.43,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -169843,7 +169526,7 @@
             "vars_20ema": -3.4,
             "rs": 100.0,
             "price": 14.43,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -172086,7 +171769,7 @@
             "vars_20ema": -3.29,
             "rs": 92.3,
             "price": 13.85,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -172132,7 +171815,7 @@
             "vars_20ema": -3.29,
             "rs": 92.3,
             "price": 13.85,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -172165,6 +171848,30 @@
         "l1": "AI",
         "l2": "Hardware",
         "l3": "Avatars"
+      },
+      {
+        "name": "Software & Internet / Gaming",
+        "avg_vars": -4.62,
+        "tickers": [
+          {
+            "ticker": "SNAL",
+            "scan": "both",
+            "days_since_hv": 0,
+            "vars": -4.62,
+            "vars_20ema": -6.63,
+            "rs": 100.0,
+            "price": 8.5,
+            "float": null,
+            "eps": null,
+            "sales": null,
+            "inst": null,
+            "short": null,
+            "ticker_color": "green"
+          }
+        ],
+        "l1": "Software & Internet",
+        "l2": "Gaming",
+        "l3": null
       },
       {
         "name": "Real Estate / Tech-Enabled Brokerage",
@@ -172681,6 +172388,12 @@
           "ticker_count": 1
         },
         {
+          "id": "Software & Internet / Gaming",
+          "kind": "leaf",
+          "parent": "Software & Internet",
+          "ticker_count": 1
+        },
+        {
           "id": "Real Estate",
           "kind": "l1"
         },
@@ -172949,6 +172662,11 @@
           "kind": "is_a"
         },
         {
+          "source": "Software & Internet / Gaming",
+          "target": "Software & Internet",
+          "kind": "is_a"
+        },
+        {
           "source": "Real Estate / Tech-Enabled Brokerage",
           "target": "Real Estate",
           "kind": "is_a"
@@ -173196,7 +172914,7 @@
             "scan": "volspike",
             "days_since_hv": 5,
             "vars": 10.96,
-            "vars_20ema": 3.47,
+            "vars_20ema": 3.48,
             "rs": 100.0,
             "price": 371.01,
             "float": "34.8",
@@ -174195,7 +173913,7 @@
             "vars_20ema": -3.26,
             "rs": 92.3,
             "price": 13.59,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -174310,7 +174028,7 @@
             "vars_20ema": -3.26,
             "rs": 92.3,
             "price": 13.59,
-            "float": "88.4",
+            "float": "88.5",
             "eps": null,
             "sales": "40",
             "inst": "-18.9",
@@ -188637,11 +188355,11 @@
             "vars_20ema": -3.98,
             "rs": 92.3,
             "price": 4.45,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           }
         ],
         "l1": "Space",
@@ -190636,11 +190354,11 @@
             "vars_20ema": -4.59,
             "rs": 100.0,
             "price": 5.23,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           }
         ],
         "l1": "Space",
@@ -192535,11 +192253,11 @@
             "vars_20ema": -5.39,
             "rs": 100.0,
             "price": 4.65,
-            "float": "1.4",
+            "float": "1.5",
             "eps": null,
             "sales": "-36",
             "inst": "-15.8",
-            "short": 9.4
+            "short": 8.7
           }
         ],
         "l1": "Space",
@@ -195550,7 +195268,7 @@
             "vars_20ema": 16.78,
             "rs": 57.7,
             "price": 281.07,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -195990,7 +195708,7 @@
             "vars_20ema": 16.78,
             "rs": 57.7,
             "price": 281.07,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -197132,7 +196850,7 @@
             "ticker": "ECHO",
             "scan": "both",
             "days_since_hv": 6,
-            "vars": 13.66,
+            "vars": 13.67,
             "vars_20ema": 10.61,
             "rs": 92.3,
             "price": 111.4,
@@ -198020,7 +197738,7 @@
             "vars_20ema": 16.63,
             "rs": 88.5,
             "price": 293.12,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -198434,7 +198152,7 @@
             "scan": "volspike",
             "days_since_hv": 5,
             "vars": 11.17,
-            "vars_20ema": 7.49,
+            "vars_20ema": 7.5,
             "rs": 88.5,
             "price": 12.3,
             "float": null,
@@ -198460,7 +198178,7 @@
             "vars_20ema": 16.63,
             "rs": 88.5,
             "price": 293.12,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -200440,7 +200158,7 @@
             "vars_20ema": 16.27,
             "rs": 96.2,
             "price": 298.58,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -200838,7 +200556,7 @@
             "vars_20ema": 16.27,
             "rs": 96.2,
             "price": 298.58,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -201428,7 +201146,7 @@
             "vars_20ema": 5.98,
             "rs": 30.8,
             "price": 6.45,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -202818,7 +202536,7 @@
             "vars_20ema": 15.78,
             "rs": 80.8,
             "price": 288.96,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -203114,7 +202832,7 @@
             "vars_20ema": 15.78,
             "rs": 80.8,
             "price": 288.96,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -203745,7 +203463,7 @@
             "vars_20ema": 5.63,
             "rs": 30.8,
             "price": 6.53,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -205191,7 +204909,7 @@
             "vars_20ema": 15.31,
             "rs": 57.7,
             "price": 277.53,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -205547,7 +205265,7 @@
             "vars": 12.31,
             "vars_20ema": 10.98,
             "rs": 0.0,
-            "price": 31.33,
+            "price": 31.4,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -205669,7 +205387,7 @@
             "vars_20ema": 15.31,
             "rs": 57.7,
             "price": 277.53,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -206266,7 +205984,7 @@
             "vars_20ema": 5.26,
             "rs": 26.9,
             "price": 6.4,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -207660,7 +207378,7 @@
             "vars_20ema": 14.95,
             "rs": 84.6,
             "price": 290.21,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -207947,7 +207665,7 @@
             "vars_20ema": 14.95,
             "rs": 84.6,
             "price": 290.21,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -208085,7 +207803,7 @@
             "vars": 11.03,
             "vars_20ema": 10.84,
             "rs": 0.0,
-            "price": 32.28,
+            "price": 32.35,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -208577,7 +208295,7 @@
             "vars_20ema": 4.98,
             "rs": 15.4,
             "price": 6.46,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -209959,7 +209677,7 @@
             "scan": "both",
             "days_since_hv": 13,
             "vars": 20.2,
-            "vars_20ema": 14.58,
+            "vars_20ema": 14.59,
             "rs": 88.5,
             "price": 4.59,
             "float": "68.5",
@@ -210008,7 +209726,7 @@
             "vars_20ema": 14.58,
             "rs": 73.1,
             "price": 284.12,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -210314,7 +210032,7 @@
             "vars_20ema": 14.58,
             "rs": 73.1,
             "price": 284.12,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -210387,7 +210105,7 @@
             "vars": 11.35,
             "vars_20ema": 10.82,
             "rs": 0.0,
-            "price": 34.52,
+            "price": 34.6,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -210464,7 +210182,7 @@
             "vars_20ema": 4.78,
             "rs": 11.5,
             "price": 6.41,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -212152,7 +211870,7 @@
             "vars_20ema": 14.2,
             "rs": 73.1,
             "price": 287.38,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -212198,7 +211916,7 @@
             "vars_20ema": 14.2,
             "rs": 73.1,
             "price": 287.38,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -212429,7 +212147,7 @@
             "vars": 12.29,
             "vars_20ema": 10.77,
             "rs": 0.0,
-            "price": 37.04,
+            "price": 37.12,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -212649,7 +212367,7 @@
             "vars_20ema": 4.62,
             "rs": 11.5,
             "price": 6.58,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -214307,7 +214025,7 @@
             "vars_20ema": 13.88,
             "rs": 73.1,
             "price": 285.94,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -214353,7 +214071,7 @@
             "vars_20ema": 13.88,
             "rs": 73.1,
             "price": 285.94,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -214682,7 +214400,7 @@
             "vars": 10.62,
             "vars_20ema": 10.61,
             "rs": 7.7,
-            "price": 37.51,
+            "price": 37.59,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -214781,7 +214499,7 @@
             "vars_20ema": 4.48,
             "rs": 7.7,
             "price": 6.45,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -216488,7 +216206,7 @@
             "vars_20ema": 13.45,
             "rs": 69.2,
             "price": 279.78,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -216534,7 +216252,7 @@
             "vars_20ema": 13.45,
             "rs": 69.2,
             "price": 279.78,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -216895,7 +216613,7 @@
             "vars": 10.52,
             "vars_20ema": 10.61,
             "rs": 3.8,
-            "price": 36.69,
+            "price": 36.77,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -217063,7 +216781,7 @@
             "vars_20ema": 4.33,
             "rs": 3.8,
             "price": 6.33,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -217257,7 +216975,7 @@
             "vars": 6.38,
             "vars_20ema": 2.49,
             "rs": 69.2,
-            "price": 37.72,
+            "price": 37.78,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -218976,7 +218694,7 @@
             "vars_20ema": 12.97,
             "rs": 73.1,
             "price": 282.78,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -218999,7 +218717,7 @@
             "vars_20ema": 12.97,
             "rs": 73.1,
             "price": 282.78,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -219531,7 +219249,7 @@
             "vars": 8.54,
             "vars_20ema": 10.62,
             "rs": 15.4,
-            "price": 38.73,
+            "price": 38.82,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -219570,7 +219288,7 @@
             "vars_20ema": 4.16,
             "rs": 0.0,
             "price": 6.33,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -219764,7 +219482,7 @@
             "vars": 5.57,
             "vars_20ema": 2.08,
             "rs": 76.9,
-            "price": 38.0,
+            "price": 38.06,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -221424,7 +221142,7 @@
             "vars_20ema": 12.52,
             "rs": 69.2,
             "price": 284.26,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -221470,7 +221188,7 @@
             "vars_20ema": 12.52,
             "rs": 69.2,
             "price": 284.26,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -221822,7 +221540,7 @@
             "vars": 10.39,
             "vars_20ema": 10.84,
             "rs": 30.8,
-            "price": 40.73,
+            "price": 40.82,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -222027,7 +221745,7 @@
             "vars_20ema": 4.06,
             "rs": 7.7,
             "price": 6.64,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -222174,7 +221892,7 @@
             "vars": 5.57,
             "vars_20ema": 1.72,
             "rs": 84.6,
-            "price": 38.81,
+            "price": 38.87,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -223993,7 +223711,7 @@
             "vars_20ema": 12.13,
             "rs": 73.1,
             "price": 285.54,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -224062,7 +223780,7 @@
             "vars_20ema": 12.13,
             "rs": 73.1,
             "price": 285.54,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -224302,7 +224020,7 @@
             "vars": 11.35,
             "vars_20ema": 10.88,
             "rs": 50.0,
-            "price": 42.39,
+            "price": 42.49,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -224544,7 +224262,7 @@
             "vars_20ema": 3.98,
             "rs": 11.5,
             "price": 6.73,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -224738,7 +224456,7 @@
             "vars": 4.97,
             "vars_20ema": 1.31,
             "rs": 92.3,
-            "price": 40.63,
+            "price": 40.69,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -226461,7 +226179,7 @@
             "vars_20ema": 11.73,
             "rs": 69.2,
             "price": 282.02,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -226530,7 +226248,7 @@
             "vars_20ema": 11.73,
             "rs": 69.2,
             "price": 282.02,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -226807,7 +226525,7 @@
             "vars": 10.16,
             "vars_20ema": 10.83,
             "rs": 23.1,
-            "price": 40.47,
+            "price": 40.56,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -226975,7 +226693,7 @@
             "vars_20ema": 3.86,
             "rs": 34.6,
             "price": 6.91,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -227118,7 +226836,7 @@
             "vars": 5.9,
             "vars_20ema": 0.93,
             "rs": 96.2,
-            "price": 41.78,
+            "price": 41.84,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -228894,7 +228612,7 @@
             "vars_20ema": 11.28,
             "rs": 69.2,
             "price": 272.43,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -229001,7 +228719,7 @@
             "vars_20ema": 11.28,
             "rs": 69.2,
             "price": 272.43,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -229266,7 +228984,7 @@
             "vars": 10.23,
             "vars_20ema": 10.91,
             "rs": 23.1,
-            "price": 40.37,
+            "price": 40.46,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -229593,7 +229311,7 @@
             "vars": 5.45,
             "vars_20ema": 0.4,
             "rs": 100.0,
-            "price": 41.88,
+            "price": 41.94,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -229730,7 +229448,7 @@
             "vars_20ema": 3.69,
             "rs": 46.2,
             "price": 6.93,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -231610,7 +231328,7 @@
             "vars_20ema": 10.83,
             "rs": 73.1,
             "price": 284.51,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -231698,7 +231416,7 @@
             "vars_20ema": 10.83,
             "rs": 73.1,
             "price": 284.51,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -231846,7 +231564,7 @@
             "vars": 12.55,
             "vars_20ema": 10.98,
             "rs": 19.2,
-            "price": 40.38,
+            "price": 40.47,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -232414,7 +232132,7 @@
             "vars_20ema": 3.57,
             "rs": 34.6,
             "price": 6.95,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -232436,7 +232154,7 @@
             "vars": 5.4,
             "vars_20ema": -0.13,
             "rs": 100.0,
-            "price": 39.54,
+            "price": 39.6,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -234463,7 +234181,7 @@
             "vars_20ema": 10.37,
             "rs": 84.6,
             "price": 300.92,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -234537,7 +234255,7 @@
             "vars_20ema": 10.37,
             "rs": 84.6,
             "price": 300.92,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -234760,7 +234478,7 @@
             "vars": 11.33,
             "vars_20ema": 10.81,
             "rs": 23.1,
-            "price": 41.55,
+            "price": 41.64,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -235100,7 +234818,7 @@
             "vars_20ema": 6.88,
             "rs": 53.8,
             "price": 66.78,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -235193,7 +234911,7 @@
             "vars": 5.92,
             "vars_20ema": -0.71,
             "rs": 96.2,
-            "price": 39.04,
+            "price": 39.1,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -235282,7 +235000,7 @@
             "vars_20ema": 3.36,
             "rs": 100.0,
             "price": 7.33,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -237331,7 +237049,7 @@
             "vars_20ema": 9.79,
             "rs": 92.3,
             "price": 302.54,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -237405,7 +237123,7 @@
             "vars_20ema": 9.79,
             "rs": 92.3,
             "price": 302.54,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -237649,7 +237367,7 @@
             "vars": 11.05,
             "vars_20ema": 10.76,
             "rs": 23.1,
-            "price": 41.78,
+            "price": 41.87,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -237733,7 +237451,7 @@
             "vars_20ema": 6.74,
             "rs": 53.8,
             "price": 66.18,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -238107,7 +237825,7 @@
             "vars_20ema": 3.17,
             "rs": 96.2,
             "price": 7.27,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -238218,7 +237936,7 @@
             "vars": 4.76,
             "vars_20ema": -1.41,
             "rs": 96.2,
-            "price": 36.7,
+            "price": 36.75,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -238728,7 +238446,7 @@
             "ticker": "DELL",
             "scan": "both",
             "days_since_hv": 4,
-            "vars": -3.14,
+            "vars": -3.13,
             "vars_20ema": -4.97,
             "rs": 92.3,
             "price": 144.73,
@@ -240222,7 +239940,7 @@
             "vars_20ema": 9.1,
             "rs": 100.0,
             "price": 313.27,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -240342,7 +240060,7 @@
             "vars_20ema": 9.1,
             "rs": 100.0,
             "price": 313.27,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -240517,7 +240235,7 @@
             "vars": 11.67,
             "vars_20ema": 10.72,
             "rs": 69.2,
-            "price": 46.23,
+            "price": 46.33,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -240638,7 +240356,7 @@
             "vars_20ema": 6.53,
             "rs": 92.3,
             "price": 69.08,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -241019,7 +240737,7 @@
             "vars_20ema": 2.96,
             "rs": 76.9,
             "price": 7.14,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -241194,7 +240912,7 @@
             "vars": 3.28,
             "vars_20ema": -2.06,
             "rs": 88.5,
-            "price": 36.02,
+            "price": 36.08,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -242917,7 +242635,7 @@
             "vars_20ema": 8.37,
             "rs": 100.0,
             "price": 307.33,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -242991,7 +242709,7 @@
             "vars_20ema": 8.37,
             "rs": 100.0,
             "price": 307.33,
-            "float": "169.5",
+            "float": "169.6",
             "eps": "42",
             "sales": "31",
             "inst": "-1.9",
@@ -243189,7 +242907,7 @@
             "vars": 12.06,
             "vars_20ema": 10.62,
             "rs": 73.1,
-            "price": 46.32,
+            "price": 46.42,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -243363,7 +243081,7 @@
             "vars_20ema": 6.29,
             "rs": 84.6,
             "price": 68.42,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -243437,7 +243155,7 @@
             "vars_20ema": 8.03,
             "rs": 76.9,
             "price": 104.24,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -243642,7 +243360,7 @@
             "vars_20ema": 8.03,
             "rs": 76.9,
             "price": 104.24,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -243818,7 +243536,7 @@
             "vars_20ema": 2.82,
             "rs": 88.5,
             "price": 7.24,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -243984,7 +243702,7 @@
             "vars": 3.27,
             "vars_20ema": -2.62,
             "rs": 92.3,
-            "price": 36.33,
+            "price": 36.38,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -246161,7 +245879,7 @@
             "vars": 11.2,
             "vars_20ema": 10.47,
             "rs": 57.7,
-            "price": 45.35,
+            "price": 45.45,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -246312,7 +246030,7 @@
             "vars_20ema": 6.03,
             "rs": 73.1,
             "price": 67.79,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -246349,7 +246067,7 @@
             "vars_20ema": 7.98,
             "rs": 88.5,
             "price": 107.56,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -246577,7 +246295,7 @@
             "vars_20ema": 7.98,
             "rs": 88.5,
             "price": 107.56,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -246799,7 +246517,7 @@
             "vars_20ema": 2.63,
             "rs": 19.2,
             "price": 6.96,
-            "float": "234.2",
+            "float": "235.1",
             "eps": "580",
             "sales": "21",
             "inst": "+5.5",
@@ -246942,7 +246660,7 @@
             "vars": 3.22,
             "vars_20ema": -3.24,
             "rs": 96.2,
-            "price": 37.02,
+            "price": 37.07,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -249053,7 +248771,7 @@
             "vars": 9.93,
             "vars_20ema": 10.4,
             "rs": 46.2,
-            "price": 44.23,
+            "price": 44.33,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -249181,7 +248899,7 @@
             "vars_20ema": 5.77,
             "rs": 69.2,
             "price": 67.82,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -249285,7 +249003,7 @@
             "vars_20ema": 7.96,
             "rs": 100.0,
             "price": 108.86,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -249451,7 +249169,7 @@
             "vars_20ema": 7.96,
             "rs": 100.0,
             "price": 108.86,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -250149,7 +249867,7 @@
             "vars": 1.5,
             "vars_20ema": -3.92,
             "rs": 88.5,
-            "price": 34.37,
+            "price": 34.42,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -251972,7 +251690,7 @@
             "vars": 10.41,
             "vars_20ema": 10.45,
             "rs": 42.3,
-            "price": 43.2,
+            "price": 43.3,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -252085,7 +251803,7 @@
             "vars_20ema": 5.52,
             "rs": 84.6,
             "price": 68.48,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -252212,7 +251930,7 @@
             "vars_20ema": 7.93,
             "rs": 88.5,
             "price": 106.7,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -252341,7 +252059,7 @@
             "vars_20ema": 7.93,
             "rs": 88.5,
             "price": 106.7,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -252790,7 +252508,7 @@
             "vars": 1.75,
             "vars_20ema": -4.49,
             "rs": 96.2,
-            "price": 35.07,
+            "price": 35.13,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -254509,7 +254227,7 @@
             "vars": 11.1,
             "vars_20ema": 10.45,
             "rs": 50.0,
-            "price": 43.73,
+            "price": 43.83,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -254585,7 +254303,7 @@
             "vars_20ema": 5.16,
             "rs": 80.8,
             "price": 67.28,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -254749,7 +254467,7 @@
             "vars_20ema": 7.86,
             "rs": 100.0,
             "price": 106.85,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -254892,7 +254610,7 @@
             "vars_20ema": 7.86,
             "rs": 100.0,
             "price": 106.85,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -255604,7 +255322,7 @@
             "vars": -0.61,
             "vars_20ema": -5.14,
             "rs": 96.2,
-            "price": 34.47,
+            "price": 34.52,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -256908,7 +256626,7 @@
             "vars": 9.19,
             "vars_20ema": 10.38,
             "rs": 42.3,
-            "price": 42.83,
+            "price": 42.93,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -257007,7 +256725,7 @@
             "vars_20ema": 7.78,
             "rs": 100.0,
             "price": 107.93,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -257148,7 +256866,7 @@
             "vars_20ema": 4.8,
             "rs": 80.8,
             "price": 67.8,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -257473,7 +257191,7 @@
             "vars_20ema": 7.78,
             "rs": 100.0,
             "price": 107.93,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -257925,7 +257643,7 @@
             "vars": 0.05,
             "vars_20ema": -5.62,
             "rs": 100.0,
-            "price": 39.37,
+            "price": 39.43,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -259571,7 +259289,7 @@
             "vars": 10.75,
             "vars_20ema": 10.51,
             "rs": 96.2,
-            "price": 47.44,
+            "price": 47.55,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -259717,7 +259435,7 @@
             "vars_20ema": 4.55,
             "rs": 92.3,
             "price": 68.59,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -259814,7 +259532,7 @@
             "vars_20ema": 7.72,
             "rs": 92.3,
             "price": 100.39,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -260039,7 +259757,7 @@
             "vars_20ema": 7.72,
             "rs": 92.3,
             "price": 100.39,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -260933,7 +260651,7 @@
             "vars": -3.85,
             "vars_20ema": -6.22,
             "rs": 92.3,
-            "price": 29.29,
+            "price": 29.34,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -262328,7 +262046,7 @@
             "vars": 11.59,
             "vars_20ema": 10.48,
             "rs": 80.8,
-            "price": 46.69,
+            "price": 46.79,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -262548,7 +262266,7 @@
             "vars_20ema": 4.19,
             "rs": 92.3,
             "price": 68.69,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -262661,7 +262379,7 @@
             "vars_20ema": 7.72,
             "rs": 42.3,
             "price": 93.97,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -262829,7 +262547,7 @@
             "vars_20ema": 7.72,
             "rs": 42.3,
             "price": 93.97,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -263587,7 +263305,7 @@
             "vars": -3.71,
             "vars_20ema": -6.47,
             "rs": 96.2,
-            "price": 29.46,
+            "price": 29.51,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -264870,7 +264588,7 @@
             "vars": 11.27,
             "vars_20ema": 10.37,
             "rs": 73.1,
-            "price": 45.15,
+            "price": 45.26,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -265144,7 +264862,7 @@
             "vars_20ema": 3.82,
             "rs": 100.0,
             "price": 69.13,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -265273,7 +264991,7 @@
             "vars_20ema": 7.74,
             "rs": 15.4,
             "price": 90.91,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -265394,7 +265112,7 @@
             "vars_20ema": 7.74,
             "rs": 15.4,
             "price": 90.91,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -266065,7 +265783,7 @@
             "vars": -3.11,
             "vars_20ema": -6.76,
             "rs": 92.3,
-            "price": 28.9,
+            "price": 28.95,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -267151,7 +266869,7 @@
             "vars": 12.87,
             "vars_20ema": 10.27,
             "rs": 92.3,
-            "price": 47.19,
+            "price": 47.29,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -267601,7 +267319,7 @@
             "vars_20ema": 3.32,
             "rs": 100.0,
             "price": 68.86,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -267758,7 +267476,7 @@
             "vars_20ema": 7.82,
             "rs": 23.1,
             "price": 91.8,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -268077,7 +267795,7 @@
             "vars_20ema": 7.82,
             "rs": 23.1,
             "price": 91.8,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -268550,7 +268268,7 @@
             "vars": -2.98,
             "vars_20ema": -7.14,
             "rs": 100.0,
-            "price": 30.09,
+            "price": 30.14,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -269668,7 +269386,7 @@
             "vars": 12.32,
             "vars_20ema": 10.0,
             "rs": 76.9,
-            "price": 44.97,
+            "price": 45.08,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -270192,7 +269910,7 @@
             "vars_20ema": 2.7,
             "rs": 96.2,
             "price": 65.26,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -270321,7 +270039,7 @@
             "vars_20ema": 7.7,
             "rs": 30.8,
             "price": 92.33,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -270557,7 +270275,7 @@
             "vars_20ema": 7.7,
             "rs": 30.8,
             "price": 92.33,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -270996,7 +270714,7 @@
             "vars": -3.74,
             "vars_20ema": -7.58,
             "rs": 76.9,
-            "price": 28.31,
+            "price": 28.35,
             "float": "72.7",
             "eps": "13",
             "sales": "5",
@@ -272023,7 +271741,7 @@
             "vars": 11.88,
             "vars_20ema": 9.75,
             "rs": 80.8,
-            "price": 46.12,
+            "price": 46.22,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -272506,7 +272224,7 @@
             "vars_20ema": 2.17,
             "rs": 100.0,
             "price": 68.71,
-            "float": "112.2",
+            "float": "112.1",
             "eps": "-1",
             "sales": "41",
             "inst": "+57.5",
@@ -272704,7 +272422,7 @@
             "vars_20ema": 7.53,
             "rs": 23.1,
             "price": 91.9,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -272866,7 +272584,7 @@
             "vars_20ema": 7.53,
             "rs": 23.1,
             "price": 91.9,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -274559,7 +274277,7 @@
             "vars": 10.39,
             "vars_20ema": 9.53,
             "rs": 69.2,
-            "price": 43.34,
+            "price": 43.44,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -274830,13 +274548,13 @@
       },
       {
         "name": "Biotech / CNS",
-        "avg_vars": 4.6,
+        "avg_vars": 4.61,
         "tickers": [
           {
             "ticker": "ACRS",
             "scan": "both",
             "days_since_hv": 21,
-            "vars": 4.6,
+            "vars": 4.61,
             "vars_20ema": 1.78,
             "rs": 73.1,
             "price": 3.65,
@@ -274863,7 +274581,7 @@
             "vars_20ema": 7.59,
             "rs": 30.8,
             "price": 93.77,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -274998,7 +274716,7 @@
             "vars_20ema": 7.59,
             "rs": 30.8,
             "price": 93.77,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -275297,13 +275015,13 @@
       },
       {
         "name": "Biotech / Immunology",
-        "avg_vars": 1.45,
+        "avg_vars": 1.46,
         "tickers": [
           {
             "ticker": "ACRS",
             "scan": "both",
             "days_since_hv": 21,
-            "vars": 4.6,
+            "vars": 4.61,
             "vars_20ema": 1.78,
             "rs": 73.1,
             "price": 3.65,
@@ -276922,7 +276640,7 @@
             "vars": 9.56,
             "vars_20ema": 9.44,
             "rs": 65.4,
-            "price": 41.82,
+            "price": 41.91,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -277179,7 +276897,7 @@
             "vars_20ema": 7.51,
             "rs": 65.4,
             "price": 97.98,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -277277,7 +276995,7 @@
             "vars_20ema": 7.51,
             "rs": 65.4,
             "price": 97.98,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -279307,7 +279025,7 @@
             "vars": 8.05,
             "vars_20ema": 9.43,
             "rs": 38.5,
-            "price": 38.87,
+            "price": 38.96,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -279495,7 +279213,7 @@
             "vars_20ema": 7.44,
             "rs": 76.9,
             "price": 98.58,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -279569,7 +279287,7 @@
             "vars_20ema": 7.44,
             "rs": 76.9,
             "price": 98.58,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -280283,7 +280001,7 @@
             "scan": "both",
             "days_since_hv": 2,
             "vars": -2.01,
-            "vars_20ema": -2.66,
+            "vars_20ema": -2.65,
             "rs": 84.6,
             "price": 17.08,
             "float": null,
@@ -281794,7 +281512,7 @@
             "vars": 8.4,
             "vars_20ema": 9.57,
             "rs": 19.2,
-            "price": 36.85,
+            "price": 36.93,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -281997,7 +281715,7 @@
             "vars_20ema": 7.25,
             "rs": 50.0,
             "price": 92.58,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -282131,7 +281849,7 @@
             "vars_20ema": 7.25,
             "rs": 50.0,
             "price": 92.58,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -284141,7 +283859,7 @@
             "vars": 8.73,
             "vars_20ema": 9.7,
             "rs": 50.0,
-            "price": 39.6,
+            "price": 39.68,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -284403,7 +284121,7 @@
             "vars_20ema": 6.9,
             "rs": 65.4,
             "price": 96.22,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -284454,7 +284172,7 @@
             "vars_20ema": 6.9,
             "rs": 65.4,
             "price": 96.22,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -286490,7 +286208,7 @@
             "vars": 8.3,
             "vars_20ema": 9.8,
             "rs": 46.2,
-            "price": 39.5,
+            "price": 39.58,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -286640,7 +286358,7 @@
             "vars_20ema": 6.66,
             "rs": 100.0,
             "price": 107.57,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -286691,7 +286409,7 @@
             "vars_20ema": 6.66,
             "rs": 100.0,
             "price": 107.57,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -288693,7 +288411,7 @@
             "vars": 7.79,
             "vars_20ema": 9.96,
             "rs": 46.2,
-            "price": 38.97,
+            "price": 39.06,
             "float": "257.9",
             "eps": "134",
             "sales": "50",
@@ -288940,7 +288658,7 @@
             "vars_20ema": 6.44,
             "rs": 100.0,
             "price": 102.76,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -288991,7 +288709,7 @@
             "vars_20ema": 6.44,
             "rs": 100.0,
             "price": 102.76,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -291048,7 +290766,7 @@
             "vars_20ema": 6.3,
             "rs": 84.6,
             "price": 98.2,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -291183,7 +290901,7 @@
             "vars_20ema": 6.3,
             "rs": 84.6,
             "price": 98.2,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -293209,7 +292927,7 @@
             "vars_20ema": 6.16,
             "rs": 73.1,
             "price": 96.48,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -293284,7 +293002,7 @@
             "vars_20ema": 6.16,
             "rs": 73.1,
             "price": 96.48,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -295190,7 +294908,7 @@
             "vars_20ema": 6.12,
             "rs": 80.8,
             "price": 97.99,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -295227,7 +294945,7 @@
             "vars_20ema": 6.12,
             "rs": 80.8,
             "price": 97.99,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -297154,7 +296872,7 @@
             "vars_20ema": 5.96,
             "rs": 69.2,
             "price": 94.61,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -297317,7 +297035,7 @@
             "vars_20ema": 5.96,
             "rs": 69.2,
             "price": 94.61,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -299158,7 +298876,7 @@
             "vars_20ema": 5.95,
             "rs": 73.1,
             "price": 94.63,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -299218,7 +298936,7 @@
             "vars_20ema": 5.95,
             "rs": 73.1,
             "price": 94.63,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -300890,7 +300608,7 @@
             "vars_20ema": 5.89,
             "rs": 76.9,
             "price": 95.02,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -300975,7 +300693,7 @@
             "vars_20ema": 5.89,
             "rs": 76.9,
             "price": 95.02,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -302547,7 +302265,7 @@
             "vars_20ema": 5.65,
             "rs": 84.6,
             "price": 97.53,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -302696,7 +302414,7 @@
             "vars_20ema": 5.65,
             "rs": 84.6,
             "price": 97.53,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -304327,7 +304045,7 @@
             "vars_20ema": 5.37,
             "rs": 92.3,
             "price": 99.87,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -304364,7 +304082,7 @@
             "vars_20ema": 5.37,
             "rs": 92.3,
             "price": 99.87,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -306023,7 +305741,7 @@
             "vars_20ema": 4.9,
             "rs": 92.3,
             "price": 97.83,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -306060,7 +305778,7 @@
             "vars_20ema": 4.9,
             "rs": 92.3,
             "price": 97.83,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -307714,7 +307432,7 @@
             "vars_20ema": 4.33,
             "rs": 100.0,
             "price": 101.01,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -307774,7 +307492,7 @@
             "vars_20ema": 4.33,
             "rs": 100.0,
             "price": 101.01,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -309783,7 +309501,7 @@
             "vars_20ema": 3.92,
             "rs": 100.0,
             "price": 100.9,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -309866,7 +309584,7 @@
             "vars_20ema": 3.92,
             "rs": 100.0,
             "price": 100.9,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -312174,7 +311892,7 @@
             "vars_20ema": 3.45,
             "rs": 100.0,
             "price": 96.52,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -312272,7 +311990,7 @@
             "vars_20ema": 3.45,
             "rs": 100.0,
             "price": 96.52,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -314255,7 +313973,7 @@
             "vars_20ema": 2.96,
             "rs": 100.0,
             "price": 93.24,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -314362,7 +314080,7 @@
             "vars_20ema": 2.96,
             "rs": 100.0,
             "price": 93.24,
-            "float": "101.4",
+            "float": "101.5",
             "eps": "65",
             "sales": "30",
             "inst": "-3.4",
@@ -323282,11 +323000,11 @@
             "vars_20ema": 4.13,
             "rs": 34.6,
             "price": 76.69,
-            "float": "72.4",
+            "float": "73.0",
             "eps": "6",
             "sales": "56",
             "inst": "+4.1",
-            "short": 13.8
+            "short": 13.7
           },
           {
             "ticker": "NRIX",
@@ -325447,11 +325165,11 @@
             "vars_20ema": 3.95,
             "rs": 30.8,
             "price": 73.46,
-            "float": "72.4",
+            "float": "73.0",
             "eps": "6",
             "sales": "56",
             "inst": "+4.1",
-            "short": 13.8
+            "short": 13.7
           },
           {
             "ticker": "NRIX",
@@ -327507,11 +327225,11 @@
             "vars_20ema": 3.84,
             "rs": 30.8,
             "price": 72.41,
-            "float": "72.4",
+            "float": "73.0",
             "eps": "6",
             "sales": "56",
             "inst": "+4.1",
-            "short": 13.8
+            "short": 13.7
           },
           {
             "ticker": "NRIX",

@@ -220,11 +220,11 @@
           "vars_20ema": 15.51,
           "rs": 0.0,
           "price": 45.92,
-          "float": "122.8",
+          "float": null,
           "eps": "1581",
           "sales": "17",
           "inst": "-0.3",
-          "short": 13.5
+          "short": null
         },
         {
           "ticker": "ALAB",
@@ -678,7 +678,7 @@
           "vars_20ema": 0.51,
           "rs": 0.0,
           "price": 84.64,
-          "float": "531.3",
+          "float": "531.2",
           "eps": "92",
           "sales": "35",
           "inst": "-0.3",
@@ -1905,29 +1905,6 @@
       "l3": null
     },
     {
-      "name": "Semiconductors / Power & Discrete",
-      "avg_vars": 0.54,
-      "tickers": [
-        {
-          "ticker": "ADI",
-          "scan": "volspike",
-          "days_since_hv": 6,
-          "vars": 0.54,
-          "vars_20ema": 3.69,
-          "rs": 0.0,
-          "price": 377.16,
-          "float": "485.7",
-          "eps": "58",
-          "sales": "37",
-          "inst": "-1.3",
-          "short": 2.5
-        }
-      ],
-      "l1": "Semiconductors",
-      "l2": "Power & Discrete",
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Optics",
       "avg_vars": 0.53,
       "tickers": [
@@ -1979,6 +1956,29 @@
       "l3": "Optics"
     },
     {
+      "name": "Semiconductors / Power & Discrete",
+      "avg_vars": 0.49,
+      "tickers": [
+        {
+          "ticker": "ADI",
+          "scan": "volspike",
+          "days_since_hv": 6,
+          "vars": 0.49,
+          "vars_20ema": 3.64,
+          "rs": 0.0,
+          "price": 377.16,
+          "float": "485.7",
+          "eps": "58",
+          "sales": "37",
+          "inst": "-1.3",
+          "short": 2.5
+        }
+      ],
+      "l1": "Semiconductors",
+      "l2": "Power & Discrete",
+      "l3": null
+    },
+    {
       "name": "AI / Data Center / Power & Cooling",
       "avg_vars": 0.36,
       "tickers": [
@@ -2018,7 +2018,7 @@
           "vars_20ema": 3.6,
           "rs": 65.4,
           "price": 55.49,
-          "float": "124.5",
+          "float": "125.0",
           "eps": "84",
           "sales": "26",
           "inst": "+1.4",
@@ -4022,16 +4022,16 @@
         "ticker_count": 5
       },
       {
-        "id": "Semiconductors / Power & Discrete",
-        "kind": "leaf",
-        "parent": "Semiconductors",
-        "ticker_count": 1
-      },
-      {
         "id": "AI / Data Center / Optics",
         "kind": "leaf",
         "parent": "AI",
         "ticker_count": 3
+      },
+      {
+        "id": "Semiconductors / Power & Discrete",
+        "kind": "leaf",
+        "parent": "Semiconductors",
+        "ticker_count": 1
       },
       {
         "id": "AI / Data Center / Power & Cooling",
@@ -4642,13 +4642,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Semiconductors / Power & Discrete",
-        "target": "Semiconductors",
+        "source": "AI / Data Center / Optics",
+        "target": "AI",
         "kind": "is_a"
       },
       {
-        "source": "AI / Data Center / Optics",
-        "target": "AI",
+        "source": "Semiconductors / Power & Discrete",
+        "target": "Semiconductors",
         "kind": "is_a"
       },
       {

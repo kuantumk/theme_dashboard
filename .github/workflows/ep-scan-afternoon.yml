@@ -97,6 +97,11 @@ jobs:
     needs: ep-scan
     if: always() && needs.ep-scan.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: write   # delete a stale Pages artifact left behind by a re-run
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -105,6 +110,20 @@ jobs:
         with:
           ref: main
       - uses: actions/configure-pages@v4
+      # A re-run leaves the prior attempt's "github-pages" artifact on the run;
+      # actions/deploy-pages then aborts with "Multiple artifacts named
+      # github-pages". Delete any leftover so the re-run uploads exactly one.
+      - name: Remove stale Pages artifact from earlier run attempts
+        if: fromJSON(github.run_attempt) > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" \
+            --jq '.artifacts[] | select(.name == "github-pages") | .id' || true)
+          for id in $ids; do
+            echo "Deleting stale github-pages artifact ${id} from a prior attempt"
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" || true
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: 'docs'

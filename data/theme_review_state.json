@@ -223,6 +223,122 @@
       ],
       "reason": "New ticker classification: Creative Global Technology Holdings is a Hong Kong wholesaler/reseller of pre-owned consumer electronics (smartphones, tablets) sourced from US/Japan suppliers for SE Asia buyers, plus small retail/rental arms; no peer group in taxonomy",
       "at": "2026-07-09T00:34:18"
+    },
+    {
+      "ticker": "ACRS",
+      "old_paths": [
+        "Biotech / Immunology",
+        "Biotech / CNS"
+      ],
+      "new_paths": [
+        "Biotech / Immunology"
+      ],
+      "reason": "Narrative-shift audit: Aclaris pipeline is inflammation/immunology (bosakitug anti-TSLP for atopic dermatitis, ATI-2138 ITK/JAK3 for lichen planus, asthma programs) \u2014 no CNS assets found; dropping stale CNS tag, keeping Immunology",
+      "at": "2026-07-10T00:36:06"
+    },
+    {
+      "ticker": "BNY",
+      "old_paths": [
+        "Fintech & Crypto / Wealth & Asset Management",
+        "Fintech & Crypto / Investment Banking"
+      ],
+      "new_paths": [
+        "Fintech & Crypto / Wealth & Asset Management"
+      ],
+      "reason": "Narrative-shift audit: BNY Mellon has no investment-banking segment (no underwriting/M&A advisory) \u2014 its three segments are Securities Services (custody, $59.4T AUC/A), Market and Wealth Services, and Investment and Wealth Management; dropping mis-tagged Investment Banking, keeping Wealth & Asset Management as closest taxonomy fit",
+      "at": "2026-07-10T00:36:09"
+    },
+    {
+      "ticker": "ALNY",
+      "old_paths": [],
+      "new_paths": [
+        "Biotech / RNAi & Antisense"
+      ],
+      "reason": "New ticker classification: Alnylam Pharmaceuticals \u2014 RNAi therapeutics pioneer (ONPATTRO for hATTR amyloidosis + pipeline)",
+      "at": "2026-07-10T00:37:53"
+    },
+    {
+      "ticker": "ATRC",
+      "old_paths": [],
+      "new_paths": [
+        "MedTech / Cardiovascular"
+      ],
+      "reason": "New ticker classification: AtriCure \u2014 surgical devices for cardiac ablation, left atrial appendage exclusion, AFib treatment",
+      "at": "2026-07-10T00:37:53"
+    },
+    {
+      "ticker": "BLLN",
+      "old_paths": [],
+      "new_paths": [
+        "Biotech / Genomics & Diagnostics Platforms"
+      ],
+      "reason": "New ticker classification: BillionToOne \u2014 molecular counting diagnostics platform (Unity NIPT prenatal genetic testing, oncology genetic testing); Nov 2025 IPO",
+      "at": "2026-07-10T00:37:53"
+    },
+    {
+      "ticker": "FBRX",
+      "old_paths": [],
+      "new_paths": [
+        "Biotech / Immunology"
+      ],
+      "reason": "New ticker classification: Forte Biosciences \u2014 clinical-stage biopharma, lead candidate FB-102 anti-CD122 mAb for autoimmune indications",
+      "at": "2026-07-10T00:37:53"
+    },
+    {
+      "ticker": "JLHL",
+      "old_paths": [],
+      "new_paths": [
+        "Singleton"
+      ],
+      "reason": "New ticker classification: Julong Holding \u2014 Beijing-based intelligent building-systems integrator for China infrastructure projects (security, fire protection, parking, toll collection, smart-city systems); no existing taxonomy peer group for systems-integration services, Singleton",
+      "at": "2026-07-10T00:38:01"
+    },
+    {
+      "ticker": "PRU",
+      "old_paths": [],
+      "new_paths": [
+        "Fintech & Crypto / Insurance & Insurtech"
+      ],
+      "reason": "New ticker classification: Prudential Financial \u2014 diversified insurance/financial-services company; revenue predominantly Individual Life + Group Insurance + Retirement, PGIM asset management is one segment among several insurance-centric lines",
+      "at": "2026-07-10T00:38:01"
+    },
+    {
+      "ticker": "TRAX",
+      "old_paths": [],
+      "new_paths": [
+        "Biotech / Immunology"
+      ],
+      "reason": "New ticker classification: First Tracks Biotherapeutics \u2014 clinical-stage biotech, lead candidate ANB033 anti-CD122 antagonist for autoimmune and inflammatory diseases",
+      "at": "2026-07-10T00:38:01"
+    },
+    {
+      "ticker": "VRAX",
+      "old_paths": [],
+      "new_paths": [
+        "Biotech / Genomics & Diagnostics Platforms"
+      ],
+      "reason": "New ticker classification: Virax Biolabs \u2014 immune-diagnostics/IVD company (T-cell immune profiling, in vitro diagnostics for viral/immune-mediated diseases, ViraxImmune/ImmuneSelect); not a drug developer",
+      "at": "2026-07-10T00:38:02"
+    },
+    {
+      "ticker": "WRAP",
+      "old_paths": [],
+      "new_paths": [
+        "Singleton"
+      ],
+      "reason": "New ticker classification: Wrap Technologies \u2014 less-lethal restraint devices (BolaWrap) and expanding counter-drone (C-UAS) tech for law enforcement/public safety; no existing taxonomy peer group for police-tech, Singleton",
+      "at": "2026-07-10T00:38:02"
+    },
+    {
+      "ticker": "HKIT",
+      "old_paths": [
+        "Singleton"
+      ],
+      "new_paths": [
+        "Software & Internet / BPO & IT Services"
+      ],
+      "reason": "Singleton rescue: Hitek Global \u2014 IT consulting/solutions services to SMB/enterprise clients in China (sector=Technology, industry=Information Technology Services); fits BPO & IT Services better than idiosyncratic Singleton",
+      "at": "2026-07-10T00:38:25"
     }
   ]
 }

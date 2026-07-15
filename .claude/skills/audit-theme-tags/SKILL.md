@@ -124,7 +124,7 @@ The Ecosystem Radar scores fixed theme baskets over **all** tagged tickers, so i
 
 Per run, keep it bounded:
 
-1. **Pick 2–3 focus families**: the top ecosystems by boosted score in `docs/data/radar.json` (committed by the daily workflow; fall back to the top L1s in `docs/data/themes.json` while radar.json doesn't exist yet). Rotate — skip a family already densified within ~2 weeks (`data/theme_review_state.json` entries with a `Basket densification:` reason prefix are the trail).
+1. **Pick 2–3 focus families**: the top ecosystems by boosted score in `docs/data/radar.json` (committed by the daily workflow; if the file doesn't exist yet — first run after the radar merge — skip this phase for the run). Rotate — skip a family already densified within ~2 weeks (`data/theme_review_state.json` entries with a `Basket densification:` reason prefix are the trail).
 2. **Cross-listing sweep** (existing tickers): for each focus family, shortlist dual-role candidates among already-tagged tickers of *other* L1s (for Cybersecurity: observability, CDN/edge, identity-adjacent names). Verify with WebSearch that the family-relevant product line is a **distinct material revenue line** — a real product suite, not a marketing page — then append the second/third path.
 3. **Roster-gap sweep** (missing tickers): list the recognized liquid pure-plays of each focus family and diff against `data/ticker_themes.json`. Classify the genuinely missing ones with the full Phase 4 rules (profile/web context, most-specific path). Skip names that would fail the radar's liquidity floor anyway (close < $3 or < ~$10M/day dollar volume) and non-US listings.
 4. **Cap: ~10 writes per run across both sweeps.** This is slow-drip curation, not a one-shot basket rebuild.

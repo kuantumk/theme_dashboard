@@ -40,11 +40,10 @@
     <!-- ══ TAB BAR ═══════════════════════════════════════ -->
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="macro" id="tab-macro">Overview</button>
-      <button class="tab-btn" data-tab="radar" id="tab-radar">Radar</button>
-      <button class="tab-btn" data-tab="vars" id="tab-vars">VARS</button>
-      <button class="tab-btn" data-tab="varsviz" id="tab-varsviz">VARS Viz</button>
       <button class="tab-btn" data-tab="themes" id="tab-themes">Themes</button>
       <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">Theme Viz</button>
+      <button class="tab-btn" data-tab="vars" id="tab-vars">VARS</button>
+      <button class="tab-btn" data-tab="varsviz" id="tab-varsviz">VARS Viz</button>
       <button class="tab-btn" data-tab="momentum" id="tab-momentum">Momentum</button>
       <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">Momentum Viz</button>
       <button class="tab-btn" data-tab="volume" id="tab-volume">Volume</button>
@@ -384,29 +383,7 @@
       </div>
     </div>
 
-    <!-- ══ TAB: ECOSYSTEM RADAR ══════════════════════════ -->
-    <div class="tab-content" id="content-radar">
-      <div class="left-panel" id="radar-left">
-        <div class="time-travel-bar">
-          <div class="time-travel-dates" id="radar-tt-dates"></div>
-        </div>
-        <div id="radar-container">
-          <div class="loading">Loading radar data...</div>
-        </div>
-      </div>
-      <div class="resize-handle" data-panel="radar"></div>
-      <div class="right-panel" id="radar-right">
-        <div class="chart-area" id="radar-chart-area">
-          <div class="chart-placeholder">
-            <div class="placeholder-icon">📡</div>
-            <div>Click any ticker to open chart</div>
-            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ TAB 3: THEMES ═════════════════════════════════ -->
+    <!-- ══ TAB 3: THEMES (Ecosystem Radar) ═══════════════ -->
     <div class="tab-content" id="content-themes">
       <div class="left-panel" id="themes-left">
         <div class="time-travel-bar" id="time-travel-bar">

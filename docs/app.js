@@ -6,10 +6,11 @@
   'use strict';
 
   // ── CONFIG ────────────────────────────────────────────
-  const THEME_DATA_URL = 'data/themes.json';
-  const THEME_HISTORY_URL = 'data/themes_history.json';
-  const RADAR_DATA_URL = 'data/radar.json';
-  const RADAR_HISTORY_URL = 'data/radar_history.json';
+  // The Themes tab renders the Ecosystem Radar (screener-independent
+  // theme-basket scoring with L1 roll-up + confirmation boost). The legacy
+  // screened themes.json/themes_history.json exports are retired.
+  const THEME_DATA_URL = 'data/radar.json';
+  const THEME_HISTORY_URL = 'data/radar_history.json';
   const MOMENTUM_DATA_URL = 'data/momentum_136.json';
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
   const VOLUME_DATA_URL = 'data/volume.json';
@@ -48,7 +49,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, radar: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -91,7 +92,6 @@
     loadMacroData();
     loadBreadthData();
     loadThemeData();
-    loadRadarData();
     loadMomentumData();
     loadVolumeData();
     loadVARSData();
@@ -215,7 +215,6 @@
 
       let tabId;
       if (tabContent.id === 'content-macro') tabId = 'macro';
-      else if (tabContent.id === 'content-radar') tabId = 'radar';
       else if (tabContent.id === 'content-themes') tabId = 'themes';
       else if (tabContent.id === 'content-momentum') tabId = 'momentum';
       else if (tabContent.id === 'content-volume') tabId = 'volume';
@@ -608,8 +607,7 @@
   }
 
   // ── THEME DATA + TIME TRAVEL ──────────────────────────
-  let themesHistory = [];    // Array of theme snapshots, newest first
-  let radarHistory = [];     // Array of ecosystem radar snapshots, newest first
+  let themesHistory = [];    // Array of radar snapshots (Themes tab), newest first
   let momentumHistory = [];  // Array of momentum snapshots, newest first
   let varsHistory = [];      // Array of vars snapshots, newest first
   let parabolicHistory = []; // Array of parabolic snapshots, newest first
@@ -640,7 +638,7 @@
         }
         renderAllTimeTravelBars();
         renderThemes(current);
-        renderThemeNetwork(current);
+        renderThemeNetwork(radarVizSnap(current));
       })
       .catch(err => {
         console.warn('Theme data not available:', err);
@@ -648,29 +646,6 @@
           '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
         const tnContainer = document.getElementById('theme-network');
         if (tnContainer) tnContainer.innerHTML = '<div class="no-data">Theme data not available.</div>';
-      });
-  }
-
-  function loadRadarData() {
-    Promise.all([
-      fetch(withCacheBust(RADAR_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch(withCacheBust(RADAR_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;  // uncapped current wins over its history entry
-        }
-        radarHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        renderAllTimeTravelBars();
-        renderRadar(current);
-      })
-      .catch(err => {
-        console.warn('Radar data not available:', err);
-        const c = document.getElementById('radar-container');
-        if (c) c.innerHTML = '<div class="no-data">Radar data not available.<br>Run the daily workflow to generate data.</div>';
       });
   }
 
@@ -786,7 +761,6 @@
   function getSessionDates() {
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
-    radarHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
     volumeHistory.forEach(h => dates.add(h.report_date));
     varsHistory.forEach(h => dates.add(h.report_date));
@@ -799,20 +773,17 @@
   }
 
   function onTimeTravelSelect(date) {
-    // Each tab's history accumulates independently (e.g. vars_history can lag
-    // themes_history if the screener was added recently). The shared session
+    // Each tab's history accumulates independently (a newly added tab's
+    // history can lag the others). The shared session
     // dropdown is the union of all dates, so a click can land on a date that
     // exists in one tab's history but not another's. ALWAYS re-render every
     // tab — render functions show a date-specific empty state when the snap
     // is missing so we never leave stale content on screen.
     //
-    // Themes
+    // Themes (Ecosystem Radar)
     const themeSnap = themesHistory.find(h => h.report_date === date);
     renderThemes(themeSnap, date);
-    renderThemeNetwork(themeSnap, date);
-    // Ecosystem Radar
-    const radarSnap = radarHistory.find(h => h.report_date === date);
-    renderRadar(radarSnap, date);
+    renderThemeNetwork(radarVizSnap(themeSnap), date);
     // Momentum 1/3/6
     const momSnap = momentumHistory.find(h => h.report_date === date);
     renderMomentum(momSnap, date);
@@ -860,7 +831,6 @@
   function renderAllTimeTravelBars() {
     const dates = getSessionDates();
     renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('radar-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('volume-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
@@ -1602,17 +1572,43 @@
     });
   }
 
-  // ── ECOSYSTEM RADAR ───────────────────────────────────
+  // ── THEMES TAB (Ecosystem Radar) ──────────────────────
   // Screener-independent lens: every tagged liquid ticker scores, leaves roll
   // up into their L1 ecosystem, and co-firing families carry a boost. Layout
   // mirrors the ranked ecosystem table: one block per ecosystem, one row per
   // sub-theme with its global rank, N, ticker chips, raw and boosted scores.
-  function renderRadar(data, date) {
-    const container = document.getElementById('radar-container');
+
+  // Adapter: flatten a radar snapshot's ecosystems into the {themes:[...]}
+  // shape the shared Cytoscape network renderer consumes (Theme Viz tab).
+  // Per-leaf `score` is the mean member composite (0-100 scale, matching the
+  // viz strength bands) and `avg_rs` the mean member RS (hot filter ≥ 70).
+  function radarVizSnap(data) {
+    if (!data || !data.ecosystems) return data;
+    const themes = [];
+    data.ecosystems.forEach(eco => {
+      (eco.leaves || []).forEach(leaf => {
+        const tickers = leaf.tickers || [];
+        const n = tickers.length;
+        const avgRs = n ? tickers.reduce((s, t) => s + (t.rs ?? 0), 0) / n : 0;
+        const avgScore = n ? tickers.reduce((s, t) => s + (t.score ?? 0), 0) / n : 0;
+        themes.push({
+          name: leaf.name,
+          l1: eco.name,
+          score: avgScore,
+          avg_rs: avgRs,
+          tickers,
+        });
+      });
+    });
+    return { report_date: data.report_date, themes };
+  }
+
+  function renderThemes(data, date) {
+    const container = document.getElementById('themes-container');
     if (!container) return;
 
     if (!data || !data.ecosystems || data.ecosystems.length === 0) {
-      const msg = (date && !data) ? `No radar data for ${date}.` : 'No radar data for this date.';
+      const msg = (date && !data) ? `No theme data for ${date}.` : 'No theme data for this date.';
       container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
@@ -1667,77 +1663,6 @@
                 </tr>
         `;
       });
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-  }
-
-  function renderThemes(data, date) {
-    const container = document.getElementById('themes-container');
-    if (!container) return;
-
-    if (!data || !data.themes || data.themes.length === 0) {
-      const msg = (date && !data) ? `No themes data for ${date}.` : 'No themes found for this date.';
-      container.innerHTML = `<div class="no-data">${msg}</div>`;
-      return;
-    }
-
-    let html = '';
-    data.themes.forEach((theme, idx) => {
-      html += `
-        <div class="theme-block">
-          <div class="theme-header">
-            <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(theme.name)}</span>
-            <span class="theme-score">Score: ${theme.score?.toFixed(1) || '—'}</span>
-          </div>
-          <div class="theme-body">
-            <table>
-              <thead><tr>
-                <th class="l">Ticker</th>
-                <th>VARS</th>
-                <th>RS%</th>
-                <th>Float(M)</th>
-                <th>EPS%</th>
-                <th>Sales%</th>
-                <th>Inst%</th>
-                <th>Short%</th>
-              </tr></thead>
-              <tbody>
-      `;
-
-      (theme.tickers || []).forEach(t => {
-        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
-        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
-        const shortVal = parseFloat(t.short);
-        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
-        const varsDisplay = (typeof t.vars === 'number') ? t.vars.toFixed(2) : '—';
-        const varsClass = (typeof t.vars === 'number') ? (t.vars >= 2 ? 'up' : t.vars <= -2 ? 'dn' : '') : '';
-        html += `
-                <tr>
-                  <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
-                      ${escHtml(t.ticker)}
-                    </span>
-                  </td>
-                  <td class="${varsClass}">${varsDisplay}</td>
-                  <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.float ?? '—'}</td>
-                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
-                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
-                  <td class="${instClass}">${t.inst ?? '—'}</td>
-                  <td class="${shortClass}">${t.short ?? '—'}</td>
-                </tr>
-        `;
-      });
-
       html += `
               </tbody>
             </table>

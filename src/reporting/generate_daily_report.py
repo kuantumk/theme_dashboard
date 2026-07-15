@@ -106,6 +106,47 @@ def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, 
 """
 
 
+def generate_radar_section(radar: Optional[Dict], limit: int = 10) -> str:
+    """Ecosystem Radar summary — top L1 families by boosted score.
+
+    `radar` is the snapshot dict from src.themes.ecosystem_score.compute_radar.
+    Unlike the Market Themes body below, this lens scores ALL tagged tickers
+    above the liquidity floor, so it surfaces families that are strengthening
+    before their members pass a screener. `*` marks members not in today's
+    screened union.
+    """
+    header = "## 📡 Ecosystem Radar\n\n"
+    if not radar or not radar.get('ecosystems'):
+        return header + "*Radar produced no scored ecosystems.*\n"
+
+    section = header
+    section += (
+        f"*Screener-independent: {radar.get('n_leaves_scored', 0)} themes scored over "
+        f"{radar.get('universe_size', 0)} tagged liquid tickers, rolled up by L1 with "
+        f"sibling-confirmation boost. `*` = not in today's screened union.*\n\n"
+    )
+    section += "| # | Ecosystem | Boosted | Raw | Δ | Themes | Top Theme | Leaders |\n"
+    section += "|---|-----------|---------|-----|---|--------|-----------|--------|\n"
+    for eco in radar['ecosystems'][:limit]:
+        leaves = eco.get('leaves', [])
+        top_leaf = leaves[0] if leaves else None
+        if top_leaf:
+            leaf_label = top_leaf.get('l2') or top_leaf.get('theme') or top_leaf.get('name', '')
+            top_theme = f"{leaf_label} (#{top_leaf.get('global_rank', '?')})"
+            members = top_leaf.get('members') or top_leaf.get('tickers') or []
+            leaders = ', '.join(
+                f"{m['ticker']}{'' if m.get('is_screened') else '*'}"
+                for m in members[:3]
+            )
+        else:
+            top_theme, leaders = '-', '-'
+        section += (
+            f"| {eco['rank']} | {eco['name']} | {eco['boosted']:.3f} | {eco['raw']:.3f} "
+            f"| {eco['delta']:+.3f} | {eco['n_leaves']} | {top_theme} | {leaders} |\n"
+        )
+    return section
+
+
 def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame) -> str:
     """Generate hot themes section with detailed tables."""
     if theme_df.empty or 'is_hot' not in theme_df.columns:
@@ -373,7 +414,8 @@ def generate_daily_report(
     market_breadth: Dict,
     screener_results: Dict[str, pd.DataFrame] = None,
     screened_tickers: Set[str] = None,
-    untagged_tickers: List[str] = None
+    untagged_tickers: List[str] = None,
+    radar: Optional[Dict] = None
 ) -> str:
     """
     Generate complete daily report in markdown.
@@ -386,6 +428,7 @@ def generate_daily_report(
         screener_results: Dict mapping screener name -> results DataFrame
         screened_tickers: Set of tickers from all screeners
         untagged_tickers: Screened tickers awaiting classification by the audit routine
+        radar: Ecosystem Radar snapshot from compute_radar (optional)
 
     Returns:
         Markdown report string
@@ -402,6 +445,12 @@ def generate_daily_report(
     # Executive summary
     report += generate_executive_summary(master_df, theme_df, untagged_tickers)
     report += "\n"
+
+    # Ecosystem Radar (screener-independent lens; sits above the screened
+    # Market Themes body and is ignored by parse_report's theme extraction)
+    if radar is not None:
+        report += generate_radar_section(radar)
+        report += "\n"
 
     # Theme Report (The Main Body)
     if screened_tickers:

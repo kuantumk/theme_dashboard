@@ -1193,3 +1193,66 @@ tbody tr.nav-active {
   width: 100% !important;
   height: 100% !important;
 }
+
+/* ── ECOSYSTEM RADAR TAB ───────────────────────────────── */
+.radar-meta {
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+
+.radar-table td {
+  vertical-align: top;
+}
+
+.radar-rank {
+  font-family: var(--mono);
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.radar-n {
+  margin-left: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+.radar-stocks {
+  max-width: 420px;
+}
+
+.radar-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  margin: 2px 4px 2px 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.radar-chip.chip-screened {
+  border-color: var(--accent2);
+  font-weight: 600;
+}
+
+.radar-chip.chip-quiet {
+  opacity: 0.55;
+}
+
+.radar-chip.chip-quiet:hover {
+  opacity: 1;
+}
+
+.radar-boosted {
+  color: var(--accent);
+  font-weight: 600;
+}

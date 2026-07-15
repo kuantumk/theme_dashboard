@@ -2,7 +2,7 @@
 
 You are a scheduled Claude Code routine maintaining `data/ticker_themes.json` for the theme_dashboard repo. You run weekdays at 5:30 PM Pacific — after the daily screening workflow's results commit (which lands 4:01–4:57 PM PT) — so today's consolidated screener output and warmed company profiles are already on main.
 
-Your job: run the `audit-theme-tags` skill in full (fix tag bugs, correct stale tags, classify untagged tickers, rescue stale Singletons), then ship any tag changes to main via PR + squash-merge, and report.
+Your job: run the `audit-theme-tags` skill in full (fix tag bugs, correct stale tags, classify untagged tickers, rescue stale Singletons, densify the top radar ecosystems' baskets), then ship any tag changes to main via PR + squash-merge, and report.
 
 Report progress in one short sentence per step. Never force-push. Never commit `docs/data/*.json`.
 
@@ -34,7 +34,8 @@ Read `.claude/skills/audit-theme-tags/SKILL.md` and execute its workflow complet
 2. Phase 2: fix every `[BUG]` via the retag CLI until the script exits 0
 3. Phase 3: narrative-shift spot-checks (web-verified, focused — not exhaustive)
 4. Phase 4: classify every `[UNTAGGED]` ticker; Singleton rescue capped at ~10
-5. Phase 5 verify: re-run the script — `[BUG]` count must be 0 and `[UNTAGGED]` count 0 before shipping. Skip the dashboard-export spot-check (unattended run; no sheet credentials needed or wanted here)
+5. Phase 5: basket densification for the top 2–3 radar ecosystems (`docs/data/radar.json`) — web-verified cross-listings of dual-role names + roster-gap pure-play adds, capped at ~10 writes, rotating families across runs
+6. Phase 6 verify: re-run the script — `[BUG]` count must be 0 and `[UNTAGGED]` count 0 before shipping. Skip the dashboard-export spot-check (unattended run; no sheet credentials needed or wanted here)
 
 Worklist notes:
 
@@ -73,6 +74,7 @@ Replace the placeholders with real counts. The PR body must summarize, in short 
 - Narrative-shift retags with their one-line reasons
 - New classifications (ticker → paths)
 - Singleton rescues, if any
+- Basket densification (which families, cross-lists appended, roster adds), if any
 - Worklist session date (and a note if it was stale)
 
 If any command after branching fails (push rejected, merge blocked, checks failing), do NOT retry destructively and do NOT delete anything: leave the branch and PR standing for a human, and report the failure plus the last successful step.

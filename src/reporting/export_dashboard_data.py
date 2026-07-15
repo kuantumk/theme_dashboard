@@ -633,55 +633,6 @@ def fetch_industry_etf_data():
     return etf_list
 
 
-def enrich_themes_from_db(theme_data):
-    """Enrich theme ticker data with fresh inst% and short% from the fundamentals DB."""
-    import sqlite3
-    if not FUNDAMENTALS_DB.exists():
-        print("   No fundamentals DB found, skipping enrichment")
-        return
-
-    all_tickers = set()
-    for theme in theme_data.get('themes', []):
-        for t in theme.get('tickers', []):
-            if t.get('ticker'):
-                all_tickers.add(t['ticker'])
-
-    if not all_tickers:
-        return
-
-    conn = sqlite3.connect(FUNDAMENTALS_DB)
-    cursor = conn.cursor()
-    placeholders = ','.join(['?'] * len(all_tickers))
-    cursor.execute(f'''
-        SELECT ticker, inst_transactions, short_interest
-        FROM fundamentals
-        WHERE ticker IN ({placeholders})
-    ''', list(all_tickers))
-
-    db_data = {}
-    for row in cursor.fetchall():
-        db_data[row[0]] = {
-            'inst_trans': row[1],
-            'short_interest': row[2],
-        }
-    conn.close()
-
-    enriched_count = 0
-    for theme in theme_data.get('themes', []):
-        for t in theme.get('tickers', []):
-            ticker = t.get('ticker')
-            if ticker and ticker in db_data:
-                db = db_data[ticker]
-                if db['inst_trans'] is not None:
-                    val = db['inst_trans']
-                    t['inst'] = f"+{val:.1f}" if val > 0 else f"{val:.1f}"
-                    enriched_count += 1
-                if db['short_interest'] is not None:
-                    t['short'] = round(db['short_interest'], 1)
-
-    print(f"   Enriched {enriched_count} tickers with finviz inst%/short% from DB")
-
-
 def load_ticker_color_flags():
     """Load tight/inside_day + close_to_ma flags, return {ticker: 'green'}.
 
@@ -895,222 +846,6 @@ def _update_history_file(history_file, report_date, entry):
         json.dump(history, f, indent=2)
     dates = [h['report_date'] for h in history]
     print(f"   -> {history_file} (history: {', '.join(dates)})")
-
-
-def update_themes_history(theme_data):
-    """Append current theme snapshot to history."""
-    _update_history_file(
-        OUTPUT_DIR / "themes_history.json",
-        theme_data.get('report_date', ''),
-        theme_data,
-    )
-
-
-def _build_themes_snapshot(master_file, screened_set, day_flags):
-    """Build a themes snapshot for one historical day, bypassing the markdown round-trip.
-
-    This is the backfill counterpart to `parse_report` — instead of parsing
-    today's daily_report_*.md, we re-run `analyze_theme_strength` on a
-    historical master CSV and convert its theme_df + per-day union of
-    screened tickers into the same JSON structure the dashboard expects.
-
-    Used by `export_themes_history` so every workflow run produces a full
-    60-session themes_history.json (matching what momentum/vars/parabolic
-    already do via per-day CSVs). Returns None if the master CSV is empty
-    or there are no screened tickers for that day.
-
-    Notes:
-    - Regime is derived from master_df itself (config sets `regime.source:
-      master_table`), so historical breadth (NCFD/MMFI) isn't required.
-    - Ticker theme tags are point-in-time (today's `data/ticker_themes.json`
-      applied to past data) — same trade-off as the existing `momentum_136`
-      and `vars` backfills.
-    - NCFD/MMFI fields are left None on historical entries; the dashboard
-      shows "—" in the meta strip and the current themes.json (parsed from
-      today's report) overrides today's history entry on the JS side.
-    """
-    import pandas as pd
-    import sqlite3
-    from src.themes.analyze_theme_strength import analyze_theme_strength
-    from src.reporting.generate_daily_report import (
-        SPECIAL_THEME_NAMES,
-        DASHBOARD_THEME_LIMIT,
-        DASHBOARD_TICKERS_PER_THEME,
-    )
-
-    master_df = su.load_df_from_parquet(master_file).fillna(0)
-    if master_df.empty:
-        return None
-
-    csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
-    if not csv_date:
-        return None
-
-    # Screened tickers for this day are derived by the caller from that date's
-    # per-screener parquet outputs (the `.txt`/_union files were removed).
-    screened_set = {str(t).upper() for t in screened_set}
-    if not screened_set:
-        return None
-
-    theme_df = analyze_theme_strength(
-        master_df, market_breadth=None, screened_tickers=screened_set
-    )
-    if theme_df.empty:
-        return None
-
-    master_df['ticker'] = master_df['ticker'].astype(str).str.upper()
-
-    # Phase 1: collect the (theme, top_tickers) pairs we'll emit, plus the union
-    # of all displayed tickers — for a single fundamentals query.
-    theme_picks = []
-    all_display_tickers = set()
-    rank = 0
-    for _, theme_row in theme_df.iterrows():
-        if rank >= DASHBOARD_THEME_LIMIT:
-            break
-        theme_name = str(theme_row.get('theme', '')).strip()
-        if theme_name in SPECIAL_THEME_NAMES:
-            continue
-        active = {
-            str(t).upper() for t in theme_row.get('tickers', [])
-            if str(t).strip()
-        }.intersection(screened_set)
-        if not active:
-            continue
-        score_map = theme_row.get('ticker_scores', {}) or {}
-        demand_map = theme_row.get('ticker_demands', {}) or {}
-        sub = master_df[master_df['ticker'].isin(active)].copy()
-        sub['composite'] = sub['ticker'].map(score_map).fillna(0.0)
-        sub['demand'] = sub['ticker'].map(demand_map).fillna(0.0)
-        theme_master = sub.sort_values(
-            ['demand', 'composite'], ascending=[False, False]
-        ).head(DASHBOARD_TICKERS_PER_THEME)
-        if theme_master.empty:
-            continue
-        rank += 1
-        theme_picks.append((rank, theme_row, theme_master))
-        all_display_tickers.update(theme_master['ticker'].tolist())
-
-    # Phase 2: one fundamentals lookup for everything
-    fundamentals = {}
-    if FUNDAMENTALS_DB.exists() and all_display_tickers:
-        try:
-            conn = sqlite3.connect(FUNDAMENTALS_DB)
-            placeholders = ','.join(['?'] * len(all_display_tickers))
-            rows = conn.execute(f'''
-                SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
-                       short_interest, inst_transactions
-                FROM fundamentals
-                WHERE ticker IN ({placeholders})
-            ''', list(all_display_tickers)).fetchall()
-            conn.close()
-            for r in rows:
-                fundamentals[r[0]] = {
-                    'shares_float': r[1],
-                    'eps_growth_yoy': r[2],
-                    'sales_growth_yoy': r[3],
-                    'short_interest': r[4],
-                    'inst_transactions': r[5],
-                }
-        except sqlite3.Error as e:
-            print(f"   Warning: fundamentals lookup failed for themes backfill: {e}")
-
-    # Phase 3: emit JSON
-    themes_out = []
-    for rank, theme_row, theme_master in theme_picks:
-        ticker_dicts = []
-        for _, m_row in theme_master.iterrows():
-            t = str(m_row['ticker']).upper()
-            f = fundamentals.get(t, {})
-            short_val = f.get('short_interest')
-            vars_val = m_row.get('vars')
-            ticker_dicts.append({
-                'ticker': t,
-                'score': round(float(m_row.get('composite', 0) or 0), 1),
-                'demand': round(float(m_row.get('demand', 0) or 0), 1),
-                'rs': round(float(m_row.get('rs_sts_pct', 0) or 0), 1),
-                'vars': round(float(vars_val), 2) if vars_val is not None and not pd.isna(vars_val) else None,
-                'price': round(float(m_row.get('close', 0) or 0), 2),
-                'float': _fmt_float_m(f.get('shares_float')),
-                'eps': _fmt_growth(f.get('eps_growth_yoy')),
-                'sales': _fmt_growth(f.get('sales_growth_yoy')),
-                'inst': _fmt_inst(f.get('inst_transactions')),
-                'short': round(float(short_val), 1) if short_val is not None else None,
-            })
-        themes_out.append({
-            'rank': rank,
-            'name': str(theme_row.get('theme', '')).strip(),
-            'score': round(float(theme_row.get('score', theme_row.get('strength_score', 0)) or 0), 1),
-            'avg_rs': round(float(theme_row.get('avg_rs_sts', 0) or 0), 1),
-            'tickers': ticker_dicts,
-        })
-
-    if day_flags:
-        for th in themes_out:
-            enrich_with_ticker_color(th['tickers'], day_flags)
-
-    _attach_hierarchy(themes_out)
-
-    return {
-        'report_date': csv_date,
-        'ncfd': None,  # historical breadth not stored — dashboard shows "—"
-        'mmfi': None,
-        'themes': themes_out,
-        'network': _build_network(themes_out),
-    }
-
-
-def export_themes_history(day_flags, current_themes_data=None):
-    """Rewrite themes_history.json with the retention-window sessions from master CSVs.
-
-    Mirrors `export_momentum_136` / `export_vars` / `export_parabolic`: every
-    workflow run produces a fresh full-history file rather than appending one
-    entry. Today's parsed-from-report entry (with NCFD/MMFI) is preserved by
-    swapping it into the history list when the dates match.
-    """
-    master_dir = SCREENING_OUTPUT_DIR / 'master'
-    master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
-    if not master_files:
-        print("   No master CSVs found, skipping themes history backfill")
-        return
-
-    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
-    recent_masters = [
-        f for f in master_files
-        if cutoff is None or f.stem.replace('master_', '') >= cutoff
-    ]
-
-    history = []
-    for master_file in recent_masters:
-        date_str = master_file.stem.replace('master_', '')  # YYYY-MM-DD
-
-        # Reuse today's report-parsed snapshot when it covers the same date —
-        # this preserves NCFD/MMFI and any report-only fields for the latest
-        # entry while past entries come from the analytic backfill.
-        if (current_themes_data
-                and current_themes_data.get('report_date') == date_str):
-            history.append(current_themes_data)
-            continue
-
-        # The per-screener `.txt`/_union files were removed; the day's screened
-        # union is derived from that date's per-screener parquet outputs.
-        screened_set = su.union_tickers_for_date(
-            date_str, CONFIG['screeners'], root=SCREENING_OUTPUT_DIR
-        )
-        snap = _build_themes_snapshot(master_file, screened_set, day_flags)
-        if snap is None:
-            continue
-        history.append(snap)
-
-    if not history:
-        print("   Themes backfill produced no entries")
-        return
-
-    history_out = OUTPUT_DIR / 'themes_history.json'
-    with open(history_out, 'w', encoding='utf-8') as fh:
-        json.dump(history, fh, indent=2)
-    dates = [h['report_date'] for h in history]
-    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
 
 
 def update_etf_history(report_date, etf_data, industry_data):
@@ -1484,6 +1219,134 @@ def export_vars(day_flags):
     artifact_out = write_vars_artifact(current)
     if artifact_out:
         print(f"   -> {artifact_out} (VARS tab artifact)")
+
+    return current
+
+
+def _build_radar_snapshot(master_file, screened_set, day_flags):
+    """Build one Ecosystem Radar session snapshot from a master parquet.
+
+    Unlike the retired screened-themes backfill, the radar scores ALL tagged
+    tickers above the liquidity floor (no screener gate) — the screened union
+    is only used to flag which members are actionable setups today. NaNs are
+    left intact:
+    the scoring module maps missing legs to its neutral default rather than 0.
+    Ticker theme tags are point-in-time (today's tags on past sessions), the
+    same trade-off as every other backfill.
+    """
+    from src.themes.ecosystem_score import compute_radar
+
+    master_df = su.load_df_from_parquet(master_file)
+    if master_df.empty:
+        return None
+    csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
+    if not csv_date:
+        return None
+
+    body = compute_radar(master_df, screened_tickers=screened_set)
+    if body is None:
+        return None
+
+    tickers_per_leaf = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
+    ecosystems = []
+    for eco in body['ecosystems']:
+        leaves = []
+        for leaf in eco['leaves']:
+            ticker_dicts = [{
+                'ticker': m['ticker'],
+                'score': round(m['composite'], 1),
+                'rs': round(m['rs'], 1),
+                'vars': round(m['vars'], 2) if m['vars'] is not None else None,
+                'price': round(m['price'], 2) if m['price'] is not None else None,
+                'is_screened': bool(m.get('is_screened', False)),
+            } for m in leaf['members'][:tickers_per_leaf]]
+            if day_flags:
+                enrich_with_ticker_color(ticker_dicts, day_flags)
+            leaves.append({
+                'global_rank': leaf['global_rank'],
+                'name': leaf['theme'],
+                'l2': leaf['l2'],
+                'l3': leaf['l3'],
+                'raw': round(leaf['raw'], 3),
+                'boosted': round(leaf['boosted'], 3),
+                'n': leaf['breadth'],
+                'tickers': ticker_dicts,
+            })
+        ecosystems.append({
+            'rank': eco['rank'],
+            'name': eco['name'],
+            'raw': round(eco['raw'], 4),
+            'boosted': round(eco['boosted'], 4),
+            'delta': round(eco['delta'], 4),
+            'n_leaves': eco['n_leaves'],
+            'n_members': eco['n_members'],
+            'n_screened': eco['n_screened'],
+            'leaves': leaves,
+        })
+
+    return {
+        'report_date': csv_date,
+        'params': body['params'],
+        'universe_size': body['universe_size'],
+        'n_leaves_scored': body['n_leaves_scored'],
+        'ecosystems': ecosystems,
+    }
+
+
+def export_radar(day_flags, root=None, out_dir=None):
+    """Export the Ecosystem Radar (dashboard Themes tab) — full
+    retention-window history every run.
+
+    Mirrors `export_vars`: iterates the per-day master parquet files within
+    the window, derives each date's screened union from the per-screener
+    parquet, and rewrites both files from scratch. `radar.json` keeps every
+    scored ecosystem and leaf (no top-N burial); history entries cap ecosystems
+    at `radar.history_ecosystem_limit` and are written compact to bound size.
+    """
+    root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
+    out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
+
+    master_files = sorted((root / 'master').glob('master_*.parquet'), reverse=True)
+    if not master_files:
+        print("   No master parquet found, skipping radar export")
+        return None
+
+    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+
+    history = []
+    for master_file in master_files:
+        date_str = master_file.stem.replace('master_', '')
+        if cutoff is not None and date_str < cutoff:
+            continue
+        screened_set = su.union_tickers_for_date(
+            date_str, CONFIG['screeners'], root=root
+        )
+        snap = _build_radar_snapshot(master_file, screened_set, day_flags)
+        if snap is None:
+            continue
+        history.append(snap)
+
+    if not history:
+        print("   Radar produced no entries, skipping export")
+        return None
+
+    current = history[0]
+    out = out_dir / "radar.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(current, fh, indent=2)
+    print(
+        f"   -> {out} ({len(current['ecosystems'])} ecosystems, "
+        f"{current['n_leaves_scored']} leaves, universe {current['universe_size']}, "
+        f"date {current['report_date']})"
+    )
+
+    eco_limit = int(CONFIG.get('radar', {}).get('history_ecosystem_limit', 20))
+    trimmed = [{**snap, 'ecosystems': snap['ecosystems'][:eco_limit]} for snap in history]
+    history_out = out_dir / "radar_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(trimmed, fh, separators=(',', ':'))
+    dates = [h['report_date'] for h in trimmed]
+    print(f"   -> {history_out} (history: {len(trimmed)} sessions, {dates[-1]} -> {dates[0]})")
 
     return current
 
@@ -1893,52 +1756,23 @@ def export_all():
     print("=" * 60)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    day_flags = None  # Lazy-loaded day pattern flags
     parabolic_data = None
     volume_data = None
 
-    # 1. Parse latest report
+    # 1. Parse latest report — only for report_date/theme_count in
+    # report_meta.json and the ETF-history session date. The Themes tab is fed
+    # by the radar export below; the legacy screened themes.json /
+    # themes_history.json exports are retired.
     report_file = find_latest_report()
     theme_data = None
     if report_file:
         print(f"\n1. Parsing report: {report_file.name}")
         theme_data = parse_report(report_file)
-
-        # Enrich theme tickers with fresh finviz data from fundamentals DB
-        enrich_themes_from_db(theme_data)
-
-        # Enrich theme tickers with ticker color flags (tight/inside + close_to_ma)
-        day_flags = load_ticker_color_flags()
-        theme_pattern_count = 0
-        for theme in theme_data.get('themes', []):
-            theme_pattern_count += enrich_with_ticker_color(theme.get('tickers', []), day_flags)
-        print(f"   Enriched {theme_pattern_count} theme tickers with ticker color flags")
-
-        # Attach l1/l2/l3 hierarchy fields + network for the Theme Viz tab
-        _attach_hierarchy(theme_data.get('themes', []))
-        theme_data['network'] = _build_network(theme_data.get('themes', []))
-
-        theme_output = OUTPUT_DIR / "themes.json"
-        with open(theme_output, 'w', encoding='utf-8') as f:
-            json.dump(theme_data, f, indent=2)
-        print(f"   -> {theme_output} ({len(theme_data['themes'])} themes)")
-
-        # Update themes history (keep last N trading sessions); kept as a
-        # fallback for the case where master CSVs aren't available — the
-        # backfill below normally rewrites this file from scratch.
-        update_themes_history(theme_data)
     else:
-        print("\n1. No report found, skipping themes export")
+        print("\n1. No report found")
 
-    # 1a-bis. Backfill 60-session themes_history.json from master CSVs.
-    # Mirrors the momentum/vars/parabolic flow: every workflow run produces a
-    # complete dropdown history rather than letting it accumulate one entry
-    # per run. Today's report-parsed entry (if present) is preserved in the
-    # output so NCFD/MMFI display correctly.
-    if day_flags is None:
-        day_flags = load_ticker_color_flags()
-    print("\n1a-bis. Backfilling themes history from master CSVs")
-    export_themes_history(day_flags, current_themes_data=theme_data)
+    # Ticker color flags (tight/inside + close_to_ma) shared by the tab exports
+    day_flags = load_ticker_color_flags()
 
     # 1b. Export Momentum 1/3/6 screener (independent of daily report)
     print("\n1b. Exporting momentum_136 data")
@@ -1955,6 +1789,13 @@ def export_all():
     # 1e. Export Parabolic screener data (independent of daily report)
     print("\n1e. Exporting parabolic data")
     parabolic_data = export_parabolic()
+
+    # 1f. Export Ecosystem Radar (screener-independent; must run before the
+    # screening_output prune at the tail so the full master window is on disk)
+    radar_data = None
+    if CONFIG.get('radar', {}).get('enabled', True):
+        print("\n1f. Exporting ecosystem radar data")
+        radar_data = export_radar(day_flags)
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")
@@ -2037,6 +1878,7 @@ def export_all():
         'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
         'etf_count': len(etf_data) if etf_data else 0,
         'industry_etf_count': len(industry_data) if industry_data else 0,
+        'radar_ecosystem_count': len(radar_data.get('ecosystems', [])) if radar_data else 0,
     }
     with open(OUTPUT_DIR / "report_meta.json", 'w') as f:
         json.dump(meta, f, indent=2)

@@ -1,6 +1,6 @@
 ---
 name: audit-theme-tags
-description: Audit and maintain data/ticker_themes.json — mechanical defects (bare-L1, invalid paths, duplicates), AI-judgment passes for business pivots and L2 selection, first-time classification of untagged screened tickers, and evidence-based Singleton rescue. Use for the weekday tag-audit routine, periodic tag reviews, before merging a taxonomy change, or when investigating viz/scoring oddities.
+description: Audit and maintain data/ticker_themes.json — mechanical defects (bare-L1, invalid paths, duplicates), AI-judgment passes for business pivots and L2 selection, first-time classification of untagged screened tickers, evidence-based Singleton rescue, and capped basket densification (cross-listing dual-role names + filling pure-play roster gaps in the top radar ecosystems). Use for the weekday tag-audit routine, periodic tag reviews, before merging a taxonomy change, or when investigating viz/scoring/radar oddities.
 ---
 
 # Audit theme tags
@@ -16,6 +16,7 @@ Triggers:
 - The network viz shows orphan or duplicate nodes
 - Theme scoring produces unexpected leaders
 - You're reviewing narrative-shift catalysts (earnings, M&A, pivots)
+- A radar ecosystem looks thinner than reality — obvious pure-plays or dual-role members missing from its baskets (run Phase 5)
 
 ## L1/L2/L3 rules being audited
 
@@ -114,7 +115,36 @@ uv run python -m src.themes.retag --ticker XYZ \
 
 **Singleton rescue (same phase, capped).** Cross-reference `Singleton`-only tickers against the current screened pool (the union file Phase 1 used): those are liquid, in-play names whose "no peer group" call may have gone stale. Re-evaluate at most ~10 per run. Rescue a Singleton into a real theme ONLY on clear evidence (sector + industry + business summary all point at an existing theme); when in doubt, leave it. Never force a theme to avoid the label, and never downgrade a themed ticker to `Singleton` without a pivot-grade reason.
 
-### Phase 5 — Verify
+### Phase 5 — Basket densification: cross-listings + roster gaps (AI judgment, capped)
+
+The Ecosystem Radar scores fixed theme baskets over **all** tagged tickers, so its output quality is bounded by basket *membership*, not just per-ticker correctness. Tags historically enter via screener discovery, which leaves two systematic holes — both exposed by the 2026-07-13 cybersecurity case, where a competitor's ecosystem table (overlapping baskets, large caps included) had the family at #2 one session pre-breakout while our fragmented baskets buried it:
+
+- **Missing cross-listings** — dual-role companies carry only their discovery-era path. DDOG sat only under `Software & Internet / DevOps & Data` although Cloud SIEM / App Security is a material security line (`Cybersecurity / Data Security` appended 2026-07-15); FSLY likewise gained `Cybersecurity / Network` (Signal Sciences WAF/DDoS).
+- **Missing pure-plays** — leaders that never passed a momentum screener are absent entirely. CYBR (CyberArk, the PAM/identity leader) was untagged until 2026-07-15.
+
+Per run, keep it bounded:
+
+1. **Pick 2–3 focus families**: the top ecosystems by boosted score in `docs/data/radar.json` (committed by the daily workflow; if the file doesn't exist yet — first run after the radar merge — skip this phase for the run). Rotate — skip a family already densified within ~2 weeks (`data/theme_review_state.json` entries with a `Basket densification:` reason prefix are the trail).
+2. **Cross-listing sweep** (existing tickers): for each focus family, shortlist dual-role candidates among already-tagged tickers of *other* L1s (for Cybersecurity: observability, CDN/edge, identity-adjacent names). Verify with WebSearch that the family-relevant product line is a **distinct material revenue line** — a real product suite, not a marketing page — then append the second/third path.
+3. **Roster-gap sweep** (missing tickers): list the recognized liquid pure-plays of each focus family and diff against `data/ticker_themes.json`. Classify the genuinely missing ones with the full Phase 4 rules (profile/web context, most-specific path). Skip names that would fail the radar's liquidity floor anyway (close < $3 or < ~$10M/day dollar volume) and non-US listings.
+4. **Cap: ~10 writes per run across both sweeps.** This is slow-drip curation, not a one-shot basket rebuild.
+
+Mechanics — the retag CLI **sets the complete path list**, so a cross-listing must repeat the existing paths:
+
+```bash
+uv run python -m src.themes.retag --ticker DDOG \
+  --reason "Basket densification: Cloud SIEM / App Security is a material security revenue line" \
+  --paths "Software & Internet / DevOps & Data" "Cybersecurity / Data Security"
+```
+
+Guardrails:
+
+- Classification rule 5 still governs: cross-list on a **distinct material revenue line**, never on thematic vibes. When a competitor's basket includes a name we'd have to stretch for (e.g. semis AVGO/NXPI/LSCC/SKYT under "hardware security"), skip it — L1 = dominant narrative is this taxonomy's core invariant, and the radar's boost math rewards genuine co-movement, not padded rosters.
+- Never drop an existing path while appending — repeat every current path in `--paths`.
+- The 3-path cap is hard. If a ticker seems to need a 4th path, its primary tag is probably wrong — re-evaluate the whole list instead.
+- A new L2 is justified only when ≥ 2 real members need it; edit `theme_taxonomy.yaml` in the same commit (Phase 4 rule 1).
+
+### Phase 6 — Verify
 
 ```bash
 uv run python tools/audit_theme_tags.py   # BUG count 0; [UNTAGGED] count 0 (or explained)
@@ -122,9 +152,9 @@ uv run python tools/audit_theme_tags.py   # BUG count 0; [UNTAGGED] count 0 (or 
 
 Optionally regenerate the viz JSON to spot-check (`uv run python -m src.reporting.export_dashboard_data`, then eyeball `docs/index.html` Theme Viz — one hexagon per L1, no duplicate-label nodes). This step needs `GOOGLE_SHEET_ID` and network access for the ETF tabs — **skip it when running unattended** (the daily workflow regenerates all of `docs/data/` anyway, and those files are never committed from an audit).
 
-### Phase 6 — Commit and PR
+### Phase 7 — Commit and PR
 
-One commit per logical batch (e.g. "Retag bare-L1 Space cluster", "Classify 2026-07-02 untagged tickers"). Reference findings in the commit body. **Do NOT include regenerated `docs/data/*.json`** — the daily workflow rewrites them; reset with `git checkout -- docs/data/` before committing. Commit only tag files: `data/ticker_themes.json`, `data/theme_review_state.json`, and `config/theme_taxonomy.yaml` when a new L2 was added.
+One commit per logical batch (e.g. "Retag bare-L1 Space cluster", "Classify 2026-07-02 untagged tickers", "Densify Cybersecurity basket: 2 cross-lists + 1 roster add"). Reference findings in the commit body. **Do NOT include regenerated `docs/data/*.json`** — the daily workflow rewrites them; reset with `git checkout -- docs/data/` before committing. Commit only tag files: `data/ticker_themes.json`, `data/theme_review_state.json`, and `config/theme_taxonomy.yaml` when a new L2 was added.
 
 When running interactively, stop at the PR. When running as the weekday routine, the routine prompt (`.claude/routines/theme_tag_audit.md`) owns the PR → squash-merge → branch-cleanup tail.
 

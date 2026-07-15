@@ -1,0 +1,277 @@
+"""
+Ecosystem Radar — screener-independent theme-basket scoring with L1 roll-up
+and sibling-confirmation boost.
+
+The existing Themes lens scores only tagged tickers that passed a screener
+that day, per leaf path, with no aggregation above the leaf — a family whose
+sub-themes strengthen together in fragments never surfaces as one move. The
+radar scores fixed theme baskets daily over ALL tagged members (liquidity-
+floored), then rolls leaves up into their taxonomy L1 "ecosystem" and boosts
+co-firing families:
+
+R1  Universe   = tagged tickers present in the master table, close >=
+                 min_close, avg_dollar_vol >= min_avg_dollar_vol. No screener
+                 gate and no fundamentals (unscreened members have none).
+R2  Composite  = weighted mean of three 0-100 legs (missing leg -> neutral
+                 missing_default): rs (rs_sts_pct), vars_pct (percentile of
+                 raw VARS within the radar universe — raw VARS is unbounded
+                 and must not be averaged with a 0-100 leg), fast
+                 (rela_perf_1mo_rank so the radar reacts pre-breakout).
+R3  Leaf raw   = mean of the top-M member composites; a leaf needs
+                 min_breadth universe members to score.
+R4  Leaf z     = cross-sectional z-score of leaf raws (session-relative;
+                 decompresses the narrow raw-score band so ranks separate).
+R5  Ecosystem  = leaves grouped by taxonomy L1. eco_raw = mean of the top-K
+                 leaf z-scores. Families with >= min_leaves_for_boost scored
+                 leaves earn boost = beta * eco_raw; every leaf in the family
+                 inherits it additively (boosted = z + boost) and the family
+                 itself is boosted_eco = eco_raw + boost. Single-leaf families
+                 get no self-confirmation. A negative eco_raw yields a
+                 negative boost — confirmation is symmetric.
+R6  Ranks      = global_rank of leaves by boosted score across ALL scored
+                 leaves; ecosystems ranked by boosted_eco. No display cap at
+                 scoring level.
+"""
+
+from typing import Dict, List, Optional, Set
+
+import numpy as np
+import pandas as pd
+
+from config.settings import CONFIG
+from src.themes.theme_registry import load_ticker_themes
+from src.themes.theme_taxonomy import (
+    build_theme_to_tickers,
+    resolve_l1,
+    split_path,
+)
+
+HIDDEN_L1S = {'Uncategorized', 'Singleton'}
+
+DEFAULTS = {
+    'beta': 0.3,
+    'top_k_leaves': 5,
+    'top_m_members': 5,
+    'min_breadth': 2,
+    'min_leaves_for_boost': 2,
+    'min_avg_dollar_vol': 10_000_000,
+    'min_close': 3.0,
+    'composite_weights': {'rs': 0.4, 'vars_pct': 0.4, 'fast': 0.2},
+    'fast_leg_column': 'rela_perf_1mo_rank',
+    'missing_default': 50.0,
+}
+
+
+def radar_config(overrides: Optional[dict] = None) -> dict:
+    """DEFAULTS <- config/workflow_config.yaml `radar:` <- explicit overrides."""
+    merged = dict(DEFAULTS)
+    merged.update(CONFIG.get('radar', {}) or {})
+    if overrides:
+        merged.update(overrides)
+    return merged
+
+
+def _leg_from_column(df: pd.DataFrame, column: str, missing_default: float) -> pd.Series:
+    """0-100 leg from a master column; absent column or NaN -> missing_default."""
+    if column in df.columns:
+        leg = pd.to_numeric(df[column], errors='coerce').clip(0, 100)
+    else:
+        leg = pd.Series(np.nan, index=df.index)
+    return leg.fillna(missing_default)
+
+
+def build_radar_universe(
+    master_df: pd.DataFrame,
+    tagged_tickers: Set[str],
+    cfg: Optional[dict] = None,
+) -> pd.DataFrame:
+    """Filter the master table to the radar universe and attach composites (R1+R2)."""
+    cfg = radar_config(cfg)
+    missing = float(cfg['missing_default'])
+
+    df = master_df.copy()
+    df['ticker'] = df['ticker'].astype(str).str.upper()
+    tagged = {str(t).upper() for t in tagged_tickers}
+    df = df[(df['ticker'] != 'SPX') & df['ticker'].isin(tagged)]
+    df = df.drop_duplicates(subset='ticker', keep='first')
+
+    if 'close' in df.columns:
+        close = pd.to_numeric(df['close'], errors='coerce')
+        df = df[close >= float(cfg['min_close'])]
+    if 'avg_dollar_vol' in df.columns:
+        adv = pd.to_numeric(df['avg_dollar_vol'], errors='coerce')
+        df = df[adv >= float(cfg['min_avg_dollar_vol'])]
+    if df.empty:
+        return df.reset_index(drop=True)
+
+    df = df.copy()
+    df['rs_leg'] = _leg_from_column(df, 'rs_sts_pct', missing)
+    if 'vars' in df.columns:
+        vars_num = pd.to_numeric(df['vars'], errors='coerce')
+        df['vars_leg'] = (vars_num.rank(pct=True, method='average') * 100).fillna(missing)
+    else:
+        df['vars_leg'] = missing
+    df['fast_leg'] = _leg_from_column(df, str(cfg['fast_leg_column']), missing)
+
+    weights = cfg['composite_weights'] or DEFAULTS['composite_weights']
+    w_rs = float(weights.get('rs', 0))
+    w_vars = float(weights.get('vars_pct', 0))
+    w_fast = float(weights.get('fast', 0))
+    total = w_rs + w_vars + w_fast
+    if total <= 0:
+        w_rs = w_vars = w_fast = 1.0
+        total = 3.0
+    df['composite'] = (
+        w_rs * df['rs_leg'] + w_vars * df['vars_leg'] + w_fast * df['fast_leg']
+    ) / total
+
+    return df.reset_index(drop=True)
+
+
+def compute_leaf_scores(
+    universe_df: pd.DataFrame,
+    theme_to_tickers: Dict[str, List[str]],
+    cfg: Optional[dict] = None,
+) -> List[dict]:
+    """Score every leaf theme over its universe members (R3)."""
+    cfg = radar_config(cfg)
+    min_breadth = int(cfg['min_breadth'])
+    top_m = int(cfg['top_m_members'])
+
+    rows = {}
+    for _, row in universe_df.iterrows():
+        rows[str(row['ticker'])] = row
+
+    leaf_scores = []
+    for theme_path, tickers in theme_to_tickers.items():
+        l1 = resolve_l1(theme_path) or split_path(theme_path)[0]
+        if theme_path in HIDDEN_L1S or l1 in HIDDEN_L1S:
+            continue
+
+        members = []
+        for t in tickers:
+            row = rows.get(str(t).upper())
+            if row is None:
+                continue
+            vars_val = row.get('vars')
+            members.append({
+                'ticker': str(t).upper(),
+                'composite': float(row['composite']),
+                'rs': float(row['rs_leg']),
+                'vars': float(vars_val) if pd.notna(vars_val) else None,
+                'price': float(row['close']) if pd.notna(row.get('close')) else None,
+            })
+        if len(members) < min_breadth:
+            continue
+
+        members.sort(key=lambda m: -m['composite'])
+        top = members[:top_m]
+        _, l2, l3 = split_path(theme_path)
+        leaf_scores.append({
+            'theme': theme_path,
+            'l1': l1,
+            'l2': l2,
+            'l3': l3,
+            'composite_avg': float(np.mean([m['composite'] for m in top])),
+            'breadth': len(members),
+            'members': members,
+        })
+    return leaf_scores
+
+
+def rollup_ecosystems(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
+    """Z-score leaves, group by L1, apply the confirmation boost, rank (R4-R6)."""
+    cfg = radar_config(cfg)
+    beta = float(cfg['beta'])
+    top_k = int(cfg['top_k_leaves'])
+    min_leaves = int(cfg['min_leaves_for_boost'])
+
+    raws = np.array([leaf['composite_avg'] for leaf in leaf_scores], dtype=float)
+    std = float(np.std(raws)) if len(raws) else 0.0
+    mean = float(np.mean(raws)) if len(raws) else 0.0
+    for leaf, raw in zip(leaf_scores, raws):
+        leaf['raw'] = float((raw - mean) / std) if std > 1e-9 else 0.0
+
+    by_l1: Dict[str, List[dict]] = {}
+    for leaf in leaf_scores:
+        by_l1.setdefault(leaf['l1'], []).append(leaf)
+
+    ecosystems = []
+    for l1, leaves in by_l1.items():
+        leaves.sort(key=lambda lf: (-lf['raw'], lf['theme']))
+        eco_raw = float(np.mean([lf['raw'] for lf in leaves[:top_k]]))
+        boost = beta * eco_raw if len(leaves) >= min_leaves else 0.0
+        for leaf in leaves:
+            leaf['boosted'] = leaf['raw'] + boost
+        members = {m['ticker'] for lf in leaves for m in lf['members']}
+        ecosystems.append({
+            'name': l1,
+            'raw': eco_raw,
+            'boosted': eco_raw + boost,
+            'delta': boost,
+            'n_leaves': len(leaves),
+            'n_members': len(members),
+            'leaves': leaves,
+        })
+
+    all_leaves = sorted(leaf_scores, key=lambda lf: (-lf['boosted'], -lf['raw'], lf['theme']))
+    for i, leaf in enumerate(all_leaves, start=1):
+        leaf['global_rank'] = i
+
+    ecosystems.sort(key=lambda e: (-e['boosted'], e['name']))
+    for i, eco in enumerate(ecosystems, start=1):
+        eco['rank'] = i
+
+    return {'ecosystems': ecosystems, 'n_leaves_scored': len(leaf_scores)}
+
+
+def compute_radar(
+    master_df: pd.DataFrame,
+    ticker_themes: Optional[Dict[str, List[str]]] = None,
+    screened_tickers: Optional[Set[str]] = None,
+    cfg: Optional[dict] = None,
+) -> Optional[dict]:
+    """Full radar for one session's master table.
+
+    Returns the snapshot body (no report_date — the caller knows the session)
+    or None when there is nothing to score.
+    """
+    cfg = radar_config(cfg)
+    if ticker_themes is None:
+        ticker_themes = load_ticker_themes()
+    if not ticker_themes:
+        return None
+
+    universe = build_radar_universe(master_df, set(ticker_themes.keys()), cfg)
+    if universe.empty:
+        return None
+
+    theme_to_tickers = build_theme_to_tickers(ticker_themes)
+    leaf_scores = compute_leaf_scores(universe, theme_to_tickers, cfg)
+    if not leaf_scores:
+        return None
+
+    rolled = rollup_ecosystems(leaf_scores, cfg)
+
+    screened = {str(t).upper() for t in screened_tickers} if screened_tickers else set()
+    for eco in rolled['ecosystems']:
+        eco_members = set()
+        for leaf in eco['leaves']:
+            for m in leaf['members']:
+                m['is_screened'] = m['ticker'] in screened
+            eco_members.update(m['ticker'] for m in leaf['members'])
+        eco['n_screened'] = len(eco_members & screened)
+
+    return {
+        'params': {
+            'beta': float(cfg['beta']),
+            'top_k_leaves': int(cfg['top_k_leaves']),
+            'top_m_members': int(cfg['top_m_members']),
+            'min_avg_dollar_vol': float(cfg['min_avg_dollar_vol']),
+            'min_close': float(cfg['min_close']),
+            'composite_weights': dict(cfg['composite_weights']),
+        },
+        'universe_size': int(len(universe)),
+        'n_leaves_scored': rolled['n_leaves_scored'],
+        'ecosystems': rolled['ecosystems'],
+    }

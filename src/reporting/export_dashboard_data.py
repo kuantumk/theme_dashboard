@@ -1488,6 +1488,132 @@ def export_vars(day_flags):
     return current
 
 
+def _build_radar_snapshot(master_file, screened_set, day_flags):
+    """Build one Ecosystem Radar session snapshot from a master parquet.
+
+    Unlike `_build_themes_snapshot`, the radar scores ALL tagged tickers above
+    the liquidity floor (no screener gate) — the screened union is only used
+    to flag which members are actionable setups today. NaNs are left intact:
+    the scoring module maps missing legs to its neutral default rather than 0.
+    Ticker theme tags are point-in-time (today's tags on past sessions), the
+    same trade-off as every other backfill.
+    """
+    from src.themes.ecosystem_score import compute_radar
+
+    master_df = su.load_df_from_parquet(master_file)
+    if master_df.empty:
+        return None
+    csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
+    if not csv_date:
+        return None
+
+    body = compute_radar(master_df, screened_tickers=screened_set)
+    if body is None:
+        return None
+
+    tickers_per_leaf = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
+    ecosystems = []
+    for eco in body['ecosystems']:
+        leaves = []
+        for leaf in eco['leaves']:
+            ticker_dicts = [{
+                'ticker': m['ticker'],
+                'score': round(m['composite'], 1),
+                'rs': round(m['rs'], 1),
+                'vars': round(m['vars'], 2) if m['vars'] is not None else None,
+                'price': round(m['price'], 2) if m['price'] is not None else None,
+                'is_screened': bool(m.get('is_screened', False)),
+            } for m in leaf['members'][:tickers_per_leaf]]
+            if day_flags:
+                enrich_with_ticker_color(ticker_dicts, day_flags)
+            leaves.append({
+                'global_rank': leaf['global_rank'],
+                'name': leaf['theme'],
+                'l2': leaf['l2'],
+                'l3': leaf['l3'],
+                'raw': round(leaf['raw'], 3),
+                'boosted': round(leaf['boosted'], 3),
+                'n': leaf['breadth'],
+                'tickers': ticker_dicts,
+            })
+        ecosystems.append({
+            'rank': eco['rank'],
+            'name': eco['name'],
+            'raw': round(eco['raw'], 4),
+            'boosted': round(eco['boosted'], 4),
+            'delta': round(eco['delta'], 4),
+            'n_leaves': eco['n_leaves'],
+            'n_members': eco['n_members'],
+            'n_screened': eco['n_screened'],
+            'leaves': leaves,
+        })
+
+    return {
+        'report_date': csv_date,
+        'params': body['params'],
+        'universe_size': body['universe_size'],
+        'n_leaves_scored': body['n_leaves_scored'],
+        'ecosystems': ecosystems,
+    }
+
+
+def export_radar(day_flags, root=None, out_dir=None):
+    """Export the Ecosystem Radar — full retention-window history every run.
+
+    Mirrors `export_themes_history`: iterates the per-day master parquet files
+    within the window, derives each date's screened union from the per-screener
+    parquet, and rewrites both files from scratch. `radar.json` keeps every
+    scored ecosystem and leaf (no top-N burial); history entries cap ecosystems
+    at `radar.history_ecosystem_limit` and are written compact to bound size.
+    """
+    root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
+    out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
+
+    master_files = sorted((root / 'master').glob('master_*.parquet'), reverse=True)
+    if not master_files:
+        print("   No master parquet found, skipping radar export")
+        return None
+
+    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+
+    history = []
+    for master_file in master_files:
+        date_str = master_file.stem.replace('master_', '')
+        if cutoff is not None and date_str < cutoff:
+            continue
+        screened_set = su.union_tickers_for_date(
+            date_str, CONFIG['screeners'], root=root
+        )
+        snap = _build_radar_snapshot(master_file, screened_set, day_flags)
+        if snap is None:
+            continue
+        history.append(snap)
+
+    if not history:
+        print("   Radar produced no entries, skipping export")
+        return None
+
+    current = history[0]
+    out = out_dir / "radar.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(current, fh, indent=2)
+    print(
+        f"   -> {out} ({len(current['ecosystems'])} ecosystems, "
+        f"{current['n_leaves_scored']} leaves, universe {current['universe_size']}, "
+        f"date {current['report_date']})"
+    )
+
+    eco_limit = int(CONFIG.get('radar', {}).get('history_ecosystem_limit', 20))
+    trimmed = [{**snap, 'ecosystems': snap['ecosystems'][:eco_limit]} for snap in history]
+    history_out = out_dir / "radar_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        json.dump(trimmed, fh, separators=(',', ':'))
+    dates = [h['report_date'] for h in trimmed]
+    print(f"   -> {history_out} (history: {len(trimmed)} sessions, {dates[-1]} -> {dates[0]})")
+
+    return current
+
+
 def _build_volume_snapshot(date_str, day_flags):
     """Build a single Volume snapshot from the volspike + denvol CSVs for one date.
 
@@ -1956,6 +2082,13 @@ def export_all():
     print("\n1e. Exporting parabolic data")
     parabolic_data = export_parabolic()
 
+    # 1f. Export Ecosystem Radar (screener-independent; must run before the
+    # screening_output prune at the tail so the full master window is on disk)
+    radar_data = None
+    if CONFIG.get('radar', {}).get('enabled', True):
+        print("\n1f. Exporting ecosystem radar data")
+        radar_data = export_radar(day_flags)
+
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")
     update_breadth_history()
@@ -2037,6 +2170,7 @@ def export_all():
         'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
         'etf_count': len(etf_data) if etf_data else 0,
         'industry_etf_count': len(industry_data) if industry_data else 0,
+        'radar_ecosystem_count': len(radar_data.get('ecosystems', [])) if radar_data else 0,
     }
     with open(OUTPUT_DIR / "report_meta.json", 'w') as f:
         json.dump(meta, f, indent=2)

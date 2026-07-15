@@ -34,6 +34,7 @@ from src.data_collection.scrape_market_breadth import get_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
 from src.themes.tag_new_tickers import sync_screened_ticker_themes
 from src.themes.analyze_theme_strength import analyze_theme_strength
+from src.themes.ecosystem_score import compute_radar
 from src.reporting.generate_daily_report import generate_daily_report, save_report
 
 # Setup logging
@@ -248,6 +249,20 @@ def run_daily_workflow():
         regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'
         logger.info(f"OK Analyzed {len(theme_df)} themes (regime: {regime})\n")
 
+        # Step 9b: Ecosystem Radar (screener-independent theme-basket scoring)
+        radar = None
+        if CONFIG.get('radar', {}).get('enabled', True):
+            logger.info(f"{'='*80}")
+            logger.info(f"STEP: Compute ecosystem radar")
+            logger.info(f"{'='*80}")
+            try:
+                radar = compute_radar(master_df, screened_tickers=all_tickers)
+                n_ecos = len(radar['ecosystems']) if radar else 0
+                logger.info(f"OK Radar scored {n_ecos} ecosystems\n")
+            except Exception as e:
+                logger.warning(f"Ecosystem radar failed: {e}")
+                logger.warning("Continuing workflow without radar section...")
+
         # Step 10: Generate daily report
         logger.info(f"{'='*80}")
         logger.info(f"STEP: Generate daily report")
@@ -259,7 +274,8 @@ def run_daily_workflow():
             theme_df=theme_df,
             market_breadth=market_breadth,
             screened_tickers=all_tickers,
-            untagged_tickers=untagged_tickers
+            untagged_tickers=untagged_tickers,
+            radar=radar
         )
 
         report_file = save_report(report, date_str)

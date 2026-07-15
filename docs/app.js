@@ -8,6 +8,8 @@
   // ── CONFIG ────────────────────────────────────────────
   const THEME_DATA_URL = 'data/themes.json';
   const THEME_HISTORY_URL = 'data/themes_history.json';
+  const RADAR_DATA_URL = 'data/radar.json';
+  const RADAR_HISTORY_URL = 'data/radar_history.json';
   const MOMENTUM_DATA_URL = 'data/momentum_136.json';
   const MOMENTUM_HISTORY_URL = 'data/momentum_136_history.json';
   const VOLUME_DATA_URL = 'data/volume.json';
@@ -46,7 +48,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
+  let activeCharts = { macro: null, radar: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -89,6 +91,7 @@
     loadMacroData();
     loadBreadthData();
     loadThemeData();
+    loadRadarData();
     loadMomentumData();
     loadVolumeData();
     loadVARSData();
@@ -212,6 +215,7 @@
 
       let tabId;
       if (tabContent.id === 'content-macro') tabId = 'macro';
+      else if (tabContent.id === 'content-radar') tabId = 'radar';
       else if (tabContent.id === 'content-themes') tabId = 'themes';
       else if (tabContent.id === 'content-momentum') tabId = 'momentum';
       else if (tabContent.id === 'content-volume') tabId = 'volume';
@@ -605,6 +609,7 @@
 
   // ── THEME DATA + TIME TRAVEL ──────────────────────────
   let themesHistory = [];    // Array of theme snapshots, newest first
+  let radarHistory = [];     // Array of ecosystem radar snapshots, newest first
   let momentumHistory = [];  // Array of momentum snapshots, newest first
   let varsHistory = [];      // Array of vars snapshots, newest first
   let parabolicHistory = []; // Array of parabolic snapshots, newest first
@@ -643,6 +648,29 @@
           '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
         const tnContainer = document.getElementById('theme-network');
         if (tnContainer) tnContainer.innerHTML = '<div class="no-data">Theme data not available.</div>';
+      });
+  }
+
+  function loadRadarData() {
+    Promise.all([
+      fetch(withCacheBust(RADAR_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(withCacheBust(RADAR_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;  // uncapped current wins over its history entry
+        }
+        radarHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderRadar(current);
+      })
+      .catch(err => {
+        console.warn('Radar data not available:', err);
+        const c = document.getElementById('radar-container');
+        if (c) c.innerHTML = '<div class="no-data">Radar data not available.<br>Run the daily workflow to generate data.</div>';
       });
   }
 
@@ -758,6 +786,7 @@
   function getSessionDates() {
     const dates = new Set();
     themesHistory.forEach(h => dates.add(h.report_date));
+    radarHistory.forEach(h => dates.add(h.report_date));
     momentumHistory.forEach(h => dates.add(h.report_date));
     volumeHistory.forEach(h => dates.add(h.report_date));
     varsHistory.forEach(h => dates.add(h.report_date));
@@ -781,6 +810,9 @@
     const themeSnap = themesHistory.find(h => h.report_date === date);
     renderThemes(themeSnap, date);
     renderThemeNetwork(themeSnap, date);
+    // Ecosystem Radar
+    const radarSnap = radarHistory.find(h => h.report_date === date);
+    renderRadar(radarSnap, date);
     // Momentum 1/3/6
     const momSnap = momentumHistory.find(h => h.report_date === date);
     renderMomentum(momSnap, date);
@@ -828,6 +860,7 @@
   function renderAllTimeTravelBars() {
     const dates = getSessionDates();
     renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
+    renderTimeTravelBar('radar-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('volume-tt-dates', dates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
@@ -1567,6 +1600,82 @@
       const tabId = tabIdMap[mode] || 'momentumviz';
       if (typeof openChart === 'function') openChart(tabId, ticker);
     });
+  }
+
+  // ── ECOSYSTEM RADAR ───────────────────────────────────
+  // Screener-independent lens: every tagged liquid ticker scores, leaves roll
+  // up into their L1 ecosystem, and co-firing families carry a boost. Layout
+  // mirrors the ranked ecosystem table: one block per ecosystem, one row per
+  // sub-theme with its global rank, N, ticker chips, raw and boosted scores.
+  function renderRadar(data, date) {
+    const container = document.getElementById('radar-container');
+    if (!container) return;
+
+    if (!data || !data.ecosystems || data.ecosystems.length === 0) {
+      const msg = (date && !data) ? `No radar data for ${date}.` : 'No radar data for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
+      return;
+    }
+
+    const fmt = (v, d = 3) => (typeof v === 'number') ? v.toFixed(d) : '—';
+    let html = `
+      <div class="radar-meta">
+        Ecosystem scores for <b>${escHtml(data.report_date || '')}</b> —
+        ${data.n_leaves_scored ?? '—'} themes over ${data.universe_size ?? '—'} tagged liquid tickers
+        (screener-independent) · boost β=${data.params?.beta ?? '—'} ·
+        <span class="radar-chip chip-screened">ABC</span> screened today ·
+        <span class="radar-chip chip-quiet">ABC</span> not screened
+      </div>
+    `;
+    data.ecosystems.forEach(eco => {
+      const delta = (typeof eco.delta === 'number')
+        ? (eco.delta >= 0 ? `+${eco.delta.toFixed(3)}` : eco.delta.toFixed(3))
+        : '—';
+      html += `
+        <div class="theme-block">
+          <div class="theme-header">
+            <span class="theme-rank">#${eco.rank}</span>
+            <span class="theme-name">${escHtml(eco.name)}</span>
+            <span class="theme-score">boosted ${fmt(eco.boosted)} · raw ${fmt(eco.raw)} · Δ ${delta} · ${eco.n_leaves} theme${eco.n_leaves === 1 ? '' : 's'} · ${eco.n_members} stocks (${eco.n_screened} screened)</span>
+          </div>
+          <div class="theme-body">
+            <table class="radar-table">
+              <thead><tr>
+                <th>Rank</th>
+                <th class="l">Theme</th>
+                <th class="l">Stocks</th>
+                <th>Raw</th>
+                <th>Boosted</th>
+              </tr></thead>
+              <tbody>
+      `;
+      (eco.leaves || []).forEach(leaf => {
+        const label = leaf.l2 ? (leaf.l3 ? `${leaf.l2} / ${leaf.l3}` : leaf.l2) : leaf.name;
+        const chips = (leaf.tickers || []).map(t => {
+          const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
+          if (t.ticker_color === 'green') cls.push('day-pattern-green');
+          const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}`;
+          return `<span class="${cls.join(' ')}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(eco.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
+        }).join('');
+        html += `
+                <tr>
+                  <td class="radar-rank">#${leaf.global_rank}</td>
+                  <td class="l">${escHtml(label)}<span class="radar-n">N=${leaf.n}</span></td>
+                  <td class="l radar-stocks">${chips}</td>
+                  <td>${fmt(leaf.raw)}</td>
+                  <td class="radar-boosted">${fmt(leaf.boosted)}</td>
+                </tr>
+        `;
+      });
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
   }
 
   function renderThemes(data, date) {

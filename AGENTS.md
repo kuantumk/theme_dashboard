@@ -137,14 +137,25 @@ The daily workflow runs the screeners listed under `screeners:` in `config/workf
 
 Both legs are normalized by their own ATR before summing, so VARS values are comparable across tickers regardless of underlying volatility. SPY's cumulative series is computed once before the per-ticker loop and reindexed into each ticker.
 
-### Theme Scoring Formula
+### Theme Scoring Formula (screened Themes lens)
 
-Scoring depends on market regime (bull when MMFI > 50%):
-- **Strength** (0-100) = median RS + leader concentration
-- **Confirmation** (0-100) = structural health + near-highs + breadth quality
-- **Score** = 0.5 × Strength + 0.5 × Confirmation
-- **Actionability** = extension penalty × volume bonus
+Two-track, implemented in `src/themes/analyze_theme_strength.py` (the earlier strength/confirmation/actionability/regime formula no longer exists in code):
+- **Universe per theme** = tagged members ∩ that day's screened union ∩ master table; min scored breadth 2
+- **Composite (per ticker)** = mean(`rs_sts_pct` clipped 0-100, raw VARS as-is) — missing legs → 50
+- **Theme score** = mean of the top-10 member composites
+- **Demand (per ticker)** = mean(short-interest score, float score via config anchors) — controls within-theme display order only, never the score
 - **Hot threshold**: avg RS_STS% > 70% and breadth ≥ 3 stocks
+
+### Ecosystem Radar (screener-independent lens)
+
+`src/themes/ecosystem_score.py` scores fixed theme baskets daily over **all** tagged tickers (no screener gate) and rolls leaves up to their L1 "ecosystem", so slowly-strengthening families (e.g. cybersecurity on 2026-07-13, one session pre-breakout) surface before members pass momentum screeners. Tunables live in the `radar:` block of `config/workflow_config.yaml`:
+- **Universe**: every `data/ticker_themes.json` ticker present in the master table with close ≥ `min_close` ($3) and 20d avg dollar vol ≥ `min_avg_dollar_vol` ($10M). No fundamentals (unscreened members have none)
+- **Composite (per ticker)** = 0.4·`rs_sts_pct` + 0.4·(VARS percentile within the radar universe) + 0.2·`rela_perf_1mo_rank` — all legs 0-100, missing → 50. Raw VARS is never averaged with 0-100 legs here (scale mismatch)
+- **Leaf raw** = mean of top-5 member composites (min breadth 2), then **z-scored across all scored leaves** (session-relative, decompresses ranks)
+- **Ecosystem raw** = mean of its top-5 leaf z-scores. Families with ≥ 2 scored leaves earn **boost = β·eco_raw** (β = 0.3), added to every leaf (`boosted = z + boost`) and to the family (`boosted_eco = eco_raw + boost`) — co-firing sub-themes lift the whole family (sibling confirmation). Single-leaf families get no self-boost; negative eco_raw boosts negatively (symmetric)
+- **Ranks**: leaves ranked globally by boosted score across all families; ecosystems by boosted score. No top-N cap at scoring level
+- **Flows**: step 9b of `run_daily_workflow.py` computes the radar in-process → "📡 Ecosystem Radar" report section (above Market Themes; ignored by `parse_report`). `export_radar` in `export_dashboard_data.py` rebuilds `docs/data/radar.json` (current, uncapped) + `radar_history.json` (180-day window, per-entry ecosystems capped at `history_ecosystem_limit`, compact JSON) from the per-day master parquet — it runs inside `export_all()` **before** `prune_screening_output`. Dashboard **Radar** tab renders ranked ecosystems with per-leaf global-rank chips, `N=`, ticker chips (screened members highlighted, unscreened dimmed), raw + boosted columns, and the shared time-travel bar
+- **Acceptance check**: `uv run python tools/validate_radar.py --date 2026-07-13 --expect-l1 Cybersecurity --max-rank 3` (add `--sweep` with a local master parquet to grid-search β/top-K/top-M/fast-weight)
 
 ### Theme Taxonomy (hierarchical)
 

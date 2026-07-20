@@ -60,6 +60,23 @@ themes:
       - [150, 75]
       - [500, 50]
 
+# VARS screener gates (src/screening/screeners/vars.py). ADR sits at 2% —
+# VARS is already ATR-normalized, and a higher floor ejects liquid large-cap
+# leaders exactly when post-run tightening compresses their ADR (PANW/FTNT
+# fell off the tab 2026-07-09 with VARS still rising).
+vars_screener:
+  min_avg_dollar_vol: 40000000  # 20-day avg dollar volume
+  min_vol_sma50: 1000000        # 50-day avg share volume (knob: lower if 700k-share names wanted)
+  min_close: 2.0                # last close
+  min_adr_pct: 0.02             # 20-day ADR% floor (was 3.3% hardcoded)
+  min_vars: 2.0                 # VARS floor
+
+# VARS dashboard tab — leaf tables clustered under L1 family sections
+vars_tab:
+  min_tickers_per_family: 3     # families with fewer members are dropped
+  top_k_vars: 5                 # family score = mean of top-K pooled member VARS
+  hot_rs_threshold: 70.0        # family hot flag: avg member RS >= this and n >= 3
+
 # Ecosystem Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/ecosystem_score.py docstring
 # for the full R1-R6 formula). Scores ALL tagged tickers above the liquidity

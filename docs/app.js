@@ -1191,7 +1191,7 @@
   function renderThemeNetwork(snap, date)    { renderNetwork(snap, 'themes', date); }
   function renderMomentumNetwork(snap, date) { renderNetwork(snap, 'momentum', date); }
   function renderVolumeNetwork(snap, date)   { renderNetwork(snap, 'volume', date); }
-  function renderVARSNetwork(snap, date)     { renderNetwork(snap, 'vars', date); }
+  function renderVARSNetwork(snap, date)     { renderNetwork(varsVizSnap(snap), 'vars', date); }
 
   function actuallyRenderNetwork(snap, mode, date) {
     const cfg = VIZ_MODES[mode];
@@ -1603,6 +1603,15 @@
     return { report_date: data.report_date, themes };
   }
 
+  // Flatten the family-clustered VARS snapshot (themes = L1 sections carrying
+  // `leaves`) back to leaf-level entries for the shared network viz. Legacy
+  // flat snapshots (pre-clustering history) pass through unchanged.
+  function varsVizSnap(data) {
+    if (!data || !data.themes) return data;
+    const themes = data.themes.flatMap(t => t.leaves || [t]);
+    return { report_date: data.report_date, themes };
+  }
+
   function renderThemes(data, date) {
     const container = document.getElementById('themes-container');
     if (!container) return;
@@ -1835,20 +1844,47 @@
     }
 
     let html = '';
-    data.themes.forEach((theme, idx) => {
-      const tickers = theme.tickers || [];
-      const count = tickers.length;
-      const avgVars = (typeof theme.avg_vars === 'number')
-        ? theme.avg_vars
-        : (count ? tickers.reduce((s, t) => s + (t.vars ?? 0), 0) / count : 0);
+    data.themes.forEach((entry, idx) => {
+      // Family section (nested shape); a legacy flat snapshot entry renders
+      // as a single-leaf section so pre-clustering history still displays.
+      const fam = entry.leaves ? entry : {
+        name: entry.name,
+        score: entry.avg_vars,
+        avg_rs: null,
+        n: (entry.tickers || []).length,
+        hot: false,
+        leaves: [entry],
+      };
+      const meta = [
+        `${entry.leaves ? 'top-5 VARS' : 'avg VARS'} ${(fam.score ?? 0).toFixed(2)}`,
+        (typeof fam.avg_rs === 'number') ? `avg RS ${fam.avg_rs.toFixed(1)}%` : '',
+        `${fam.n} ticker${fam.n === 1 ? '' : 's'}`,
+      ].filter(Boolean).join(' · ');
       html += `
         <div class="theme-block">
-          <div class="theme-header">
+          <div class="theme-header${fam.hot ? ' family-hot' : ''}">
             <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(theme.name)}</span>
-            <span class="theme-score">avg VARS ${avgVars.toFixed(2)} · ${count} ticker${count === 1 ? '' : 's'}</span>
+            <span class="theme-name">${escHtml(fam.name)}${fam.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
+            <span class="theme-score">${meta}</span>
           </div>
           <div class="theme-body">
+      `;
+
+      const showLeafHdr = !(fam.leaves.length === 1 && fam.leaves[0].name === fam.name);
+      fam.leaves.forEach(leaf => {
+        const tickers = leaf.tickers || [];
+        if (showLeafHdr) {
+          const sub = leaf.name.startsWith(fam.name + ' / ')
+            ? leaf.name.slice(fam.name.length + 3)
+            : leaf.name;
+          html += `
+            <div class="leaf-subheader">
+              <span class="leaf-name">${escHtml(sub)}</span>
+              <span class="leaf-meta">avg VARS ${(leaf.avg_vars ?? 0).toFixed(2)} · ${tickers.length} ticker${tickers.length === 1 ? '' : 's'}</span>
+            </div>
+          `;
+        }
+        html += `
             <table>
               <thead><tr>
                 <th class="l">Ticker</th>
@@ -1862,23 +1898,28 @@
                 <th>Short%</th>
               </tr></thead>
               <tbody>
-      `;
+        `;
 
-      tickers.forEach(t => {
-        const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
-        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
-        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
-        const shortVal = parseFloat(t.short);
-        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
-        html += `
+        tickers.forEach(t => {
+          const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
+          const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+          const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
+          const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+          const shortVal = parseFloat(t.short);
+          const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+          const accel = (typeof t.vars_20ema === 'number')
+            ? (t.vars > t.vars_20ema
+              ? '<span class="accel accel-up">▲</span>'
+              : '<span class="accel accel-dn">▼</span>')
+            : '';
+          html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
-                  <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}</td>
+                  <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}${accel}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
                   <td>${t.price ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
@@ -1887,12 +1928,16 @@
                   <td class="${instClass}">${t.inst ?? '—'}</td>
                   <td class="${shortClass}">${t.short ?? '—'}</td>
                 </tr>
+          `;
+        });
+
+        html += `
+              </tbody>
+            </table>
         `;
       });
 
       html += `
-              </tbody>
-            </table>
           </div>
         </div>
       `;

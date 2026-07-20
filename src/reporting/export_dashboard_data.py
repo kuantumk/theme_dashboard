@@ -1048,16 +1048,21 @@ def export_momentum_136(day_flags):
 def _build_vars_snapshot(csv_file, day_flags):
     """Build a single VARS snapshot dict from one screener CSV.
 
-    Theme groups in config/theme_groups.yaml are applied to consolidate sub-themes
-    (e.g. "AI - Optics" + "AI - Infra / Optics" -> "AI - Data Center - Optics").
-    Themes with fewer than 3 tickers and "Uncategorized" are dropped.
-    Themes are sorted by avg VARS desc; within each theme tickers are sorted by VARS desc.
-    Returns the JSON dict or None if the CSV is empty. Pure function.
+    Tickers are grouped by leaf theme path, then leaves are clustered under
+    their L1 family: `themes` is a list of family sections, each carrying its
+    `leaves` (per-leaf ticker tables). Families with fewer than
+    `vars_tab.min_tickers_per_family` unique members and Uncategorized/
+    Singleton leaves are dropped. Family score = mean of the top
+    `vars_tab.top_k_vars` member VARS values; families sort by score desc,
+    then family-avg (vars - vars_20ema) acceleration desc. Leaves within a
+    family sort by avg VARS desc; tickers within a leaf by VARS desc. A
+    family is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
+    has >= 3 members. The `network` payload stays leaf-level so the viz is
+    unchanged. Returns the JSON dict or None if the CSV is empty. Pure function.
     """
     import sqlite3
-    import pandas as pd
     from src.themes.theme_registry import load_ticker_themes
-    from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
+    from src.themes.theme_taxonomy import build_theme_to_tickers
 
     df = su.load_df_from_parquet(csv_file).fillna(0)
     if df.empty:
@@ -1071,9 +1076,7 @@ def _build_vars_snapshot(csv_file, day_flags):
         t: ticker_themes.get(t) or ['Uncategorized']
         for t in screener_tickers
     }
-    # Apply theme_groups consolidation so AI - Optics, AI - Infra / Optics, etc. merge.
-    theme_groups = load_theme_groups()
-    theme_to_tickers = build_theme_to_tickers(filtered_map, theme_groups)
+    theme_to_tickers = build_theme_to_tickers(filtered_map)
 
     # Single-shot fundamentals lookup
     fundamentals = {}
@@ -1114,42 +1117,70 @@ def _build_vars_snapshot(csv_file, day_flags):
             'short': round(float(short_val), 1) if short_val is not None else None,
         }
 
-    # Build theme list — drop Uncategorized/Singleton + themes with < 3 tickers; sort by avg vars desc
+    # Leaf tables — drop Uncategorized/Singleton; no per-leaf minimum (family
+    # breadth decides below, so a 2-member leaf like Cybersecurity / Endpoint
+    # still renders inside its family section).
     HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
-    MIN_TICKERS_PER_THEME = 3
-    themes_list = []
+    leaf_list = []
     for theme_name, tickers in theme_to_tickers.items():
         if theme_name in HIDDEN_THEMES:
             continue
         ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
-        if len(ticker_dicts) < MIN_TICKERS_PER_THEME:
+        if not ticker_dicts:
             continue
         ticker_dicts.sort(key=lambda x: -x['vars'])
         avg_vars = sum(td['vars'] for td in ticker_dicts) / len(ticker_dicts)
-        themes_list.append({
+        leaf_list.append({
             'name': theme_name,
             'avg_vars': round(avg_vars, 2),
             'tickers': ticker_dicts,
         })
 
-    # Catch-all bucket sorts to the bottom regardless of avg_vars
-    catchall_themes = {'Singleton'}
-    themes_list.sort(key=lambda th: (
-        th['name'] in catchall_themes,
-        -th['avg_vars'],
-        th['name'],
-    ))
-
     if day_flags:
-        for th in themes_list:
-            enrich_with_ticker_color(th['tickers'], day_flags)
+        for leaf in leaf_list:
+            enrich_with_ticker_color(leaf['tickers'], day_flags)
 
-    _attach_hierarchy(themes_list)
+    _attach_hierarchy(leaf_list)
+
+    # Cluster leaves under their L1 family; score, flag and sort each family.
+    tab_cfg = CONFIG.get('vars_tab') or {}
+    min_family = int(tab_cfg.get('min_tickers_per_family', 3))
+    top_k = int(tab_cfg.get('top_k_vars', 5))
+    hot_rs = float(tab_cfg.get('hot_rs_threshold', 70.0))
+
+    leaves_by_l1 = {}
+    for leaf in leaf_list:
+        leaves_by_l1.setdefault(leaf['l1'], []).append(leaf)
+
+    family_list = []
+    for l1, leaves in leaves_by_l1.items():
+        # Unique members — a dual-tagged ticker may sit in two leaves of one family
+        members = list({td['ticker']: td for leaf in leaves for td in leaf['tickers']}.values())
+        if len(members) < min_family:
+            continue
+        leaves.sort(key=lambda lf: -lf['avg_vars'])
+        top_vars = sorted((m['vars'] for m in members), reverse=True)[:top_k]
+        avg_rs = sum(m['rs'] for m in members) / len(members)
+        family_list.append({
+            'name': l1,
+            'score': round(sum(top_vars) / len(top_vars), 2),
+            'avg_vars': round(sum(m['vars'] for m in members) / len(members), 2),
+            'avg_rs': round(avg_rs, 1),
+            'accel': round(sum(m['vars'] - m['vars_20ema'] for m in members) / len(members), 2),
+            'n': len(members),
+            'hot': bool(avg_rs >= hot_rs and len(members) >= 3),
+            'leaves': leaves,
+        })
+
+    family_list.sort(key=lambda fam: (-fam['score'], -fam['accel'], fam['name']))
+
+    # Network stays leaf-level (leaves of rendered families only) — viz unchanged.
+    shown_leaves = [leaf for fam in family_list for leaf in fam['leaves']]
 
     return {
         'report_date': csv_date,
-        'themes': themes_list,
-        'network': _build_network(themes_list),
+        'themes': family_list,
+        'network': _build_network(shown_leaves),
     }
 
 
@@ -1204,9 +1235,9 @@ def export_vars(day_flags):
     out = OUTPUT_DIR / "vars.json"
     with open(out, 'w', encoding='utf-8') as fh:
         json.dump(current, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in current['themes'])
+    total_tickers = sum(fam.get('n', len(fam.get('tickers', []))) for fam in current['themes'])
     print(
-        f"   -> {out} ({len(current['themes'])} themes, "
+        f"   -> {out} ({len(current['themes'])} families, "
         f"{total_tickers} tickers, date {current['report_date']})"
     )
 

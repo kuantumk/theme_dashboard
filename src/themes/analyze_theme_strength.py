@@ -170,12 +170,14 @@ def calculate_theme_metrics(
     breadth = len(top_n)
     theme_score = float(np.mean([c for _, c in top_n]))
 
-    # Reporting fields kept for daily report + downstream compat
-    rs_values = rs_col
-    avg_rs = float(np.mean(rs_values))
-    median_rs = float(np.median(rs_values))
-    high_momentum_count = int(np.sum(rs_values > MOMENTUM_THRESHOLD))
-    high_momentum_pct = (high_momentum_count / len(rs_values)) * 100
+    # Reporting fields kept for daily report + downstream compat.
+    # rs_sts_pct can be NaN (young IPOs lack the full RS lookback) — aggregate
+    # over known values only, neutral default when none are known.
+    rs_known = rs_col[~pd.isna(rs_col)]
+    avg_rs = float(np.mean(rs_known)) if rs_known.size else MISSING_DEFAULT
+    median_rs = float(np.median(rs_known)) if rs_known.size else MISSING_DEFAULT
+    high_momentum_count = int(np.sum(rs_known > MOMENTUM_THRESHOLD))
+    high_momentum_pct = (high_momentum_count / rs_known.size) * 100 if rs_known.size else 0.0
 
     # Daily-report top_stocks: top 3 by demand desc (within-theme display order).
     rs_lookup = dict(zip(tickers_arr, rs_col))

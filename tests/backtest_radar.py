@@ -130,17 +130,19 @@ def load_tags_asof(date_str=None, pit=False, _cache={}):
 
 
 def _normalize_tags(tags):
-    """Map legacy labels to canonical paths, drop what fails validation."""
+    """Alias-map legacy free-form labels; otherwise keep paths as written.
+
+    Historical tags reference the taxonomy AS OF their commit (L1/L2 names
+    have been renamed since), so validating against today's taxonomy would
+    drop whole branches. Per-session scoring only needs internally
+    consistent paths — each path groups under its own first segment — so
+    unvalidated-but-structured paths are kept. Caveat: taxonomy renames make
+    L1 names drift across PIT sessions (affects cross-session stability
+    metrics near rename dates, not within-session IC)."""
     from src.themes.legacy_aliases import normalize_legacy_theme
-    from src.themes.theme_taxonomy import load_taxonomy, validate_path
-    tax = load_taxonomy()
     out = {}
     for ticker, paths in tags.items():
-        kept = []
-        for p in paths or []:
-            cand = normalize_legacy_theme(p) or p
-            if validate_path(cand, tax):
-                kept.append(cand)
+        kept = [normalize_legacy_theme(p) or p for p in paths or [] if p]
         if kept:
             out[str(ticker).upper()] = kept
     return out

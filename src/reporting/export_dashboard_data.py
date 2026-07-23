@@ -1049,14 +1049,14 @@ def _build_vars_snapshot(csv_file, day_flags):
     """Build a single VARS snapshot dict from one screener CSV.
 
     Tickers are grouped by leaf theme path, then leaves are clustered under
-    their L1 family: `themes` is a list of family sections, each carrying its
-    `leaves` (per-leaf ticker tables). Families with fewer than
-    `vars_tab.min_tickers_per_family` unique members and Uncategorized/
-    Singleton leaves are dropped. Family score = mean of the top
-    `vars_tab.top_k_vars` member VARS values; families sort by score desc,
-    then family-avg (vars - vars_20ema) acceleration desc. Leaves within a
-    family sort by avg VARS desc; tickers within a leaf by VARS desc. A
-    family is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
+    their taxonomy L1: `themes` is a list of L1 sections, each carrying its
+    `leaves` (per-leaf ticker tables). L1s with fewer than
+    `vars_tab.min_tickers_per_l1` unique members and Uncategorized/
+    Singleton leaves are dropped. L1 score = mean of the top
+    `vars_tab.top_k_vars` member VARS values; L1s sort by score desc,
+    then L1-avg (vars - vars_20ema) acceleration desc. Leaves within an
+    L1 sort by avg VARS desc; tickers within a leaf by VARS desc. An
+    L1 is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
     has >= 3 members. The `network` payload stays leaf-level so the viz is
     unchanged. Returns the JSON dict or None if the CSV is empty. Pure function.
     """
@@ -1117,9 +1117,9 @@ def _build_vars_snapshot(csv_file, day_flags):
             'short': round(float(short_val), 1) if short_val is not None else None,
         }
 
-    # Leaf tables — drop Uncategorized/Singleton; no per-leaf minimum (family
+    # Leaf tables — drop Uncategorized/Singleton; no per-leaf minimum (L1
     # breadth decides below, so a 2-member leaf like Cybersecurity / Endpoint
-    # still renders inside its family section).
+    # still renders inside its L1 section).
     HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
     leaf_list = []
     for theme_name, tickers in theme_to_tickers.items():
@@ -1142,9 +1142,9 @@ def _build_vars_snapshot(csv_file, day_flags):
 
     _attach_hierarchy(leaf_list)
 
-    # Cluster leaves under their L1 family; score, flag and sort each family.
+    # Cluster leaves under their L1; score, flag and sort each L1 section.
     tab_cfg = CONFIG.get('vars_tab') or {}
-    min_family = int(tab_cfg.get('min_tickers_per_family', 3))
+    min_l1 = int(tab_cfg.get('min_tickers_per_l1', 3))
     top_k = int(tab_cfg.get('top_k_vars', 5))
     hot_rs = float(tab_cfg.get('hot_rs_threshold', 70.0))
 
@@ -1152,16 +1152,16 @@ def _build_vars_snapshot(csv_file, day_flags):
     for leaf in leaf_list:
         leaves_by_l1.setdefault(leaf['l1'], []).append(leaf)
 
-    family_list = []
+    l1_list = []
     for l1, leaves in leaves_by_l1.items():
-        # Unique members — a dual-tagged ticker may sit in two leaves of one family
+        # Unique members — a dual-tagged ticker may sit in two leaves of one L1
         members = list({td['ticker']: td for leaf in leaves for td in leaf['tickers']}.values())
-        if len(members) < min_family:
+        if len(members) < min_l1:
             continue
         leaves.sort(key=lambda lf: -lf['avg_vars'])
         top_vars = sorted((m['vars'] for m in members), reverse=True)[:top_k]
         avg_rs = sum(m['rs'] for m in members) / len(members)
-        family_list.append({
+        l1_list.append({
             'name': l1,
             'score': round(sum(top_vars) / len(top_vars), 2),
             'avg_vars': round(sum(m['vars'] for m in members) / len(members), 2),
@@ -1172,14 +1172,14 @@ def _build_vars_snapshot(csv_file, day_flags):
             'leaves': leaves,
         })
 
-    family_list.sort(key=lambda fam: (-fam['score'], -fam['accel'], fam['name']))
+    l1_list.sort(key=lambda grp: (-grp['score'], -grp['accel'], grp['name']))
 
-    # Network stays leaf-level (leaves of rendered families only) — viz unchanged.
-    shown_leaves = [leaf for fam in family_list for leaf in fam['leaves']]
+    # Network stays leaf-level (leaves of rendered L1 sections only) — viz unchanged.
+    shown_leaves = [leaf for grp in l1_list for leaf in grp['leaves']]
 
     return {
         'report_date': csv_date,
-        'themes': family_list,
+        'themes': l1_list,
         'network': _build_network(shown_leaves),
     }
 
@@ -1235,9 +1235,9 @@ def export_vars(day_flags):
     out = OUTPUT_DIR / "vars.json"
     with open(out, 'w', encoding='utf-8') as fh:
         json.dump(current, fh, indent=2)
-    total_tickers = sum(fam.get('n', len(fam.get('tickers', []))) for fam in current['themes'])
+    total_tickers = sum(grp.get('n', len(grp.get('tickers', []))) for grp in current['themes'])
     print(
-        f"   -> {out} ({len(current['themes'])} families, "
+        f"   -> {out} ({len(current['themes'])} L1s, "
         f"{total_tickers} tickers, date {current['report_date']})"
     )
 
@@ -1255,7 +1255,7 @@ def export_vars(day_flags):
 
 
 def _build_radar_snapshot(master_file, screened_set, day_flags):
-    """Build one Ecosystem Radar session snapshot from a master parquet.
+    """Build one L1 Radar session snapshot from a master parquet.
 
     Unlike the retired screened-themes backfill, the radar scores ALL tagged
     tickers above the liquidity floor (no screener gate) — the screened union
@@ -1265,7 +1265,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
     Ticker theme tags are point-in-time (today's tags on past sessions), the
     same trade-off as every other backfill.
     """
-    from src.themes.ecosystem_score import compute_radar
+    from src.themes.l1_score import compute_radar
 
     master_df = su.load_df_from_parquet(master_file)
     if master_df.empty:
@@ -1279,10 +1279,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
         return None
 
     tickers_per_leaf = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
-    ecosystems = []
-    for eco in body['ecosystems']:
+    l1s = []
+    for l1_entry in body['l1s']:
         leaves = []
-        for leaf in eco['leaves']:
+        for leaf in l1_entry['leaves']:
             ticker_dicts = [{
                 'ticker': m['ticker'],
                 'score': round(m['composite'], 1),
@@ -1303,15 +1303,15 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
                 'n': leaf['breadth'],
                 'tickers': ticker_dicts,
             })
-        ecosystems.append({
-            'rank': eco['rank'],
-            'name': eco['name'],
-            'raw': round(eco['raw'], 4),
-            'boosted': round(eco['boosted'], 4),
-            'delta': round(eco['delta'], 4),
-            'n_leaves': eco['n_leaves'],
-            'n_members': eco['n_members'],
-            'n_screened': eco['n_screened'],
+        l1s.append({
+            'rank': l1_entry['rank'],
+            'name': l1_entry['name'],
+            'raw': round(l1_entry['raw'], 4),
+            'boosted': round(l1_entry['boosted'], 4),
+            'delta': round(l1_entry['delta'], 4),
+            'n_leaves': l1_entry['n_leaves'],
+            'n_members': l1_entry['n_members'],
+            'n_screened': l1_entry['n_screened'],
             'leaves': leaves,
         })
 
@@ -1320,19 +1320,19 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
         'params': body['params'],
         'universe_size': body['universe_size'],
         'n_leaves_scored': body['n_leaves_scored'],
-        'ecosystems': ecosystems,
+        'l1s': l1s,
     }
 
 
 def export_radar(day_flags, root=None, out_dir=None):
-    """Export the Ecosystem Radar (dashboard Themes tab) — full
+    """Export the L1 Radar (dashboard Themes tab) — full
     retention-window history every run.
 
     Mirrors `export_vars`: iterates the per-day master parquet files within
     the window, derives each date's screened union from the per-screener
     parquet, and rewrites both files from scratch. `radar.json` keeps every
-    scored ecosystem and leaf (no top-N burial); history entries cap ecosystems
-    at `radar.history_ecosystem_limit` and are written compact to bound size.
+    scored L1 and leaf (no top-N burial); history entries cap L1s
+    at `radar.history_l1_limit` and are written compact to bound size.
     """
     root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
     out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
@@ -1366,13 +1366,13 @@ def export_radar(day_flags, root=None, out_dir=None):
     with open(out, 'w', encoding='utf-8') as fh:
         json.dump(current, fh, indent=2)
     print(
-        f"   -> {out} ({len(current['ecosystems'])} ecosystems, "
+        f"   -> {out} ({len(current['l1s'])} L1s, "
         f"{current['n_leaves_scored']} leaves, universe {current['universe_size']}, "
         f"date {current['report_date']})"
     )
 
-    eco_limit = int(CONFIG.get('radar', {}).get('history_ecosystem_limit', 20))
-    trimmed = [{**snap, 'ecosystems': snap['ecosystems'][:eco_limit]} for snap in history]
+    l1_limit = int(CONFIG.get('radar', {}).get('history_l1_limit', 20))
+    trimmed = [{**snap, 'l1s': snap['l1s'][:l1_limit]} for snap in history]
     history_out = out_dir / "radar_history.json"
     with open(history_out, 'w', encoding='utf-8') as fh:
         json.dump(trimmed, fh, separators=(',', ':'))
@@ -1821,11 +1821,11 @@ def export_all():
     print("\n1e. Exporting parabolic data")
     parabolic_data = export_parabolic()
 
-    # 1f. Export Ecosystem Radar (screener-independent; must run before the
+    # 1f. Export L1 Radar (screener-independent; must run before the
     # screening_output prune at the tail so the full master window is on disk)
     radar_data = None
     if CONFIG.get('radar', {}).get('enabled', True):
-        print("\n1f. Exporting ecosystem radar data")
+        print("\n1f. Exporting L1 radar data")
         radar_data = export_radar(day_flags)
 
     # 2. Update market breadth history
@@ -1909,7 +1909,7 @@ def export_all():
         'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
         'etf_count': len(etf_data) if etf_data else 0,
         'industry_etf_count': len(industry_data) if industry_data else 0,
-        'radar_ecosystem_count': len(radar_data.get('ecosystems', [])) if radar_data else 0,
+        'radar_l1_count': len(radar_data.get('l1s', [])) if radar_data else 0,
     }
     with open(OUTPUT_DIR / "report_meta.json", 'w') as f:
         json.dump(meta, f, indent=2)

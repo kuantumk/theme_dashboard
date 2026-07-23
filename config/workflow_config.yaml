@@ -71,33 +71,33 @@ vars_screener:
   min_adr_pct: 0.02             # 20-day ADR% floor (was 3.3% hardcoded)
   min_vars: 2.0                 # VARS floor
 
-# VARS dashboard tab — leaf tables clustered under L1 family sections
+# VARS dashboard tab — leaf tables clustered under taxonomy L1 sections
 vars_tab:
-  min_tickers_per_family: 3     # families with fewer members are dropped
-  top_k_vars: 5                 # family score = mean of top-K pooled member VARS
-  hot_rs_threshold: 70.0        # family hot flag: avg member RS >= this and n >= 3
+  min_tickers_per_l1: 3         # L1 sections with fewer members are dropped
+  top_k_vars: 5                 # L1 score = mean of top-K pooled member VARS
+  hot_rs_threshold: 70.0        # L1 hot flag: avg member RS >= this and n >= 3
 
-# Ecosystem Radar — screener-independent theme-basket scoring with L1 roll-up
-# and sibling-confirmation boost (see src/themes/ecosystem_score.py docstring
+# L1 Radar — screener-independent theme-basket scoring with L1 roll-up
+# and sibling-confirmation boost (see src/themes/l1_score.py docstring
 # for the full R1-R6 formula). Scores ALL tagged tickers above the liquidity
 # floor, not just the day's screened union.
 radar:
   enabled: true
   beta: 0.3                     # sibling-confirmation boost coefficient
-  top_k_leaves: 5               # leaves averaged into the ecosystem raw score
+  top_k_leaves: 5               # leaves averaged into the L1 raw score
   top_m_members: 5              # member composites averaged into a leaf raw score
   min_breadth: 2                # min universe members for a leaf to score
-  min_leaves_for_boost: 2       # families with fewer scored leaves get no boost
+  min_leaves_for_boost: 2       # L1s with fewer scored leaves get no boost
   min_avg_dollar_vol: 10000000  # universe floor: 20-day avg dollar volume
   min_close: 3.0                # universe floor: last close
   composite_weights:            # per-ticker composite legs (each 0-100)
     rs: 0.4                     #   rs_sts_pct
-    vars_pct: 0.4               #   percentile of raw VARS within the radar universe
+    vars_pct: 0.4               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
     fast: 0.2                   #   rela_perf_1mo_rank (reacts pre-breakout)
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
   tickers_per_leaf: 10          # export cap on ticker chips per leaf
-  history_ecosystem_limit: 20   # ecosystems kept per radar_history.json entry
+  history_l1_limit: 20          # L1 entries kept per radar_history.json entry
 
 # Dashboard data sources (Google Sheets)
 dashboard:

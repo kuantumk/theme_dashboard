@@ -1,35 +1,41 @@
 """
-Ecosystem Radar — screener-independent theme-basket scoring with L1 roll-up
-and sibling-confirmation boost.
+L1 Radar — screener-independent theme-basket scoring with L1 roll-up and
+sibling-confirmation boost.
 
-The existing Themes lens scores only tagged tickers that passed a screener
-that day, per leaf path, with no aggregation above the leaf — a family whose
+The screened Themes lens scores only tagged tickers that passed a screener
+that day, per leaf path, with no aggregation above the leaf — an L1 whose
 sub-themes strengthen together in fragments never surfaces as one move. The
 radar scores fixed theme baskets daily over ALL tagged members (liquidity-
-floored), then rolls leaves up into their taxonomy L1 "ecosystem" and boosts
-co-firing families:
+floored), then rolls leaves up to their taxonomy L1 and boosts co-firing L1s:
 
 R1  Universe   = tagged tickers present in the master table, close >=
                  min_close, avg_dollar_vol >= min_avg_dollar_vol. No screener
                  gate and no fundamentals (unscreened members have none).
 R2  Composite  = weighted mean of three 0-100 legs (missing leg -> neutral
                  missing_default): rs (rs_sts_pct), vars_pct (percentile of
-                 raw VARS within the radar universe — raw VARS is unbounded
-                 and must not be averaged with a 0-100 leg), fast
-                 (rela_perf_1mo_rank so the radar reacts pre-breakout).
+                 raw VARS across ALL tagged tickers in the master table,
+                 computed before the price/liquidity floors — wide anchoring
+                 consistent with the fast leg, and invariant to floor
+                 changes; raw VARS is unbounded and must not be averaged
+                 with a 0-100 leg), fast (rela_perf_1mo_rank so the radar
+                 reacts pre-breakout). Cross-sectional ranks of
+                 rela_perf_1mo are benchmark-invariant: the SPX leg divides
+                 every ticker by the same per-session scalar, so ranking it
+                 equals ranking raw perf_1mo (the SPY-vs-^GSPC difference
+                 cannot move this leg).
 R3  Leaf raw   = mean of the top-M member composites; a leaf needs
                  min_breadth universe members to score.
 R4  Leaf z     = cross-sectional z-score of leaf raws (session-relative;
                  decompresses the narrow raw-score band so ranks separate).
-R5  Ecosystem  = leaves grouped by taxonomy L1. eco_raw = mean of the top-K
-                 leaf z-scores. Families with >= min_leaves_for_boost scored
-                 leaves earn boost = beta * eco_raw; every leaf in the family
-                 inherits it additively (boosted = z + boost) and the family
-                 itself is boosted_eco = eco_raw + boost. Single-leaf families
-                 get no self-confirmation. A negative eco_raw yields a
-                 negative boost — confirmation is symmetric.
+R5  L1 score   = leaves grouped by taxonomy L1. l1_raw = mean of the top-K
+                 leaf z-scores. L1s with >= min_leaves_for_boost scored
+                 leaves earn boost = beta * l1_raw; every leaf under the L1
+                 inherits it additively (boosted = z + boost) and the L1
+                 itself scores boosted = l1_raw + boost. Single-leaf L1s get
+                 no self-confirmation. A negative l1_raw yields a negative
+                 boost — confirmation is symmetric.
 R6  Ranks      = global_rank of leaves by boosted score across ALL scored
-                 leaves; ecosystems ranked by boosted_eco. No display cap at
+                 leaves; L1s ranked by boosted score. No display cap at
                  scoring level.
 """
 
@@ -93,7 +99,17 @@ def build_radar_universe(
     df['ticker'] = df['ticker'].astype(str).str.upper()
     tagged = {str(t).upper() for t in tagged_tickers}
     df = df[(df['ticker'] != 'SPX') & df['ticker'].isin(tagged)]
-    df = df.drop_duplicates(subset='ticker', keep='first')
+    df = df.drop_duplicates(subset='ticker', keep='first').copy()
+    if df.empty:
+        return df.reset_index(drop=True)
+
+    # vars percentile is anchored to the full tagged pool BEFORE the floors —
+    # wide anchoring consistent with the fast leg, invariant to floor changes.
+    if 'vars' in df.columns:
+        vars_num = pd.to_numeric(df['vars'], errors='coerce')
+        df['vars_leg'] = (vars_num.rank(pct=True, method='average') * 100).fillna(missing)
+    else:
+        df['vars_leg'] = missing
 
     if 'close' in df.columns:
         close = pd.to_numeric(df['close'], errors='coerce')
@@ -106,11 +122,6 @@ def build_radar_universe(
 
     df = df.copy()
     df['rs_leg'] = _leg_from_column(df, 'rs_sts_pct', missing)
-    if 'vars' in df.columns:
-        vars_num = pd.to_numeric(df['vars'], errors='coerce')
-        df['vars_leg'] = (vars_num.rank(pct=True, method='average') * 100).fillna(missing)
-    else:
-        df['vars_leg'] = missing
     df['fast_leg'] = _leg_from_column(df, str(cfg['fast_leg_column']), missing)
 
     weights = cfg['composite_weights'] or DEFAULTS['composite_weights']
@@ -179,7 +190,7 @@ def compute_leaf_scores(
     return leaf_scores
 
 
-def rollup_ecosystems(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
+def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
     """Z-score leaves, group by L1, apply the confirmation boost, rank (R4-R6)."""
     cfg = radar_config(cfg)
     beta = float(cfg['beta'])
@@ -196,18 +207,18 @@ def rollup_ecosystems(leaf_scores: List[dict], cfg: Optional[dict] = None) -> di
     for leaf in leaf_scores:
         by_l1.setdefault(leaf['l1'], []).append(leaf)
 
-    ecosystems = []
+    l1s = []
     for l1, leaves in by_l1.items():
         leaves.sort(key=lambda lf: (-lf['raw'], lf['theme']))
-        eco_raw = float(np.mean([lf['raw'] for lf in leaves[:top_k]]))
-        boost = beta * eco_raw if len(leaves) >= min_leaves else 0.0
+        l1_raw = float(np.mean([lf['raw'] for lf in leaves[:top_k]]))
+        boost = beta * l1_raw if len(leaves) >= min_leaves else 0.0
         for leaf in leaves:
             leaf['boosted'] = leaf['raw'] + boost
         members = {m['ticker'] for lf in leaves for m in lf['members']}
-        ecosystems.append({
+        l1s.append({
             'name': l1,
-            'raw': eco_raw,
-            'boosted': eco_raw + boost,
+            'raw': l1_raw,
+            'boosted': l1_raw + boost,
             'delta': boost,
             'n_leaves': len(leaves),
             'n_members': len(members),
@@ -218,11 +229,11 @@ def rollup_ecosystems(leaf_scores: List[dict], cfg: Optional[dict] = None) -> di
     for i, leaf in enumerate(all_leaves, start=1):
         leaf['global_rank'] = i
 
-    ecosystems.sort(key=lambda e: (-e['boosted'], e['name']))
-    for i, eco in enumerate(ecosystems, start=1):
-        eco['rank'] = i
+    l1s.sort(key=lambda e: (-e['boosted'], e['name']))
+    for i, l1_entry in enumerate(l1s, start=1):
+        l1_entry['rank'] = i
 
-    return {'ecosystems': ecosystems, 'n_leaves_scored': len(leaf_scores)}
+    return {'l1s': l1s, 'n_leaves_scored': len(leaf_scores)}
 
 
 def compute_radar(
@@ -251,16 +262,16 @@ def compute_radar(
     if not leaf_scores:
         return None
 
-    rolled = rollup_ecosystems(leaf_scores, cfg)
+    rolled = rollup_l1s(leaf_scores, cfg)
 
     screened = {str(t).upper() for t in screened_tickers} if screened_tickers else set()
-    for eco in rolled['ecosystems']:
-        eco_members = set()
-        for leaf in eco['leaves']:
+    for l1_entry in rolled['l1s']:
+        l1_members = set()
+        for leaf in l1_entry['leaves']:
             for m in leaf['members']:
                 m['is_screened'] = m['ticker'] in screened
-            eco_members.update(m['ticker'] for m in leaf['members'])
-        eco['n_screened'] = len(eco_members & screened)
+            l1_members.update(m['ticker'] for m in leaf['members'])
+        l1_entry['n_screened'] = len(l1_members & screened)
 
     return {
         'params': {
@@ -273,5 +284,5 @@ def compute_radar(
         },
         'universe_size': int(len(universe)),
         'n_leaves_scored': rolled['n_leaves_scored'],
-        'ecosystems': rolled['ecosystems'],
+        'l1s': rolled['l1s'],
     }

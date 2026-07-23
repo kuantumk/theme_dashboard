@@ -56,7 +56,7 @@ class ExportRadarTests(unittest.TestCase):
                 root / 'master' / 'master_2026-07-09.parquet',
             )
 
-            with patch('src.themes.ecosystem_score.load_ticker_themes', return_value=THEMES):
+            with patch('src.themes.l1_score.load_ticker_themes', return_value=THEMES):
                 current = export_radar({'CY11': 'green'}, root=root, out_dir=out_dir)
 
             self.assertIsNotNone(current)
@@ -67,9 +67,9 @@ class ExportRadarTests(unittest.TestCase):
             self.assertEqual([h['report_date'] for h in history],
                              ['2026-07-13', '2026-07-10'])
 
-            self.assertEqual([e['rank'] for e in radar['ecosystems']],
-                             list(range(1, len(radar['ecosystems']) + 1)))
-            cyber = next(e for e in radar['ecosystems'] if e['name'] == 'Cybersecurity')
+            self.assertEqual([e['rank'] for e in radar['l1s']],
+                             list(range(1, len(radar['l1s']) + 1)))
+            cyber = next(e for e in radar['l1s'] if e['name'] == 'Cybersecurity')
             self.assertEqual(cyber['n_leaves'], 2)
             self.assertEqual(cyber['n_screened'], 2)
 
@@ -83,13 +83,13 @@ class ExportRadarTests(unittest.TestCase):
             self.assertIn('raw', network)
             self.assertIn('boosted', network)
 
-            for eco in radar['ecosystems']:
-                for leaf in eco['leaves']:
+            for l1_entry in radar['l1s']:
+                for leaf in l1_entry['leaves']:
                     for td in leaf['tickers']:
                         self.assertEqual(td['is_screened'],
                                          td['ticker'] in {'CY00', 'IDA'})
 
-            flagged = [td for eco in radar['ecosystems'] for lf in eco['leaves']
+            flagged = [td for l1_entry in radar['l1s'] for lf in l1_entry['leaves']
                        for td in lf['tickers'] if td.get('ticker_color') == 'green']
             self.assertEqual({td['ticker'] for td in flagged}, {'CY11'})
 

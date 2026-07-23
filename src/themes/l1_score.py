@@ -62,7 +62,9 @@ DEFAULTS = {
     'min_leaves_for_boost': 2,
     'min_avg_dollar_vol': 10_000_000,
     'min_close': 3.0,
-    'composite_weights': {'rs': 0.4, 'vars_pct': 0.4, 'fast': 0.2},
+    # backtest 2026-07: fast leg is rho~0.81 redundant with rs and adds no
+    # IC — zero-weighted (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
+    'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0},
     'fast_leg_column': 'rela_perf_1mo_rank',
     'missing_default': 50.0,
 }

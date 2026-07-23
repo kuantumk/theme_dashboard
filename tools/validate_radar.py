@@ -16,10 +16,12 @@ Modes (picked automatically):
                  until roughly mid-January 2027).
 
 Usage:
-  uv run python tools/validate_radar.py --date 2026-07-13 \
-      --expect-l1 Cybersecurity --max-rank 3 [--sweep]
+  uv run python tools/validate_radar.py --date 2026-04-16 \
+      --expect-l1 Semiconductors --max-rank 5 [--sweep]
+  uv run python tools/validate_radar.py --episodes tools/radar_episodes.yaml
 
-Exit code 1 when --expect-l1 is given and its rank is worse than --max-rank.
+Exit code 1 when --expect-l1 is given and its rank is worse than --max-rank,
+or when any --episodes entry fails.
 """
 
 import argparse
@@ -114,16 +116,58 @@ def run_mode_b(date_str):
     return l1s
 
 
+def _l1s_for_date(date_str):
+    """Mode A when the local master parquet exists, else mode B."""
+    master_file = SCREENING_OUTPUT_DIR / 'master' / f'master_{date_str}.parquet'
+    if master_file.exists():
+        return run_mode_a(master_file, date_str,
+                          argparse.Namespace(sweep=False, expect_l1=None))
+    return run_mode_b(date_str)
+
+
+def run_episodes(path):
+    """Iterate the episodes YAML; exit 1 if any entry fails."""
+    import yaml
+    spec = yaml.safe_load(Path(path).read_text(encoding='utf-8'))
+    episodes = spec.get('episodes') or []
+    failures = 0
+    for ep in episodes:
+        date_str = str(ep['date'])
+        expect, max_rank = ep['expect_l1'], int(ep.get('max_rank', 3))
+        print(f"\n=== {date_str}: expect {expect} rank <= {max_rank} ===")
+        l1s = _l1s_for_date(date_str)
+        if l1s is None:
+            print(f"FAIL: no radar data for {date_str}")
+            failures += 1
+            continue
+        rank = l1_rank(l1s, expect)
+        ok = rank is not None and rank <= max_rank
+        print(f"{'PASS' if ok else 'FAIL'}: {expect} L1 rank {rank} "
+              f"(required <= {max_rank})")
+        failures += 0 if ok else 1
+    print(f"\nEpisodes: {len(episodes) - failures}/{len(episodes)} PASS")
+    sys.exit(1 if failures else 0)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--date', required=True, help='Session date YYYY-MM-DD')
+    ap.add_argument('--date', help='Session date YYYY-MM-DD')
     ap.add_argument('--expect-l1', help='Taxonomy L1 expected near the top')
     ap.add_argument('--max-rank', type=int, default=3,
                     help='Expected L1 must rank <= this (default 3)')
     ap.add_argument('--sweep', action='store_true',
                     help='Mode A only: grid-search beta/top-K/top-M/fast-weight')
+    ap.add_argument('--episodes',
+                    help='YAML of {date, expect_l1, max_rank, note} entries; '
+                         'runs each and exits 1 on any failure')
     args = ap.parse_args()
+
+    if args.episodes:
+        run_episodes(args.episodes)
+        return
+    if not args.date:
+        ap.error('--date is required unless --episodes is given')
 
     master_file = SCREENING_OUTPUT_DIR / 'master' / f'master_{args.date}.parquet'
     if master_file.exists():

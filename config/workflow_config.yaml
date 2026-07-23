@@ -91,9 +91,11 @@ radar:
   min_avg_dollar_vol: 10000000  # universe floor: 20-day avg dollar volume
   min_close: 3.0                # universe floor: last close
   composite_weights:            # per-ticker composite legs (each 0-100)
-    rs: 0.4                     #   rs_sts_pct
-    vars_pct: 0.4               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
-    fast: 0.2                   #   rela_perf_1mo_rank (reacts pre-breakout)
+    rs: 0.5                     #   rs_sts_pct (27d RS-line freshness)
+    vars_pct: 0.5               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
+    fast: 0.0                   #   rela_perf_1mo_rank — zero-weighted, backtest 2026-07: rs~fast
+                                #   Spearman +0.81 and no incremental IC anywhere in the grid
+                                #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
   tickers_per_leaf: 10          # export cap on ticker chips per leaf

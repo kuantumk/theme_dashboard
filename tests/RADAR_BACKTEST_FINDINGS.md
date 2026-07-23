@@ -1,6 +1,6 @@
 # L1 Radar Backtest: Composite Weights & Boost β
 
-**Status**: results filled 2026-07-23 (protocol §1 was pre-registered before any sweep ran).
+**Status**: results filled 2026-07-23 (protocol §1 was pre-registered before any sweep ran); user approved same day — §8 "Adopt" items shipped (weights 0.5/0.5/0 in config + DEFAULTS, episodes regression in `tools/radar_episodes.yaml`).
 **Data**: 130 point-in-time master tables, 2026-01-21 → 2026-07-22 (fresh 500-day yfinance download, NaN-honest rs_sts_pct, tagged-pool VARS anchoring); forward windows truncate the tail → 125/120/110 scored sessions at H=5/10/20.
 **Harness**: `tests/backtest_radar.py` (manual research tool, not in the daily workflow).
 **Adoption gate**: no `workflow_config.yaml` change ships with this document — user reviews first.
@@ -143,9 +143,12 @@ These are the radar's actual early calls on our own data — better regression
 material than the aspirational 2026-07-13 Cybersecurity case (which fails,
 §5). Human verification required before landing an episodes file.
 
-## 8. Recommendations (adoption gated on user review)
+## 8. Recommendations (user-approved 2026-07-23; "Adopt" items shipped)
 
-**Adopt (config-only, pending review)**
+**Adopt (config-only, pending review)** — *approved and applied*. Episode
+verification during adoption rejected Fintech & Crypto 2026-04-08 (rank 9-10
+under point-in-time 4/08 tags — early only retroactively; tag lookahead), so
+`tools/radar_episodes.yaml` carries three episodes, not four.
 - `radar.composite_weights` → `rs: 0.5, vars_pct: 0.5, fast: 0.0` (the
   `no_fast` winner; clears the pre-registered win rule, robust to PIT tags
   and skip-day). Mirror into `DEFAULTS` in `src/themes/l1_score.py`. Two legs

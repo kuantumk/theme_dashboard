@@ -1,0 +1,30 @@
+# Verified early-call regression episodes for `tools/validate_radar.py --episodes`.
+#
+# Selection (2026-07-23, tests/RADAR_BACKTEST_FINDINGS.md §7): discovered by
+# backtest_radar --mode episodes-scan (first top-3 entry in >=10 sessions AND
+# fwd-10 all-basket excess > +3%), then rank-verified under live AND
+# point-in-time tags and under both the old (.4/.4/.2) and adopted (.5/.5/0)
+# weights. Fintech & Crypto 2026-04-08 was rejected: rank 9-10 under the tags
+# that existed on that date — early only retroactively (tag lookahead).
+# The original 2026-07-13 Cybersecurity<=3 case is retired: it fails (rank 6)
+# on our data under every tag vintage (findings §5).
+#
+# max_rank = worst observed rank + 2 headroom. Ranks drift as tags evolve
+# (tags are point-in-time-today) — re-baseline against the findings doc after
+# large taxonomy/tag changes rather than loosening blindly.
+# Mode A needs the local master parquet (regenerated back ~130 sessions);
+# afterwards mode B reads docs/data/radar_history.json while the date stays
+# inside the 180-day export window.
+episodes:
+  - date: 2026-01-26
+    expect_l1: Oil & Gas
+    max_rank: 5
+    note: "+7.8% fwd-10 excess; rank 3 under old and adopted weights (no tag history before 2026-03-01 to PIT-check)"
+  - date: 2026-04-16
+    expect_l1: Semiconductors
+    max_rank: 5
+    note: "+6.2% fwd-10 excess; rank 3 under live AND point-in-time tags, both weightings — the cleanest anchor"
+  - date: 2026-06-08
+    expect_l1: Corrections & Detention
+    max_rank: 6
+    note: "+16.8% fwd-10 excess; rank 3-4 live (unscored under 6/08-era tags — basket was tagged after the move started; kept as a code-regression anchor, not a real-time-call claim)"

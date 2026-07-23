@@ -6,7 +6,7 @@
   'use strict';
 
   // ── CONFIG ────────────────────────────────────────────
-  // The Themes tab renders the Ecosystem Radar (screener-independent
+  // The Themes tab renders the L1 Radar (screener-independent
   // theme-basket scoring with L1 roll-up + confirmation boost). The legacy
   // screened themes.json/themes_history.json exports are retired.
   const THEME_DATA_URL = 'data/radar.json';
@@ -757,30 +757,24 @@
       });
   }
 
-  /** Collect all available session dates and render all time-travel bars. */
-  function getSessionDates() {
+  /** Session dates one tab has data for (newest first). Each bar lists only
+   *  its own tab's finished sessions — never a calendar date another tab
+   *  wrote first (e.g. the 5:45 AM EP scan writes today's entry hours before
+   *  the 1:30 PM pipeline produces the other tabs' data). */
+  function tabSessionDates(...histories) {
     const dates = new Set();
-    themesHistory.forEach(h => dates.add(h.report_date));
-    momentumHistory.forEach(h => dates.add(h.report_date));
-    volumeHistory.forEach(h => dates.add(h.report_date));
-    varsHistory.forEach(h => dates.add(h.report_date));
-    parabolicHistory.forEach(h => dates.add(h.report_date));
-    epAfternoonHistory.forEach(h => dates.add(h.report_date));
-    epMorningHistory.forEach(h => dates.add(h.report_date));
-    industryHistory.forEach(h => dates.add(h.report_date));
-    etfHistory.forEach(h => dates.add(h.report_date));
+    histories.forEach(hist => (hist || []).forEach(h => dates.add(h.report_date)));
     return [...dates].sort().reverse();
   }
 
   function onTimeTravelSelect(date) {
-    // Each tab's history accumulates independently (a newly added tab's
-    // history can lag the others). The shared session
-    // dropdown is the union of all dates, so a click can land on a date that
-    // exists in one tab's history but not another's. ALWAYS re-render every
+    // Each tab's bar lists only its own history's dates, but the active
+    // session is shared across tabs — after switching tabs the active date
+    // can be missing from the new tab's history. ALWAYS re-render every
     // tab — render functions show a date-specific empty state when the snap
     // is missing so we never leave stale content on screen.
     //
-    // Themes (Ecosystem Radar)
+    // Themes (L1 Radar)
     const themeSnap = themesHistory.find(h => h.report_date === date);
     renderThemes(themeSnap, date);
     renderThemeNetwork(radarVizSnap(themeSnap), date);
@@ -829,19 +823,23 @@
   }
 
   function renderAllTimeTravelBars() {
-    const dates = getSessionDates();
-    renderTimeTravelBar('time-travel-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('momentum-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('volume-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('industry-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('etf-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('ep-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('parabolic-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('themeviz-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('momentumviz-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('volumeviz-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('vars-tt-dates', dates, onTimeTravelSelect);
-    renderTimeTravelBar('varsviz-tt-dates', dates, onTimeTravelSelect);
+    const themesDates = tabSessionDates(themesHistory);
+    const momentumDates = tabSessionDates(momentumHistory);
+    const volumeDates = tabSessionDates(volumeHistory);
+    const varsDates = tabSessionDates(varsHistory);
+    renderTimeTravelBar('time-travel-dates', themesDates, onTimeTravelSelect);
+    renderTimeTravelBar('themeviz-tt-dates', themesDates, onTimeTravelSelect);
+    renderTimeTravelBar('momentum-tt-dates', momentumDates, onTimeTravelSelect);
+    renderTimeTravelBar('momentumviz-tt-dates', momentumDates, onTimeTravelSelect);
+    renderTimeTravelBar('volume-tt-dates', volumeDates, onTimeTravelSelect);
+    renderTimeTravelBar('volumeviz-tt-dates', volumeDates, onTimeTravelSelect);
+    renderTimeTravelBar('vars-tt-dates', varsDates, onTimeTravelSelect);
+    renderTimeTravelBar('varsviz-tt-dates', varsDates, onTimeTravelSelect);
+    renderTimeTravelBar('industry-tt-dates', tabSessionDates(industryHistory), onTimeTravelSelect);
+    renderTimeTravelBar('etf-tt-dates', tabSessionDates(etfHistory), onTimeTravelSelect);
+    renderTimeTravelBar('ep-tt-dates',
+      tabSessionDates(epMorningHistory, epAfternoonHistory), onTimeTravelSelect);
+    renderTimeTravelBar('parabolic-tt-dates', tabSessionDates(parabolicHistory), onTimeTravelSelect);
   }
 
   /**
@@ -1572,28 +1570,36 @@
     });
   }
 
-  // ── THEMES TAB (Ecosystem Radar) ──────────────────────
+  // ── THEMES TAB (L1 Radar) ─────────────────────────
   // Screener-independent lens: every tagged liquid ticker scores, leaves roll
-  // up into their L1 ecosystem, and co-firing families carry a boost. Layout
-  // mirrors the ranked ecosystem table: one block per ecosystem, one row per
+  // up into their taxonomy L1, and co-firing L1s carry a boost. Layout
+  // mirrors the ranked L1 table: one block per L1, one row per
   // sub-theme with its global rank, N, ticker chips, raw and boosted scores.
 
-  // Adapter: flatten a radar snapshot's ecosystems into the {themes:[...]}
+  // Legacy pre-L1-rename schema shim: radar snapshots written before the L1
+  // consolidation carry the L1 list under `ecosystems`. Removable once the
+  // daily workflow has rewritten radar.json + radar_history.json with `l1s`.
+  function radarL1s(data) {
+    return (data && (data.l1s || data.ecosystems)) || null;
+  }
+
+  // Adapter: flatten a radar snapshot's L1 groups into the {themes:[...]}
   // shape the shared Cytoscape network renderer consumes (Theme Viz tab).
   // Per-leaf `score` is the mean member composite (0-100 scale, matching the
   // viz strength bands) and `avg_rs` the mean member RS (hot filter ≥ 70).
   function radarVizSnap(data) {
-    if (!data || !data.ecosystems) return data;
+    const l1s = radarL1s(data);
+    if (!l1s) return data;
     const themes = [];
-    data.ecosystems.forEach(eco => {
-      (eco.leaves || []).forEach(leaf => {
+    l1s.forEach(grp => {
+      (grp.leaves || []).forEach(leaf => {
         const tickers = leaf.tickers || [];
         const n = tickers.length;
         const avgRs = n ? tickers.reduce((s, t) => s + (t.rs ?? 0), 0) / n : 0;
         const avgScore = n ? tickers.reduce((s, t) => s + (t.score ?? 0), 0) / n : 0;
         themes.push({
           name: leaf.name,
-          l1: eco.name,
+          l1: grp.name,
           score: avgScore,
           avg_rs: avgRs,
           tickers,
@@ -1603,7 +1609,7 @@
     return { report_date: data.report_date, themes };
   }
 
-  // Flatten the family-clustered VARS snapshot (themes = L1 sections carrying
+  // Flatten the L1-clustered VARS snapshot (themes = L1 sections carrying
   // `leaves`) back to leaf-level entries for the shared network viz. Legacy
   // flat snapshots (pre-clustering history) pass through unchanged.
   function varsVizSnap(data) {
@@ -1616,32 +1622,25 @@
     const container = document.getElementById('themes-container');
     if (!container) return;
 
-    if (!data || !data.ecosystems || data.ecosystems.length === 0) {
+    const l1s = radarL1s(data);
+    if (!l1s || l1s.length === 0) {
       const msg = (date && !data) ? `No theme data for ${date}.` : 'No theme data for this date.';
       container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
 
     const fmt = (v, d = 3) => (typeof v === 'number') ? v.toFixed(d) : '—';
-    let html = `
-      <div class="radar-meta">
-        Ecosystem scores for <b>${escHtml(data.report_date || '')}</b> —
-        ${data.n_leaves_scored ?? '—'} themes over ${data.universe_size ?? '—'} tagged liquid tickers
-        (screener-independent) · boost β=${data.params?.beta ?? '—'} ·
-        <span class="radar-chip chip-screened">ABC</span> screened today ·
-        <span class="radar-chip chip-quiet">ABC</span> not screened
-      </div>
-    `;
-    data.ecosystems.forEach(eco => {
-      const delta = (typeof eco.delta === 'number')
-        ? (eco.delta >= 0 ? `+${eco.delta.toFixed(3)}` : eco.delta.toFixed(3))
+    let html = '';
+    l1s.forEach(grp => {
+      const delta = (typeof grp.delta === 'number')
+        ? (grp.delta >= 0 ? `+${grp.delta.toFixed(3)}` : grp.delta.toFixed(3))
         : '—';
       html += `
         <div class="theme-block">
           <div class="theme-header">
-            <span class="theme-rank">#${eco.rank}</span>
-            <span class="theme-name">${escHtml(eco.name)}</span>
-            <span class="theme-score">boosted ${fmt(eco.boosted)} · raw ${fmt(eco.raw)} · Δ ${delta} · ${eco.n_leaves} theme${eco.n_leaves === 1 ? '' : 's'} · ${eco.n_members} stocks (${eco.n_screened} screened)</span>
+            <span class="theme-rank">#${grp.rank}</span>
+            <span class="theme-name">${escHtml(grp.name)}</span>
+            <span class="theme-score">boosted ${fmt(grp.boosted)} · raw ${fmt(grp.raw)} · Δ ${delta} · ${grp.n_leaves} theme${grp.n_leaves === 1 ? '' : 's'} · ${grp.n_members} stocks (${grp.n_screened} screened)</span>
           </div>
           <div class="theme-body">
             <table class="radar-table">
@@ -1654,13 +1653,13 @@
               </tr></thead>
               <tbody>
       `;
-      (eco.leaves || []).forEach(leaf => {
+      (grp.leaves || []).forEach(leaf => {
         const label = leaf.l2 ? (leaf.l3 ? `${leaf.l2} / ${leaf.l3}` : leaf.l2) : leaf.name;
         const chips = (leaf.tickers || []).map(t => {
           const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
           if (t.ticker_color === 'green') cls.push('day-pattern-green');
           const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}`;
-          return `<span class="${cls.join(' ')}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(eco.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
+          return `<span class="${cls.join(' ')}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');
         html += `
                 <tr>
@@ -1845,9 +1844,9 @@
 
     let html = '';
     data.themes.forEach((entry, idx) => {
-      // Family section (nested shape); a legacy flat snapshot entry renders
+      // L1 section (nested shape); a legacy flat snapshot entry renders
       // as a single-leaf section so pre-clustering history still displays.
-      const fam = entry.leaves ? entry : {
+      const grp = entry.leaves ? entry : {
         name: entry.name,
         score: entry.avg_vars,
         avg_rs: null,
@@ -1856,26 +1855,26 @@
         leaves: [entry],
       };
       const meta = [
-        `${entry.leaves ? 'top-5 VARS' : 'avg VARS'} ${(fam.score ?? 0).toFixed(2)}`,
-        (typeof fam.avg_rs === 'number') ? `avg RS ${fam.avg_rs.toFixed(1)}%` : '',
-        `${fam.n} ticker${fam.n === 1 ? '' : 's'}`,
+        `${entry.leaves ? 'top-5 VARS' : 'avg VARS'} ${(grp.score ?? 0).toFixed(2)}`,
+        (typeof grp.avg_rs === 'number') ? `avg RS ${grp.avg_rs.toFixed(1)}%` : '',
+        `${grp.n} ticker${grp.n === 1 ? '' : 's'}`,
       ].filter(Boolean).join(' · ');
       html += `
         <div class="theme-block">
-          <div class="theme-header${fam.hot ? ' family-hot' : ''}">
+          <div class="theme-header${grp.hot ? ' l1-hot' : ''}">
             <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(fam.name)}${fam.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
+            <span class="theme-name">${escHtml(grp.name)}${grp.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
             <span class="theme-score">${meta}</span>
           </div>
           <div class="theme-body">
       `;
 
-      const showLeafHdr = !(fam.leaves.length === 1 && fam.leaves[0].name === fam.name);
-      fam.leaves.forEach(leaf => {
+      const showLeafHdr = !(grp.leaves.length === 1 && grp.leaves[0].name === grp.name);
+      grp.leaves.forEach(leaf => {
         const tickers = leaf.tickers || [];
         if (showLeafHdr) {
-          const sub = leaf.name.startsWith(fam.name + ' / ')
-            ? leaf.name.slice(fam.name.length + 3)
+          const sub = leaf.name.startsWith(grp.name + ' / ')
+            ? leaf.name.slice(grp.name.length + 3)
             : leaf.name;
           html += `
             <div class="leaf-subheader">

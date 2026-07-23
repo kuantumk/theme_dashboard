@@ -638,8 +638,8 @@ td.l {
   overflow: hidden;
 }
 
-/* ── VARS FAMILY SECTIONS ──────────────────────────────── */
-.theme-header.family-hot {
+/* ── VARS L1 SECTIONS ──────────────────────────────────── */
+.theme-header.l1-hot {
   border-color: var(--amber);
   background: var(--adim2);
 }
@@ -1249,17 +1249,7 @@ tbody tr.nav-active {
   height: 100% !important;
 }
 
-/* ── ECOSYSTEM RADAR TAB ───────────────────────────────── */
-.radar-meta {
-  padding: 8px 14px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.8;
-}
-
+/* ── L1 RADAR TAB ──────────────────────────────────────── */
 .radar-table td {
   vertical-align: top;
 }

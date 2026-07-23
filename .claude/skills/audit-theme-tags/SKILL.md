@@ -1,6 +1,6 @@
 ---
 name: audit-theme-tags
-description: Audit and maintain data/ticker_themes.json — mechanical defects (bare-L1, invalid paths, duplicates), AI-judgment passes for business pivots and L2 selection, first-time classification of untagged screened tickers, evidence-based Singleton rescue, and capped basket densification (cross-listing dual-role names + filling pure-play roster gaps in the top radar ecosystems). Use for the weekday tag-audit routine, periodic tag reviews, before merging a taxonomy change, or when investigating viz/scoring/radar oddities.
+description: Audit and maintain data/ticker_themes.json — mechanical defects (bare-L1, invalid paths, duplicates), AI-judgment passes for business pivots and L2 selection, first-time classification of untagged screened tickers, evidence-based Singleton rescue, and capped basket densification (cross-listing dual-role names + filling pure-play roster gaps in the top radar L1s). Use for the weekday tag-audit routine, periodic tag reviews, before merging a taxonomy change, or when investigating viz/scoring/radar oddities.
 ---
 
 # Audit theme tags
@@ -16,7 +16,7 @@ Triggers:
 - The network viz shows orphan or duplicate nodes
 - Theme scoring produces unexpected leaders
 - You're reviewing narrative-shift catalysts (earnings, M&A, pivots)
-- A radar ecosystem looks thinner than reality — obvious pure-plays or dual-role members missing from its baskets (run Phase 5)
+- A radar L1 looks thinner than reality — obvious pure-plays or dual-role members missing from its baskets (run Phase 5)
 
 ## L1/L2/L3 rules being audited
 
@@ -117,16 +117,16 @@ uv run python -m src.themes.retag --ticker XYZ \
 
 ### Phase 5 — Basket densification: cross-listings + roster gaps (AI judgment, capped)
 
-The Ecosystem Radar scores fixed theme baskets over **all** tagged tickers, so its output quality is bounded by basket *membership*, not just per-ticker correctness. Tags historically enter via screener discovery, which leaves two systematic holes — both exposed by the 2026-07-13 cybersecurity case, where a competitor's ecosystem table (overlapping baskets, large caps included) had the family at #2 one session pre-breakout while our fragmented baskets buried it:
+The L1 Radar scores fixed theme baskets over **all** tagged tickers, so its output quality is bounded by basket *membership*, not just per-ticker correctness. Tags historically enter via screener discovery, which leaves two systematic holes — both exposed by the 2026-07-13 cybersecurity case, where a competitor's L1-style table (overlapping baskets, large caps included) had the L1 at #2 one session pre-breakout while our fragmented baskets buried it:
 
 - **Missing cross-listings** — dual-role companies carry only their discovery-era path. DDOG sat only under `Software & Internet / DevOps & Data` although Cloud SIEM / App Security is a material security line (`Cybersecurity / Data Security` appended 2026-07-15); FSLY likewise gained `Cybersecurity / Network` (Signal Sciences WAF/DDoS).
 - **Missing pure-plays** — leaders that never passed a momentum screener are absent entirely. CYBR (CyberArk, the PAM/identity leader) was untagged until 2026-07-15.
 
 Per run, keep it bounded:
 
-1. **Pick 2–3 focus families**: the top ecosystems by boosted score in `docs/data/radar.json` (committed by the daily workflow; if the file doesn't exist yet — first run after the radar merge — skip this phase for the run). Rotate — skip a family already densified within ~2 weeks (`data/theme_review_state.json` entries with a `Basket densification:` reason prefix are the trail).
-2. **Cross-listing sweep** (existing tickers): for each focus family, shortlist dual-role candidates among already-tagged tickers of *other* L1s (for Cybersecurity: observability, CDN/edge, identity-adjacent names). Verify with WebSearch that the family-relevant product line is a **distinct material revenue line** — a real product suite, not a marketing page — then append the second/third path.
-3. **Roster-gap sweep** (missing tickers): list the recognized liquid pure-plays of each focus family and diff against `data/ticker_themes.json`. Classify the genuinely missing ones with the full Phase 4 rules (profile/web context, most-specific path). Skip names that would fail the radar's liquidity floor anyway (close < $3 or < ~$10M/day dollar volume) and non-US listings.
+1. **Pick 2–3 focus L1s**: the top L1s by boosted score in `docs/data/radar.json` (`l1s` array) (committed by the daily workflow; if the file doesn't exist yet — first run after the radar merge — skip this phase for the run). Rotate — skip an L1 already densified within ~2 weeks (`data/theme_review_state.json` entries with a `Basket densification:` reason prefix are the trail).
+2. **Cross-listing sweep** (existing tickers): for each focus L1, shortlist dual-role candidates among already-tagged tickers of *other* L1s (for Cybersecurity: observability, CDN/edge, identity-adjacent names). Verify with WebSearch that the L1-relevant product line is a **distinct material revenue line** — a real product suite, not a marketing page — then append the second/third path.
+3. **Roster-gap sweep** (missing tickers): list the recognized liquid pure-plays of each focus L1 and diff against `data/ticker_themes.json`. Classify the genuinely missing ones with the full Phase 4 rules (profile/web context, most-specific path). Skip names that would fail the radar's liquidity floor anyway (close < $3 or < ~$10M/day dollar volume) and non-US listings.
 4. **Cap: ~10 writes per run across both sweeps.** This is slow-drip curation, not a one-shot basket rebuild.
 
 Mechanics — the retag CLI **sets the complete path list**, so a cross-listing must repeat the existing paths:

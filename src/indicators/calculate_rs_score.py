@@ -83,8 +83,8 @@ def calculate_rs_sts_for_tickers(price_data: Dict, lookback_days: int = None) ->
 def add_rs_sts_to_master_table(master_df: pd.DataFrame, price_data: Dict) -> pd.DataFrame:
     """Add RS_STS% column to the master table."""
     rs_sts = calculate_rs_sts_for_tickers(price_data)
+    # No fillna: missing RS stays NaN (consumers apply their own neutral default).
     master_df['rs_sts_pct'] = master_df['ticker'].map(rs_sts)
-    master_df['rs_sts_pct'] = master_df['rs_sts_pct'].fillna(0)
     return master_df
 
 

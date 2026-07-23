@@ -76,7 +76,9 @@ def create_master_table(offset_days, daily_price, date_list):
     print("Calculating RS_STS%...")
     price_data_as_of = {t: d[:run_date] for t, d in daily_price.items()}
     rs_sts = calculate_rs_sts_for_tickers(price_data_as_of)
-    df['rs_sts_pct'] = df['ticker'].map(rs_sts).fillna(0)
+    # No fillna: a ticker without enough RS history stays NaN so downstream
+    # consumers can apply their own neutral default (radar maps NaN -> 50).
+    df['rs_sts_pct'] = df['ticker'].map(rs_sts)
 
     # Re-arrange columns
     cols_to_pop = ['ticker']

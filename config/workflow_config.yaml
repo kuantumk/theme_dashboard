@@ -90,6 +90,11 @@ radar:
   min_leaves_for_boost: 2       # L1s with fewer scored leaves get no boost
   min_avg_dollar_vol: 10000000  # universe floor: 20-day avg dollar volume
   min_close: 3.0                # universe floor: last close
+  min_avg_volume: 750000        # universe floor: 50-day avg share volume (vol_sma50)
+  min_avg_volume_dollar_exempt: 40000000  # share floor waived at/above this avg dollar
+                                #   vol — stacked on the $10M floor a share floor only
+                                #   ejects high-priced names, and STRL/CRS/ARGX-class
+                                #   liquid leaders must stay (assessment 2026-07-24)
   composite_weights:            # per-ticker composite legs (each 0-100)
     rs: 0.5                     #   rs_sts_pct (27d RS-line freshness)
     vars_pct: 0.5               #   percentile of raw VARS across all tagged tickers (pre-floor pool)

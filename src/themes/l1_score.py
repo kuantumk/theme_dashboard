@@ -9,8 +9,13 @@ radar scores fixed theme baskets daily over ALL tagged members (liquidity-
 floored), then rolls leaves up to their taxonomy L1 and boosts co-firing L1s:
 
 R1  Universe   = tagged tickers present in the master table, close >=
-                 min_close, avg_dollar_vol >= min_avg_dollar_vol. No screener
-                 gate and no fundamentals (unscreened members have none).
+                 min_close, avg_dollar_vol >= min_avg_dollar_vol, and
+                 vol_sma50 >= min_avg_volume unless avg_dollar_vol >=
+                 min_avg_volume_dollar_exempt (stacked on the dollar floor a
+                 share floor only ejects high-priced names — the exemption
+                 keeps liquid leaders; NaN vol_sma50 = young IPO, passes).
+                 No screener gate and no fundamentals (unscreened members
+                 have none).
 R2  Composite  = weighted mean of three 0-100 legs (missing leg -> neutral
                  missing_default): rs (rs_sts_pct), vars_pct (percentile of
                  raw VARS across ALL tagged tickers in the master table,
@@ -62,6 +67,8 @@ DEFAULTS = {
     'min_leaves_for_boost': 2,
     'min_avg_dollar_vol': 10_000_000,
     'min_close': 3.0,
+    'min_avg_volume': 750_000,
+    'min_avg_volume_dollar_exempt': 40_000_000,
     # backtest 2026-07: fast leg is rho~0.81 redundant with rs and adds no
     # IC — zero-weighted (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
     'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0},
@@ -119,6 +126,15 @@ def build_radar_universe(
     if 'avg_dollar_vol' in df.columns:
         adv = pd.to_numeric(df['avg_dollar_vol'], errors='coerce')
         df = df[adv >= float(cfg['min_avg_dollar_vol'])]
+    if 'vol_sma50' in df.columns:
+        vol50 = pd.to_numeric(df['vol_sma50'], errors='coerce')
+        passes = vol50 >= float(cfg['min_avg_volume'])
+        if 'avg_dollar_vol' in df.columns:
+            adv = pd.to_numeric(df['avg_dollar_vol'], errors='coerce')
+            passes |= adv >= float(cfg['min_avg_volume_dollar_exempt'])
+        # vol_sma50 needs 25 sessions (avg_dollar_vol only 10) — keep young
+        # IPOs on dollar-floor-only gating instead of blanking them for weeks
+        df = df[passes | vol50.isna()]
     if df.empty:
         return df.reset_index(drop=True)
 
@@ -282,6 +298,8 @@ def compute_radar(
             'top_m_members': int(cfg['top_m_members']),
             'min_avg_dollar_vol': float(cfg['min_avg_dollar_vol']),
             'min_close': float(cfg['min_close']),
+            'min_avg_volume': float(cfg['min_avg_volume']),
+            'min_avg_volume_dollar_exempt': float(cfg['min_avg_volume_dollar_exempt']),
             'composite_weights': dict(cfg['composite_weights']),
         },
         'universe_size': int(len(universe)),

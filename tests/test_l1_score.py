@@ -19,6 +19,8 @@ CFG = {
     'min_leaves_for_boost': 2,
     'min_avg_dollar_vol': 10_000_000,
     'min_close': 3.0,
+    'min_avg_volume': 750_000,
+    'min_avg_volume_dollar_exempt': 40_000_000,
     'composite_weights': {'rs': 0.4, 'vars_pct': 0.4, 'fast': 0.2},
     'fast_leg_column': 'rela_perf_1mo_rank',
     'missing_default': 50.0,
@@ -67,6 +69,20 @@ class BuildRadarUniverseTests(unittest.TestCase):
         uni = build_radar_universe(master, {'AAA', 'BBB', 'CCC', 'DDD', 'SPX'}, CFG)
         self.assertEqual(sorted(uni['ticker']), ['AAA', 'BBB'])
         self.assertEqual(float(uni[uni['ticker'] == 'AAA']['close'].iloc[0]), 50.0)
+
+    def test_share_volume_floor_with_dollar_exemption(self):
+        master = make_master([
+            {'ticker': 'AAA', 'vol_sma50': 800_000.0,
+             'avg_dollar_vol': 20_000_000.0},                   # above share floor
+            {'ticker': 'BBB', 'vol_sma50': 500_000.0,
+             'avg_dollar_vol': 20_000_000.0},                   # thin, not exempt -> dropped
+            {'ticker': 'CCC', 'vol_sma50': 300_000.0,
+             'avg_dollar_vol': 60_000_000.0},                   # thin but $40M+ exempt
+            {'ticker': 'DDD', 'vol_sma50': np.nan,
+             'avg_dollar_vol': 20_000_000.0},                   # young IPO: NaN passes
+        ])
+        uni = build_radar_universe(master, {'AAA', 'BBB', 'CCC', 'DDD'}, CFG)
+        self.assertEqual(sorted(uni['ticker']), ['AAA', 'CCC', 'DDD'])
 
     def test_composite_legs_and_weights(self):
         master = make_master([

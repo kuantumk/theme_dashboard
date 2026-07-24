@@ -98,7 +98,9 @@ radar:
                                 #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
-  tickers_per_leaf: 10          # export cap on ticker chips per leaf
+  tickers_per_leaf: 10          # chips per leaf in radar_history.json (radar.json
+                                #   is uncapped — the Themes tab expands to the
+                                #   full roster); also the Theme Viz member pool
   history_l1_limit: 20          # L1 entries kept per radar_history.json entry
 
 # Dashboard data sources (Google Sheets)

@@ -75,13 +75,25 @@ class ExportRadarTests(unittest.TestCase):
 
             network = next(lf for lf in cyber['leaves']
                            if lf['name'] == 'Cybersecurity / Network')
-            # 12 members scored (n) but chips capped at radar.tickers_per_leaf
+            # radar.json ships every scored member so the Themes tab can expand
+            # a leaf to its full roster...
             self.assertEqual(network['n'], 12)
-            cap = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
-            self.assertEqual(len(network['tickers']), cap)
+            self.assertEqual(len(network['tickers']), 12)
             self.assertIn('global_rank', network)
             self.assertIn('raw', network)
             self.assertIn('boosted', network)
+
+            # ...while the same session in history stays capped at
+            # radar.tickers_per_leaf, which bounds radar_history.json.
+            cap = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
+            hist_cyber = next(e for e in history[0]['l1s']
+                              if e['name'] == 'Cybersecurity')
+            hist_network = next(lf for lf in hist_cyber['leaves']
+                                if lf['name'] == 'Cybersecurity / Network')
+            self.assertEqual(hist_network['n'], 12)
+            self.assertEqual(len(hist_network['tickers']), cap)
+            self.assertEqual([t['ticker'] for t in hist_network['tickers']],
+                             [t['ticker'] for t in network['tickers']][:cap])
 
             for l1_entry in radar['l1s']:
                 for leaf in l1_entry['leaves']:

@@ -1254,7 +1254,7 @@ def export_vars(day_flags):
     return current
 
 
-def _build_radar_snapshot(master_file, screened_set, day_flags):
+def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf=None):
     """Build one L1 Radar session snapshot from a master parquet.
 
     Unlike the retired screened-themes backfill, the radar scores ALL tagged
@@ -1264,6 +1264,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
     the scoring module maps missing legs to its neutral default rather than 0.
     Ticker theme tags are point-in-time (today's tags on past sessions), the
     same trade-off as every other backfill.
+
+    `tickers_per_leaf=None` ships every scored member (what `radar.json` wants,
+    so the dashboard can expand a leaf to its full roster); an int caps the
+    chips per leaf, which is how history entries stay small.
     """
     from src.themes.l1_score import compute_radar
 
@@ -1278,7 +1282,6 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
     if body is None:
         return None
 
-    tickers_per_leaf = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
     l1s = []
     for l1_entry in body['l1s']:
         leaves = []
@@ -1290,7 +1293,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags):
                 'vars': round(m['vars'], 2) if m['vars'] is not None else None,
                 'price': round(m['price'], 2) if m['price'] is not None else None,
                 'is_screened': bool(m.get('is_screened', False)),
-            } for m in leaf['members'][:tickers_per_leaf]]
+            } for m in (leaf['members'] if tickers_per_leaf is None
+                        else leaf['members'][:tickers_per_leaf])]
             if day_flags:
                 enrich_with_ticker_color(ticker_dicts, day_flags)
             leaves.append({
@@ -1331,8 +1335,9 @@ def export_radar(day_flags, root=None, out_dir=None):
     Mirrors `export_vars`: iterates the per-day master parquet files within
     the window, derives each date's screened union from the per-screener
     parquet, and rewrites both files from scratch. `radar.json` keeps every
-    scored L1 and leaf (no top-N burial); history entries cap L1s
-    at `radar.history_l1_limit` and are written compact to bound size.
+    scored L1 and leaf (no top-N burial) *and* every member ticker; history
+    entries cap L1s at `radar.history_l1_limit` and chips at
+    `radar.tickers_per_leaf`, and are written compact to bound size.
     """
     root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
     out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
@@ -1343,6 +1348,7 @@ def export_radar(day_flags, root=None, out_dir=None):
         return None
 
     cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+    chip_cap = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
 
     history = []
     for master_file in master_files:
@@ -1352,7 +1358,13 @@ def export_radar(day_flags, root=None, out_dir=None):
         screened_set = su.union_tickers_for_date(
             date_str, CONFIG['screeners'], root=root
         )
-        snap = _build_radar_snapshot(master_file, screened_set, day_flags)
+        # The newest session (first to land in `history`) becomes radar.json and
+        # ships every member; older sessions stay capped so radar_history.json
+        # does not balloon — it already carries ~124 sessions.
+        snap = _build_radar_snapshot(
+            master_file, screened_set, day_flags,
+            tickers_per_leaf=None if not history else chip_cap,
+        )
         if snap is None:
             continue
         history.append(snap)
@@ -1372,7 +1384,17 @@ def export_radar(day_flags, root=None, out_dir=None):
     )
 
     l1_limit = int(CONFIG.get('radar', {}).get('history_l1_limit', 20))
-    trimmed = [{**snap, 'l1s': snap['l1s'][:l1_limit]} for snap in history]
+    trimmed = [
+        {**snap, 'l1s': [
+            # history[0] is the uncapped current snapshot — re-cap its chips so
+            # every history entry carries the same top-N roster.
+            {**l1, 'leaves': [
+                {**lf, 'tickers': lf['tickers'][:chip_cap]} for lf in l1['leaves']
+            ]} if i == 0 else l1
+            for l1 in snap['l1s'][:l1_limit]
+        ]}
+        for i, snap in enumerate(history)
+    ]
     history_out = out_dir / "radar_history.json"
     with open(history_out, 'w', encoding='utf-8') as fh:
         json.dump(trimmed, fh, separators=(',', ':'))

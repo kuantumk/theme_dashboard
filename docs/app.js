@@ -87,6 +87,7 @@
     initTabs();
     initTickerClicks();
     initResizablePanels();
+    initRadarClamps();
     initArrowKeyNav();
     loadMeta();
     loadMacroData();
@@ -163,6 +164,8 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('content-' + btn.dataset.tab).classList.add('active');
+        // Radar chips can only be measured once the tab has a box.
+        if (btn.dataset.tab === 'themes') syncRadarClampsNow();
       });
     });
   }
@@ -186,6 +189,7 @@
           const dx = e.clientX - startX;
           const newWidth = Math.max(250, Math.min(startWidth + dx, window.innerWidth - 300));
           leftPanel.style.width = newWidth + 'px';
+          syncRadarClampsNow();
         }
         function onUp() {
           handle.classList.remove('dragging');
@@ -1583,6 +1587,13 @@
     return (data && (data.l1s || data.ecosystems)) || null;
   }
 
+  // Members averaged into a viz leaf's score. radar.json ships every member
+  // while radar_history.json stays capped at `radar.tickers_per_leaf` (10), so
+  // the viz takes the same leading slice from both — otherwise today's leaves
+  // would be diluted by their long tail and read cooler than the same leaf one
+  // session back in the time-travel bar.
+  const RADAR_VIZ_MEMBERS = 10;
+
   // Adapter: flatten a radar snapshot's L1 groups into the {themes:[...]}
   // shape the shared Cytoscape network renderer consumes (Theme Viz tab).
   // Per-leaf `score` is the mean member composite (0-100 scale, matching the
@@ -1593,7 +1604,7 @@
     const themes = [];
     l1s.forEach(grp => {
       (grp.leaves || []).forEach(leaf => {
-        const tickers = leaf.tickers || [];
+        const tickers = (leaf.tickers || []).slice(0, RADAR_VIZ_MEMBERS);
         const n = tickers.length;
         const avgRs = n ? tickers.reduce((s, t) => s + (t.rs ?? 0), 0) / n : 0;
         const avgScore = n ? tickers.reduce((s, t) => s + (t.score ?? 0), 0) / n : 0;
@@ -1642,17 +1653,12 @@
             <span class="theme-name">${escHtml(grp.name)}</span>
             <span class="theme-score">boosted ${fmt(grp.boosted)} · raw ${fmt(grp.raw)} · Δ ${delta} · ${grp.n_leaves} theme${grp.n_leaves === 1 ? '' : 's'} · ${grp.n_members} stocks (${grp.n_screened} screened)</span>
           </div>
-          <div class="theme-body">
-            <table class="radar-table">
-              <thead><tr>
-                <th>Rank</th>
-                <th class="l">Theme</th>
-                <th class="l">Stocks</th>
-                <th>Raw</th>
-                <th>Boosted</th>
-              </tr></thead>
-              <tbody>
+          <div class="theme-body radar-body">
       `;
+      // Each leaf is a two-line block, not a table row: the metadata line
+      // carries rank/name/N/scores, and the chips below get the panel's full
+      // width so every ticker is reachable in a narrow left panel (a 5-column
+      // table pushed Raw/Boosted off-screen and clipped the ticker list).
       (grp.leaves || []).forEach(leaf => {
         const label = leaf.l2 ? (leaf.l3 ? `${leaf.l2} / ${leaf.l3}` : leaf.l2) : leaf.name;
         const chips = (leaf.tickers || []).map(t => {
@@ -1662,24 +1668,88 @@
           return `<span class="${cls.join(' ')}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');
         html += `
-                <tr>
-                  <td class="radar-rank">#${leaf.global_rank}</td>
-                  <td class="l">${escHtml(label)}<span class="radar-n">N=${leaf.n}</span></td>
-                  <td class="l radar-stocks">${chips}</td>
-                  <td>${fmt(leaf.raw)}</td>
-                  <td class="radar-boosted">${fmt(leaf.boosted)}</td>
-                </tr>
+            <div class="radar-leaf">
+              <div class="radar-leaf-hdr">
+                <span class="radar-rank">#${leaf.global_rank}</span>
+                <span class="radar-leaf-name">${escHtml(label)}</span>
+                <span class="radar-n">N=${leaf.n}</span>
+                <span class="radar-scores" title="raw → boosted">${fmt(leaf.raw)}<span class="radar-arrow">→</span><span class="radar-boosted">${fmt(leaf.boosted)}</span></span>
+              </div>
+              <div class="radar-stocks-wrap">
+                <div class="radar-stocks">${chips}</div>
+                <button type="button" class="radar-more" hidden></button>
+              </div>
+            </div>
         `;
       });
       html += `
-              </tbody>
-            </table>
           </div>
         </div>
       `;
     });
 
     container.innerHTML = html;
+    observeRadarClamps(container);
+    syncRadarClamps(container);
+  }
+
+  // ── RADAR CHIP CLAMPING ───────────────────────────────
+  // Collapsed chip rows are capped by CSS (`.radar-stocks` max-height); the
+  // "+N" toggle only appears when chips actually overflow that cap, which
+  // depends on the live panel width — so it is measured, never guessed.
+  function syncRadarClamps(container) {
+    container.querySelectorAll('.radar-stocks-wrap').forEach(wrap => {
+      const box = wrap.querySelector('.radar-stocks');
+      const btn = wrap.querySelector('.radar-more');
+      if (!box || !btn) return;
+      // Tab is hidden (display:none) — nothing measurable yet; the tab-switch
+      // hook re-runs this once the panel has a box.
+      if (!box.clientHeight) return;
+      const expanded = wrap.classList.contains('expanded');
+      if (!expanded) {
+        const limit = box.clientHeight + 1;
+        const hidden = Array.prototype.filter.call(
+          box.querySelectorAll('.radar-chip'),
+          c => c.offsetTop + c.offsetHeight > limit,
+        ).length;
+        btn.dataset.hidden = String(hidden);
+      }
+      const n = Number(btn.dataset.hidden || 0);
+      const shouldHide = n === 0;
+      if (btn.hidden !== shouldHide) btn.hidden = shouldHide;
+      const label = expanded ? '− less' : `+${n} more`;
+      if (btn.textContent !== label) btn.textContent = label;
+    });
+  }
+
+  function syncRadarClampsNow() {
+    const container = document.getElementById('themes-container');
+    if (container) syncRadarClamps(container);
+  }
+
+  function observeRadarClamps(container) {
+    if (container._radarObs || typeof ResizeObserver === 'undefined') return;
+    // Catch-all for reflows the explicit hooks miss — most importantly a late
+    // web-font load, which changes chip widths and therefore the hidden count.
+    // The writes below are no-ops when nothing changed, so this converges
+    // instead of looping.
+    container._radarObs = new ResizeObserver(() => syncRadarClamps(container));
+    container._radarObs.observe(container);
+  }
+
+  function initRadarClamps() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.radar-more');
+      if (!btn) return;
+      const wrap = btn.closest('.radar-stocks-wrap');
+      if (!wrap) return;
+      const expanded = wrap.classList.toggle('expanded');
+      btn.textContent = expanded ? '− less' : `+${btn.dataset.hidden || 0} more`;
+    });
+    // The ResizeObserver only delivers inside the rendering lifecycle, so the
+    // measurement never depends on it alone: the tab-shown and panel-width
+    // paths call sync directly.
+    window.addEventListener('resize', syncRadarClampsNow);
   }
 
   function renderMomentum(data, date) {
@@ -1781,7 +1851,6 @@
                 <th>Scan</th>
                 <th>VARS</th>
                 <th>RS%</th>
-                <th>Price</th>
                 <th>Float(M)</th>
                 <th>EPS%</th>
                 <th>Sales%</th>
@@ -1811,7 +1880,6 @@
                   <td class="scan-cell">${escHtml(scanLabel)}</td>
                   <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.price ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
                   <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
                   <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
@@ -1889,7 +1957,6 @@
                 <th class="l">Ticker</th>
                 <th>VARS</th>
                 <th>RS%</th>
-                <th>Price</th>
                 <th>Float(M)</th>
                 <th>EPS%</th>
                 <th>Sales%</th>
@@ -1920,7 +1987,6 @@
                   </td>
                   <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}${accel}</td>
                   <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.price ?? '—'}</td>
                   <td>${t.float ?? '—'}</td>
                   <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
                   <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>

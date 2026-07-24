@@ -1250,26 +1250,102 @@ tbody tr.nav-active {
 }
 
 /* ── L1 RADAR TAB ──────────────────────────────────────── */
-.radar-table td {
-  vertical-align: top;
+/* Each leaf renders as a metadata line + a full-width chip block rather than
+   a table row, so the ticker list gets the whole left panel instead of one
+   narrow column. Chips are clamped to --radar-chip-rows lines; the "+N more"
+   toggle is unhidden by syncRadarClamps() only when they actually overflow. */
+.radar-body {
+  --radar-chip-row: 24px;   /* chip line box (16px) + padding/border + margins */
+  --radar-chip-rows: 2;
+  padding: 4px 0;
+}
+
+.radar-leaf {
+  padding: 6px 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.radar-leaf:last-child {
+  border-bottom: none;
+}
+
+.radar-leaf:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.radar-leaf-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 3px;
+}
+
+.radar-leaf-name {
+  font-size: 12px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .radar-rank {
   font-family: var(--mono);
+  font-size: 11px;
   color: var(--amber);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .radar-n {
-  margin-left: 8px;
   font-family: var(--mono);
   font-size: 10px;
   color: var(--text3);
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.radar-scores {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.radar-arrow {
+  margin: 0 4px;
+  color: var(--text3);
+}
+
+.radar-stocks-wrap {
+  position: relative;
 }
 
 .radar-stocks {
-  max-width: 420px;
+  position: relative;  /* offsetParent for the chips, so syncRadarClamps can
+                          measure each chip's offsetTop against the clamp */
+  max-height: calc(var(--radar-chip-row) * var(--radar-chip-rows));
+  overflow: hidden;
+}
+
+.radar-stocks-wrap.expanded .radar-stocks {
+  max-height: none;
+}
+
+.radar-more {
+  display: block;
+  margin: 2px 0 0 auto;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  cursor: pointer;
+}
+
+.radar-more:hover {
+  color: var(--accent);
 }
 
 .radar-chip {
@@ -1281,6 +1357,7 @@ tbody tr.nav-active {
   border-bottom: 1px solid var(--border);
   font-family: var(--mono);
   font-size: 11px;
+  line-height: 16px;  /* fixes the chip row height that --radar-chip-row assumes */
   white-space: nowrap;
 }
 

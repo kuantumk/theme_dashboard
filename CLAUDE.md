@@ -231,6 +231,7 @@ Two square toggles sit at the right edge of the time-travel bar on the five stoc
 - **Missing metric fails open** (not dimmed), matching `build_radar_universe`'s NaN handling. The snapshot builders `.fillna(0)`, so `filter_metrics` maps 0 to `None` as well — otherwise every ticker missing the metric would read as illiquid.
 - **One-run deployment lag.** The metrics ship as `avg_vol` / `adr_pct` per ticker in `radar.json`, `vars.json`, `volume.json`, `momentum_136.json`, and `parabolic.json` (plus their `*_history.json`). Since code-fix PRs reset `docs/data/`, the toggles render but dim nothing in production until the next daily workflow run republishes the data.
 - `.time-travel-dates` is `display: contents` so the date buttons, the `+ more` dropdown, and the toggles share one wrapping flex flow — without it the toggles reserve a column and push the dates onto an extra line in a narrow left panel.
+- **The left panel's default width is derived from this bar.** `.left-panel { width: max(20%, 470px) }` — the floor is the measured 463px the widest bar needs to stay on one row (3 date buttons ×75px + the 98px dropdown + the 52px toggle pair + 4px gaps + the bar's and the panel's 14px padding + the 6px scrollbar), rounded up for slack. Adding a control to the bar, widening the date label, or bumping `VISIBLE` in `renderTimeTravelBar` re-wraps it — re-measure and raise the floor. `min-width` deliberately stays at 256px so the resize handle can still trade list width for chart width; the floor is the default, not a hard minimum.
 
 ### Dashboard Time Travel
 

@@ -86,6 +86,7 @@
     initMarketStatus();
     initTabs();
     initTickerClicks();
+    initTickerFilters();
     initResizablePanels();
     initRadarClamps();
     initArrowKeyNav();
@@ -164,6 +165,8 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('content-' + btn.dataset.tab).classList.add('active');
+        // The newly-shown tab may have rendered under a different filter state.
+        applyTickerFilters();
         // Radar chips can only be measured once the tab has a box.
         if (btn.dataset.tab === 'themes') syncRadarClampsNow();
       });
@@ -619,6 +622,65 @@
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let activeSessionDate = null;
   let hasUserSelectedSession = false;
+
+  // ── TICKER FILTER TOGGLES (V / A) ─────────────────────
+  // Shared across tabs like activeSessionDate: arming V on VARS leaves it armed
+  // on Themes. Session-only — no persistence across reloads.
+  const FILTER_MIN_AVG_VOL = 1e6;    // 50-day avg share volume (vol_sma50)
+  const FILTER_MIN_ADR_PCT = 0.04;   // 20-day ADR, fractional (0.04 == 4%)
+  const tickerFilters = { vol: false, adr: false };
+
+  /**
+   * Dim every rendered ticker that fails an armed floor.
+   *
+   * A view-level pass, not a re-render: renderers emit data-avgvol/data-adr and
+   * this only toggles a class. That keeps scores, breadth counts, ranks, sort
+   * order, and the radar's measured "+N more" chip count identical armed or
+   * disarmed — nothing leaves the DOM and nothing changes size.
+   *
+   * Fail-open: a ticker with the attribute absent or unparseable passes. Missing
+   * metrics are unknown, not disqualifying, and the published JSON carries none
+   * of them until the next daily workflow run republishes it.
+   */
+  function applyTickerFilters() {
+    const scope = document.querySelector('.tab-content.active') || document;
+    scope.querySelectorAll('[data-avgvol], [data-adr]').forEach(el => {
+      const belowFloor = (attr, floor) => {
+        if (!tickerFilters[attr === 'avgvol' ? 'vol' : 'adr']) return false;
+        const raw = el.dataset[attr === 'avgvol' ? 'avgvol' : 'adr'];
+        if (raw === undefined || raw === '') return false;
+        const value = parseFloat(raw);
+        return Number.isFinite(value) && value < floor;
+      };
+      const dim = belowFloor('avgvol', FILTER_MIN_AVG_VOL)
+        || belowFloor('adr', FILTER_MIN_ADR_PCT);
+      el.classList.toggle('filtered-out', dim);
+    });
+  }
+
+  function initTickerFilters() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tt-filter-btn');
+      if (!btn) return;
+      const key = btn.dataset.filter;
+      if (!(key in tickerFilters)) return;
+      tickerFilters[key] = !tickerFilters[key];
+      // State is shared, so every bar's copy of this button must agree.
+      document.querySelectorAll(`.tt-filter-btn[data-filter="${key}"]`).forEach(b => {
+        b.classList.toggle('on', tickerFilters[key]);
+        b.setAttribute('aria-pressed', String(tickerFilters[key]));
+      });
+      applyTickerFilters();
+    });
+  }
+
+  /** Emit the filter attributes for a ticker payload. Omitted when unknown. */
+  function filterAttrs(t) {
+    const parts = [];
+    if (typeof t.avg_vol === 'number') parts.push(` data-avgvol="${t.avg_vol}"`);
+    if (typeof t.adr_pct === 'number') parts.push(` data-adr="${t.adr_pct}"`);
+    return parts.join('');
+  }
 
   function loadThemeData() {
     // Load current themes and history in parallel
@@ -1665,7 +1727,7 @@
           const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
           if (t.ticker_color === 'green') cls.push('day-pattern-green');
           const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}`;
-          return `<span class="${cls.join(' ')}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
+          return `<span class="${cls.join(' ')}"${filterAttrs(t)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');
         html += `
             <div class="radar-leaf">
@@ -1689,6 +1751,7 @@
     });
 
     container.innerHTML = html;
+    applyTickerFilters();
     observeRadarClamps(container);
     syncRadarClamps(container);
   }
@@ -1793,7 +1856,7 @@
         const shortVal = parseFloat(t.short);
         const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
         html += `
-                <tr>
+                <tr${filterAttrs(t)}>
                   <td class="l">
                     <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
@@ -1818,6 +1881,7 @@
     });
 
     container.innerHTML = html;
+    applyTickerFilters();
   }
 
   function renderVolume(data, date) {
@@ -1871,7 +1935,7 @@
         const days = (typeof t.days_since_hv === 'number') ? `${t.days_since_hv}d` : '';
         const scanLabel = scan ? (days ? `${scan} · ${days}` : scan) : '—';
         html += `
-                <tr>
+                <tr${filterAttrs(t)}>
                   <td class="l">
                     <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
@@ -1898,6 +1962,7 @@
     });
 
     container.innerHTML = html;
+    applyTickerFilters();
   }
 
   function renderVARS(data, date) {
@@ -1979,7 +2044,7 @@
               : '<span class="accel accel-dn">▼</span>')
             : '';
           html += `
-                <tr>
+                <tr${filterAttrs(t)}>
                   <td class="l">
                     <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
@@ -2009,6 +2074,7 @@
     });
 
     container.innerHTML = html;
+    applyTickerFilters();
   }
 
   // ── PARABOLIC DATA ────────────────────────────────────
@@ -2049,7 +2115,7 @@
       const atrStr = isNaN(atrVal) ? '—' : atrVal.toFixed(1) + 'x';
 
       html += `
-        <tr>
+        <tr${filterAttrs(row)}>
           <td class="l">
             <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
           </td>
@@ -2062,6 +2128,7 @@
     });
 
     tbody.innerHTML = html;
+    applyTickerFilters();
   }
 
   // ── INDUSTRY ETF DATA ─────────────────────────────────

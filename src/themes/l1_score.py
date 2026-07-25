@@ -183,12 +183,18 @@ def compute_leaf_scores(
             if row is None:
                 continue
             vars_val = row.get('vars')
+            # vol_sma50/adr_pct are payload-only: they feed the dashboard's V/A
+            # filter toggles and take no part in scoring.
+            vol_val = row.get('vol_sma50')
+            adr_val = row.get('adr_pct')
             members.append({
                 'ticker': str(t).upper(),
                 'composite': float(row['composite']),
                 'rs': float(row['rs_leg']),
                 'vars': float(vars_val) if pd.notna(vars_val) else None,
                 'price': float(row['close']) if pd.notna(row.get('close')) else None,
+                'vol_sma50': float(vol_val) if pd.notna(vol_val) else None,
+                'adr_pct': float(adr_val) if pd.notna(adr_val) else None,
             })
         if len(members) < min_breadth:
             continue

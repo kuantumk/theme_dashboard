@@ -895,6 +895,30 @@ def _fmt_inst(val):
     return f"+{v:.1f}" if v > 0 else f"{v:.1f}"
 
 
+def filter_metrics(row):
+    """Return ``(avg_vol, adr_pct)`` for the dashboard's V/A filter toggles.
+
+    `avg_vol` is `vol_sma50` (50-day avg share volume) as a whole number and
+    `adr_pct` is the fractional 20-day ADR (0.04 == 4%). Both are read from the
+    same per-day row as the rest of the payload, so a time-travel session filters
+    against *its own* values rather than today's.
+
+    A missing value returns None and the toggle treats the ticker as passing
+    (fail-open, matching `build_radar_universe`'s NaN handling). The snapshot
+    builders call ``.fillna(0)`` on their frames, so a genuinely absent metric
+    arrives as 0.0 rather than NaN — zero is therefore also mapped to None, or
+    every such ticker would be dimmed as if it were illiquid.
+    """
+    def _positive_or_none(value, caster):
+        cast = caster(value)
+        return cast if cast else None
+
+    return (
+        _positive_or_none(row.get('vol_sma50'), _int_or_none),
+        _positive_or_none(row.get('adr_pct'), lambda v: _round_or_none(v, 4)),
+    )
+
+
 def _build_momentum_136_snapshot(csv_file, day_flags):
     """Build a single momentum_136 snapshot dict from one screener CSV.
 
@@ -950,10 +974,13 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
         t = str(row['ticker']).upper()
         f = fundamentals.get(t, {})
         short_val = f.get('short_interest')
+        avg_vol, adr_pct = filter_metrics(row)
         per_ticker[t] = {
             'ticker': t,
             'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
             'price': round(float(row.get('close', 0) or 0), 2),
+            'avg_vol': avg_vol,
+            'adr_pct': adr_pct,
             'float': _fmt_float_m(f.get('shares_float')),
             'eps': _fmt_growth(f.get('eps_growth_yoy')),
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
@@ -1104,12 +1131,15 @@ def _build_vars_snapshot(csv_file, day_flags):
         t = str(row['ticker']).upper()
         f = fundamentals.get(t, {})
         short_val = f.get('short_interest')
+        avg_vol, adr_pct = filter_metrics(row)
         per_ticker[t] = {
             'ticker': t,
             'vars': round(float(row.get('vars', 0) or 0), 2),
             'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
             'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
             'price': round(float(row.get('close', 0) or 0), 2),
+            'avg_vol': avg_vol,
+            'adr_pct': adr_pct,
             'float': _fmt_float_m(f.get('shares_float')),
             'eps': _fmt_growth(f.get('eps_growth_yoy')),
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
@@ -1292,6 +1322,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'rs': round(m['rs'], 1),
                 'vars': round(m['vars'], 2) if m['vars'] is not None else None,
                 'price': round(m['price'], 2) if m['price'] is not None else None,
+                'avg_vol': _int_or_none(m.get('vol_sma50')),
+                'adr_pct': _round_or_none(m.get('adr_pct'), 4),
                 'is_screened': bool(m.get('is_screened', False)),
             } for m in (leaf['members'] if tickers_per_leaf is None
                         else leaf['members'][:tickers_per_leaf])]
@@ -1478,6 +1510,7 @@ def _build_volume_snapshot(date_str, day_flags):
         t = str(row['ticker']).upper()
         f = fundamentals.get(t, {})
         short_val = f.get('short_interest')
+        avg_vol, adr_pct = filter_metrics(row)
         per_ticker[t] = {
             'ticker': t,
             'scan': scan_for_ticker.get(t, ''),
@@ -1486,6 +1519,8 @@ def _build_volume_snapshot(date_str, day_flags):
             'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
             'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
             'price': round(float(row.get('close', 0) or 0), 2),
+            'avg_vol': avg_vol,
+            'adr_pct': adr_pct,
             'float': _fmt_float_m(f.get('shares_float')),
             'eps': _fmt_growth(f.get('eps_growth_yoy')),
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
@@ -1726,6 +1761,9 @@ def _parabolic_item_from_row(row, fundamentals):
         'short': _round_or_none(short_val, 1),
         'atr_multi_50sma': _round_or_none(row.get('atr_multi_50sma'), 1),
         'avg_dollar_vol': _round_or_none(row.get('avg_dollar_vol'), 0),
+        # adr_pct predates the V/A filter toggles and already carries the value
+        # they read; only avg_vol is new here.
+        'avg_vol': filter_metrics(row)[0],
         'adr_pct': _round_or_none(row.get('adr_pct'), 4),
         'current_session_low': _round_or_none(row.get('low'), 2),
         'current_session_high': _round_or_none(row.get('high'), 2),

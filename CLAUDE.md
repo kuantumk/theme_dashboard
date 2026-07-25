@@ -221,6 +221,17 @@ Per-ticker green highlighting in dashboard tables marks entry-ready setups. A ti
 
 Tickers that fail any condition stay default-colored. Logic lives in `src/reporting/export_dashboard_data.py:load_ticker_color_flags` (main universe) and `fetch_etf_metrics` (ETF tabs, recomputes color + VARS on-the-fly from yfinance OHLC).
 
+### V / A Filter Toggles
+
+Two square toggles sit at the right edge of the time-travel bar on the five stock-list tabs — **Themes, VARS, Momentum, Volume, Parabolic**. `V` dims tickers whose 50-day average share volume (`vol_sma50`) is below **1M**; `A` dims tickers whose 20-day `adr_pct` is below **4%**. Both armed dims the union. The Viz, Industry/Lev ETF, and EP tabs deliberately carry no toggles (network rendering path; ETF rows come from an on-the-fly yfinance fetch, not the screening parquet; EP already screens on avg vol > 1M upstream).
+
+- **`V` applies a straight share-volume cut with no dollar-volume exemption**, unlike the L1 Radar's universe floor, which waives its 750k share floor at ≥ $40M avg dollar vol. The radar exemption exists so scoring is not blinded to high-priced liquid leaders; this toggle is a user-armed view lens, so it takes the user's threshold literally. Do not "harmonize" the two.
+- **View-level only.** Filtering never re-scores, re-ranks, re-sorts, or removes anything — it toggles a `filtered-out` class on already-rendered elements (`applyTickerFilters` in `docs/app.js`). Leaf `N=`, L1 scores, and the radar's `+N more` count are identical armed or disarmed.
+- **Never give `.filtered-out` a layout-affecting property** (notably `font-weight`). Chip width drives how radar chip rows wrap, and `syncRadarClamps` measures that wrapping to derive the `+N more` count — a width change would silently move that count whenever a toggle is armed.
+- **Missing metric fails open** (not dimmed), matching `build_radar_universe`'s NaN handling. The snapshot builders `.fillna(0)`, so `filter_metrics` maps 0 to `None` as well — otherwise every ticker missing the metric would read as illiquid.
+- **One-run deployment lag.** The metrics ship as `avg_vol` / `adr_pct` per ticker in `radar.json`, `vars.json`, `volume.json`, `momentum_136.json`, and `parabolic.json` (plus their `*_history.json`). Since code-fix PRs reset `docs/data/`, the toggles render but dim nothing in production until the next daily workflow run republishes the data.
+- `.time-travel-dates` is `display: contents` so the date buttons, the `+ more` dropdown, and the toggles share one wrapping flex flow — without it the toggles reserve a column and push the dates onto an extra line in a narrow left panel.
+
 ### Dashboard Time Travel
 
 Each tab's session bar (every tab except Overview) shows the last 5 trading days as clickable date buttons plus a `+ more` dropdown that exposes every remaining session within the last **180 calendar days**. Retention is calendar-day-based, not a fixed session count: `THEMES_HISTORY_DAYS = 180` in `export_dashboard_data.py` (mirrored by `SCAN_HISTORY_DAYS` in `ep_scan_common.py` and `SESSION_HISTORY_DAYS` in `docs/app.js`) controls the window. The shared `_history_cutoff` helper anchors the cutoff to the newest available session date (not wall-clock today) so the window is reproducible and robust to stale/holiday export runs.

@@ -507,17 +507,21 @@ td.l {
 .time-travel-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  flex-wrap: wrap;
   padding: 8px 14px;
   margin-bottom: 10px;
   background: transparent;
   border: 1px solid var(--border);
 }
 
+/* display:contents hoists the date buttons and the "+ more" select into the
+   bar's own flex flow, so the V/A toggles wrap alongside them and settle in
+   the gap next to the dropdown instead of reserving a column that forces the
+   dates onto an extra line in a narrow left panel. renderTimeTravelBar still
+   owns this element's innerHTML — only its box is removed. */
 .time-travel-dates {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  display: contents;
 }
 
 .tt-date-btn {
@@ -585,6 +589,64 @@ td.l {
 .tt-date-select option {
   background: var(--bg2);
   color: var(--text);
+}
+
+/* ── TICKER FILTER TOGGLES (V / A) ─────────────────────── */
+/* Pinned to the far right of the bar so they sit in the empty space next to
+   the date dropdown regardless of how many date buttons a tab renders. */
+.tt-filters {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tt-filter-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0;
+}
+
+.tt-filter-btn:hover {
+  border-color: var(--amber);
+  color: var(--text);
+}
+
+/* Amber, not the bar's accent blue: the active date button and the active
+   "+ more" dropdown are both blue and sit immediately to the left, so a third
+   adjacent blue-active control would read as part of the date group. */
+.tt-filter-btn.on {
+  border-color: var(--amber);
+  background: var(--adim2);
+  color: var(--amber);
+}
+
+/* Table rows dim whole: a bright RS/VARS row under a greyed ticker still
+   pulls the eye, which defeats the filter. The `tr` element selector outranks
+   .tn-link.day-pattern-green, so a green ticker greys out too. */
+tr.filtered-out td {
+  opacity: 0.32;
+}
+
+tr.filtered-out .tn-link {
+  color: var(--text2);
+  border-bottom-color: transparent;
+}
+
+tr.filtered-out:hover td {
+  opacity: 0.6;
 }
 
 /* ── THEME CARD ─────────────────────────────────────────── */
@@ -1372,6 +1434,24 @@ tbody tr.nav-active {
 
 .radar-chip.chip-quiet:hover {
   opacity: 1;
+}
+
+/* Dim applied by an armed V/A filter toggle: reads like an unscreened chip but
+   with the square outline dropped, so it stays distinct from both chip-screened
+   (blue outline) and chip-quiet (grey outline kept). Must sit AFTER those two
+   rules — it carries equal specificity and wins only on source order.
+   Touch NO layout-affecting property here, in particular never font-weight:
+   chip width drives how the chip rows wrap, and syncRadarClamps measures that
+   wrapping to derive the "+N more" count. A weight change would silently move
+   that count whenever a toggle is armed. */
+.radar-chip.filtered-out {
+  opacity: 0.4;
+  border-color: transparent;
+  color: var(--text2);
+}
+
+.radar-chip.filtered-out:hover {
+  opacity: 0.75;
 }
 
 .radar-boosted {

@@ -21,6 +21,13 @@
   --rdim: rgba(255, 51, 85, 0.09);
   --amber: #ffb300;
   --adim2: rgba(255, 179, 0, 0.09);
+  /* L1 section band — an indigo-tinted lift of --bg4 in the --accent hue, so a
+     new L1 reads as a break in a long scroll without introducing a new color. */
+  --l1-bg: #161a2c;
+  --l1-bg-hover: #1e2440;
+  --l1-edge: #2e3760;
+  --l1-hot-bg: #2a2109;   /* amber counterpart at matching luminance */
+  --l1-hot-bg-hover: #3a2e0d;
   --text: #eeeeee;
   --text2: #888888;
   --text3: #555555;
@@ -662,19 +669,24 @@ tr.filtered-out:hover td {
   margin-bottom: 12px;
 }
 
+/* The L1 header is the only "a new section starts here" cue in a long scrolling
+   list, so it gets a lifted band + an accent rail instead of the body's flat
+   black — on transparent/--border it sat at the same weight as the leaf
+   subheaders nested inside it and vanished mid-scroll. */
 .theme-header {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--l1-bg);
+  border: 1px solid var(--l1-edge);
+  border-left: 3px solid var(--accent);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .theme-header:hover {
-  background: var(--bg3);
+  background: var(--l1-bg-hover);
 }
 
 .theme-rank {
@@ -709,9 +721,16 @@ tr.filtered-out:hover td {
 }
 
 /* ── VARS L1 SECTIONS ──────────────────────────────────── */
+/* Same band, amber hue — HOT keeps its own color while sitting at the same
+   luminance as a normal L1 header (the old --adim2 fill was darker than the
+   new band, which made a hot L1 recede instead of pop). */
 .theme-header.l1-hot {
   border-color: var(--amber);
-  background: var(--adim2);
+  background: var(--l1-hot-bg);
+}
+
+.theme-header.l1-hot:hover {
+  background: var(--l1-hot-bg-hover);
 }
 
 .hot-badge {

@@ -280,6 +280,7 @@
           { "id": "MAExp@tv-basicstudies", "inputs": { "length": 20 } },
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 50 } },
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } },
+          { "id": "Earnings@tv-basicstudies" },
           { "id": "STD;Volume" }
         ],
         "studies_overrides": {
@@ -291,6 +292,7 @@
           "moving average.ma.transparency": 20
         },
         "overrides": {
+          "mainSeriesProperties.esdShowEarnings": true,
           "scalesProperties.scaleSeriesOnly": true,
           "paneProperties.legendProperties.showStudyTitles": false,
           "paneProperties.legendProperties.showStudyValues": false,

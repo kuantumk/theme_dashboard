@@ -10,6 +10,8 @@ execution: code
 
 # Chart Earnings Markers - Plan
 
+> **⛔ SUPERSEDED — shipped as #72, then reverted.** The free `tv.js` embed applies only the **first 5** entries of `studies` and silently discards the rest, so adding `Earnings@tv-basicstudies` as a 6th entry pushed `STD;Volume` off the cap and killed the volume pane and its average-volume overlay. KTD3's "retain `STD;Volume`" was satisfied in the source but not at runtime, and the AE3 browser check did not catch it. `mainSeriesProperties.esdShowEarnings: true` alone is inert — the markers genuinely cost a study slot. Re-attempting this requires **giving up one moving average**, not appending. See the hard rule in `CLAUDE.md` → *Dashboard Chart (TradingView Free Embed Widget)*.
+
 ## Goal Capsule
 
 - **Objective:** Show TradingView's native square `E` markers at earnings dates on every supported equity chart opened from the dashboard.

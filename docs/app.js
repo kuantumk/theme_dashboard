@@ -275,13 +275,17 @@
         "details": false,
         "calendar": false,
         "hide_volume": true,
+        // HARD RULE: STD;Volume stays first and is never removed. The free
+        // tv.js embed applies only the FIRST 5 studies and silently discards
+        // the rest -- no error, no warning. Index 0 is the one slot the cap
+        // can never reach, so the volume pane (bars + average-volume overlay)
+        // is safe there. To add a study, REPLACE one; never append a 6th.
         "studies": [
+          { "id": "STD;Volume" },
           { "id": "MAExp@tv-basicstudies", "inputs": { "length": 10 } },
           { "id": "MAExp@tv-basicstudies", "inputs": { "length": 20 } },
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 50 } },
-          { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } },
-          { "id": "Earnings@tv-basicstudies" },
-          { "id": "STD;Volume" }
+          { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } }
         ],
         "studies_overrides": {
           "moving average exponential.ma.color": "#4CAF50",
@@ -292,7 +296,6 @@
           "moving average.ma.transparency": 20
         },
         "overrides": {
-          "mainSeriesProperties.esdShowEarnings": true,
           "scalesProperties.scaleSeriesOnly": true,
           "paneProperties.legendProperties.showStudyTitles": false,
           "paneProperties.legendProperties.showStudyValues": false,

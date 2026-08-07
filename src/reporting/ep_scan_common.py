@@ -52,12 +52,87 @@ RVOL_LOOKBACK_SESSIONS = 10
 
 # ── Finviz helpers ───────────────────────────────────────────────────────────
 
+# Finviz's 2026-07-15 screener redesign put a company-logo avatar inside the
+# ticker cell. The avatar carries a one-letter fallback <span> that renders when
+# the logo image is missing, and finvizfinance's flat `col.text` parse
+# concatenates it with the ticker itself — "OKLO" comes back as "OOKLO". Every
+# symbol arrives with its first character doubled, so every downstream Yahoo
+# lookup 404s and the scan exports nothing.
+#
+# The unmangled symbol is still in the markup twice: as the cell's
+# data-boxover-ticker attribute, and as the text of its <a class="tab-link">.
+# We re-read it from there rather than un-doubling the first character, which
+# would be a guess that silently corrupts if Finviz changes the avatar again.
+# finvizfinance 1.3.0 (Jan 2026) is the latest release and predates the
+# redesign, so there is no upstream fix to upgrade to.
+
+def _ticker_from_row(row) -> Optional[str]:
+    """Read the unmangled ticker out of a Finviz screener <tr>."""
+    cell = row.find('td', attrs={'data-boxover-ticker': True})
+    if cell is not None:
+        symbol = (cell.get('data-boxover-ticker') or '').strip()
+        if symbol:
+            return symbol
+
+    cells = row.find_all('td')
+    if len(cells) < 2:
+        return None
+    link = cells[1].find('a', class_='tab-link')
+    if link is None:
+        return None
+    return link.get_text(strip=True) or None
+
+
+def repair_ticker_column(table: pd.DataFrame, data_rows: List) -> int:
+    """Overwrite mangled Ticker values with the symbols carried in the markup.
+
+    ``table`` is finvizfinance's cumulative frame across pages; ``data_rows``
+    are the current page's <tr> elements, which map to its trailing rows.
+    Returns the number of values actually corrected.
+    """
+    if table is None or 'Ticker' not in getattr(table, 'columns', []):
+        return 0
+    start = len(table) - len(data_rows)
+    if start < 0:
+        return 0
+
+    col = table.columns.get_loc('Ticker')
+    repaired = 0
+    for offset, row in enumerate(data_rows):
+        symbol = _ticker_from_row(row)
+        if not symbol:
+            continue
+        if table.iat[start + offset, col] != symbol:
+            table.iat[start + offset, col] = symbol
+            repaired += 1
+    return repaired
+
+
+if FINVIZ_AVAILABLE:
+
+    class _TickerRepairOverview(Overview):
+        """Overview that re-reads tickers from the markup after each page."""
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.tickers_repaired = 0
+
+        def _get_table(self, rows, df, num_col_index, table_header, limit=-1):
+            table = super()._get_table(rows, df, num_col_index, table_header, limit)
+            # Mirror the parent's row slicing so offsets line up.
+            data_rows = rows[1:]
+            if limit != -1:
+                data_rows = data_rows[0:limit]
+            self.tickers_repaired += repair_ticker_column(table, data_rows)
+            return table
+
+
 def scan_finviz_tickers(earnings_filter: str) -> List[str]:
     """Use Finviz screener to find tickers matching earnings + short + volume."""
     if not FINVIZ_AVAILABLE:
         return []
     try:
-        overview = Overview()
+        overview = _TickerRepairOverview()
         overview.set_filter(filters_dict={
             'Earnings Date': earnings_filter,
             'Float Short': 'Over 10%',
@@ -66,6 +141,9 @@ def scan_finviz_tickers(earnings_filter: str) -> List[str]:
         df = overview.screener_view()
         if df is None or df.empty:
             return []
+        if overview.tickers_repaired:
+            print(f"  Repaired {overview.tickers_repaired}/{len(df)} ticker symbols "
+                  f"mangled by the Finviz logo markup")
         return df['Ticker'].tolist()
     except Exception as e:
         print(f"  Finviz scan failed ({earnings_filter}): {e}")
@@ -391,6 +469,7 @@ def send_discord_notification(
     scan_type: str,
     scan_date: str,
     tickers: List[Dict],
+    screened_count: Optional[int] = None,
 ) -> None:
     """Send EP scan results to Discord via webhook.
 
@@ -399,9 +478,24 @@ def send_discord_notification(
       2. News:    Ticker | News
     The change-column label flips between BM CHG (morning/PM) and AH CHG
     (afternoon/AH) based on the data shape of the first ticker.
+
+    ``screened_count`` is how many candidates the Finviz screener returned. An
+    empty result on a non-zero screened count means enrichment dropped every
+    candidate, which is a broken-upstream signal rather than a quiet earnings
+    day — the Finviz ticker-mangling bug looked exactly like the latter for
+    three weeks. That case gets a warning instead of the usual "none found".
     """
     if not tickers:
-        content = f"**EP Scan - {scan_type} ({scan_date})**\nNo qualifying tickers found."
+        if screened_count:
+            content = (
+                f"**EP Scan - {scan_type} ({scan_date})**\n"
+                f":warning: **All {screened_count} screened candidate(s) were dropped "
+                f"during enrichment.**\n"
+                f"This usually means upstream data is broken (ticker symbols, price "
+                f"feed, or fundamentals) — check the workflow log."
+            )
+        else:
+            content = f"**EP Scan - {scan_type} ({scan_date})**\nNo qualifying tickers found."
     else:
         # Detect scan flavor from the first ticker's keys (matches the prior
         # per-ticker check, but resolved once for the table header).

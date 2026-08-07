@@ -36,8 +36,13 @@ from src.reporting.ep_scan_common import (  # noqa: E402
 )
 
 
-def run_morning_scan() -> list:
-    """Run the morning EP scan for BMO stocks."""
+def run_morning_scan() -> tuple[list, int]:
+    """Run the morning EP scan for BMO stocks.
+
+    Returns (results, screened_count) — the screener's candidate count is
+    reported alongside the survivors so callers can tell a quiet earnings day
+    apart from enrichment dropping everything.
+    """
     print("=" * 60)
     print("EP SCAN — MORNING (BMO)")
     print("=" * 60)
@@ -47,7 +52,7 @@ def run_morning_scan() -> list:
 
     if not tickers:
         print("  No qualifying tickers from screener.")
-        return []
+        return [], 0
 
     now_et = datetime.now(ET)
     results = []
@@ -111,7 +116,12 @@ def run_morning_scan() -> list:
               f"PM={pm_price:.2f} ({pm_chg_pct:+.1f}%), RVol={rvol:.1f}x")
 
     results.sort(key=lambda x: x['float'] if x['float'] is not None else float('inf'))
-    return results
+
+    if tickers and not results:
+        print(f"  WARNING: all {len(tickers)} screened candidate(s) were dropped "
+              f"during enrichment — check for upstream data breakage.")
+
+    return results, len(tickers)
 
 
 def main():
@@ -131,12 +141,14 @@ def main():
     )
     args = parser.parse_args()
 
-    results = run_morning_scan()
+    results, screened_count = run_morning_scan()
     scan_date = datetime.now(ET).strftime('%Y-%m-%d')
 
     export_scan_results(results, 'morning', 'ep_scan_morning.json', out_dir=args.out_dir)
     if not args.no_discord:
-        send_discord_notification('Morning Earnings', scan_date, results)
+        send_discord_notification(
+            'Morning Earnings', scan_date, results, screened_count=screened_count
+        )
 
     print(f"\nDone. {len(results)} tickers exported.")
 

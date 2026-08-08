@@ -156,6 +156,19 @@ def build_payload(counts: pd.DataFrame, export_sessions: int = EXPORT_SESSIONS) 
     }
 
 
+def summary_line(payload: dict, out_path) -> str:
+    """One-line run summary.
+
+    Split out of `main()` so it is reachable from tests. Inlined in `main()` it
+    was the one code path no test touched, and a stale key reference there
+    raised KeyError on every run *after* nasi.json had already been written —
+    a clean run that looked like a failed one in the workflow log.
+    """
+    current = payload["current"]
+    return (f"NASI {current['summation']:.2f} (osc {current['oscillator']:+.2f})  "
+            f"RSI(14) {current['rsi']:.2f}  issues {current['issues']}  -> {out_path}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compute Nasdaq McClellan Summation Index + RSI")
     parser.add_argument("--backfill", action="store_true",
@@ -194,9 +207,7 @@ def main() -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, separators=(",", ":")))
 
-    current = payload["current"]
-    print(f"NASI {current['summation']:.2f} (chg {current['change']:+.2f})  "
-          f"RSI(14) {current['rsi']:.2f}  issues {current['issues']}  -> {args.out}")
+    print(summary_line(payload, args.out))
     return 0
 
 

@@ -135,5 +135,39 @@ class TestBreadthFrame(unittest.TestCase):
         self.assertLess(float(rsi.iloc[-1]), 10.0)
 
 
+class TestPayloadContract(unittest.TestCase):
+    """The exported payload and the run summary must agree on their fields.
+
+    Regression: `build_payload` dropped the redundant `change` key while
+    `main()`'s summary print still referenced it. nasi.json was written first,
+    so the run produced correct data and *then* raised KeyError — surfacing in
+    the workflow as a failed non-critical step on every single run.
+    """
+
+    def setUp(self):
+        from src.data_collection.compute_nasi import build_payload, summary_line
+        self.build_payload, self.summary_line = build_payload, summary_line
+        rng = np.random.default_rng(17)
+        idx = _sessions(260)
+        adv = pd.Series(rng.integers(700, 2400, 260), index=idx)
+        self.counts = pd.DataFrame({"advances": adv, "declines": 3100 - adv})
+
+    def test_summary_line_only_reads_fields_the_payload_exports(self):
+        payload = self.build_payload(self.counts)
+        line = self.summary_line(payload, "docs/data/nasi.json")
+        self.assertIn("NASI", line)
+        self.assertIn("RSI(14)", line)
+        self.assertIn("osc", line)
+
+    def test_current_block_exposes_exactly_the_documented_fields(self):
+        current = self.build_payload(self.counts)["current"]
+        self.assertEqual(
+            set(current),
+            {"date", "summation", "summation_ma", "oscillator", "rsi", "issues"},
+        )
+        self.assertNotIn("change", current,
+                         "change duplicates oscillator; see summary_line docstring")
+
+
 if __name__ == "__main__":
     unittest.main()

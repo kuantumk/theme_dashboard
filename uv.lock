@@ -1074,6 +1074,7 @@ dependencies = [
     { name = "selenium" },
     { name = "tabulate" },
     { name = "tqdm" },
+    { name = "tradingview-screener" },
     { name = "webdriver-manager" },
     { name = "yfinance" },
 ]
@@ -1095,6 +1096,7 @@ requires-dist = [
     { name = "selenium" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "tqdm" },
+    { name = "tradingview-screener", specifier = ">=3.2.1" },
     { name = "webdriver-manager" },
     { name = "yfinance" },
 ]
@@ -1109,6 +1111,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/06/b3/36c8ecf72e8925200671613332db156d84b99b3aee742a41c1938ebb0808/tqdm-4.68.1.tar.gz", hash = "sha256:fc163d96b287bd031e1aa24421ce4411b25559bd0a1be4fe649bdaa4d2c02bf5", size = 171236, upload-time = "2026-06-05T17:23:15.267Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/47/aa/218a0eb34de1f753c83e4d0d1c8e7c4cef27f20dcb8342e024f63a80dc86/tqdm-4.68.1-py3-none-any.whl", hash = "sha256:fea4a90e4023f764914569f7802a297277c5ab1a66be5144143e142e1a4031d8", size = 78354, upload-time = "2026-06-05T17:23:13.654Z" },
+]
+
+[[package]]
+name = "tradingview-screener"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pandas" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f1/ec/3866844b321e95c28b87894f6fd6ae4d5778141f1b2980e25bf280c1a683/tradingview_screener-3.2.1.tar.gz", hash = "sha256:5144ecd8ccb7559e9e1a38365fd8c8a625758bc4dd3788863b5d8a1284732854", size = 99963, upload-time = "2026-06-20T23:01:09.498Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/56/6864a2ab4c70cf1c1aaf5e88576b8dbdf010c2398c1b04a1e6945e3e5dd3/tradingview_screener-3.2.1-py3-none-any.whl", hash = "sha256:93e4b9844dc8977408794891dce69078838a01f2efc2cb75d04a37e1a0faffb3", size = 22199, upload-time = "2026-06-20T23:01:07.729Z" },
 ]
 
 [[package]]

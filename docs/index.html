@@ -326,6 +326,38 @@
               <div class="breadth-value" id="mmth-value">—</div>
             </div>
           </div>
+          <div class="nasi-panel" id="nasi-panel">
+            <div class="nasi-head">
+              <div class="nasi-title">
+                <span class="nasi-name">NASI</span>
+                <span class="nasi-desc">Nasdaq McClellan Summation · RSI(14)</span>
+              </div>
+              <!-- The summation *level* is a running total with an arbitrary
+                   origin, so it can never match a vendor's chart and is not shown
+                   as a figure. The oscillator and the RSI both are comparable. -->
+              <div class="nasi-readout">
+                <span class="nasi-stat">
+                  <span class="nasi-stat-lbl">OSC</span>
+                  <span class="nasi-stat-val" id="nasi-osc">—</span>
+                </span>
+                <span class="nasi-stat">
+                  <span class="nasi-stat-lbl">RSI</span>
+                  <span class="nasi-stat-val" id="nasi-rsi">—</span>
+                </span>
+              </div>
+            </div>
+            <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 152"
+                 preserveAspectRatio="none" role="img"
+                 aria-label="Nasdaq McClellan Summation Index and its 14-day RSI"></svg>
+            <div class="nasi-foot">
+              <span id="nasi-range">—</span>
+              <span class="nasi-legend">
+                <i class="nasi-key nasi-key-ma"></i>10-day MA
+                <i class="nasi-key nasi-key-os"></i>RSI ≤ 10 oversold · dashed 12 = major-low band
+                <span class="nasi-note">summation shape only — level is origin-relative</span>
+              </span>
+            </div>
+          </div>
         </div>
 
       </div>

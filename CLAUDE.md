@@ -59,7 +59,7 @@ cd tests && uv run python backtest_theme_scoring.py
 
 1. **Download** ~8000 stocks × 500 days OHLCV via yfinance → `data/price_daily.pkl`
 2. **Indicators** pandas-based technicals (no TA-Lib) → `data/price_daily_ta.pkl`
-3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`
+3. **Market Breadth** NCFD/MMFI scraped from barchart.com via Selenium → `docs/data/market_breadth.json`; then **step 3b** computes the Nasdaq McClellan Summation Index + RSI(14) → `docs/data/nasi.json` (see NASI below). Both are non-critical — a failure logs a warning and the workflow continues.
 4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/*.parquet`
 5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener `*.parquet`
 6. **Consolidate** union all screener tickers (derived from the per-screener parquet) → committed `data/screened_union.json` (`{date, tickers}`, the tag-audit routine's worklist). No `.txt` is written.
@@ -93,6 +93,8 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `data/screened_union.json` | JSON | `{date, tickers}` — latest screened union; the tag-audit routine's worklist (committed) |
 | `screening_output/**/*.parquet` | Parquet | Per-run master + per-screener numeric outputs (local scratch; regenerated each run, never committed, pruned to newest 10) |
 | `config/workflow_config.yaml` | YAML | All tunable parameters |
+| `data/nasdaq_ad_history.json` | JSON | `{date: {advances, declines}}` — cached Nasdaq A/D counts (committed; each run refreshes a trailing **90 calendar days** (~62 sessions, `REFRESH_DAYS`) so late-reported sessions self-correct and the multi-year history is paid for once) |
+| `docs/data/nasi.json` | JSON | Nasdaq McClellan Summation Index + RSI(14), current + 378-session (~18 month) history. Seeded in git so the panel renders before the first workflow run; rewritten every run thereafter |
 | `docs/data/ep_scan_afternoon.json` | JSON | Afternoon EP scan results |
 | `docs/data/ep_scan_morning.json` | JSON | Morning EP scan results |
 
@@ -140,6 +142,25 @@ The daily workflow runs the screeners listed under `screeners:` in `config/workf
 - `vars_20ema = ewm(vars, span=20)`
 
 Both legs are normalized by their own ATR before summing, so VARS values are comparable across tickers regardless of underlying volatility. SPY's cumulative series is computed once before the per-ticker loop and reindexed into each ticker.
+
+### NASI — Nasdaq McClellan Summation Index + RSI(14)
+
+`src/indicators/nasdaq_mcclellan.py` (pure math) + `src/data_collection/compute_nasi.py` (collection). Rendered in the Overview tab's **Market Breadth & Sentiment** card, under the breadth tiles. RSI(14) of the summation index reaching ≈10 has marked major Nasdaq lows (2024-04-17, 2025-11-17, 2026-07-30).
+
+```
+RANA       = 1000 * (advances - declines) / (advances + declines)
+oscillator = EMA19(RANA) - EMA39(RANA)      # recursive, adjust=False
+summation  = cumsum(oscillator)
+rsi        = Wilder RSI(14) of summation
+```
+
+**There is no free feed for `$NASI`, and no canonical one either.** The exchanges do not publish advance/decline data at all — every vendor computes its own from a private issue list, so values legitimately differ between providers. StockCharts is JS-walled; Barchart serves `$NCFD` but 404s on `$NASI`/`$NAMO`/`$NAAD`; stooq blocks. Computing our own is the only sustainable path. Do not add a scraper for this.
+
+**⛔ The issue universe must include ETFs — this is the whole ballgame.** `select_universe` deliberately does **not** use `stock_utils.get_tickers_from_nasdaq()`, which drops ETFs, warrants, units, rights and ETNs because the *screeners* must never trade them. Breadth is the opposite problem: Nasdaq's own market diary counts every listed security. Excluding ETFs under-counts decliners in a selloff and biases the series upward — measured on 2026-07-30, an operating-companies-only universe reads RSI **13.06** where an all-issues universe reads **9.97** (StockCharts: 8.85). Since the oversold line is 10, that one exclusion is the difference between seeing the signal and missing it entirely. Consequently `price_daily.pkl` **cannot** be reused as the breadth source, and step 3b keeps its own universe and its own cached A/D history.
+
+**The summation *level* is meaningless; only its shape and its RSI are portable.** The index is a running total with an arbitrary origin, so ours reads ≈ −6,400 where StockCharts reads −139 for the same session. The dashboard therefore shows the **oscillator** and the **RSI** as figures (both vendor-comparable: ours +29.03 / 9.89 vs their +27.91 / 8.85 on those dates) and plots the summation for shape only. Never surface the summation level as a headline number — it will never match any chart a user compares against. RSI is immune to the origin because `diff(summation) == oscillator`; `tests/test_nasdaq_mcclellan.py` pins this invariance.
+
+**RSI near the floor is provider-specific and hypersensitive.** At a trough the average-gain term is only a Wilder-decayed remnant of the *previous rally* (in July 2026 every contributing up-day fell in 6/26–7/09; from 7/13 there were 13 straight down days), while the average-loss term is large. Small coverage differences therefore swing RSI by points — issue-universe choice alone moved RSI(2026-07-30) across 12.30–22.97 before the ETF fix. Treat `NASI_OVERSOLD = 10` in `docs/app.js` as calibrated to *our* series, not as a universal constant, and re-verify it if the universe rule changes.
 
 ### Theme Scoring Formula (screened lens — daily report only)
 

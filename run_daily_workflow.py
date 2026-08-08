@@ -90,7 +90,9 @@ def run_script(script_path: str, args: list = None, description: str = None):
             logger.error(f"STDERR: {e.stderr}")
 
         # Non-critical steps can fail without aborting
-        if script_path in ['src/data_collection/fetch_fundamental_data.py', 'src/data_collection/scrape_market_breadth.py']:
+        if script_path in ['src/data_collection/fetch_fundamental_data.py',
+                           'src/data_collection/scrape_market_breadth.py',
+                           'src/data_collection/compute_nasi.py']:
             logger.warning(f"Non-critical step failed, continuing...")
             return False
         else:
@@ -164,6 +166,15 @@ def run_daily_workflow():
             json.dump(market_breadth, f)
 
         logger.info(f"OK Market breadth saved\n")
+
+        # Step 3b: Nasdaq McClellan Summation Index + RSI(14).
+        # Non-critical: it has its own ticker universe (breadth needs the ETFs
+        # that `get_tickers_from_nasdaq` deliberately drops) and its own cached
+        # advance/decline history, so a failure here cannot affect screening.
+        run_script(
+            'src/data_collection/compute_nasi.py',
+            description="Compute Nasdaq McClellan Summation Index + RSI(14)"
+        )
 
         # Step 4: Create master table (includes RS_STS% calculation).
         # `--days 130` (~180 calendar days of trading sessions) so historical

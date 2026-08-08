@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "dashboard", "runtimeExecutable": "uv", "runtimeArgs": ["run", "python", "-m", "http.server", "8777", "--directory", "docs"], "port": 8777 }
+  ]
+}

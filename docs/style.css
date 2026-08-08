@@ -812,6 +812,104 @@ tr.filtered-out:hover td {
   letter-spacing: -1.2px;
 }
 
+/* ── NASI (Nasdaq McClellan Summation + RSI) ──────────────
+   Sits under the breadth grid as one full-width block. Colors come from the
+   existing palette only: --green/--red for direction, --accent for the MA,
+   --amber for the oversold band. */
+.nasi-panel {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px 10px;
+}
+
+.nasi-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.nasi-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+
+.nasi-desc {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--text3);
+  margin-left: 7px;
+}
+
+.nasi-readout {
+  display: flex;
+  gap: 16px;
+}
+
+.nasi-stat-lbl {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 300;
+  color: var(--text3);
+  margin-right: 5px;
+}
+
+.nasi-stat-val {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Oversold RSI is a bullish tell, so it takes --green — matching how the
+   NCFD/MMTW tiles above already color a low reading. */
+.nasi-stat-val.oversold { color: var(--green); }
+.nasi-stat-val.watch    { color: var(--amber); }
+.nasi-stat-val.overbought { color: var(--red); }
+
+.nasi-chart {
+  display: block;
+  width: 100%;
+  height: 152px;
+  overflow: visible;
+}
+
+.nasi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 300;
+  color: var(--text3);
+}
+
+.nasi-legend { display: flex; align-items: center; gap: 5px; }
+
+.nasi-key {
+  display: inline-block;
+  width: 10px;
+  height: 2px;
+  margin-left: 8px;
+}
+
+.nasi-key-ma { background: var(--accent); }
+.nasi-key-os { background: var(--amber); height: 7px; opacity: 0.5; }
+
+.nasi-note {
+  margin-left: 10px;
+  color: var(--text3);
+  opacity: 0.75;
+}
+
 .breadth-sub {
   font-family: var(--display);
   font-size: 10px;

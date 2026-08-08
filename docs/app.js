@@ -26,6 +26,20 @@
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
+  const NASI_DATA_URL = 'data/nasi.json';
+  // Oversold line for OUR series. Not portable from a vendor's chart: RSI at the
+  // floor is a ratio between a decayed memory of the last rally and the current
+  // decline, so it shifts with issue coverage. Calibrated 2026-08 against
+  // StockCharts $NASI (ours 9.97 vs their 8.85 on 2026-07-30).
+  const NASI_OVERSOLD = 10;
+  // Second rail. Every major low in the exported window bottomed at or below
+  // 12 — 2025-03-14 (11.01), 2025-04-11 (11.31), 2025-11-21 (5.43), 2026-03-30
+  // (10.95, the SPY year low), 2026-07-31 (9.23) — but only two of the five
+  // broke 10, so a lone 10-line hides most of them. The classic RSI 30 rail is
+  // useless here: this series crosses it constantly.
+  const NASI_LOW_BAND = 12;
+  const NASI_WATCH = 20;
+  const NASI_OVERBOUGHT = 80;
   const MACRO_DATA_URL = 'data/macro_data.json';
   const INDUSTRY_ETF_URL = 'data/industry_etf.json';
   const META_URL = 'data/report_meta.json';
@@ -93,6 +107,8 @@
     loadMeta();
     loadMacroData();
     loadBreadthData();
+    initNasiResize();
+    loadNasiData();
     loadThemeData();
     loadMomentumData();
     loadVolumeData();
@@ -193,6 +209,7 @@
           const newWidth = Math.max(250, Math.min(startWidth + dx, window.innerWidth - 300));
           leftPanel.style.width = newWidth + 'px';
           syncRadarClampsNow();
+          redrawNasiNow();
         }
         function onUp() {
           handle.classList.remove('dragging');
@@ -594,6 +611,159 @@
         });
       })
       .catch(err => console.error('Error loading breadth:', err));
+  }
+
+  // ── NASI (Nasdaq McClellan Summation + RSI) ───────────
+  function loadNasiData() {
+    fetch(withCacheBust(NASI_DATA_URL))
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!data || !data.current) return;
+        const cur = data.current;
+
+        const oscEl = document.getElementById('nasi-osc');
+        if (oscEl && cur.oscillator != null) {
+          oscEl.textContent = (cur.oscillator >= 0 ? '+' : '') + cur.oscillator.toFixed(2);
+          oscEl.className = 'nasi-stat-val ' + (cur.oscillator >= 0 ? 'pos' : 'neg');
+        }
+
+        const rsiEl = document.getElementById('nasi-rsi');
+        if (rsiEl && cur.rsi != null) {
+          rsiEl.textContent = cur.rsi.toFixed(2);
+          rsiEl.className = 'nasi-stat-val ' + nasiRsiState(cur.rsi);
+        }
+
+        const hist = data.history || [];
+        const rangeEl = document.getElementById('nasi-range');
+        if (rangeEl) {
+          rangeEl.textContent = hist.length
+            ? `${hist[0].date} → ${hist[hist.length - 1].date} · ${hist.length} sessions`
+            : '';
+        }
+        nasiHistory = hist;
+        renderNasiChart(hist);
+      })
+      .catch(err => console.error('Error loading NASI:', err));
+  }
+
+  function nasiRsiState(rsi) {
+    if (rsi <= NASI_OVERSOLD) return 'oversold';
+    if (rsi <= NASI_WATCH) return 'watch';
+    if (rsi >= NASI_OVERBOUGHT) return 'overbought';
+    return '';
+  }
+
+  // Geometry of the two stacked panes inside viewBox "0 0 600 152".
+  const NASI_GEO = { w: 600, top: 6, botTop: 94, rsiTop: 108, rsiBot: 148 };
+
+  // Last rendered history, so a resize can redraw at the new x-scale. The
+  // oversold markers are sized from the live scale, so a stale render leaves
+  // them stretched after the panel is dragged.
+  let nasiHistory = null;
+
+  function redrawNasiNow() {
+    if (nasiHistory) renderNasiChart(nasiHistory);
+  }
+
+  function initNasiResize() {
+    const svg = document.getElementById('nasi-chart');
+    if (!svg || typeof ResizeObserver === 'undefined') return;
+    // Backstop only. Same lesson as syncRadarClamps: the observer delivers only
+    // inside the rendering lifecycle, so the panel-drag and window-resize paths
+    // call redrawNasiNow directly rather than depending on it.
+    let last = 0;
+    new ResizeObserver(entries => {
+      const w = Math.round(entries[0].contentRect.width);
+      if (w === last) return;
+      last = w;
+      redrawNasiNow();
+    }).observe(svg);
+  }
+
+  function renderNasiChart(history) {
+    const svg = document.getElementById('nasi-chart');
+    if (!svg) return;
+    svg.innerHTML = '';
+    if (!history || history.length < 2) return;
+
+    const g = NASI_GEO;
+    const n = history.length;
+    const xAt = i => (n === 1 ? 0 : (i / (n - 1)) * g.w);
+
+    const sums = history.map(d => d.summation).filter(v => v != null);
+    let lo = Math.min(...sums), hi = Math.max(...sums);
+    if (hi === lo) { hi += 1; lo -= 1; }
+    const pad = (hi - lo) * 0.08;
+    lo -= pad; hi += pad;
+    const yNasi = v => g.botTop - ((v - lo) / (hi - lo)) * (g.botTop - g.top);
+    const yRsi = v => g.rsiBot - (Math.max(0, Math.min(100, v)) / 100) * (g.rsiBot - g.rsiTop);
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      svg.appendChild(el);
+      return el;
+    };
+    // preserveAspectRatio="none" stretches the box, so every stroke must opt out
+    // of scaling or the lines thicken with panel width.
+    const line = (d, stroke, width, dash) => add('path', {
+      d, fill: 'none', stroke, 'stroke-width': width,
+      'vector-effect': 'non-scaling-stroke',
+      'stroke-linejoin': 'round',
+      ...(dash ? { 'stroke-dasharray': dash } : {})
+    });
+    const path = (key, yFn) => {
+      let d = '', pen = false;
+      history.forEach((pt, i) => {
+        const v = pt[key];
+        if (v == null) { pen = false; return; }
+        d += `${pen ? 'L' : 'M'}${xAt(i).toFixed(2)},${yFn(v).toFixed(2)}`;
+        pen = true;
+      });
+      return d;
+    };
+
+    // NASI pane: zero reference, then the 10-day MA under the index itself.
+    if (lo < 0 && hi > 0) {
+      line(`M0,${yNasi(0).toFixed(2)}L${g.w},${yNasi(0).toFixed(2)}`,
+           'var(--border2)', 1, '3 3');
+    }
+    const maPath = path('summation_ma', yNasi);
+    if (maPath) line(maPath, 'var(--accent)', 1, '4 3');
+    line(path('summation', yNasi), 'var(--text)', 1.4);
+
+    // RSI pane: oversold band, threshold rails, then the RSI track.
+    add('rect', {
+      x: 0, y: yRsi(NASI_OVERSOLD), width: g.w,
+      height: g.rsiBot - yRsi(NASI_OVERSOLD),
+      fill: 'var(--amber)', opacity: 0.16
+    });
+    [NASI_OVERSOLD, NASI_LOW_BAND].forEach(lvl => {
+      line(`M0,${yRsi(lvl).toFixed(2)}L${g.w},${yRsi(lvl).toFixed(2)}`,
+           lvl === NASI_OVERSOLD ? 'var(--amber)' : 'var(--border2)', 1,
+           lvl === NASI_OVERSOLD ? null : '3 3');
+    });
+    line(path('rsi', yRsi), 'var(--text2)', 1.2);
+
+    // Mark every session that actually reached the oversold band — these are the
+    // signal dates, and they are easy to miss on a 40px-tall pane.
+    //
+    // An <ellipse> with rx divided by the live x-scale, not a <circle>: under
+    // preserveAspectRatio="none" the x and y scales differ at every panel width
+    // except exactly 600px, and a circle's r is a viewBox length, so it would
+    // render as an ellipse whose shape drifts as the panel is dragged.
+    // vector-effect does not help — it protects stroke width, not geometry, and
+    // is inert on a fill-only shape. Since the scale is read at render time,
+    // renderNasiChart must re-run on resize (see initNasiResize).
+    const sx = (svg.getBoundingClientRect().width / g.w) || 1;
+    history.forEach((pt, i) => {
+      if (pt.rsi == null || pt.rsi > NASI_OVERSOLD) return;
+      add('ellipse', {
+        cx: xAt(i).toFixed(2), cy: yRsi(pt.rsi).toFixed(2),
+        rx: (2 / sx).toFixed(3), ry: 2, fill: 'var(--green)'
+      });
+    });
   }
 
   function renderBreadthHistory(key, el, history) {
@@ -1818,6 +1988,7 @@
     // measurement never depends on it alone: the tab-shown and panel-width
     // paths call sync directly.
     window.addEventListener('resize', syncRadarClampsNow);
+    window.addEventListener('resize', redrawNasiNow);
   }
 
   function renderMomentum(data, date) {

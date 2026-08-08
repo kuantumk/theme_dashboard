@@ -43,7 +43,12 @@ REFRESH_DAYS = 90
 # gets different advance/decline counts on a refresh than it got on the backfill,
 # because its liquidity gate was computed from a partial average.
 VOLUME_WARMUP_DAYS = 45
-EXPORT_SESSIONS = 180
+# Trading sessions, not calendar days: ~18 months, matching the span of the
+# reference $NASI chart. The point of this panel is that RSI(14) troughs recur
+# only about once a year, so a window short enough to contain a single trough
+# shows a squiggle rather than a pattern. Bounded by what the committed A/D
+# cache holds (3.2 years), so widening it needs no backfill.
+EXPORT_SESSIONS = 378
 BATCH_SIZE = 150
 
 

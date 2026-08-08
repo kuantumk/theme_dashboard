@@ -32,6 +32,12 @@
   // decline, so it shifts with issue coverage. Calibrated 2026-08 against
   // StockCharts $NASI (ours 9.97 vs their 8.85 on 2026-07-30).
   const NASI_OVERSOLD = 10;
+  // Second rail. Every major low in the exported window bottomed at or below
+  // 12 — 2025-03-14 (11.01), 2025-04-11 (11.31), 2025-11-21 (5.43), 2026-03-30
+  // (10.95, the SPY year low), 2026-07-31 (9.23) — but only two of the five
+  // broke 10, so a lone 10-line hides most of them. The classic RSI 30 rail is
+  // useless here: this series crosses it constantly.
+  const NASI_LOW_BAND = 12;
   const NASI_WATCH = 20;
   const NASI_OVERBOUGHT = 80;
   const MACRO_DATA_URL = 'data/macro_data.json';
@@ -733,7 +739,7 @@
       height: g.rsiBot - yRsi(NASI_OVERSOLD),
       fill: 'var(--amber)', opacity: 0.16
     });
-    [NASI_OVERSOLD, 30].forEach(lvl => {
+    [NASI_OVERSOLD, NASI_LOW_BAND].forEach(lvl => {
       line(`M0,${yRsi(lvl).toFixed(2)}L${g.w},${yRsi(lvl).toFixed(2)}`,
            lvl === NASI_OVERSOLD ? 'var(--amber)' : 'var(--border2)', 1,
            lvl === NASI_OVERSOLD ? null : '3 3');

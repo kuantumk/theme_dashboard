@@ -92,7 +92,7 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `screening_output/**/*.parquet` | Parquet | Per-run master + per-screener numeric outputs (local scratch; regenerated each run, never committed, pruned to newest 10) |
 | `config/workflow_config.yaml` | YAML | All tunable parameters |
 | `data/nasdaq_ad_history.json` | JSON | `{date: {advances, declines}}` — cached Nasdaq A/D counts (committed; each run refreshes a trailing **90 calendar days** (~62 sessions, `REFRESH_DAYS`) so late-reported sessions self-correct and the multi-year history is paid for once) |
-| `docs/data/nasi.json` | JSON | Nasdaq McClellan Summation Index + RSI(14), current + 180-session history |
+| `docs/data/nasi.json` | JSON | Nasdaq McClellan Summation Index + RSI(14), current + 378-session (~18 month) history. Seeded in git so the panel renders before the first workflow run; rewritten every run thereafter |
 | `docs/data/ep_scan_afternoon.json` | JSON | Afternoon EP scan results |
 | `docs/data/ep_scan_morning.json` | JSON | Morning EP scan results |
 

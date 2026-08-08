@@ -20,6 +20,18 @@ load_dotenv(PROJECT_ROOT / ".env")
 IBKR_FLEX_TOKEN = os.getenv("IBKR_FLEX_TOKEN", "")
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
+# TradingView session cookies for the bid/ask dashboard (src/bidask/).
+# Copied by hand from the browser — never obtained by programmatic login, which
+# triggers CAPTCHA and risks account flagging. Together these are a full account
+# session token, revoked only by logging out of TradingView.
+# Both spellings of the sign cookie are accepted: the cookie itself is
+# `sessionid_sign`, but TRADINGVIEW_SESSION_SIGN reads more naturally.
+TRADINGVIEW_SESSIONID = os.getenv("TRADINGVIEW_SESSIONID", "")
+TRADINGVIEW_SESSION_SIGN = (
+    os.getenv("TRADINGVIEW_SESSIONID_SIGN", "")
+    or os.getenv("TRADINGVIEW_SESSION_SIGN", "")
+)
+
 # ─── YAML Config ────────────────────────────────────────────────
 CONFIG_FILE = PROJECT_ROOT / "config" / "workflow_config.yaml"
 with CONFIG_FILE.open() as _f:

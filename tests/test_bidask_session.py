@@ -92,7 +92,7 @@ class TestDivergence(unittest.TestCase):
 
 
 class TestCoverage(unittest.TestCase):
-    def test_coverage_falls_and_reasons_are_tallied(self):
+    def test_coverage_measures_classification_not_trade_frequency(self):
         acc = SessionAccumulator(CFG)
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")  # no trade
@@ -100,10 +100,27 @@ class TestCoverage(unittest.TestCase):
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 2000)], session_date="d")  # good
         stats = acc.snapshot_stats()
         self.assertEqual(stats["attempted"], 3)
+        self.assertEqual(stats["traded"], 2)     # the no-trade poll is excluded
         self.assertEqual(stats["classified"], 1)
-        self.assertAlmostEqual(stats["coverage"], 1 / 3, places=4)
+        # 1 of 2 actual trades classified — not 1 of 3 attempts. A symbol that
+        # simply did not print is not a classification failure.
+        self.assertAlmostEqual(stats["coverage"], 0.5, places=4)
+        self.assertAlmostEqual(stats["trade_rate"], 2 / 3, places=4)
         self.assertIn("no_trade", stats["rejections"])
         self.assertIn("crossed", stats["rejections"])
+
+    def test_coverage_is_one_when_every_trade_classifies(self):
+        acc = SessionAccumulator(CFG)
+        for poll in buy_sequence("AAA", 4):
+            acc.apply(poll, session_date="d")
+        self.assertEqual(acc.coverage, 1.0)
+
+    def test_coverage_is_zero_when_nothing_traded(self):
+        acc = SessionAccumulator(CFG)
+        for _ in range(3):
+            acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")
+        self.assertEqual(acc.coverage, 0.0)
+        self.assertEqual(acc.trade_rate, 0.0)
 
 
 class TestSessionRoll(unittest.TestCase):
@@ -126,6 +143,21 @@ class TestSessionRoll(unittest.TestCase):
         rolled = acc.apply([row("AAA", 10.10, 10.08, 10.10, 1500)], session_date="d")
         self.assertFalse(rolled)
         self.assertEqual(acc.states["AAA"].ask_hits, 1)
+
+
+class TestSymbolHygiene(unittest.TestCase):
+    def test_nan_symbol_is_dropped(self):
+        # float('nan') is truthy, so a plain falsiness check lets it through and
+        # it renders as a literal "nan" ticker.
+        acc = SessionAccumulator(CFG)
+        acc.apply([row(float("nan"), 10.10, 10.08, 10.10, 1000)], session_date="d")
+        self.assertEqual(acc.states, {})
+
+    def test_none_and_blank_symbols_are_dropped(self):
+        acc = SessionAccumulator(CFG)
+        acc.apply([row(None, 10.10, 10.08, 10.10, 1000),
+                   row("   ", 10.10, 10.08, 10.10, 1000)], session_date="d")
+        self.assertEqual(acc.states, {})
 
 
 class TestSerialization(unittest.TestCase):

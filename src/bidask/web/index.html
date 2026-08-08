@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bid/Ask Tape Pressure</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">Tape Pressure</div>
+    <div class="tabs">
+      <button class="tab-btn active" data-market="crypto">Crypto</button>
+      <button class="tab-btn" data-market="equity">Equity</button>
+    </div>
+    <div class="status">
+      <span class="pill" id="feed-pill">connecting</span>
+      <span class="pill" id="coverage-pill">coverage —</span>
+      <span class="pill" id="polls-pill">0 scans</span>
+      <span class="pill" id="scan-pill">—</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label class="control">
+      min hits
+      <input type="range" id="min-hits" min="1" max="40" value="3">
+      <span class="val" id="min-hits-val">3</span>
+    </label>
+    <label class="control">
+      <input type="checkbox" id="hide-uncertain">
+      hide low-confidence
+    </label>
+    <label class="control">
+      <input type="checkbox" id="hide-divergent">
+      hide divergent
+    </label>
+  </div>
+
+  <div class="pressure">
+    <div class="pressure-labels">
+      <span class="buy" id="buy-label">Buying — (—)</span>
+      <span class="sell" id="sell-label">(—) — Selling</span>
+    </div>
+    <div class="pressure-track"><div class="pressure-fill" id="pressure-fill" style="width:50%"></div></div>
+  </div>
+
+  <div class="columns">
+    <div class="column strong">
+      <div class="column-head">Strong tape — offers being lifted</div>
+      <div id="strong-body"><div class="empty">Waiting for the first scans…</div></div>
+    </div>
+    <div class="column weak">
+      <div class="column-head">Weak tape — bids being hit</div>
+      <div id="weak-body"><div class="empty">Waiting for the first scans…</div></div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Hit counts are an <strong>approximation</strong> of order flow, not a measured share of buying
+    volume. Each scan contributes at most one classified observation, compared against a quote that
+    may be newer than the trade that set the last price. Read the numbers relatively — a ticker
+    against its own history, or ranked against peers on the same cadence.
+    Dashed borders mark tickers where the count-based and volume-weighted signals disagree, which
+    usually means a single large print is driving the reading.
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

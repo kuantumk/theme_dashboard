@@ -23,7 +23,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
 
-from src.bidask.classify import Tick, classify
+from src.bidask.classify import REJECT_NO_TRADE, Tick, classify
 
 # Below this many observed volume deltas the running median is too noisy to
 # winsorize against, so no cap is applied yet.
@@ -140,7 +140,7 @@ class SessionAccumulator:
         self.polls += 1
 
         for row in rows:
-            symbol = row.get("symbol")
+            symbol = _clean_symbol(row.get("symbol"))
             if not symbol:
                 continue
             state = self.states.get(symbol)
@@ -195,9 +195,29 @@ class SessionAccumulator:
     # ── reporting ────────────────────────────────────────────────
 
     @property
+    def traded(self) -> int:
+        """Attempted observations where a trade actually printed.
+
+        `no_trade` is not a classification failure — most symbols simply do not
+        print in any given interval, and that share rises with a broad universe
+        or a tight cadence. Counting it against coverage would make a correctly
+        working scanner look broken.
+        """
+        return self.attempted - self.reasons.get(REJECT_NO_TRADE, 0)
+
+    @property
     def coverage(self) -> float:
-        """Share of attempted observations that produced a usable classification."""
-        return (self.classified / self.attempted) if self.attempted else 0.0
+        """Share of *actual trades* that produced a usable classification.
+
+        Measures classification quality. The denominator excludes polls where
+        nothing traded; `trade_rate` reports those separately.
+        """
+        return (self.classified / self.traded) if self.traded else 0.0
+
+    @property
+    def trade_rate(self) -> float:
+        """Share of attempted observations where a trade printed."""
+        return (self.traded / self.attempted) if self.attempted else 0.0
 
     def active(self, min_hits: int = 0) -> list[TickerState]:
         return [s for s in self.states.values() if s.total_hits >= max(min_hits, 1)]
@@ -206,12 +226,28 @@ class SessionAccumulator:
         return {
             "polls": self.polls,
             "attempted": self.attempted,
+            "traded": self.traded,
             "classified": self.classified,
             "coverage": round(self.coverage, 4),
+            "trade_rate": round(self.trade_rate, 4),
             "rejections": dict(self.reasons),
             "session_date": self.session_date,
             "tracked": len(self.states),
         }
+
+
+def _clean_symbol(value) -> str:
+    """Normalise a symbol, rejecting the NaN that pandas yields for null cells.
+
+    `float('nan')` is truthy, so a plain falsiness check lets it through and it
+    renders as a literal "nan" ticker.
+    """
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return ""
+    return text
 
 
 def _num(value) -> float:

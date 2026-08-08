@@ -130,6 +130,11 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
     if df.empty:
         return Payload(rows=df, matched=matched)
 
+    # Some venue rows carry a null base_currency; without this they surface as a
+    # literal "nan" ticker in the UI.
+    df = df[df["base_currency"].notna()]
+    if df.empty:
+        return Payload(rows=df, matched=matched)
     df = df.drop_duplicates(subset="base_currency", keep="first").copy()
     df["symbol"] = df["base_currency"]
     df["change_pct"] = df["24h_close_change|5"]

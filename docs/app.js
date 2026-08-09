@@ -405,9 +405,14 @@
       // the list, or every remaining ticker dimmed — stay put rather than
       // falling back to the boundary, which would select a dimmed ticker.
       const step = e.key === 'ArrowDown' ? 1 : -1;
-      const start = navIndices[tabId];
+      let start = navIndices[tabId];
+      // A re-render — time travel to a sparser session, a data reload — can
+      // leave the stored index past the end of the new, shorter list. Re-enter
+      // from the near edge instead of scanning from out of bounds, which
+      // matches nothing and deadens BOTH arrows until the user clicks.
+      if (start >= links.length) start = step > 0 ? -1 : links.length;
       if (start < 0 && step < 0) return;   // ArrowUp before any selection
-      const idx = nextVisibleIndex(links, start < 0 ? -1 : start, step);
+      const idx = nextVisibleIndex(links, start, step);
       if (idx < 0) return;
 
       navIndices[tabId] = idx;

@@ -21,6 +21,11 @@
   --rdim: rgba(255, 51, 85, 0.09);
   --amber: #ffb300;
   --adim2: rgba(255, 179, 0, 0.09);
+  /* Selected ticker. Matches the Cytoscape selected-node colour in app.js, so
+     the DOM tabs and the network viz agree on what "selected" looks like. Kept
+     distinct from --amber, which the V/A cutoff dropdowns own in the same panel. */
+  --yellow: #ffd700;
+  --ydim: rgba(255, 215, 0, 0.10);
   /* L1 section band — an indigo-tinted lift of --bg4 in the --accent hue, so a
      new L1 reads as a break in a long scroll without introducing a new color. */
   --l1-bg: #161a2c;
@@ -254,14 +259,17 @@ body {
 
 /* 20% table:chart default on wide monitors (~20% narrower than the former 25%;
    right-panel flex:1 fills the rest), floored at the width that keeps the
-   widest time-travel bar on a single row: 3 date buttons (75px) + the "+ more"
-   dropdown (98px) + the V/A toggles (52px) + gaps + the bar's and the panel's
-   14px padding + the 6px scrollbar = 463px measured, rounded up for slack.
-   Re-measure if the bar gains a control. min-width stays low so the resize
-   handle can still trade list width for chart width — the floor is the
-   *default*, not a hard minimum. */
+   widest time-travel bar on a single row: 1 date button (75px) + the "+ more"
+   dropdown (98px) + the V/A cutoff dropdowns (132px together) + gaps + the
+   bar's and the panel's 14px padding + the 6px scrollbar = 385px measured,
+   rounded up for slack. Down from 470px: the cutoff dropdowns are far wider
+   than the 52px toggle pair they replaced, but dropping the bar from 3 date
+   buttons to 1 more than pays for them. Re-measure if the bar gains a control,
+   a date label widens, or VISIBLE in renderTimeTravelBar goes back up.
+   min-width stays low so the resize handle can still trade list width for
+   chart width — the floor is the *default*, not a hard minimum. */
 .left-panel {
-  width: max(20%, 470px);
+  width: max(20%, 400px);
   min-width: 256px;
   overflow-y: auto;
   padding: 14px;
@@ -507,10 +515,21 @@ td.l {
   border-bottom-color: var(--accent);
 }
 
+/* Yellow, not the accent blue used by the active date button, the active
+   "+ more" dropdown, and the screened-chip outline. The one thing that must be
+   unmistakable on a dense panel should not share a colour with four decorations. */
 .tn-link.active-ticker {
-  color: var(--accent) !important;
-  border-bottom-color: var(--accent);
+  color: var(--yellow) !important;
+  border-bottom-color: var(--yellow);
   border-bottom-style: solid;
+}
+
+/* .tn-link:hover sets accent blue with !important. Without this the selected
+   ticker flips to blue under the cursor — invisible back when selection was
+   also blue, obvious now. */
+.tn-link.active-ticker:hover {
+  color: var(--yellow) !important;
+  border-bottom-color: var(--yellow);
 }
 
 /* (tight_day OR inside_day) AND close_to_ma — green ticker */
@@ -606,9 +625,9 @@ td.l {
   color: var(--text);
 }
 
-/* ── TICKER FILTER TOGGLES (V / A) ─────────────────────── */
-/* Pinned to the far right of the bar so they sit in the empty space next to
-   the date dropdown regardless of how many date buttons a tab renders. */
+/* ── TICKER FILTER CUTOFFS (V / A) ─────────────────────── */
+/* Pinned to the far right of the bar so the date controls bear left and the
+   cutoffs bear right, regardless of how many date buttons a tab renders. */
 .tt-filters {
   display: flex;
   gap: 4px;
@@ -617,35 +636,33 @@ td.l {
   flex-shrink: 0;
 }
 
-.tt-filter-btn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border2);
-  background: transparent;
-  color: var(--text3);
+/* Amber, not the bar's accent blue: the active date button and the active
+   "+ more" dropdown are both blue and sit immediately to the left, so a third
+   adjacent blue control would read as part of the date group. These are always
+   amber because they are always on — there is no disarmed state to contrast
+   against, only a tighter or looser cutoff. */
+.tt-filter-select {
+  padding: 4px 6px;
+  border: 1px solid var(--amber);
+  background: var(--adim2);
+  color: var(--amber);
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
   letter-spacing: 0;
+  appearance: auto;
+  outline: none;
 }
 
-.tt-filter-btn:hover {
-  border-color: var(--amber);
+.tt-filter-select:hover {
+  background: var(--bg4);
+  color: var(--white);
+}
+
+.tt-filter-select option {
+  background: var(--bg2);
   color: var(--text);
-}
-
-/* Amber, not the bar's accent blue: the active date button and the active
-   "+ more" dropdown are both blue and sit immediately to the left, so a third
-   adjacent blue-active control would read as part of the date group. */
-.tt-filter-btn.on {
-  border-color: var(--amber);
-  background: var(--adim2);
-  color: var(--amber);
 }
 
 /* Table rows dim whole: a bright RS/VARS row under a greyed ticker still
@@ -1186,8 +1203,8 @@ th.sorted-asc::after {
 
 /* ── ACTIVE TICKER ROW HIGHLIGHT ───────────────────────── */
 tbody tr.nav-active {
-  background: rgba(85, 102, 255, 0.08) !important;
-  outline: 1px solid rgba(85, 102, 255, 0.2);
+  background: var(--ydim) !important;
+  outline: 1px solid rgba(255, 215, 0, 0.25);
   outline-offset: -1px;
 }
 
@@ -1577,6 +1594,19 @@ tbody tr.nav-active {
 
 .radar-chip.filtered-out:hover {
   opacity: 0.75;
+}
+
+/* Selection on a chip, and it must sit AFTER every rule above.
+   .tn-link.active-ticker sets border-bottom-color, but .radar-chip.chip-screened
+   sets the whole border-color at equal specificity and later in this file, so it
+   wins on source order and a selected screened chip would keep a blue outline.
+   .filtered-out likewise blanks the border, so a selected dimmed chip — still
+   clickable by design — would show no selection at all. Colours only: chip width
+   drives radar chip-row wrapping, which syncRadarClamps measures for "+N more". */
+.radar-chip.active-ticker {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  opacity: 1;
 }
 
 .radar-boosted {

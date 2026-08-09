@@ -363,6 +363,30 @@
     return Array.from(leftPanel.querySelectorAll('.tn-link'));
   }
 
+  /**
+   * A ticker the V/A cutoffs have dimmed. `closest` matches self-or-ancestor,
+   * which covers both shapes in one expression: table tabs put .filtered-out on
+   * the <tr>, the Themes tab puts it on the chip, which is the link itself.
+   */
+  function isDimmed(link) {
+    return link.closest('.filtered-out') !== null;
+  }
+
+  /**
+   * Next undimmed ticker from `idx`, or -1 when there is none that way.
+   *
+   * Scans the full link array rather than a pre-filtered one so the stored index
+   * keeps meaning the same thing regardless of the active cutoffs — the click
+   * handler writes into the same index space with links.indexOf(link), and a
+   * cutoff change must not silently repoint the selection.
+   */
+  function nextVisibleIndex(links, idx, step) {
+    for (let i = idx + step; i >= 0 && i < links.length; i += step) {
+      if (!isDimmed(links[i])) return i;
+    }
+    return -1;
+  }
+
   function initArrowKeyNav() {
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -376,13 +400,15 @@
       const links = getTickerLinksForTab(tabId);
       if (links.length === 0) return;
 
-      let idx = navIndices[tabId];
-
-      if (e.key === 'ArrowDown') {
-        idx = (idx < links.length - 1) ? idx + 1 : idx;
-      } else {
-        idx = (idx > 0) ? idx - 1 : 0;
-      }
+      // Travel between tickers that pass the cutoffs, stepping over any number
+      // of consecutive dimmed ones. When nothing undimmed lies that way — end of
+      // the list, or every remaining ticker dimmed — stay put rather than
+      // falling back to the boundary, which would select a dimmed ticker.
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      const start = navIndices[tabId];
+      if (start < 0 && step < 0) return;   // ArrowUp before any selection
+      const idx = nextVisibleIndex(links, start < 0 ? -1 : start, step);
+      if (idx < 0) return;
 
       navIndices[tabId] = idx;
       const link = links[idx];
@@ -798,52 +824,59 @@
   let activeSessionDate = null;
   let hasUserSelectedSession = false;
 
-  // ── TICKER FILTER TOGGLES (V / A) ─────────────────────
-  // Shared across tabs like activeSessionDate: arming V on VARS leaves it armed
-  // on Themes. Session-only — no persistence across reloads.
-  const FILTER_MIN_AVG_VOL = 1e6;    // 50-day avg share volume (vol_sma50)
-  const FILTER_MIN_ADR_PCT = 0.04;   // 20-day ADR, fractional (0.04 == 4%)
-  const tickerFilters = { vol: false, adr: false };
+  // ── TICKER FILTER CUTOFFS (V / A) ─────────────────────
+  // Shared across tabs like activeSessionDate: changing V on VARS leaves it
+  // changed on Themes. Session-only — reload returns to the defaults below.
+  //
+  // These are cutoffs, not toggles: there is no off position. The dashboard
+  // dims against $50M / 4% from first paint, and the only choice is how tight.
+  // V reads 20-day average DOLLAR volume — the column every screener and the
+  // radar universe floor already gate on — not share volume, which it read
+  // while the control was a fixed 1M-share on/off button.
+  const tickerFilters = { vol: 50e6, adr: 0.04 };
+
+  // Which payload key and data-attribute each cutoff reads.
+  const FILTER_SOURCES = { vol: 'dvol', adr: 'adr' };
 
   /**
-   * Dim every rendered ticker that fails an armed floor.
+   * Dim every rendered ticker that falls under a cutoff.
    *
-   * A view-level pass, not a re-render: renderers emit data-avgvol/data-adr and
+   * A view-level pass, not a re-render: renderers emit data-dvol/data-adr and
    * this only toggles a class. That keeps scores, breadth counts, ranks, sort
-   * order, and the radar's measured "+N more" chip count identical armed or
-   * disarmed — nothing leaves the DOM and nothing changes size.
+   * order, and the radar's measured "+N more" chip count identical at every
+   * cutoff — nothing leaves the DOM and nothing changes size.
    *
    * Fail-open: a ticker with the attribute absent or unparseable passes. Missing
-   * metrics are unknown, not disqualifying, and the published JSON carries none
-   * of them until the next daily workflow run republishes it.
+   * metrics are unknown, not disqualifying. This matters more now that the
+   * filters are always on: the published JSON carries no dollar volume until the
+   * next daily workflow run republishes it, and failing open means the cutoffs
+   * dim nothing for one run rather than dimming everything.
    */
   function applyTickerFilters() {
     const scope = document.querySelector('.tab-content.active') || document;
-    scope.querySelectorAll('[data-avgvol], [data-adr]').forEach(el => {
-      const belowFloor = (attr, floor) => {
-        if (!tickerFilters[attr === 'avgvol' ? 'vol' : 'adr']) return false;
-        const raw = el.dataset[attr === 'avgvol' ? 'avgvol' : 'adr'];
+    scope.querySelectorAll('[data-dvol], [data-adr]').forEach(el => {
+      const belowCutoff = (key) => {
+        const raw = el.dataset[FILTER_SOURCES[key]];
         if (raw === undefined || raw === '') return false;
         const value = parseFloat(raw);
-        return Number.isFinite(value) && value < floor;
+        return Number.isFinite(value) && value < tickerFilters[key];
       };
-      const dim = belowFloor('avgvol', FILTER_MIN_AVG_VOL)
-        || belowFloor('adr', FILTER_MIN_ADR_PCT);
-      el.classList.toggle('filtered-out', dim);
+      el.classList.toggle('filtered-out', belowCutoff('vol') || belowCutoff('adr'));
     });
   }
 
   function initTickerFilters() {
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.tt-filter-btn');
-      if (!btn) return;
-      const key = btn.dataset.filter;
+    document.addEventListener('change', (e) => {
+      const select = e.target.closest('.tt-filter-select');
+      if (!select) return;
+      const key = select.dataset.filter;
       if (!(key in tickerFilters)) return;
-      tickerFilters[key] = !tickerFilters[key];
-      // State is shared, so every bar's copy of this button must agree.
-      document.querySelectorAll(`.tt-filter-btn[data-filter="${key}"]`).forEach(b => {
-        b.classList.toggle('on', tickerFilters[key]);
-        b.setAttribute('aria-pressed', String(tickerFilters[key]));
+      const cutoff = parseFloat(select.value);
+      if (!Number.isFinite(cutoff)) return;
+      tickerFilters[key] = cutoff;
+      // State is shared, so every bar's copy of this select must agree.
+      document.querySelectorAll(`.tt-filter-select[data-filter="${key}"]`).forEach(s => {
+        s.value = select.value;
       });
       applyTickerFilters();
     });
@@ -852,7 +885,7 @@
   /** Emit the filter attributes for a ticker payload. Omitted when unknown. */
   function filterAttrs(t) {
     const parts = [];
-    if (typeof t.avg_vol === 'number') parts.push(` data-avgvol="${t.avg_vol}"`);
+    if (typeof t.dollar_vol === 'number') parts.push(` data-dvol="${t.dollar_vol}"`);
     if (typeof t.adr_pct === 'number') parts.push(` data-adr="${t.adr_pct}"`);
     return parts.join('');
   }
@@ -1098,7 +1131,12 @@
     if (!container || dates.length === 0) return;
 
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const VISIBLE = 3;  // first N as buttons; remainder go in the dropdown
+    // First N sessions render as buttons; the rest go in the "+ more" dropdown.
+    // One, not three: the V/A cutoff dropdowns are much wider than the toggle
+    // buttons they replaced, and three date buttons plus both cutoffs no longer
+    // fit one row at the left panel's default width. Raising this again means
+    // re-measuring the .left-panel width floor.
+    const VISIBLE = 1;
     const fmt = (rd) => {
       const d = new Date(rd + 'T12:00:00');
       const wd = weekdays[d.getDay()];

@@ -421,8 +421,21 @@
         <div class="time-travel-bar" id="time-travel-bar">
           <div class="time-travel-dates" id="time-travel-dates"></div>
           <div class="tt-filters">
-            <button type="button" class="tt-filter-btn" data-filter="vol" aria-pressed="false" title="Dim tickers with average volume below 1M">V</button>
-            <button type="button" class="tt-filter-btn" data-filter="adr" aria-pressed="false" title="Dim tickers with ADR% below 4%">A</button>
+            <select class="tt-filter-select" data-filter="vol" aria-label="Dollar volume cutoff"
+                    title="Dim tickers whose 20-day average dollar volume is below this cutoff">
+              <option value="10000000">$10M</option>
+              <option value="50000000" selected>$50M</option>
+              <option value="100000000">$100M</option>
+            </select>
+            <select class="tt-filter-select" data-filter="adr" aria-label="ADR percent cutoff"
+                    title="Dim tickers whose 20-day ADR% is below this cutoff">
+              <option value="0.025">2.5%</option>
+              <option value="0.03">3%</option>
+              <option value="0.035">3.5%</option>
+              <option value="0.04" selected>4%</option>
+              <option value="0.045">4.5%</option>
+              <option value="0.05">5%</option>
+            </select>
           </div>
         </div>
         <div id="themes-container">
@@ -447,8 +460,21 @@
         <div class="time-travel-bar">
           <div class="time-travel-dates" id="momentum-tt-dates"></div>
           <div class="tt-filters">
-            <button type="button" class="tt-filter-btn" data-filter="vol" aria-pressed="false" title="Dim tickers with average volume below 1M">V</button>
-            <button type="button" class="tt-filter-btn" data-filter="adr" aria-pressed="false" title="Dim tickers with ADR% below 4%">A</button>
+            <select class="tt-filter-select" data-filter="vol" aria-label="Dollar volume cutoff"
+                    title="Dim tickers whose 20-day average dollar volume is below this cutoff">
+              <option value="10000000">$10M</option>
+              <option value="50000000" selected>$50M</option>
+              <option value="100000000">$100M</option>
+            </select>
+            <select class="tt-filter-select" data-filter="adr" aria-label="ADR percent cutoff"
+                    title="Dim tickers whose 20-day ADR% is below this cutoff">
+              <option value="0.025">2.5%</option>
+              <option value="0.03">3%</option>
+              <option value="0.035">3.5%</option>
+              <option value="0.04" selected>4%</option>
+              <option value="0.045">4.5%</option>
+              <option value="0.05">5%</option>
+            </select>
           </div>
         </div>
         <div id="momentum-container">
@@ -473,8 +499,21 @@
         <div class="time-travel-bar">
           <div class="time-travel-dates" id="volume-tt-dates"></div>
           <div class="tt-filters">
-            <button type="button" class="tt-filter-btn" data-filter="vol" aria-pressed="false" title="Dim tickers with average volume below 1M">V</button>
-            <button type="button" class="tt-filter-btn" data-filter="adr" aria-pressed="false" title="Dim tickers with ADR% below 4%">A</button>
+            <select class="tt-filter-select" data-filter="vol" aria-label="Dollar volume cutoff"
+                    title="Dim tickers whose 20-day average dollar volume is below this cutoff">
+              <option value="10000000">$10M</option>
+              <option value="50000000" selected>$50M</option>
+              <option value="100000000">$100M</option>
+            </select>
+            <select class="tt-filter-select" data-filter="adr" aria-label="ADR percent cutoff"
+                    title="Dim tickers whose 20-day ADR% is below this cutoff">
+              <option value="0.025">2.5%</option>
+              <option value="0.03">3%</option>
+              <option value="0.035">3.5%</option>
+              <option value="0.04" selected>4%</option>
+              <option value="0.045">4.5%</option>
+              <option value="0.05">5%</option>
+            </select>
           </div>
         </div>
         <div id="volume-container">
@@ -735,8 +774,21 @@
       <div class="time-travel-bar">
         <div class="time-travel-dates" id="vars-tt-dates"></div>
         <div class="tt-filters">
-          <button type="button" class="tt-filter-btn" data-filter="vol" aria-pressed="false" title="Dim tickers with average volume below 1M">V</button>
-          <button type="button" class="tt-filter-btn" data-filter="adr" aria-pressed="false" title="Dim tickers with ADR% below 4%">A</button>
+          <select class="tt-filter-select" data-filter="vol" aria-label="Dollar volume cutoff"
+                  title="Dim tickers whose 20-day average dollar volume is below this cutoff">
+            <option value="10000000">$10M</option>
+            <option value="50000000" selected>$50M</option>
+            <option value="100000000">$100M</option>
+          </select>
+          <select class="tt-filter-select" data-filter="adr" aria-label="ADR percent cutoff"
+                  title="Dim tickers whose 20-day ADR% is below this cutoff">
+            <option value="0.025">2.5%</option>
+            <option value="0.03">3%</option>
+            <option value="0.035">3.5%</option>
+            <option value="0.04" selected>4%</option>
+            <option value="0.045">4.5%</option>
+            <option value="0.05">5%</option>
+          </select>
         </div>
       </div>
       <div id="vars-container">
@@ -795,8 +847,21 @@
       <div class="time-travel-bar">
         <div class="time-travel-dates" id="parabolic-tt-dates"></div>
         <div class="tt-filters">
-          <button type="button" class="tt-filter-btn" data-filter="vol" aria-pressed="false" title="Dim tickers with average volume below 1M">V</button>
-          <button type="button" class="tt-filter-btn" data-filter="adr" aria-pressed="false" title="Dim tickers with ADR% below 4%">A</button>
+          <select class="tt-filter-select" data-filter="vol" aria-label="Dollar volume cutoff"
+                  title="Dim tickers whose 20-day average dollar volume is below this cutoff">
+            <option value="10000000">$10M</option>
+            <option value="50000000" selected>$50M</option>
+            <option value="100000000">$100M</option>
+          </select>
+          <select class="tt-filter-select" data-filter="adr" aria-label="ADR percent cutoff"
+                  title="Dim tickers whose 20-day ADR% is below this cutoff">
+            <option value="0.025">2.5%</option>
+            <option value="0.03">3%</option>
+            <option value="0.035">3.5%</option>
+            <option value="0.04" selected>4%</option>
+            <option value="0.045">4.5%</option>
+            <option value="0.05">5%</option>
+          </select>
         </div>
       </div>
       <div class="card">

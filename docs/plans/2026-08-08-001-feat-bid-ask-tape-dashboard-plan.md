@@ -74,7 +74,7 @@ Order flow is the mechanism underneath price rather than a restatement of it. A 
 
 **Runtime**
 
-- R28. `scripts/launch_bid_ask_dash.bat` starts the app on double-click: poll loop, local HTTP server, browser opened to the app.
+- R28. `scripts/launch_tape_pressure.bat` starts the app on double-click: poll loop, local HTTP server, browser opened to the app.
 - R29. The server binds to loopback only and serves only the app's own static directory plus its state endpoint. It never serves the repository root, which would expose `.env`.
 - R30. All state is written to a gitignored path. The app never writes to `docs/data/`, `data/`, or any tracked file.
 - R31. Poll cadence is configurable and defaults to 10 seconds. On repeated feed errors the loop backs off rather than retrying at cadence.
@@ -169,7 +169,7 @@ src/bidask/
     ├── app.js           # fetch, render, filter controls
     └── style.css        # :root tokens copied from docs/style.css
 scripts/
-└── launch_bid_ask_dash.bat
+└── launch_tape_pressure.bat
 tests/
 ├── test_bidask_classify.py
 ├── test_bidask_session.py
@@ -408,7 +408,7 @@ tests/
 **Dependencies:** U6.
 
 **Files:**
-- `src/bidask/server.py`, `scripts/launch_bid_ask_dash.bat`
+- `src/bidask/server.py`, `scripts/launch_tape_pressure.bat`
 - `tests/test_bidask_server.py`
 
 **Approach:**
@@ -437,7 +437,7 @@ tests/
 - `uv run python -m unittest discover -s tests` passes.
 - The R11 directional-mapping test passes with hardcoded fixtures.
 - `/.env` and `/../.env` return 404 against the running server.
-- `scripts/launch_bid_ask_dash.bat` opens a populated crypto view within two poll intervals and leaves `git status` clean.
+- `scripts/launch_tape_pressure.bat` opens a populated crypto view within two poll intervals and leaves `git status` clean.
 - Classification coverage on a live crypto run exceeds 50%, with rejection reasons tallied.
 - Count-based and volume-weighted signals are both present, and divergence is flagged where they disagree.
 

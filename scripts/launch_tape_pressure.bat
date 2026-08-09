@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  Bid/Ask Tape Pressure Dashboard - local launcher
+REM  Tape Pressure Dashboard - local launcher
 REM
 REM  Starts the poll loop and a loopback web server, then opens
 REM  the dashboard in your browser. Ctrl-C in this window stops it.

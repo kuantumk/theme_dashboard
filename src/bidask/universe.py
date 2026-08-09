@@ -56,8 +56,25 @@ def apply_in_play(df: pd.DataFrame, cfg) -> pd.DataFrame:
     return df[keep]
 
 
-def build_universe(df: pd.DataFrame, cfg, *, in_play: bool = True) -> pd.DataFrame:
+def exclude_symbols(df: pd.DataFrame, excluded) -> pd.DataFrame:
+    """Drop symbols whose tape pressure carries no information.
+
+    Stablecoins are the motivating case: pegged at $1, so their observations are
+    micro-oscillation around the peg being classified as directional flow. They
+    also trade constantly, so they accumulate hits faster than anything real and
+    float to the top of the column.
+    """
+    if df.empty or not excluded or "symbol" not in df.columns:
+        return df
+    return df[~df["symbol"].astype(str).str.upper().isin(excluded)]
+
+
+def build_universe(
+    df: pd.DataFrame, cfg, *, in_play: bool = True, market: str = "equity"
+) -> pd.DataFrame:
     out = apply_liquidity(df, cfg)
+    if market == "crypto":
+        out = exclude_symbols(out, cfg.crypto_exclude)
     if in_play:
         out = apply_in_play(out, cfg)
     return out

@@ -115,6 +115,18 @@ body {
 
 .control { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
 .control input[type="range"] { width: 110px; accent-color: var(--accent); }
+
+.control select {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+}
+
+.control select:hover { border-color: var(--accent); }
 .control input[type="checkbox"] { accent-color: var(--accent); }
 .control .val { color: var(--white); min-width: 22px; font-variant-numeric: tabular-nums; }
 

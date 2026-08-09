@@ -10,8 +10,8 @@
   <div class="topbar">
     <div class="brand">Tape Pressure</div>
     <div class="tabs">
-      <button class="tab-btn active" data-market="crypto">Crypto</button>
-      <button class="tab-btn" data-market="equity">Equity</button>
+      <button class="tab-btn active" data-market="equity">Equity</button>
+      <button class="tab-btn" data-market="crypto">Crypto</button>
     </div>
     <div class="status">
       <span class="pill" id="feed-pill">connecting</span>
@@ -22,6 +22,18 @@
   </div>
 
   <div class="controls">
+    <label class="control">
+      scan every
+      <select id="cadence">
+        <option value="3">3s</option>
+        <option value="5">5s</option>
+        <option value="10" selected>10s</option>
+        <option value="15">15s</option>
+        <option value="30">30s</option>
+        <option value="60">60s</option>
+        <option value="120">120s</option>
+      </select>
+    </label>
     <label class="control">
       min hits
       <input type="range" id="min-hits" min="1" max="40" value="3">

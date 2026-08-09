@@ -6,8 +6,8 @@ so thresholds are never hardcoded in the pipeline modules.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import FrozenSet, Optional
 
 from config.settings import CONFIG, TRADINGVIEW_SESSION_SIGN, TRADINGVIEW_SESSIONID
 
@@ -34,6 +34,17 @@ class BidAskConfig:
     min_hits_to_show: int
     max_rows_per_column: int
     max_rows_per_group: int
+    min_poll_seconds: int
+    max_poll_seconds: int
+    crypto_exclude: FrozenSet[str] = frozenset()
+
+    def clamp_poll_seconds(self, seconds) -> int:
+        """Bound a requested cadence. The floor protects the vendor endpoint."""
+        try:
+            value = int(seconds)
+        except (TypeError, ValueError):
+            return self.poll_seconds
+        return max(self.min_poll_seconds, min(self.max_poll_seconds, value))
 
     @property
     def avg_volume_field(self) -> str:
@@ -79,6 +90,11 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         min_hits_to_show=int(raw.get("min_hits_to_show", 3)),
         max_rows_per_column=int(raw.get("max_rows_per_column", 60)),
         max_rows_per_group=int(raw.get("max_rows_per_group", 12)),
+        min_poll_seconds=int(raw.get("min_poll_seconds", 3)),
+        max_poll_seconds=int(raw.get("max_poll_seconds", 120)),
+        crypto_exclude=frozenset(
+            str(s).strip().upper() for s in (raw.get("crypto_exclude") or []) if str(s).strip()
+        ),
     )
 
 

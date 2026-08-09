@@ -10,9 +10,13 @@
 
   const STATE_URL = 'state.json';
 
-  let market = 'crypto';
+  const CADENCE_URL = 'cadence';
+
+  let market = 'equity';
   let state = null;
   let timer = null;
+  let cadence = null;      // seconds; mirrors the server's live value
+  let pickedTab = false;   // user has chosen a tab, so stop auto-selecting
 
   const els = {
     strong: document.getElementById('strong-body'),
@@ -28,7 +32,28 @@
     minHitsVal: document.getElementById('min-hits-val'),
     hideUncertain: document.getElementById('hide-uncertain'),
     hideDivergent: document.getElementById('hide-divergent'),
+    cadence: document.getElementById('cadence'),
   };
+
+  function tickerCount(view) {
+    if (!view || !view.columns) return 0;
+    return ['strong', 'weak'].reduce((total, side) =>
+      total + (view.columns[side] || []).reduce((n, g) => n + (g.members || []).length, 0), 0);
+  }
+
+  // Equity is empty outside US market hours, so landing there shows nothing and
+  // looks broken. Switch to whichever tab actually has data until the user picks
+  // one, then respect their choice.
+  function autoSelectTab() {
+    if (pickedTab || !state) return;
+    if (tickerCount(state[market])) { pickedTab = true; return; }
+    const other = market === 'equity' ? 'crypto' : 'equity';
+    if (tickerCount(state[other])) {
+      market = other;
+      document.querySelectorAll('.tab-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.market === market));
+    }
+  }
 
   // Feed-sourced strings (industry labels, symbols) come from an external
   // vendor, unlike the repo-controlled taxonomy. Escape before they touch markup.
@@ -128,6 +153,7 @@
 
   function render() {
     if (!state) return;
+    autoSelectTab();
     const view = state[market];
     if (!view) return;
     renderStatus(view);
@@ -143,7 +169,17 @@
   function refresh() {
     fetch(STATE_URL + '?t=' + Date.now())
       .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
-      .then(data => { state = data; render(); })
+      .then(data => {
+        state = data;
+        // Follow the server's live cadence: it is authoritative (it clamps to
+        // configured bounds) and another tab may have changed it.
+        if (state.poll_seconds && state.poll_seconds !== cadence) {
+          cadence = state.poll_seconds;
+          els.cadence.value = String(cadence);
+          schedule();
+        }
+        render();
+      })
       .catch(() => {
         els.feed.textContent = 'server unreachable';
         els.feed.className = 'pill error';
@@ -152,8 +188,24 @@
 
   function schedule() {
     if (timer) clearInterval(timer);
-    const seconds = (state && state.poll_seconds) || 10;
-    timer = setInterval(refresh, seconds * 1000);
+    timer = setInterval(refresh, (cadence || 10) * 1000);
+  }
+
+  function setCadence(seconds) {
+    fetch(CADENCE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seconds: seconds }),
+    })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(data => {
+        // The server clamps to configured bounds, so echo back what it applied
+        // rather than what was asked for.
+        cadence = data.poll_seconds;
+        els.cadence.value = String(cadence);
+        schedule();
+      })
+      .catch(() => { els.cadence.value = String(cadence || 10); });
   }
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -161,9 +213,12 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       market = btn.dataset.market;
+      pickedTab = true;
       render();
     });
   });
+
+  els.cadence.addEventListener('change', () => setCadence(parseInt(els.cadence.value, 10)));
 
   els.minHits.addEventListener('input', () => {
     els.minHitsVal.textContent = els.minHits.value;

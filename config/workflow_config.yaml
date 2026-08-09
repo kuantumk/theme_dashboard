@@ -157,6 +157,44 @@ bidask:
   close_auction_minutes: 5      # equity only: reject prints inside the closing window
   winsor_multiple: 10.0         # cap a poll's volume delta at this x its running median
 
+  # Runtime cadence bounds for the in-app control. The floor protects an
+  # undocumented endpoint from being hammered under a personal account.
+  min_poll_seconds: 3
+  max_poll_seconds: 120
+
+  # Crypto: symbols whose tape pressure is meaningless. Stablecoins are pegged,
+  # so their "buying pressure" is micro-oscillation around the peg being read as
+  # directional flow -- and because they trade constantly they float to the top
+  # of the column. Gold-backed tokens (PAXG, XAUT) are deliberately NOT here:
+  # they track a real moving asset.
+  crypto_exclude:
+    - USDC
+    - USDT
+    - USD1
+    - USDS
+    - USDD
+    - USDE
+    - USDF
+    - USDY
+    - USDP
+    - FDUSD
+    - PYUSD
+    - RLUSD
+    - TUSD
+    - BUSD
+    - DAI
+    - FRAX
+    - LUSD
+    - GUSD
+    - GHO
+    - CRVUSD
+    - SUSD
+    - USTC
+    - EURI
+    - EURS
+    - EURT
+    - AEUR
+
   # Display
   min_hits_to_show: 3           # hide tickers below this total hit count
   max_rows_per_column: 60       # per-column render cap

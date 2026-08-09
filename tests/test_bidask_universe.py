@@ -73,6 +73,49 @@ class TestInPlayGate(unittest.TestCase):
         self.assertEqual(len(apply_in_play(df, CFG)), 0)
 
 
+class TestStablecoinExclusion(unittest.TestCase):
+    def test_stablecoins_are_dropped_from_crypto(self):
+        # Pegged assets accumulate hits from micro-oscillation around $1 and
+        # float to the top of the column carrying no information.
+        df = frame([
+            {"symbol": "USDC", "close": 1.0, "avg_volume": None},
+            {"symbol": "USDT", "close": 1.0, "avg_volume": None},
+            {"symbol": "BTC", "close": 65000.0, "avg_volume": None},
+        ])
+        out = build_universe(df, CFG, in_play=False, market="crypto")
+        self.assertEqual(out["symbol"].tolist(), ["BTC"])
+
+    def test_exclusion_is_case_insensitive(self):
+        df = frame([{"symbol": "usdc", "close": 1.0, "avg_volume": None},
+                    {"symbol": "BTC", "close": 65000.0, "avg_volume": None}])
+        out = build_universe(df, CFG, in_play=False, market="crypto")
+        self.assertEqual(out["symbol"].tolist(), ["BTC"])
+
+    def test_gold_backed_tokens_are_kept(self):
+        # PAXG/XAUT track a real moving asset; they are not pegged.
+        df = frame([{"symbol": "PAXG", "close": 2600.0, "avg_volume": None},
+                    {"symbol": "XAUT", "close": 2600.0, "avg_volume": None}])
+        out = build_universe(df, CFG, in_play=False, market="crypto")
+        self.assertEqual(sorted(out["symbol"].tolist()), ["PAXG", "XAUT"])
+
+    def test_equity_market_is_unaffected(self):
+        # "USDC" as an equity ticker must not be filtered by a crypto rule.
+        df = frame([{"symbol": "USDC", "close": 50.0, "avg_volume": 1_000_000}])
+        out = build_universe(df, CFG, in_play=False, market="equity")
+        self.assertEqual(len(out), 1)
+
+
+class TestCadenceClamp(unittest.TestCase):
+    def test_requested_cadence_is_bounded(self):
+        self.assertEqual(CFG.clamp_poll_seconds(1), CFG.min_poll_seconds)
+        self.assertEqual(CFG.clamp_poll_seconds(9999), CFG.max_poll_seconds)
+        self.assertEqual(CFG.clamp_poll_seconds(15), 15)
+
+    def test_garbage_cadence_falls_back_to_the_configured_value(self):
+        self.assertEqual(CFG.clamp_poll_seconds(None), CFG.poll_seconds)
+        self.assertEqual(CFG.clamp_poll_seconds("fast"), CFG.poll_seconds)
+
+
 class TestBuildUniverse(unittest.TestCase):
     def test_in_play_can_be_bypassed(self):
         df = frame([{"symbol": "AAA", "close": 100.0, "avg_volume": 1_000_000,

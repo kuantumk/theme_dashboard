@@ -36,6 +36,7 @@ from src.bidask.universe import build_universe
 ET = ZoneInfo("America/New_York")
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATE_ROUTE = "/state.json"
+CADENCE_ROUTE = "/cadence"
 STATE_FILENAME = "bidask_state.json"
 DEFAULT_OUT_DIR = "scripts/local_runs"
 
@@ -106,7 +107,15 @@ class TapeEngine:
         self.errors = {m: "" for m in markets}
         self.feeds = {m: "" for m in markets}
         self.consecutive_failures = 0
+        # Mutable so the in-app control can retune cadence without a restart.
+        # cfg stays frozen; this is the live value the loop reads each cycle.
+        self.poll_seconds = cfg.poll_seconds
         self._lock = threading.Lock()
+
+    def set_poll_seconds(self, seconds) -> int:
+        """Retune cadence at runtime, bounded by config. Returns the value set."""
+        self.poll_seconds = self.cfg.clamp_poll_seconds(seconds)
+        return self.poll_seconds
 
     def poll_once(self) -> bool:
         """One full cycle across every market. Returns False if every feed failed."""
@@ -119,7 +128,10 @@ class TapeEngine:
                 continue
             any_ok = True
 
-            rows = build_universe(payload.rows, self.cfg, in_play=(market == "equity"))
+            rows = build_universe(
+                payload.rows, self.cfg,
+                in_play=(market == "equity"), market=market,
+            )
             session_date, in_auction = (
                 _equity_session_context() if market == "equity" else _crypto_session_context()
             )
@@ -136,7 +148,9 @@ class TapeEngine:
         return any_ok
 
     def build_state(self) -> dict:
-        state = {"poll_seconds": self.cfg.poll_seconds,
+        state = {"poll_seconds": self.poll_seconds,
+                 "min_poll_seconds": self.cfg.min_poll_seconds,
+                 "max_poll_seconds": self.cfg.max_poll_seconds,
                  "generated_at": datetime.now().strftime("%H:%M:%S")}
         for market in self.markets:
             acc = self.accumulators[market]
@@ -198,6 +212,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     """Serves the app directory plus exactly one state route."""
 
     state_path: Path = None  # set by the factory below
+    engine = None            # set by the factory below
 
     def translate_path(self, path):
         # Everything else resolves inside WEB_DIR because the base class is
@@ -209,6 +224,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._serve_state()
             return
         super().do_GET()
+
+    def do_POST(self):  # noqa: N802 — base-class naming
+        """Cadence retune. POST rather than GET so a browser prefetch or a
+        speculative connection can never silently change the poll rate."""
+        if self.path.split("?", 1)[0] != CADENCE_ROUTE or self.engine is None:
+            self.send_error(404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            body = json.loads(self.rfile.read(length) or b"{}")
+        except (ValueError, OSError):
+            self.send_error(400, "bad request")
+            return
+        applied = self.engine.set_poll_seconds(body.get("seconds"))
+        payload = json.dumps({"poll_seconds": applied}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
 
     def _serve_state(self):
         try:
@@ -227,8 +262,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass  # the poll loop's own output is the useful signal
 
 
-def make_handler(state_path: Path):
-    cls = type("BoundHandler", (Handler,), {"state_path": state_path})
+def make_handler(state_path: Path, engine=None):
+    cls = type("BoundHandler", (Handler,), {"state_path": state_path, "engine": engine})
     return functools.partial(cls, directory=str(WEB_DIR))
 
 
@@ -257,7 +292,9 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
                 engine.consecutive_failures += 1
                 ok = False
             step = BACKOFF_STEPS[min(engine.consecutive_failures, len(BACKOFF_STEPS) - 1)]
-            wait = cfg.poll_seconds * (step if not ok else 1)
+            # Read the live value, not the frozen config: the in-app control
+            # retunes cadence between cycles without a restart.
+            wait = engine.poll_seconds * (step if not ok else 1)
             if not ok and engine.consecutive_failures:
                 print(f"  feed unavailable, backing off {wait}s")
             stop.wait(max(0.0, wait - (time.time() - started)))
@@ -273,14 +310,16 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
         daemon_threads = True
         allow_reuse_address = True
 
-    with _Server(("127.0.0.1", port), make_handler(out_dir / STATE_FILENAME)) as httpd:
+    handler = make_handler(out_dir / STATE_FILENAME, engine)
+    with _Server(("127.0.0.1", port), handler) as httpd:
         url = f"http://127.0.0.1:{port}/index.html"
         print("=" * 62)
         print("  Bid/Ask Tape Pressure")
         print("=" * 62)
         print(f"  serving : {url}")
         print(f"  state   : {out_dir / STATE_FILENAME}")
-        print(f"  cadence : {cfg.poll_seconds}s")
+        print(f"  cadence : {engine.poll_seconds}s "
+              f"(adjustable in-app, {cfg.min_poll_seconds}-{cfg.max_poll_seconds}s)")
         print("  Ctrl-C to stop")
         if open_browser:
             threading.Timer(1.0, lambda: webbrowser.open(url)).start()

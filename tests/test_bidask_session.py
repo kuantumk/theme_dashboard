@@ -1,5 +1,6 @@
 """Session accumulator tests."""
 
+import math
 import unittest
 
 from src.bidask.config import load_config
@@ -158,6 +159,82 @@ class TestSymbolHygiene(unittest.TestCase):
         acc.apply([row(None, 10.10, 10.08, 10.10, 1000),
                    row("   ", 10.10, 10.08, 10.10, 1000)], session_date="d")
         self.assertEqual(acc.states, {})
+
+
+class TestTickRuleFreshness(unittest.TestCase):
+    def test_oscillating_midspread_price_classifies_by_tick_rule(self):
+        # Regression: prior_different_price used to be refreshed *after*
+        # classify consumed it, so on the poll where the price moved the
+        # classifier still held the pre-change value. On an oscillating price
+        # that value equalled cur.last, the tick rule returned 0, and every
+        # mid-spread print came back unclassified.
+        acc = SessionAccumulator(CFG)
+        prices = [10.09, 10.10, 10.09, 10.10, 10.09]
+        for i, price in enumerate(prices):
+            acc.apply([row("AAA", price, 10.05, 10.15, 1000 + i * 500)],
+                      session_date="d")
+        state = acc.states["AAA"]
+        self.assertEqual(state.total_hits, 4)
+        self.assertGreater(state.ask_hits, 0)
+        self.assertGreater(state.bid_hits, 0)
+        self.assertEqual(acc.coverage, 1.0)
+
+
+class TestInPlayChurn(unittest.TestCase):
+    def test_absence_gap_is_not_booked_as_one_print(self):
+        # A ticker that drops below the in-play gate and returns would otherwise
+        # have its entire absence booked as a single signed print, because
+        # volume_delta spans the whole gap.
+        acc = SessionAccumulator(CFG)
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 1500)], session_date="d")
+        delta_before = acc.states["AAA"].delta
+
+        for _ in range(4):           # ticker absent from the feed
+            acc.apply([], session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 9_000_000)], session_date="d")
+
+        # The re-entry poll is a warmup, contributing nothing.
+        self.assertEqual(acc.states["AAA"].delta, delta_before)
+
+    def test_continuous_presence_still_accumulates(self):
+        acc = SessionAccumulator(CFG)
+        for poll in buy_sequence("AAA", 4):
+            acc.apply(poll, session_date="d")
+        self.assertEqual(acc.states["AAA"].ask_hits, 3)
+
+
+class TestNonFinitePayload(unittest.TestCase):
+    def test_nan_meta_field_is_dropped_from_the_payload(self):
+        # json.dumps would otherwise emit a bare NaN token — valid Python,
+        # invalid JSON — and the browser would reject the whole document.
+        acc = SessionAccumulator(CFG)
+        acc.apply([row("AAA", 10.09, 10.08, 10.10, 1000,
+                       **{"High.6M": float("nan"), "rvol": float("nan")})],
+                  session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 1500,
+                       **{"High.6M": float("nan"), "rvol": 2.0})],
+                  session_date="d")
+        payload = acc.states["AAA"].as_dict()
+        self.assertNotIn("High.6M", payload)
+        self.assertEqual(payload["rvol"], 2.0)
+
+    def test_payload_serializes_as_strict_json(self):
+        import json
+        acc = SessionAccumulator(CFG)
+        acc.apply([row("AAA", 10.09, 10.08, 10.10, 1000,
+                       **{"High.1M": float("nan")})], session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 1500,
+                       **{"High.1M": float("nan")})], session_date="d")
+        # allow_nan=False is what the browser effectively enforces.
+        json.dumps(acc.states["AAA"].as_dict(), allow_nan=False)
+
+    def test_nan_numeric_field_does_not_poison_delta(self):
+        acc = SessionAccumulator(CFG)
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, float("nan"))], session_date="d")
+        acc.apply([row("AAA", 10.10, 10.08, 10.10, 2000)], session_date="d")
+        self.assertTrue(math.isfinite(acc.states["AAA"].delta))
 
 
 class TestSerialization(unittest.TestCase):

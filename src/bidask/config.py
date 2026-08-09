@@ -33,6 +33,7 @@ class BidAskConfig:
     winsor_multiple: float
     min_hits_to_show: int
     max_rows_per_column: int
+    max_rows_per_group: int
 
     @property
     def avg_volume_field(self) -> str:
@@ -77,6 +78,7 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         winsor_multiple=float(raw.get("winsor_multiple", 10.0)),
         min_hits_to_show=int(raw.get("min_hits_to_show", 3)),
         max_rows_per_column=int(raw.get("max_rows_per_column", 60)),
+        max_rows_per_group=int(raw.get("max_rows_per_group", 12)),
     )
 
 

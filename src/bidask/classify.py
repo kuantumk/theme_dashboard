@@ -28,6 +28,7 @@ would essentially never fire on US equities.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Optional
 
@@ -113,6 +114,16 @@ def classify(
     """
     if prev is None:
         return _rejected(REJECT_WARMUP)
+
+    # Non-finite guard FIRST. pandas yields NaN (not None) for null cells, and
+    # every comparison against NaN is False — so without this, `nan <= 0` does
+    # not fire and a row with no quote at all falls through to the tick rule and
+    # is returned `certain=True`. That is exactly the equity-out-of-session case
+    # this app must surface rather than silently classify.
+    if not all(math.isfinite(v) for v in (cur.last, cur.bid, cur.ask, cur.volume)):
+        return _rejected(REJECT_NO_QUOTE)
+    if not math.isfinite(prev.volume):
+        return _rejected(REJECT_NO_TRADE)
 
     # Preconditions, in order. Each exits without producing an observation.
     volume_delta = cur.volume - prev.volume

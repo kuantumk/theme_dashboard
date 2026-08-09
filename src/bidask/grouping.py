@@ -99,13 +99,15 @@ def _grouped(rows: list[dict], themes: dict, cfg, *, reverse: bool) -> list[dict
         bucket["members"].sort(key=lambda r: r["margin"], reverse=reverse)
     groups.sort(key=lambda b: b["score"], reverse=reverse)
 
-    # Cap by rendered rows rather than group count, so one huge group cannot
-    # crowd out every other narrative in the column.
+    # Cap per group *before* spending the column budget. Without the per-group
+    # limit the top bucket takes as many slots as it has members and every other
+    # narrative is dropped — an industry fallback can easily hold 70 tickers.
     capped, budget = [], cfg.max_rows_per_column
     for bucket in groups:
         if budget <= 0:
             break
-        bucket["members"] = bucket["members"][:budget]
+        take = min(budget, cfg.max_rows_per_group)
+        bucket["members"] = bucket["members"][:take]
         budget -= len(bucket["members"])
         capped.append(bucket)
     return capped

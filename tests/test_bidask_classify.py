@@ -231,6 +231,53 @@ class TestQuoteDriftOverride(unittest.TestCase):
         self.assertTrue(obs.certain)
 
 
+class TestNonFiniteGuard(unittest.TestCase):
+    """pandas yields NaN for null cells, and every NaN comparison is False.
+
+    Without an explicit guard, `nan <= 0` does not fire and a row with no quote
+    falls through every precondition to the tick rule, returning certain=True.
+    """
+
+    def test_nan_quote_is_rejected_not_classified(self):
+        nan = float("nan")
+        obs = classify(
+            cur=tick(last=10.10, bid=nan, ask=nan, volume=2000),
+            prev=tick(last=10.05, bid=nan, ask=nan, volume=1000),
+            prior_different_price=10.05,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.reason, REJECT_NO_QUOTE)
+        self.assertFalse(obs.classified)
+        self.assertFalse(obs.certain)
+
+    def test_nan_last_price_is_rejected(self):
+        obs = classify(
+            cur=tick(last=float("nan"), bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.05, bid=10.08, ask=10.10, volume=1000),
+            prior_different_price=10.05,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.reason, REJECT_NO_QUOTE)
+
+    def test_nan_volume_does_not_score_a_hit(self):
+        obs = classify(
+            cur=tick(last=10.10, bid=10.08, ask=10.10, volume=float("nan")),
+            prev=tick(last=10.05, bid=10.08, ask=10.10, volume=1000),
+            prior_different_price=10.05,
+            cfg=CFG,
+        )
+        self.assertFalse(obs.classified)
+
+    def test_infinite_value_is_rejected(self):
+        obs = classify(
+            cur=tick(last=float("inf"), bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.05, bid=10.08, ask=10.10, volume=1000),
+            prior_different_price=10.05,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.reason, REJECT_NO_QUOTE)
+
+
 class TestVolumeDelta(unittest.TestCase):
     def test_volume_delta_is_reported(self):
         obs = classify(

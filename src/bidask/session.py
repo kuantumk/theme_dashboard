@@ -18,6 +18,7 @@ so counts partly measure cadence. The imbalance ratio accompanies them.
 
 from __future__ import annotations
 
+import math
 import statistics
 from collections import Counter
 from dataclasses import dataclass, field
@@ -41,6 +42,10 @@ class TickerState:
     prior_different_price: Optional[float] = None
     vol_deltas: list = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    # Poll index when this ticker was last present in the feed. A gap means the
+    # ticker left the in-play universe and returned; bridging it would book the
+    # whole absence as one signed print.
+    last_seen_poll: Optional[int] = None
 
     @property
     def total_hits(self) -> int:
@@ -148,12 +153,28 @@ class SessionAccumulator:
                 state = TickerState(symbol=symbol)
                 self.states[symbol] = state
 
+            # A ticker that fell out of the in-play gate and came back would
+            # otherwise have its entire absence booked as one signed print:
+            # volume_delta spans the whole gap and gets a single sign from a
+            # single snapshot. Force a warmup instead of bridging.
+            if state.last_seen_poll is not None and self.polls - state.last_seen_poll > 1:
+                state.prev = None
+                state.prior_different_price = None
+            state.last_seen_poll = self.polls
+
             cur = Tick(
                 last=_num(row.get("close")),
                 bid=_num(row.get("bid")),
                 ask=_num(row.get("ask")),
                 volume=_num(row.get("volume")),
             )
+            # Refresh the tick-rule reference BEFORE classifying. Updating it
+            # afterwards leaves the classifier holding the pre-change value on
+            # exactly the poll where the price moved, so mid-spread prints go
+            # unclassified and the drift override never fires.
+            if state.prev is not None and cur.last != state.prev.last:
+                state.prior_different_price = state.prev.last
+
             obs = classify(
                 cur=cur,
                 prev=state.prev,
@@ -183,10 +204,6 @@ class SessionAccumulator:
                 if not obs.certain:
                     state.uncertain += 1
 
-            # Track the most recent *different* price for the tick rule. Must be
-            # updated regardless of classification outcome.
-            if state.prev is not None and cur.last != state.prev.last:
-                state.prior_different_price = state.prev.last
             state.prev = cur
             state.meta = _display_meta(row)
 
@@ -251,12 +268,34 @@ def _clean_symbol(value) -> str:
 
 
 def _num(value) -> float:
+    """Coerce to float, mapping None and non-finite values to 0.0.
+
+    0.0 is deliberate rather than NaN-passthrough: it makes the classifier's
+    positivity preconditions fire, so a null field is rejected as a missing
+    quote instead of slipping past every comparison.
+    """
     try:
         if value is None:
             return 0.0
-        return float(value)
+        result = float(value)
+        return result if math.isfinite(result) else 0.0
     except (TypeError, ValueError):
         return 0.0
+
+
+def _is_finite(value) -> bool:
+    """False for None and for the NaN pandas yields on null cells.
+
+    Non-finite floats must never reach the payload: `json.dumps` writes a bare
+    `NaN` token, which is valid Python but invalid JSON, so the browser's
+    JSON.parse rejects the entire document and the page reports the server as
+    unreachable. One recent IPO with a null period-high would do it.
+    """
+    if value is None:
+        return False
+    if isinstance(value, float):
+        return math.isfinite(value)
+    return True
 
 
 def _display_meta(row: dict) -> dict:
@@ -266,4 +305,4 @@ def _display_meta(row: dict) -> dict:
         "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
         "price_52_week_high", "price_52_week_low", "high", "low",
     )
-    return {k: row[k] for k in keys if k in row and row[k] is not None}
+    return {k: row[k] for k in keys if k in row and _is_finite(row[k])}

@@ -79,9 +79,12 @@ def _equity_session_context(now: Optional[datetime] = None) -> tuple[str, bool]:
     open_min = 9 * 60 + 30
     close_min = 16 * 60
     minutes = now_et.hour * 60 + now_et.minute
+    # Both windows are bounded. An unbounded lower test (`minutes < open+15`)
+    # is also true at 04:00 and 08:00, which would reject every pre-market and
+    # after-hours poll as an "auction" — 18 hours of the day misdiagnosed.
     in_auction = (
-        minutes < open_min + cfg.open_auction_minutes
-        or minutes >= close_min - cfg.close_auction_minutes
+        (open_min <= minutes < open_min + cfg.open_auction_minutes)
+        or (close_min - cfg.close_auction_minutes <= minutes < close_min)
     )
     return now_et.strftime("%Y-%m-%d"), in_auction
 
@@ -127,6 +130,8 @@ class TapeEngine:
             )
 
         self.consecutive_failures = 0 if any_ok else self.consecutive_failures + 1
+        # A write failure must not touch consecutive_failures: that counter
+        # throttles the feed, and a busy state file says nothing about the feed.
         self.write_state()
         return any_ok
 
@@ -156,13 +161,37 @@ class TapeEngine:
             }
         return state
 
-    def write_state(self) -> None:
-        """Write atomically so a mid-write fetch never sees a truncated file."""
-        payload = json.dumps(self.build_state(), separators=(",", ":"))
+    def write_state(self) -> bool:
+        """Write atomically so a mid-write fetch never sees a truncated file.
+
+        `allow_nan=False` is load-bearing: the default emits a bare `NaN` token,
+        which is valid Python but invalid JSON, and the browser would reject the
+        whole document. Failing here is far better than shipping a payload the
+        page cannot parse.
+
+        On Windows `os.replace` raises PermissionError when the destination is
+        open by another handle — which is exactly what the HTTP thread does when
+        it serves the file on the same cadence the writer uses. Retry briefly
+        rather than treating a read collision as a write failure.
+        """
+        try:
+            payload = json.dumps(self.build_state(), separators=(",", ":"), allow_nan=False)
+        except ValueError as exc:
+            print(f"  state serialization failed (non-finite value): {exc}")
+            return False
+
         tmp = self.out_path.with_suffix(".tmp")
         with self._lock:
             tmp.write_text(payload, encoding="utf-8")
-            os.replace(tmp, self.out_path)
+            for attempt in range(6):
+                try:
+                    os.replace(tmp, self.out_path)
+                    return True
+                except PermissionError:
+                    time.sleep(0.05 * (attempt + 1))
+            print("  state file busy; skipped this write")
+            tmp.unlink(missing_ok=True)
+            return False
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -236,8 +265,15 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
     thread = threading.Thread(target=loop, daemon=True, name="bidask-poll")
     thread.start()
 
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", port), make_handler(out_dir / STATE_FILENAME)) as httpd:
+    # Threaded: a single-threaded server serialises every connection, so one
+    # stalled peer (Chrome's speculative preconnect opens sockets without
+    # sending a request) would freeze the dashboard while the poll loop kept
+    # writing state normally — a frozen UI with a healthy backend.
+    class _Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        daemon_threads = True
+        allow_reuse_address = True
+
+    with _Server(("127.0.0.1", port), make_handler(out_dir / STATE_FILENAME)) as httpd:
         url = f"http://127.0.0.1:{port}/index.html"
         print("=" * 62)
         print("  Bid/Ask Tape Pressure")

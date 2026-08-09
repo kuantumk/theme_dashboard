@@ -44,6 +44,26 @@ class TestSessionContext(unittest.TestCase):
         self.assertRegex(date, r"^\d{4}-\d{2}-\d{2}$")
         self.assertIsInstance(in_auction, bool)
 
+    def test_auction_window_is_bounded_on_both_sides(self):
+        # Regression: an unbounded lower test (`minutes < open+15`) is also true
+        # at 04:00 and 08:00, which rejected every extended-hours poll as an
+        # "auction" -- 18 hours of the day misdiagnosed.
+        from datetime import datetime as dt
+
+        from src.bidask.server import ET as SERVER_ET
+
+        def at(hour, minute):
+            moment = dt(2026, 8, 10, hour, minute, tzinfo=SERVER_ET)
+            return _equity_session_context(moment)[1]
+
+        for hour, minute in [(0, 30), (4, 0), (8, 0), (9, 29),
+                             (12, 0), (16, 30), (20, 0), (23, 0)]:
+            self.assertFalse(at(hour, minute),
+                             f"{hour:02d}:{minute:02d} ET must not be an auction window")
+        for hour, minute in [(9, 30), (9, 44), (15, 55), (15, 59)]:
+            self.assertTrue(at(hour, minute),
+                            f"{hour:02d}:{minute:02d} ET must be an auction window")
+
 
 class TestServerRouting(unittest.TestCase):
     """Boot a real server on an ephemeral port and probe it."""

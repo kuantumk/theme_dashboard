@@ -87,6 +87,25 @@ class TestGrouping(unittest.TestCase):
         )
         self.assertEqual(cols["strong"][0]["name"], "Strong Industry")
 
+    def test_one_large_group_does_not_consume_the_whole_column(self):
+        # Regression: the column budget was decremented by each group's full
+        # member count in score order, so a 70-member industry bucket took every
+        # slot and every other narrative vanished.
+        big = [state(f"B{i}", 20, 0, industry="Biotechnology") for i in range(70)]
+        small = [state(f"S{i}", 5, 0, industry="Semiconductors") for i in range(5)]
+        cols = build_columns(big + small, THEMES, CFG)
+        names = [g["name"] for g in cols["strong"]]
+        self.assertIn("Biotechnology", names)
+        self.assertIn("Semiconductors", names)
+        for group in cols["strong"]:
+            self.assertLessEqual(len(group["members"]), CFG.max_rows_per_group)
+
+    def test_column_cap_still_bounds_total_rows(self):
+        many = [state(f"T{i}", 9, 0, industry=f"Ind{i // 3}") for i in range(120)]
+        cols = build_columns(many, THEMES, CFG)
+        total = sum(len(g["members"]) for g in cols["strong"])
+        self.assertLessEqual(total, CFG.max_rows_per_column)
+
     def test_crypto_path_is_flat(self):
         cols = build_columns([state("BTC", 9, 1)], {}, CFG, grouped=False)
         self.assertEqual(len(cols["strong"]), 1)

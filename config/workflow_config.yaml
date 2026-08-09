@@ -160,6 +160,8 @@ bidask:
   # Display
   min_hits_to_show: 3           # hide tickers below this total hit count
   max_rows_per_column: 60       # per-column render cap
+  max_rows_per_group: 12        # per-group cap, so one large bucket (usually an
+                                #   industry fallback) cannot consume the column
 
 # Logging
 logging:

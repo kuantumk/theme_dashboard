@@ -1,0 +1,260 @@
+/* ═══════════════════════════════════════════════════════
+   BID/ASK TAPE PRESSURE — standalone app
+   Design tokens are a deliberate copy of the :root block in docs/style.css,
+   which remains the source of truth. They are duplicated rather than imported
+   because this app's server pins its document root to this directory and must
+   not be able to serve the repository (which holds .env). Keep in sync by hand.
+   ═══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Inter:wght@100;200;300;400;500&display=swap');
+
+:root {
+  --bg: #000000;
+  --bg2: #050505;
+  --bg3: #0a0a0a;
+  --bg4: #111111;
+  --border: #1a1a1a;
+  --border2: #262626;
+  --accent: #5566ff;
+  --adim: rgba(85, 102, 255, 0.10);
+  --green: #00e676;
+  --gdim: rgba(0, 230, 118, 0.09);
+  --red: #ff3355;
+  --rdim: rgba(255, 51, 85, 0.09);
+  --amber: #ffb300;
+  --adim2: rgba(255, 179, 0, 0.09);
+  --text: #eeeeee;
+  --text2: #888888;
+  --text3: #555555;
+  --white: #ffffff;
+  --mono: 'IBM Plex Mono', monospace;
+  --display: 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ── header ───────────────────────────────────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border2);
+  background: var(--bg2);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--white);
+}
+
+.tabs { display: flex; gap: 4px; }
+
+.tab-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { background: var(--adim); color: var(--white); border-color: var(--accent); }
+
+.status {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 2px 8px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  white-space: nowrap;
+}
+
+.pill.live { color: var(--green); border-color: var(--green); background: var(--gdim); }
+.pill.delayed { color: var(--amber); border-color: var(--amber); background: var(--adim2); }
+.pill.error { color: var(--red); border-color: var(--red); background: var(--rdim); }
+
+/* ── controls ─────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-wrap: wrap;
+}
+
+.control { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
+.control input[type="range"] { width: 110px; accent-color: var(--accent); }
+
+.control select {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+}
+
+.control select:hover { border-color: var(--accent); }
+.control input[type="checkbox"] { accent-color: var(--accent); }
+.control .val { color: var(--white); min-width: 22px; font-variant-numeric: tabular-nums; }
+.control .val.wide { min-width: 46px; }
+
+/* ── market pressure bar ──────────────────────────────── */
+
+.pressure { padding: 9px 14px 12px; border-bottom: 1px solid var(--border); }
+
+.pressure-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.pressure-labels .buy { color: var(--green); }
+.pressure-labels .sell { color: var(--red); }
+
+.pressure-track {
+  height: 7px;
+  background: var(--red);
+  display: flex;
+  overflow: hidden;
+}
+
+.pressure-fill { background: var(--green); height: 100%; transition: width 0.4s ease; }
+
+/* ── columns ──────────────────────────────────────────── */
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  min-height: calc(100vh - 190px);
+}
+
+.column { background: var(--bg); padding: 10px 12px 40px; }
+
+.column-head {
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.column.strong .column-head { color: var(--green); }
+.column.weak .column-head { color: var(--red); }
+
+/* ── groups ───────────────────────────────────────────── */
+
+.group { margin-bottom: 13px; }
+
+.group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 0 5px;
+}
+
+.group-name {
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An industry-derived group came from the vendor, not our taxonomy. Marked so
+   curated vocabulary stays distinguishable from vendor vocabulary at a glance. */
+.group-name.industry { color: var(--text2); font-style: italic; }
+.group-name.industry::after { content: ' ·ind'; color: var(--text3); font-style: normal; }
+
+.group-score { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.column.strong .group-score { color: var(--green); }
+.column.weak .group-score { color: var(--red); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  font-size: 11px;
+  cursor: default;
+}
+
+.column.strong .chip { border-color: rgba(0, 230, 118, 0.28); background: var(--gdim); }
+.column.weak .chip { border-color: rgba(255, 51, 85, 0.28); background: var(--rdim); }
+
+.chip .sym { color: var(--white); font-weight: 500; }
+.chip .hits { font-size: 10px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.column.strong .chip .hits b { color: var(--green); font-weight: 500; }
+.column.weak .chip .hits b { color: var(--red); font-weight: 500; }
+
+.chip .badge {
+  font-size: 9px;
+  padding: 0 3px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  letter-spacing: 0.03em;
+}
+
+.chip .badge.low { border-color: var(--red); color: var(--red); }
+
+/* Count-based and volume-based signals disagree: one print is likely driving
+   the reading. Rendered as a warning marker, not a silent difference. */
+.chip.divergent { border-style: dashed; }
+.chip .warn { color: var(--amber); font-size: 10px; }
+
+.empty { color: var(--text3); font-size: 11px; padding: 18px 0; }
+
+.footnote {
+  padding: 10px 14px 18px;
+  color: var(--text3);
+  font-size: 10px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .columns { grid-template-columns: 1fr; }
+}

@@ -132,6 +132,75 @@ screeners:
   - volspike
   - denvol
 
+# Bid/Ask tape-pressure dashboard (src/bidask/) — a standalone local app, not
+# part of the daily workflow. Classifies each poll as buyer- or seller-initiated
+# and accumulates pressure per ticker since session start.
+bidask:
+  poll_seconds: 10              # cadence; ~360 requests/hour against an undocumented endpoint
+
+  # Universe floors. traded-value and share-volume floors are pushed server-side;
+  # avg dollar volume is computed client-side (the library rejects column arithmetic).
+  min_today_dollar_vol: 1000000     # today's traded value
+  min_avg_dollar_vol: 10000000      # avg share volume x price
+  min_avg_volume: 750000            # avg share volume
+  avg_window_days: 30           # one of 10/30/60/90 — the feed returns null for 20
+
+  # "In play" gate: what is worth displaying, not what is worth polling.
+  in_play_min_rvol: 1.5         # relative volume; null disables this leg
+  in_play_min_change_pct: 3.0   # absolute % change; null disables this leg
+
+  # Classification (see KTD2/KTD3 in the plan). The band is CLNV's 30% of spread:
+  # exact-equality tests never fire on US equities because of sub-penny improvement.
+  band_frac: 0.30
+  max_spread_pct: 2.0           # reject quotes wider than this % of mid as stale
+  open_auction_minutes: 15      # equity only: reject prints inside the opening window
+  close_auction_minutes: 5      # equity only: reject prints inside the closing window
+  winsor_multiple: 10.0         # cap a poll's volume delta at this x its running median
+
+  # Runtime cadence bounds for the in-app control. The floor protects an
+  # undocumented endpoint from being hammered under a personal account.
+  min_poll_seconds: 3
+  max_poll_seconds: 120
+
+  # Crypto: symbols whose tape pressure is meaningless. Stablecoins are pegged,
+  # so their "buying pressure" is micro-oscillation around the peg being read as
+  # directional flow -- and because they trade constantly they float to the top
+  # of the column. Gold-backed tokens (PAXG, XAUT) are deliberately NOT here:
+  # they track a real moving asset.
+  crypto_exclude:
+    - USDC
+    - USDT
+    - USD1
+    - USDS
+    - USDD
+    - USDE
+    - USDF
+    - USDY
+    - USDP
+    - FDUSD
+    - PYUSD
+    - RLUSD
+    - TUSD
+    - BUSD
+    - DAI
+    - FRAX
+    - LUSD
+    - GUSD
+    - GHO
+    - CRVUSD
+    - SUSD
+    - USTC
+    - EURI
+    - EURS
+    - EURT
+    - AEUR
+
+  # Display
+  min_hits_to_show: 3           # hide tickers below this total hit count
+  max_rows_per_column: 60       # per-column render cap
+  max_rows_per_group: 12        # per-group cap, so one large bucket (usually an
+                                #   industry fallback) cannot consume the column
+
 # Logging
 logging:
   level: INFO

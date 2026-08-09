@@ -219,6 +219,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # constructed with directory=WEB_DIR.
         return super().translate_path(path)
 
+    def end_headers(self):
+        """Forbid caching of the app's own assets.
+
+        SimpleHTTPRequestHandler sends only Last-Modified on an HTTP/1.0
+        response, so browsers apply heuristic caching and will serve a stale
+        app.js or index.html without revalidating — an edit to the app then
+        appears not to have taken effect at all. This is a local single-user
+        tool refetching every few seconds; there is nothing to gain from caching.
+        """
+        self.send_header("Cache-Control", "no-store, must-revalidate")
+        super().end_headers()
+
     def do_GET(self):  # noqa: N802 — base-class naming
         if self.path.split("?", 1)[0] == STATE_ROUTE:
             self._serve_state()
@@ -254,8 +266,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
+        self.end_headers()  # adds Cache-Control: no-store
         self.wfile.write(body)
 
     def log_message(self, fmt, *args):
@@ -308,10 +319,23 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
     # writing state normally — a frozen UI with a healthy backend.
     class _Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
         daemon_threads = True
-        allow_reuse_address = True
+        # NOT reusable on Windows: there SO_REUSEADDR lets a second process bind
+        # an address another process is already listening on, with connections
+        # routed indeterminately between them — a second launch would silently
+        # shadow the first and keep serving stale files. Fail loudly instead.
+        allow_reuse_address = os.name != "nt"
 
     handler = make_handler(out_dir / STATE_FILENAME, engine)
-    with _Server(("127.0.0.1", port), handler) as httpd:
+    try:
+        server = _Server(("127.0.0.1", port), handler)
+    except OSError as exc:
+        stop.set()
+        print(f"\n  cannot bind 127.0.0.1:{port}: {exc}")
+        print("  a dashboard is probably already running on that port —")
+        print("  close its window, or relaunch with a different --port.")
+        return 1
+
+    with server as httpd:
         url = f"http://127.0.0.1:{port}/index.html"
         print("=" * 62)
         print("  Bid/Ask Tape Pressure")

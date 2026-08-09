@@ -21,7 +21,10 @@ from config.settings import (
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
-from src.indicators.create_technical_indicators import compute_spy_cum_norm_100
+from src.indicators.create_technical_indicators import (
+    compute_inside_day,
+    compute_spy_cum_norm_100,
+)
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
 
@@ -759,10 +762,12 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
             # Day-pattern green flag (tight/inside-day on the EMA10/20).
             color = None
             last = df.iloc[-1]
-            prev = df.iloc[-2]
             last_close = float(last['Close'])
             last_open = float(last['Open'])
-            inside = float(last['High']) < float(prev['High']) and float(last['Low']) > float(prev['Low'])
+            # Same helper the indicator pipeline uses, so the two definitions
+            # cannot drift. yfinance hands back capitalized OHLC columns.
+            inside = bool(compute_inside_day(
+                df['Open'], df['High'], df['Low'], df['Close']).iloc[-1])
             tight = abs(last_close - last_open) / last_close < 0.2 * float(adr_pct.iloc[-1])
             if inside or tight:
                 close_to_ema10 = abs(last_close - float(ema10.iloc[-1])) < 0.5 * float(atr14.iloc[-1])

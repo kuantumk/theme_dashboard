@@ -30,6 +30,42 @@ def compute_spy_cum_norm_100(spy_df):
     return norm_change.rolling(window=100, min_periods=1).sum()
 
 
+def compute_inside_day(open_, high, low, close):
+    """Return the inside-day flag: candle engulfed OR body engulfed.
+
+        (high <= prev_high and low >= prev_low)
+          or (body_top <= prev_body_top and body_bottom >= prev_body_bottom)
+
+    where body_top/bottom are max/min of (open, close), so the comparison is
+    direction-agnostic — a red previous bar reads the same as a green one.
+
+    Both clauses are inclusive. The earlier strict form (`high < prev_high and
+    low > prev_low`) rejected a bar that ties the prior high or low, and rejected
+    a tight-bodied bar whose wicks poke outside the prior range — both of which
+    are the coiled setups the green day-pattern colouring exists to surface.
+
+    Takes four Series rather than a frame so the caller's column naming is its
+    own business: the pipeline passes lowercase OHLC, the dashboard's ETF
+    recompute passes yfinance's capitalized columns. Shared with
+    `export_dashboard_data.fetch_etf_metrics` for the same reason
+    `compute_spy_cum_norm_100` is — one definition cannot drift from itself.
+
+    The first bar has no predecessor and is never an inside day.
+    """
+    prev_high = high.shift(1)
+    prev_low = low.shift(1)
+    range_engulf = (high <= prev_high) & (low >= prev_low)
+
+    bodies = pd.concat([open_, close], axis=1)
+    body_top = bodies.max(axis=1)
+    body_bottom = bodies.min(axis=1)
+    body_engulf = (
+        (body_top <= body_top.shift(1)) & (body_bottom >= body_bottom.shift(1))
+    )
+
+    return (range_engulf | body_engulf).astype(bool)
+
+
 VOL_SPIKE_WINDOW = '365D'  # trailing 1-year (calendar) lookback for volume-spike detection
 
 
@@ -143,8 +179,10 @@ def calculate_technical_indicators():
             daily['previous_session_low'] = daily['low'].shift(1)
             daily['previous_session_volume'] = daily['volume'].shift(1)
 
-            # Inside Day: current bar's range is within previous bar's range
-            daily['inside_day'] = (daily['high'] < daily['high'].shift(1)) & (daily['low'] > daily['low'].shift(1))
+            # Inside Day: candle engulfed by the previous candle, or body engulfed
+            # by the previous body. See compute_inside_day for why both clauses.
+            daily['inside_day'] = compute_inside_day(
+                daily['open'], daily['high'], daily['low'], daily['close'])
 
             # Tight Day: fractional body size (vs close) < 0.2 of ADR%
             daily['tight_day'] = (daily['close'] - daily['open']).abs() / daily['close'] < 0.2 * daily['adr_pct']

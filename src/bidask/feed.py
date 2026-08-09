@@ -31,8 +31,22 @@ EQUITY_COLUMNS = [
     "relative_volume_10d_calc", "market_cap_basic", "sector", "industry",
     "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
     "price_52_week_high", "price_52_week_low",
-    "update_mode", "last_bar_update_time",
+    "update_mode", "last_bar_update_time", "current_session",
 ]
+
+# `current_session` reports whether the market is actually trading, which is a
+# different question from `update_mode` (whether our *feed* is real-time). A
+# real-time entitlement on a closed market is still a closed market.
+SESSION_LABELS = {
+    "regular": "market open",
+    "extended": "extended hours",
+    "pre_market": "pre-market",
+    "premarket": "pre-market",
+    "post_market": "after hours",
+    "postmarket": "after hours",
+    "out_of_session": "market closed",
+    "holiday": "holiday",
+}
 
 CRYPTO_COLUMNS = [
     "base_currency", "close", "bid", "ask", "24h_close_change|5", "volume",
@@ -50,7 +64,13 @@ class Payload:
     feed: str = ""
     error: str = ""
     matched: int = 0
+    market_status: str = ""
     extra: dict = field(default_factory=dict)
+
+    @property
+    def market_open(self) -> bool:
+        return self.market_status in ("market open", "extended hours",
+                                      "pre-market", "after hours")
 
     @property
     def delayed(self) -> bool:
@@ -73,6 +93,17 @@ def _feed_mode(df: pd.DataFrame) -> str:
     if not modes:
         return ""
     return str(modes[0]) if len(modes) == 1 else "mixed"
+
+
+def _market_status(df: pd.DataFrame) -> str:
+    """Human-readable trading state, from the feed's own session field."""
+    if "current_session" not in df.columns:
+        return ""
+    values = df["current_session"].dropna().unique().tolist()
+    if not values:
+        return ""
+    raw = str(values[0]).strip().lower()
+    return SESSION_LABELS.get(raw, raw.replace("_", " "))
 
 
 def _bare_ticker(value: str) -> str:
@@ -110,7 +141,11 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
     df["avg_volume"] = df[cfg.avg_volume_field]
     df["change_pct"] = df["change"]
     df["rvol"] = df.get("relative_volume_10d_calc")
-    return Payload(rows=df, feed=_feed_mode(df), matched=matched)
+    # Session-to-date traded value. `Value.Traded` is the feed's own figure;
+    # fall back to price x volume when it is absent.
+    df["dollar_vol"] = df["Value.Traded"].fillna(df["close"] * df["volume"])
+    return Payload(rows=df, feed=_feed_mode(df), matched=matched,
+                   market_status=_market_status(df))
 
 
 def fetch_crypto(cfg, limit: int = 200) -> Payload:
@@ -143,7 +178,12 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
     # rather than session extremes — see A3 in the plan.
     df["avg_volume"] = None
     df["rvol"] = None
-    return Payload(rows=df, feed=_feed_mode(df), matched=matched)
+    # Crypto `volume` is 24h rolling rather than session-to-date — there is no
+    # session to date from. Labelled as 24h in the UI so it is not read as the
+    # same quantity the equity tab shows.
+    df["dollar_vol"] = df["close"] * df["volume"]
+    return Payload(rows=df, feed=_feed_mode(df), matched=matched,
+                   market_status="24/7")
 
 
 def fetch(market: str, cfg, limit: Optional[int] = None) -> Payload:

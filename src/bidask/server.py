@@ -106,15 +106,22 @@ class TapeEngine:
         self.accumulators = {m: SessionAccumulator(cfg, m) for m in markets}
         self.errors = {m: "" for m in markets}
         self.feeds = {m: "" for m in markets}
+        self.market_status = {m: "" for m in markets}
         self.consecutive_failures = 0
         # Mutable so the in-app control can retune cadence without a restart.
         # cfg stays frozen; this is the live value the loop reads each cycle.
         self.poll_seconds = cfg.poll_seconds
+        # Set when cadence changes, so the poll loop can abandon a wait it is
+        # already sitting in rather than finishing the old interval first.
+        self.wake = threading.Event()
         self._lock = threading.Lock()
 
     def set_poll_seconds(self, seconds) -> int:
         """Retune cadence at runtime, bounded by config. Returns the value set."""
         self.poll_seconds = self.cfg.clamp_poll_seconds(seconds)
+        # Cut short a wait already in progress, so a change from 60s to 3s takes
+        # effect now rather than up to a minute later.
+        self.wake.set()
         return self.poll_seconds
 
     def poll_once(self) -> bool:
@@ -124,6 +131,7 @@ class TapeEngine:
             payload = fetch(market, self.cfg)
             self.errors[market] = payload.error
             self.feeds[market] = payload.feed
+            self.market_status[market] = payload.market_status
             if payload.error or payload.rows.empty:
                 continue
             any_ok = True
@@ -170,6 +178,9 @@ class TapeEngine:
                 "stats": acc.snapshot_stats(),
                 "feed": feed,
                 "delayed": (not feed) or feed.startswith("delayed"),
+                # Distinct from `feed`: a real-time entitlement on a closed
+                # market is still a closed market.
+                "market_status": self.market_status[market],
                 "error": self.errors[market],
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }
@@ -250,6 +261,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_error(400, "bad request")
             return
         applied = self.engine.set_poll_seconds(body.get("seconds"))
+        # Rewrite immediately. The state file still holds the cadence from the
+        # last poll, and the client treats that file as authoritative — without
+        # this, its next refresh reads the stale value and resets the cadence
+        # the user just chose.
+        self.engine.write_state()
         payload = json.dumps({"poll_seconds": applied}).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -308,7 +324,13 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
             wait = engine.poll_seconds * (step if not ok else 1)
             if not ok and engine.consecutive_failures:
                 print(f"  feed unavailable, backing off {wait}s")
-            stop.wait(max(0.0, wait - (time.time() - started)))
+            # Wait on `wake` rather than `stop` so a cadence change interrupts
+            # the interval instead of being deferred to the end of it.
+            engine.wake.clear()
+            deadline = time.time() + max(0.0, wait - (time.time() - started))
+            while not stop.is_set() and time.time() < deadline:
+                if engine.wake.wait(min(1.0, deadline - time.time())):
+                    break  # cadence retuned; start the next cycle now
 
     thread = threading.Thread(target=loop, daemon=True, name="bidask-poll")
     thread.start()

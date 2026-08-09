@@ -129,6 +129,7 @@ body {
 .control select:hover { border-color: var(--accent); }
 .control input[type="checkbox"] { accent-color: var(--accent); }
 .control .val { color: var(--white); min-width: 22px; font-variant-numeric: tabular-nums; }
+.control .val.wide { min-width: 46px; }
 
 /* ── market pressure bar ──────────────────────────────── */
 

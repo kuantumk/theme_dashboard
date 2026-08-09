@@ -302,6 +302,9 @@ def _display_meta(row: dict) -> dict:
     """The subset of feed fields the UI renders, carried alongside counters."""
     keys = (
         "close", "change_pct", "sector", "industry", "avg_dollar_vol", "rvol",
+        # Session-to-date liquidity, carried per ticker so the UI sliders can
+        # filter without a refetch.
+        "volume", "dollar_vol",
         "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
         "price_52_week_high", "price_52_week_low", "high", "low",
     )

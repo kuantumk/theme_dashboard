@@ -105,6 +105,58 @@ class TestStablecoinExclusion(unittest.TestCase):
         self.assertEqual(len(out), 1)
 
 
+class TestMarketStatus(unittest.TestCase):
+    """Market state and feed entitlement are different questions.
+
+    A real-time entitlement on a closed market is still a closed market, so the
+    UI must not read `update_mode` as "the market is live".
+    """
+
+    def test_session_field_maps_to_a_human_label(self):
+        from src.bidask.feed import _market_status
+        self.assertEqual(_market_status(frame([{"current_session": "regular"}])),
+                         "market open")
+        self.assertEqual(_market_status(frame([{"current_session": "out_of_session"}])),
+                         "market closed")
+        self.assertEqual(_market_status(frame([{"current_session": "pre_market"}])),
+                         "pre-market")
+        self.assertEqual(_market_status(frame([{"current_session": "post_market"}])),
+                         "after hours")
+
+    def test_unknown_session_value_is_passed_through_readably(self):
+        from src.bidask.feed import _market_status
+        self.assertEqual(_market_status(frame([{"current_session": "some_new_state"}])),
+                         "some new state")
+
+    def test_missing_session_column_yields_empty(self):
+        from src.bidask.feed import _market_status
+        self.assertEqual(_market_status(frame([{"close": 10.0}])), "")
+
+    def test_payload_market_open_only_for_trading_states(self):
+        from src.bidask.feed import Payload
+        import pandas as pd
+        empty = pd.DataFrame()
+        self.assertTrue(Payload(rows=empty, market_status="market open").market_open)
+        self.assertTrue(Payload(rows=empty, market_status="pre-market").market_open)
+        self.assertFalse(Payload(rows=empty, market_status="market closed").market_open)
+        self.assertFalse(Payload(rows=empty, market_status="").market_open)
+
+
+class TestLiquidityFieldsReachThePayload(unittest.TestCase):
+    def test_volume_and_dollar_vol_are_carried_per_ticker(self):
+        # The UI sliders filter client-side against these, so they must survive
+        # into the per-ticker payload rather than being dropped as unused meta.
+        from src.bidask.session import SessionAccumulator
+        acc = SessionAccumulator(CFG)
+        for i, price in enumerate((10.09, 10.10)):
+            acc.apply([{"symbol": "AAA", "close": price, "bid": 10.08, "ask": 10.10,
+                        "volume": 1000 + i * 500, "dollar_vol": 5_050_000.0}],
+                      session_date="d")
+        payload = acc.states["AAA"].as_dict()
+        self.assertEqual(payload["volume"], 1500)
+        self.assertEqual(payload["dollar_vol"], 5_050_000.0)
+
+
 class TestCadenceClamp(unittest.TestCase):
     def test_requested_cadence_is_bounded(self):
         self.assertEqual(CFG.clamp_poll_seconds(1), CFG.min_poll_seconds)

@@ -33,7 +33,43 @@
     hideUncertain: document.getElementById('hide-uncertain'),
     hideDivergent: document.getElementById('hide-divergent'),
     cadence: document.getElementById('cadence'),
+    minDollarVol: document.getElementById('min-dollar-vol'),
+    minDollarVolVal: document.getElementById('min-dollar-vol-val'),
+    minVolume: document.getElementById('min-volume'),
+    minVolumeVal: document.getElementById('min-volume-val'),
+    market: document.getElementById('market-pill'),
   };
+
+  // Liquidity spans orders of magnitude, so a linear slider would spend most of
+  // its travel in a range nobody filters on. Each slider step is a tenth of a
+  // decade above $1K/1K shares, which makes round values land on integer
+  // positions: $1M is exactly position 30, 1M shares exactly position 30.
+  const LOG_BASE = 1e3;
+
+  function sliderToValue(pos) {
+    return LOG_BASE * Math.pow(10, pos / 10);
+  }
+
+  function compact(n) {
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return (n / 1e9).toFixed(abs >= 1e10 ? 0 : 1) + 'B';
+    if (abs >= 1e6) return (n / 1e6).toFixed(abs >= 1e7 ? 0 : 1) + 'M';
+    if (abs >= 1e3) return (n / 1e3).toFixed(abs >= 1e4 ? 0 : 1) + 'K';
+    return String(Math.round(n));
+  }
+
+  function liquidityFloors() {
+    return {
+      dollar: sliderToValue(parseInt(els.minDollarVol.value, 10)),
+      volume: sliderToValue(parseInt(els.minVolume.value, 10)),
+    };
+  }
+
+  function syncLiquidityLabels() {
+    const f = liquidityFloors();
+    els.minDollarVolVal.textContent = '$' + compact(f.dollar);
+    els.minVolumeVal.textContent = compact(f.volume);
+  }
 
   function tickerCount(view) {
     if (!view || !view.columns) return 0;
@@ -64,10 +100,13 @@
   }
 
   function filters() {
+    const liq = liquidityFloors();
     return {
       minHits: parseInt(els.minHits.value, 10) || 1,
       hideUncertain: els.hideUncertain.checked,
       hideDivergent: els.hideDivergent.checked,
+      minDollarVol: liq.dollar,
+      minVolume: liq.volume,
     };
   }
 
@@ -77,6 +116,11 @@
     // "Low confidence" means most of this ticker's observations fired the
     // quote-drift override, where the quote and tick rules disagreed.
     if (f.hideUncertain && m.total_hits > 0 && m.uncertain / m.total_hits > 0.5) return false;
+    // Liquidity floors. A ticker missing the metric is dropped rather than let
+    // through: these filters exist to guarantee tradeable names, so an unknown
+    // must not pass as if it qualified.
+    if (!(typeof m.dollar_vol === 'number' && m.dollar_vol >= f.minDollarVol)) return false;
+    if (!(typeof m.volume === 'number' && m.volume >= f.minVolume)) return false;
     return true;
   }
 
@@ -136,8 +180,15 @@
 
   function renderStatus(view) {
     if (!view) return;
+    // Market state and feed state are different questions: a real-time
+    // entitlement on a closed market is still a closed market.
+    const status = view.market_status || 'unknown';
+    const open = status === 'market open' || status === '24/7';
+    els.market.textContent = status;
+    els.market.className = 'pill ' + (open ? 'live' : 'delayed');
+
     els.feed.textContent = view.error ? `feed error: ${esc(view.error)}`
-      : (view.delayed ? 'delayed feed' : 'live');
+      : (view.delayed ? 'delayed feed' : 'real-time feed');
     els.feed.className = 'pill ' + (view.error ? 'error' : (view.delayed ? 'delayed' : 'live'));
     // Coverage is classification quality (share of actual trades classified),
     // not trade frequency — most symbols do not print every interval.
@@ -226,6 +277,11 @@
   });
   els.hideUncertain.addEventListener('change', render);
   els.hideDivergent.addEventListener('change', render);
+
+  [els.minDollarVol, els.minVolume].forEach(slider => {
+    slider.addEventListener('input', () => { syncLiquidityLabels(); render(); });
+  });
+  syncLiquidityLabels();
 
   refresh();
   setTimeout(schedule, 1000);

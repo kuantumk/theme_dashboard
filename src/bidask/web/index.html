@@ -14,6 +14,7 @@
       <button class="tab-btn" data-market="crypto">Crypto</button>
     </div>
     <div class="status">
+      <span class="pill" id="market-pill">—</span>
       <span class="pill" id="feed-pill">connecting</span>
       <span class="pill" id="coverage-pill">coverage —</span>
       <span class="pill" id="polls-pill">0 scans</span>
@@ -38,6 +39,16 @@
       min hits
       <input type="range" id="min-hits" min="1" max="40" value="3">
       <span class="val" id="min-hits-val">3</span>
+    </label>
+    <label class="control" title="Dollar volume traded since session start (24h for crypto)">
+      $ liquidity &ge;
+      <input type="range" id="min-dollar-vol" min="0" max="70" value="30">
+      <span class="val wide" id="min-dollar-vol-val">$1M</span>
+    </label>
+    <label class="control" title="Share volume traded since session start (24h for crypto)">
+      vol &ge;
+      <input type="range" id="min-volume" min="0" max="60" value="17">
+      <span class="val wide" id="min-volume-val">50K</span>
     </label>
     <label class="control">
       <input type="checkbox" id="hide-uncertain">

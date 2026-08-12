@@ -2,13 +2,13 @@
 module: bidask
 date: 2026-08-12
 problem_type: logic_error
-component: data_source
+component: service_object
 severity: critical
 symptoms:
   - "Equity tab rendered no tickers for an entire trading session while crypto worked normally"
   - "100% of equity observations rejected as no_quote, with the UI blaming user-set thresholds"
   - "bid/ask null on an authenticated real-time feed, indistinguishable from a missing data entitlement"
-root_cause: wrong_api_surface
+root_cause: wrong_api
 resolution_type: code_fix
 tags:
   - vendor-api

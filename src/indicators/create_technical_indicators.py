@@ -56,9 +56,16 @@ def compute_inside_day(open_, high, low, close):
     prev_low = low.shift(1)
     range_engulf = (high <= prev_high) & (low >= prev_low)
 
+    # skipna=False is load-bearing: pandas would otherwise treat a NaN open as
+    # "just use close", collapsing the body to a single point and returning a
+    # confident verdict computed from half a quote — for this bar and, via the
+    # shift below, the next one. The pipeline dropna's whole rows, but the
+    # dashboard's ETF path only drops rows missing Close, so a NaN open with a
+    # valid close does reach here. Propagating NaN makes both clauses False,
+    # which is the honest answer: unknown, so don't flag it.
     bodies = pd.concat([open_, close], axis=1)
-    body_top = bodies.max(axis=1)
-    body_bottom = bodies.min(axis=1)
+    body_top = bodies.max(axis=1, skipna=False)
+    body_bottom = bodies.min(axis=1, skipna=False)
     body_engulf = (
         (body_top <= body_top.shift(1)) & (body_bottom >= body_bottom.shift(1))
     )

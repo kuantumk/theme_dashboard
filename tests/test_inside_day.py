@@ -122,6 +122,61 @@ class SeriesShapeTests(unittest.TestCase):
         self.assertTrue(bool((new & ~old).any()))  # and genuinely looser
 
 
+class PartialQuoteTests(unittest.TestCase):
+    """A missing open must read as unknown, not as a zero-width body.
+
+    The pipeline drops whole rows with any NaN, but the dashboard's ETF path
+    only drops rows missing Close, so a row with a valid close and a missing
+    open does reach the helper. pandas' max/min default to skipna=True, which
+    would silently treat such a row as a single-point body at close and hand
+    back a confident verdict computed from half a quote.
+    """
+
+    def test_missing_open_is_not_an_inside_day(self):
+        # Body would be a zero-width point at close=103 under skipna=True, which
+        # sits inside the previous body (100..105) and would wrongly flag True.
+        self.assertFalse(_verdict(
+            PREV_GREEN,
+            {'open': float('nan'), 'high': 115.0, 'low': 85.0, 'close': 103.0}))
+
+    def test_missing_open_does_not_contaminate_the_following_bar(self):
+        # shift(1) carries the previous bar's body into the next comparison, so
+        # a fabricated body would corrupt the bar after it too.
+        df = pd.DataFrame([
+            PREV_GREEN,
+            {'open': float('nan'), 'high': 115.0, 'low': 85.0, 'close': 103.0},
+            {'open': 102.0, 'high': 116.0, 'low': 84.0, 'close': 104.0},
+        ])
+        flags = compute_inside_day(df['open'], df['high'], df['low'], df['close'])
+        self.assertFalse(bool(flags.iloc[1]))
+        self.assertFalse(bool(flags.iloc[2]))
+
+    def test_missing_close_still_allows_the_range_clause(self):
+        # The range clause reads only high/low, which are present here. An
+        # unknown body does not invalidate an unambiguously engulfed range.
+        self.assertTrue(_verdict(
+            PREV_GREEN,
+            {'open': 102.0, 'high': 108.0, 'low': 95.0, 'close': float('nan')}))
+
+    def test_missing_close_cannot_carry_the_body_clause(self):
+        # Range breaks out both sides, so only the body could qualify it. Under
+        # skipna=True the body would collapse to a point at open=102, sitting
+        # inside 100..105, and wrongly flag True off a half-quote.
+        self.assertFalse(_verdict(
+            PREV_GREEN,
+            {'open': 102.0, 'high': 115.0, 'low': 85.0, 'close': float('nan')}))
+
+    def test_a_complete_row_still_qualifies_on_the_range_clause(self):
+        # Guard against over-correcting into "any NaN anywhere kills the series".
+        df = pd.DataFrame([
+            PREV_GREEN,
+            {'open': float('nan'), 'high': 115.0, 'low': 85.0, 'close': 103.0},
+            {'open': 101.0, 'high': 110.0, 'low': 90.0, 'close': 103.0},
+        ])
+        flags = compute_inside_day(df['open'], df['high'], df['low'], df['close'])
+        self.assertTrue(bool(flags.iloc[2]))  # range clause needs no body values
+
+
 class EtfParityTests(unittest.TestCase):
     """The dashboard's ETF path recomputes from yfinance's capitalized columns."""
 

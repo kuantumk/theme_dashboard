@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "dashboard", "runtimeExecutable": "uv", "runtimeArgs": ["run", "python", "-m", "http.server", "8777", "--directory", "docs"], "port": 8777 }
+    { "name": "dashboard", "runtimeExecutable": "uv", "runtimeArgs": ["run", "python", "-m", "http.server", "8777", "--directory", "docs"], "port": 8777 },
+    { "name": "tape", "runtimeExecutable": "uv", "runtimeArgs": ["run", "python", "-m", "src.bidask.server", "--out-dir", "scripts/local_runs", "--port", "8787", "--no-browser"], "port": 8787 }
   ]
 }

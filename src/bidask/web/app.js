@@ -38,6 +38,7 @@
     minVolume: document.getElementById('min-volume'),
     minVolumeVal: document.getElementById('min-volume-val'),
     market: document.getElementById('market-pill'),
+    quotes: document.getElementById('quotes-pill'),
   };
 
   // Liquidity spans orders of magnitude, so a linear slider would spend most of
@@ -124,7 +125,37 @@
     return true;
   }
 
-  function renderColumn(groups, container, side) {
+  // An empty column has several possible causes and they are not interchangeable.
+  // The default text blames the user's thresholds; when the real cause is that no
+  // quotes are arriving, saying so is the difference between a two-minute fix and
+  // a lost session. US equity bid/ask comes from the quote socket, because the
+  // screener API carries no such field for that market.
+  function emptyReason(view) {
+    if (!view) return 'Waiting for the first scans…';
+    if (view.error) return `Feed error: ${esc(view.error)}. Nothing can be classified until it clears.`;
+    const q = view.quotes;
+    if (q) {
+      if (!q.connected) {
+        return `Quote stream disconnected${q.error ? ` (${esc(q.error)})` : ''} — reconnecting. `
+          + 'US equity bid/ask comes from the quote socket, so nothing classifies while it is down.';
+      }
+      if (q.subscribed > 0 && !q.merged) {
+        return 'Quote stream connected but no symbol is quoting yet. '
+          + 'If this persists, the session cookie in .env has probably expired.';
+      }
+    }
+    const stats = view.stats || {};
+    if (stats.polls < 2) return 'Waiting for the first scans…';
+    if (!stats.classified) {
+      const top = Object.entries(stats.rejections || {}).sort((a, b) => b[1] - a[1])[0];
+      return top
+        ? `No observation has classified yet — every one was rejected as "${esc(top[0])}".`
+        : 'No observation has classified yet.';
+    }
+    return 'No tickers above the current thresholds yet.';
+  }
+
+  function renderColumn(groups, container, side, emptyMsg) {
     const f = filters();
     const kept = [];
     (groups || []).forEach(group => {
@@ -139,7 +170,7 @@
     kept.sort((a, b) => (side === 'strong' ? b.score - a.score : a.score - b.score));
 
     if (!kept.length) {
-      container.innerHTML = '<div class="empty">No tickers above the current thresholds yet.</div>';
+      container.innerHTML = `<div class="empty">${emptyMsg || 'No tickers above the current thresholds yet.'}</div>`;
       return;
     }
 
@@ -200,6 +231,19 @@
     els.coverage.title = 'share of actual trades classified · share of scans where a trade printed';
     els.polls.textContent = `${(view.stats && view.stats.polls) || 0} scans`;
     els.scan.textContent = view.scanned_at || '—';
+
+    // Only equities carry a quote socket; the crypto screener serves bid/ask
+    // directly, so the pill would be meaningless on that tab.
+    const q = view.quotes;
+    els.quotes.hidden = !q;
+    if (q) {
+      const healthy = q.connected && q.merged > 0;
+      els.quotes.textContent = q.connected
+        ? `quotes ${q.merged}/${q.subscribed}`
+        : `quotes offline${q.error ? ` (${q.error})` : ''}`;
+      els.quotes.title = 'symbols with a live two-sided quote / symbols subscribed';
+      els.quotes.className = 'pill ' + (healthy ? 'live' : 'error');
+    }
   }
 
   function render() {
@@ -212,8 +256,9 @@
     // Preserve scroll across the poll-cadence re-render: this is the first
     // surface in the project that re-renders while being actively read.
     const y = window.scrollY;
-    renderColumn(view.columns && view.columns.strong, els.strong, 'strong');
-    renderColumn(view.columns && view.columns.weak, els.weak, 'weak');
+    const reason = emptyReason(view);
+    renderColumn(view.columns && view.columns.strong, els.strong, 'strong', reason);
+    renderColumn(view.columns && view.columns.weak, els.weak, 'weak', reason);
     window.scrollTo(0, y);
   }
 

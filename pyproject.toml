@@ -28,6 +28,9 @@ dependencies = [
     "selenium",
     "webdriver-manager",
     "tradingview-screener>=3.2.1",
+    # TradingView quote websocket (src/bidask/tvquote.py). The screener REST API
+    # carries no bid/ask for US equities; the quote socket is the only source.
+    "websocket-client>=1.9.0",
 ]
 
 [tool.uv]

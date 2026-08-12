@@ -82,6 +82,20 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 - **Discord notification**: sends webhook alert with ticker summaries on scan completion.
 - **Local diagnostic runs**: both scan scripts accept `--out-dir <path>` (defaults to `docs/data/`) and `--no-discord`. The Windows Task Scheduler launcher `scripts/ep_scan_morning_local.bat` passes `--out-dir scripts/local_runs --no-discord` so local runs write to a gitignored sandbox and never dirty the CI-published `docs/data/ep_scan_*.json` files.
 
+### Tape Pressure Dashboard (`src/bidask/`, local only)
+
+A standalone local app — `scripts/launch_tape_pressure.bat` → `src/bidask/server.py` — that polls quotes, classifies each observation as buyer- or seller-initiated (CLNV-shaped band + tick rule, see `classify.py`), accumulates pressure per ticker since session start, and splits the market into strong-tape / weak-tape columns grouped under the L1/L2 theme taxonomy. Nothing is published to Pages; state goes to the gitignored `scripts/local_runs/`. Requires `TRADINGVIEW_SESSIONID` + `TRADINGVIEW_SESSION_SIGN` in `.env`.
+
+**⛔ The TradingView screener has no `bid`/`ask` for US equities, and asking for them succeeds.** `scanner.tradingview.com/america/metainfo` publishes **3,771 fields and not one is a quote field** (`bid`, `ask`, `bid_size`, `ask_size`, `spread` are all absent). Select one anyway and the API does **not** error — it returns `null` for every row, which is indistinguishable from a missing data entitlement. It is not an entitlement problem: verified on an authenticated `streaming` (real-time) session during market hours, 2064/2064 rows null. The *crypto* scanner genuinely does expose `bid`/`ask` in its metainfo, which is the only reason that tab ever worked.
+
+Equity quotes therefore come from the service TradingView's own web and desktop apps use: the **quote websocket** (`src/bidask/tvquote.py`) at `wss://data.tradingview.com/socket.io/websocket`, authenticated with a JWT minted from the same `sessionid` cookie via `https://www.tradingview.com/quote_token/`. Measured: 296 symbols subscribed in 6 frames, all quoting within **0.4s**, 99% two-sided (the misses are OTC ADRs, which genuinely have no quote).
+
+- **Last price and volume come from the socket too**, not the screener — `merge_quotes` overwrites `close`/`volume` alongside `bid`/`ask`. The classifier compares a trade price against its prevailing quote, so both legs must share one clock; mixing sources adds a second skew term on top of the poll-interval skew `classify.py` already documents as its dominant error.
+- **Rows without a quote are kept, never dropped.** They surface as `no_quote` rejections. Dropping them would hide a dead socket behind a quietly shrinking universe.
+- **The screener still owns the universe** — liquidity floors, the in-play gate, sector/industry, period highs. It is good at that and it is one request.
+- **An empty column must name its own cause** (`emptyReason` in `web/app.js` + the `quotes` block in the state payload). The original bug hid for a full session because the UI said *"No tickers above the current thresholds yet"* — blaming the user's sliders — while 100% of observations were being rejected for want of a quote. A `quotes N/M` pill and the rejection-reason fallback exist so that can't recur.
+- `current_session` reports **`market`** during the regular session, not `regular`. Both are mapped in `SESSION_LABELS`; an unmapped value falls through to the raw string and then fails the UI's equality test, styling an open market as delayed.
+
 ### Key Data Stores
 
 | File | Format | Content |

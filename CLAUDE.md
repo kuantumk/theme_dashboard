@@ -122,6 +122,8 @@ Equity quotes therefore come from the service TradingView's own web and desktop 
 - **`src/themes/`** — Sheet ground-truth sync (`tag_new_tickers.py`), retag CLI, theme strength scoring, Google Sheets import
 - **`src/reporting/`** — daily markdown reports, dashboard JSON export, earnings pivot scanner
 - **`docs/`** — GitHub Pages web dashboard (index.html, app.js, style.css + data JSONs)
+- **`docs/solutions/`** — documented solutions to past problems (bugs, architecture patterns, conventions), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when implementing or debugging in an area one of them covers — several record vendor-API traps that cost a full session to diagnose the first time.
+- **`CONCEPTS.md`** — shared domain vocabulary (themes and taxonomy levels, screening artifacts, metrics, breadth, tape pressure). Relevant when orienting to the codebase or when a term's project-specific meaning is load-bearing.
 
 ### Screeners (`src/screening/screeners/`)
 

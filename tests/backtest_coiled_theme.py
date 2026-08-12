@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.indicators.create_technical_indicators import compute_inside_day
 from src.screening.coiled_theme import add_coiled_theme_metrics
 
 ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "coiled_theme_backtest"
@@ -122,7 +123,8 @@ def add_indicators(df: pd.DataFrame, spy: pd.DataFrame | None = None) -> pd.Data
     out["vol_sma252"] = out["volume"].rolling(252, min_periods=126).mean()
     out["avg_dollar_vol"] = (out["volume"] * out["close"]).rolling(20, min_periods=10).mean()
     out["adr_pct"] = (out["high"] / out["low"]).rolling(20, min_periods=10).mean() - 1
-    out["inside_day"] = (out["high"] < out["high"].shift(1)) & (out["low"] > out["low"].shift(1))
+    out["inside_day"] = compute_inside_day(
+        out["open"], out["high"], out["low"], out["close"])
     out["tight_day"] = (out["close"] - out["open"]).abs() / out["close"] < 0.2 * out["adr_pct"]
     out["close_to_ma"] = (
         ((out["close"] - out["ema10"]).abs() < 0.5 * out["atr14"])

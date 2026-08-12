@@ -183,9 +183,13 @@ def compute_leaf_scores(
             if row is None:
                 continue
             vars_val = row.get('vars')
-            # vol_sma50/adr_pct are payload-only: they feed the dashboard's V/A
-            # filter toggles and take no part in scoring.
-            vol_val = row.get('vol_sma50')
+            # avg_dollar_vol/adr_pct are payload-only: they feed the dashboard's
+            # V/A cutoff filters and take no part in scoring. Note this is the
+            # same column `build_radar_universe` gates on above — the universe
+            # floor and the view lens now read one metric, but they remain
+            # separate decisions: the floor keeps its share-volume leg and its
+            # $40M dollar-volume waiver, which the view lens has no part in.
+            dvol_val = row.get('avg_dollar_vol')
             adr_val = row.get('adr_pct')
             members.append({
                 'ticker': str(t).upper(),
@@ -193,7 +197,7 @@ def compute_leaf_scores(
                 'rs': float(row['rs_leg']),
                 'vars': float(vars_val) if pd.notna(vars_val) else None,
                 'price': float(row['close']) if pd.notna(row.get('close')) else None,
-                'vol_sma50': float(vol_val) if pd.notna(vol_val) else None,
+                'avg_dollar_vol': float(dvol_val) if pd.notna(dvol_val) else None,
                 'adr_pct': float(adr_val) if pd.notna(adr_val) else None,
             })
         if len(members) < min_breadth:

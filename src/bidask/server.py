@@ -31,6 +31,7 @@ from src.bidask.config import load_config
 from src.bidask.feed import fetch
 from src.bidask.grouping import build_columns, load_themes
 from src.bidask.session import SessionAccumulator
+from src.bidask.tvquote import QuoteStream, merge_quotes
 from src.bidask.universe import build_universe
 
 ET = ZoneInfo("America/New_York")
@@ -108,6 +109,12 @@ class TapeEngine:
         self.feeds = {m: "" for m in markets}
         self.market_status = {m: "" for m in markets}
         self.consecutive_failures = 0
+        # Equity quotes come from the socket, never the screener: the `america`
+        # scanner has no bid/ask field, so every equity observation would be
+        # rejected as `no_quote` and the tab would render empty. Crypto needs no
+        # stream — the crypto scanner does publish bid/ask.
+        self.quotes = QuoteStream() if "equity" in markets else None
+        self.quoted = {m: 0 for m in markets}
         # Mutable so the in-app control can retune cadence without a restart.
         # cfg stays frozen; this is the live value the loop reads each cycle.
         self.poll_seconds = cfg.poll_seconds
@@ -132,6 +139,10 @@ class TapeEngine:
             self.errors[market] = payload.error
             self.feeds[market] = payload.feed
             self.market_status[market] = payload.market_status
+            # Reset before the early exit: a merge count left over from the last
+            # good poll would report healthy quotes through a feed outage, which
+            # is the failure mode this whole field exists to expose.
+            self.quoted[market] = 0
             if payload.error or payload.rows.empty:
                 continue
             any_ok = True
@@ -140,11 +151,19 @@ class TapeEngine:
                 payload.rows, self.cfg,
                 in_play=(market == "equity"), market=market,
             )
+            records = rows.to_dict("records")
+            if market == "equity" and self.quotes is not None:
+                # Track exactly the in-play set. The socket pushes on change, so
+                # symbols subscribed this poll are quoted by the next one — which
+                # costs nothing, because the classifier needs a previous
+                # observation before it can classify anything anyway.
+                self.quotes.sync(rows["ticker"].tolist() if "ticker" in rows else [])
+                records, self.quoted[market] = merge_quotes(records, self.quotes.snapshot())
             session_date, in_auction = (
                 _equity_session_context() if market == "equity" else _crypto_session_context()
             )
             self.accumulators[market].apply(
-                rows.to_dict("records"),
+                records,
                 session_date=session_date,
                 in_auction_window=in_auction,
             )
@@ -184,6 +203,13 @@ class TapeEngine:
                 "error": self.errors[market],
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }
+            if market == "equity" and self.quotes is not None:
+                # Carried so an empty column can name its own cause. Without it
+                # a dead quote socket is indistinguishable from thresholds set
+                # too high, which is exactly how the screener's missing bid/ask
+                # went unnoticed for a full session.
+                state[market]["quotes"] = {**self.quotes.status(),
+                                           "merged": self.quoted[market]}
         return state
 
     def write_state(self) -> bool:
@@ -305,6 +331,8 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
     out_dir.mkdir(parents=True, exist_ok=True)
 
     engine = TapeEngine(cfg, out_dir)
+    if engine.quotes is not None:
+        engine.quotes.start()
     engine.write_state()  # so the page has something to fetch immediately
 
     stop = threading.Event()
@@ -375,6 +403,8 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
             print("\n  stopping…")
         finally:
             stop.set()
+            if engine.quotes is not None:
+                engine.quotes.stop()
     return 0
 
 

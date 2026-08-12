@@ -1076,6 +1076,7 @@ dependencies = [
     { name = "tqdm" },
     { name = "tradingview-screener" },
     { name = "webdriver-manager" },
+    { name = "websocket-client" },
     { name = "yfinance" },
 ]
 
@@ -1098,6 +1099,7 @@ requires-dist = [
     { name = "tqdm" },
     { name = "tradingview-screener", specifier = ">=3.2.1" },
     { name = "webdriver-manager" },
+    { name = "websocket-client", specifier = ">=1.9.0" },
     { name = "yfinance" },
 ]
 

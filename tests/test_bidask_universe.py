@@ -114,6 +114,12 @@ class TestMarketStatus(unittest.TestCase):
 
     def test_session_field_maps_to_a_human_label(self):
         from src.bidask.feed import _market_status
+        # `market` is the value the feed actually sends during the regular
+        # session (verified live 2026-08-12). The original `regular` spelling was
+        # assumed, never observed, and left the UI styling an open market as
+        # delayed; both map now so neither vintage regresses.
+        self.assertEqual(_market_status(frame([{"current_session": "market"}])),
+                         "market open")
         self.assertEqual(_market_status(frame([{"current_session": "regular"}])),
                          "market open")
         self.assertEqual(_market_status(frame([{"current_session": "out_of_session"}])),

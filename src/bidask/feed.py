@@ -38,6 +38,11 @@ EQUITY_COLUMNS = [
 # different question from `update_mode` (whether our *feed* is real-time). A
 # real-time entitlement on a closed market is still a closed market.
 SESSION_LABELS = {
+    # `market` is what the feed actually sends while the regular session runs —
+    # verified live, 2026-08-12. `regular` was assumed and never observed; an
+    # unmapped value falls through to the raw string, which then fails the UI's
+    # equality test and renders an open market in the "delayed" style.
+    "market": "market open",
     "regular": "market open",
     "extended": "extended hours",
     "pre_market": "pre-market",

@@ -108,6 +108,7 @@
     loadMacroData();
     loadBreadthData();
     initNasiResize();
+    initNasiCrosshair();
     loadNasiData();
     loadThemeData();
     loadMomentumData();
@@ -665,16 +666,30 @@
         }
 
         const hist = data.history || [];
-        const rangeEl = document.getElementById('nasi-range');
-        if (rangeEl) {
-          rangeEl.textContent = hist.length
-            ? `${hist[0].date} → ${hist[hist.length - 1].date} · ${hist.length} sessions`
-            : '';
-        }
         nasiHistory = hist;
+        nasiOsc = deriveNasiOscillator(hist);
         renderNasiChart(hist);
+        showNasiReadout(hist.length - 1);
       })
       .catch(err => console.error('Error loading NASI:', err));
+  }
+
+  // The history points carry date/summation/summation_ma/rsi — no oscillator;
+  // only `current` has one. Since summation is a running total of the
+  // oscillator, diff(summation) recovers it exactly (CLAUDE.md pins this
+  // invariant, and tests/test_nasdaq_mcclellan.py tests it). Deriving here
+  // rather than adding a field to the exporter keeps the readout working on
+  // merge: code PRs reset docs/data/, so a new field would read "—" until the
+  // next daily workflow run.
+  //
+  // Round to 2dp. The stored summations are themselves 2dp, so the raw
+  // subtraction carries float noise — -6304.07 - -6328.92 evaluates to
+  // 24.849999999999454 — and the header shows two decimals.
+  function deriveNasiOscillator(history) {
+    return history.map((pt, i) => {
+      if (i === 0 || pt.summation == null || history[i - 1].summation == null) return null;
+      return Math.round((pt.summation - history[i - 1].summation) * 100) / 100;
+    });
   }
 
   function nasiRsiState(rsi) {
@@ -691,6 +706,12 @@
   // oversold markers are sized from the live scale, so a stale render leaves
   // them stretched after the panel is dragged.
   let nasiHistory = null;
+  // Oscillator per history index, derived once per load (see
+  // deriveNasiOscillator). Parallel to nasiHistory; null where not derivable.
+  let nasiOsc = null;
+  // The crosshair <line>. renderNasiChart clears the SVG on every redraw, so
+  // this ref is reassigned there rather than held across renders.
+  let nasiCrosshair = null;
 
   function redrawNasiNow() {
     if (nasiHistory) renderNasiChart(nasiHistory);
@@ -794,6 +815,72 @@
         cx: xAt(i).toFixed(2), cy: yRsi(pt.rsi).toFixed(2),
         rx: (2 / sx).toFixed(3), ry: 2, fill: 'var(--green)'
       });
+    });
+
+    // Crosshair last, so it draws over the plotted series. It is created as
+    // part of the render because the innerHTML reset above destroys it on
+    // every redraw — and redraws fire on panel drag, window resize, and the
+    // ResizeObserver backstop.
+    nasiCrosshair = add('line', {
+      x1: 0, y1: g.top, x2: 0, y2: g.rsiBot,
+      stroke: 'var(--yellow)', 'stroke-width': 1,
+      'vector-effect': 'non-scaling-stroke',
+      opacity: 0.75, visibility: 'hidden', 'pointer-events': 'none'
+    });
+  }
+
+  // Pointer x -> nearest session index. The SVG is preserveAspectRatio="none",
+  // so viewBox units and CSS pixels diverge at every width except exactly 600 —
+  // the mapping has to go through the measured rect. Read the rect per event
+  // rather than caching it: the panel is drag-resizable mid-session.
+  function nasiIndexAt(clientX) {
+    const svg = document.getElementById('nasi-chart');
+    if (!svg || !nasiHistory || nasiHistory.length < 2) return -1;
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width) return -1;
+    const frac = (clientX - rect.left) / rect.width;
+    const i = Math.round(frac * (nasiHistory.length - 1));
+    return Math.max(0, Math.min(nasiHistory.length - 1, i));
+  }
+
+  function showNasiReadout(i) {
+    const dateEl = document.getElementById('nasi-ro-date');
+    const oscEl = document.getElementById('nasi-ro-osc');
+    const rsiEl = document.getElementById('nasi-ro-rsi');
+    if (!dateEl || !oscEl || !rsiEl) return;
+    if (!nasiHistory || i < 0 || i >= nasiHistory.length) return;
+
+    const pt = nasiHistory[i];
+    const osc = nasiOsc ? nasiOsc[i] : null;
+    dateEl.textContent = pt.date || '—';
+    // Index 0 has no predecessor, so no oscillator is derivable there.
+    oscEl.textContent = osc == null ? '—' : (osc >= 0 ? '+' : '') + osc.toFixed(2);
+    rsiEl.textContent = pt.rsi == null ? '—' : pt.rsi.toFixed(2);
+  }
+
+  function initNasiCrosshair() {
+    const svg = document.getElementById('nasi-chart');
+    if (!svg) return;
+
+    svg.addEventListener('pointermove', e => {
+      // The panel renders before nasi.json resolves; a hover in that window
+      // must be a no-op, not a throw.
+      if (!nasiHistory || !nasiCrosshair) return;
+      const i = nasiIndexAt(e.clientX);
+      if (i < 0) return;
+      const n = nasiHistory.length;
+      const x = (n === 1 ? 0 : (i / (n - 1)) * NASI_GEO.w).toFixed(2);
+      nasiCrosshair.setAttribute('x1', x);
+      nasiCrosshair.setAttribute('x2', x);
+      nasiCrosshair.setAttribute('visibility', 'visible');
+      showNasiReadout(i);
+    });
+
+    svg.addEventListener('pointerleave', () => {
+      if (nasiCrosshair) nasiCrosshair.setAttribute('visibility', 'hidden');
+      // Fall back to the newest session, which is also what the removed range
+      // line used to convey: how current the data is.
+      if (nasiHistory) showNasiReadout(nasiHistory.length - 1);
     });
   }
 

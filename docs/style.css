@@ -889,13 +889,22 @@ tr.filtered-out:hover td {
 .nasi-stat-val.watch    { color: var(--amber); }
 .nasi-stat-val.overbought { color: var(--red); }
 
+/* pointer-events:all makes the whole box hittable. The plotted paths are
+   fill:none, so they emit events only on the stroke itself, and the panes are
+   separated by a 14px gap — without this the crosshair would drop out whenever
+   the pointer crossed an empty band. cursor:crosshair advertises that the
+   chart is inspectable, which nothing else on the panel does. */
 .nasi-chart {
   display: block;
   width: 100%;
   height: 152px;
   overflow: visible;
+  pointer-events: all;
+  cursor: crosshair;
 }
 
+/* Crosshair readout row. Wraps rather than clipping: the panel can be dragged
+   to its 256px min-width, where date and stats no longer share a line. */
 .nasi-foot {
   display: flex;
   align-items: center;
@@ -909,22 +918,40 @@ tr.filtered-out:hover td {
   color: var(--text3);
 }
 
-.nasi-legend { display: flex; align-items: center; gap: 5px; }
-
-.nasi-key {
-  display: inline-block;
-  width: 10px;
-  height: 2px;
-  margin-left: 8px;
+/* The hovered session, in the same yellow the selected ticker uses. */
+.nasi-ro-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--yellow);
+  letter-spacing: 0;
 }
 
-.nasi-key-ma { background: var(--accent); }
-.nasi-key-os { background: var(--amber); height: 7px; opacity: 0.5; }
+.nasi-ro-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
 
-.nasi-note {
-  margin-left: 10px;
+.nasi-ro-lbl {
+  font-size: 9px;
   color: var(--text3);
-  opacity: 0.75;
+}
+
+/* Bright white, not the header's pos/neg colouring — these are read while the
+   eye is on the chart, so they must not compete with the plotted lines. */
+.nasi-ro-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0;
+  min-width: 44px;
+  text-align: right;
+}
+
+.nasi-ro-val + .nasi-ro-lbl {
+  margin-left: 6px;
 }
 
 .breadth-sub {

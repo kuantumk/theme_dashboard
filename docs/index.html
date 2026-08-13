@@ -346,15 +346,24 @@
                 </span>
               </div>
             </div>
+            <!-- role="img" would declare this non-interactive; the chart takes
+                 pointer input for the crosshair readout below, so it carries an
+                 img-like description without the contradicting role. -->
             <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 152"
-                 preserveAspectRatio="none" role="img"
+                 preserveAspectRatio="none"
                  aria-label="Nasdaq McClellan Summation Index and its 14-day RSI"></svg>
-            <div class="nasi-foot">
-              <span id="nasi-range">—</span>
-              <span class="nasi-legend">
-                <i class="nasi-key nasi-key-ma"></i>10-day MA
-                <i class="nasi-key nasi-key-os"></i>RSI ≤ 10 oversold · dashed 12 = major-low band
-                <span class="nasi-note">summation shape only — level is origin-relative</span>
+            <!-- Crosshair readout. Replaces the former range + legend row: that
+                 text was read once, this is read every time the chart is. The
+                 summation level is deliberately absent — it is origin-relative
+                 and never comparable to a vendor chart (see NASI in CLAUDE.md);
+                 OSC and RSI are the two portable figures, matching the header. -->
+            <div class="nasi-foot" id="nasi-readout">
+              <span class="nasi-ro-date" id="nasi-ro-date">—</span>
+              <span class="nasi-ro-stats">
+                <span class="nasi-ro-lbl">OSC</span>
+                <span class="nasi-ro-val" id="nasi-ro-osc">—</span>
+                <span class="nasi-ro-lbl">RSI</span>
+                <span class="nasi-ro-val" id="nasi-ro-rsi">—</span>
               </span>
             </div>
           </div>

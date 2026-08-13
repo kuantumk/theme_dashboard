@@ -741,6 +741,9 @@
     const svg = document.getElementById('nasi-chart');
     if (!svg) return;
     svg.innerHTML = '';
+    // The reset above detached the previous crosshair; drop the reference on
+    // the early-return path too, so it can never point at an orphaned node.
+    nasiCrosshair = null;
     if (!history || history.length < 2) return;
 
     const g = NASI_GEO;
@@ -838,8 +841,7 @@
   // so viewBox units and CSS pixels diverge at every width except exactly 600 —
   // the mapping has to go through the measured rect. Read the rect per event
   // rather than caching it: the panel is drag-resizable mid-session.
-  function nasiIndexAt(clientX) {
-    const svg = document.getElementById('nasi-chart');
+  function nasiIndexAt(svg, clientX) {
     if (!svg || !nasiHistory || nasiHistory.length < 2) return -1;
     const rect = svg.getBoundingClientRect();
     if (!rect.width) return -1;
@@ -871,10 +873,10 @@
       // The panel renders before nasi.json resolves; a hover in that window
       // must be a no-op, not a throw.
       if (!nasiHistory || !nasiCrosshair) return;
-      const i = nasiIndexAt(e.clientX);
+      const i = nasiIndexAt(svg, e.clientX);
       if (i < 0) return;
-      const n = nasiHistory.length;
-      const x = (n === 1 ? 0 : (i / (n - 1)) * NASI_GEO.w).toFixed(2);
+      // nasiIndexAt already rejected n < 2, so the divisor is safe.
+      const x = ((i / (nasiHistory.length - 1)) * NASI_GEO.w).toFixed(2);
       nasiCrosshair.setAttribute('x1', x);
       nasiCrosshair.setAttribute('x2', x);
       nasiCrosshair.setAttribute('visibility', 'visible');

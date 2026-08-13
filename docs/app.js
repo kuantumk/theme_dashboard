@@ -207,7 +207,12 @@
 
         function onMove(e) {
           const dx = e.clientX - startX;
-          const newWidth = Math.max(250, Math.min(startWidth + dx, window.innerWidth - 300));
+          // Minus, not plus: the list pane sits to the RIGHT of the handle
+          // (see PANEL ORDER in style.css), so dragging right must shrink it
+          // and hand the space to the chart. With a plus the divider runs
+          // away from the pointer — wrong in a way that looks like a broken
+          // handle rather than a sign error, and invisible in a screenshot.
+          const newWidth = Math.max(250, Math.min(startWidth - dx, window.innerWidth - 300));
           leftPanel.style.width = newWidth + 'px';
           syncRadarClampsNow();
           redrawNasiNow();

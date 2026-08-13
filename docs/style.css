@@ -257,30 +257,86 @@ body {
   overflow: hidden;
 }
 
-/* 20% table:chart default on wide monitors (~20% narrower than the former 25%;
-   right-panel flex:1 fills the rest), floored at the width that keeps the
-   widest time-travel bar on a single row: 1 date button (75px) + the "+ more"
-   dropdown (98px) + the V/A cutoff dropdowns (132px together) + gaps + the
-   bar's and the panel's 14px padding + the 6px scrollbar = 385px measured,
-   rounded up for slack. Down from 470px: the cutoff dropdowns are far wider
-   than the 52px toggle pair they replaced, but dropping the bar from 3 date
-   buttons to 1 more than pays for them. Re-measure if the bar gains a control,
-   a date label widens, or VISIBLE in renderTimeTravelBar goes back up.
+/* ── PANEL ORDER ─────────────────────────────────────────
+   The chart renders on the LEFT and the ticker list on the RIGHT. The DOM
+   order is still list → handle → chart, so `.left-panel` / `.right-panel`
+   name DOM position, not screen position — read them as "the list pane" and
+   "the chart pane". Reordering 13 near-identical tab blocks in the HTML to
+   fix the names is a separate, mechanical change.
+
+   The three orders must stay relatively ordered (chart < handle < list); the
+   responsive block below resets all three so stacked mobile keeps the list on
+   top. */
+.right-panel { order: 1; }
+.resize-handle { order: 2; }
+.left-panel { order: 3; }
+
+/* 20% table:chart default on wide monitors (right-panel flex:1 fills the
+   rest), floored at the width that keeps the widest time-travel bar on a
+   single row: 1 date button (75px) + the "+ more" dropdown (98px) + the V/A
+   cutoff dropdowns (132px together) + gaps + the bar's and the panel's 14px
+   padding + the 6px scrollbar = 385px measured, rounded up for slack.
+   Re-measure if the bar gains a control, a date label widens, or VISIBLE in
+   renderTimeTravelBar goes back up.
+
+   This is the default for tabs whose table fits it — Themes, Parabolic, and
+   the four Viz tabs. The six list-heavy tabs override it below with a width
+   measured from their own table; that block is the one to re-measure when a
+   column is added.
+
    min-width stays low so the resize handle can still trade list width for
-   chart width — the floor is the *default*, not a hard minimum. */
+   chart width — the floor is the *default*, not a hard minimum.
+
+   border-left, not border-right: the divider belongs on the side now facing
+   the chart. The responsive block replaces it with border-bottom. */
 .left-panel {
   width: max(20%, 400px);
   min-width: 256px;
   overflow-y: auto;
   padding: 14px;
-  border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-/* Overview keeps its wider left panel; the 1:3 default applies to the table tabs only. */
+/* Overview's pane carries the whole macro dashboard, not one table, so it
+   keeps its own proportional width rather than a measured one. */
 #macro-left {
   width: 42%;
 }
+
+/* Per-tab defaults for the list-heavy tabs, so each opens showing its whole
+   table instead of asking for a drag every session. Each value is that tab's
+   measured natural table width plus 28px panel padding, ~6px scrollbar and
+   2px card border, rounded up for slack.
+
+                     measured   default
+     Volume   (9 col)   562px  ->  610px
+     Lev ETF  (6 col)   539px  ->  585px
+     Industry (6 col)   524px  ->  570px
+     EP       (8 col)   450px  ->  500px
+     VARS     (8 col)   445px  ->  490px
+     Momentum (7 col)   389px  ->  440px
+
+   Sized per tab rather than one shared width because column counts genuinely
+   differ — a single value big enough for Volume would cost Momentum ~170px of
+   chart it does not need.
+
+   Natural width is data-dependent: `td` is white-space:nowrap, so a longer
+   ticker or a larger figure widens the table. These came from a snapshot where
+   many Volume/VARS leaf tables held 1-3 rows and both EP tables held one, so
+   treat them as a floor and keep the slack. Re-measure when a column is added:
+   set the table to width:max-content and read its bounding box.
+
+   Tabs absent here (Themes, Parabolic, the four Viz tabs) use the shared
+   default above — Parabolic's 5-column table measures 286px and Themes renders
+   chips, not a table. tests/test_dashboard_panel_layout.py pins these values
+   and the 385px time-travel-bar floor they all clear. */
+#volume-left { width: 610px; }
+#etf-left { width: 585px; }
+#industry-left { width: 570px; }
+#ep-left { width: 500px; }
+#vars-left { width: 490px; }
+#momentum-left { width: 440px; }
 
 .right-panel {
   flex: 1;
@@ -1244,11 +1300,23 @@ tbody tr.nav-active {
   /* Mobile: stack list over chart, each taking half the available
      tab-content height. Use relative flex (50% of the content box) rather
      than 50vh so the header + tab-bar are accounted for — 50vh+50vh would
-     overflow the viewport and push the chart off-screen / collapse it. */
+     overflow the viewport and push the chart off-screen / collapse it.
+
+     Reset `order` on all three. The desktop rules put the chart first, which
+     is a left/right decision; stacked vertically it would read as chart-above
+     -list and bury the list you scroll to pick a ticker from. Resetting all
+     three (not just one) keeps them in DOM order regardless of what the
+     desktop values are changed to later. */
+  .left-panel,
+  .right-panel,
+  .resize-handle {
+    order: 0;
+  }
+
   .left-panel {
     width: 100% !important;
     min-width: unset;
-    border-right: none;
+    border-left: none;
     border-bottom: 1px solid var(--border);
     flex: 1 1 50%;
     max-height: 50%;

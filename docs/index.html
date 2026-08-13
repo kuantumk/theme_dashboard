@@ -58,6 +58,79 @@
     <div class="tab-content active" id="content-macro">
       <div class="left-panel" id="macro-left">
 
+        <!-- Market Breadth & Sentiment (expanded) -->
+        <div class="card">
+          <div class="card-lbl">Market Breadth & Sentiment</div>
+          <div class="breadth-grid" id="breadth-container">
+            <div class="breadth-item">
+              <div class="breadth-label">CNN Fear & Greed</div>
+              <div class="breadth-value" id="fg-value">—</div>
+              <div class="breadth-sub" id="fg-rating"></div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">NAAIM Exposure</div>
+              <div class="breadth-value" id="naaim-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">NCFD</div>
+              <div class="breadth-value" id="ncfd-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMTW</div>
+              <div class="breadth-value" id="mmtw-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMFI</div>
+              <div class="breadth-value" id="mmfi-value">—</div>
+            </div>
+            <div class="breadth-item">
+              <div class="breadth-label">MMTH</div>
+              <div class="breadth-value" id="mmth-value">—</div>
+            </div>
+          </div>
+          <div class="nasi-panel" id="nasi-panel">
+            <div class="nasi-head">
+              <div class="nasi-title">
+                <span class="nasi-name">NASI</span>
+                <span class="nasi-desc">Nasdaq McClellan Summation · RSI(14)</span>
+              </div>
+              <!-- The summation *level* is a running total with an arbitrary
+                   origin, so it can never match a vendor's chart and is not shown
+                   as a figure. The oscillator and the RSI both are comparable. -->
+              <div class="nasi-readout">
+                <span class="nasi-stat">
+                  <span class="nasi-stat-lbl">OSC</span>
+                  <span class="nasi-stat-val" id="nasi-osc">—</span>
+                </span>
+                <span class="nasi-stat">
+                  <span class="nasi-stat-lbl">RSI</span>
+                  <span class="nasi-stat-val" id="nasi-rsi">—</span>
+                </span>
+              </div>
+            </div>
+            <!-- role="img" would declare this non-interactive; the chart takes
+                 pointer input for the crosshair readout below, so it carries an
+                 img-like description without the contradicting role. -->
+            <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 152"
+                 preserveAspectRatio="none"
+                 aria-label="Nasdaq McClellan Summation Index and its 14-day RSI"></svg>
+            <!-- Crosshair readout. Replaces the former range + legend row: that
+                 text was read once, this is read every time the chart is. The
+                 summation level is deliberately absent — it is origin-relative
+                 and never comparable to a vendor chart (see NASI in CLAUDE.md);
+                 OSC and RSI are the two portable figures, matching the header. -->
+            <div class="nasi-foot" id="nasi-readout">
+              <span class="nasi-ro-date" id="nasi-ro-date">—</span>
+              <span class="nasi-ro-stats">
+                <span class="nasi-ro-lbl">OSC</span>
+                <span class="nasi-ro-val" id="nasi-ro-osc">—</span>
+                <span class="nasi-ro-lbl">RSI</span>
+                <span class="nasi-ro-val" id="nasi-ro-rsi">—</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <!-- US Index Futures -->
         <div class="card">
           <div class="card-lbl">US Index Futures & VIX</div>
@@ -293,79 +366,6 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <!-- Market Breadth & Sentiment (expanded) -->
-        <div class="card">
-          <div class="card-lbl">Market Breadth & Sentiment</div>
-          <div class="breadth-grid" id="breadth-container">
-            <div class="breadth-item">
-              <div class="breadth-label">CNN Fear & Greed</div>
-              <div class="breadth-value" id="fg-value">—</div>
-              <div class="breadth-sub" id="fg-rating"></div>
-            </div>
-            <div class="breadth-item">
-              <div class="breadth-label">NAAIM Exposure</div>
-              <div class="breadth-value" id="naaim-value">—</div>
-            </div>
-            <div class="breadth-item">
-              <div class="breadth-label">NCFD</div>
-              <div class="breadth-value" id="ncfd-value">—</div>
-            </div>
-            <div class="breadth-item">
-              <div class="breadth-label">MMTW</div>
-              <div class="breadth-value" id="mmtw-value">—</div>
-            </div>
-            <div class="breadth-item">
-              <div class="breadth-label">MMFI</div>
-              <div class="breadth-value" id="mmfi-value">—</div>
-            </div>
-            <div class="breadth-item">
-              <div class="breadth-label">MMTH</div>
-              <div class="breadth-value" id="mmth-value">—</div>
-            </div>
-          </div>
-          <div class="nasi-panel" id="nasi-panel">
-            <div class="nasi-head">
-              <div class="nasi-title">
-                <span class="nasi-name">NASI</span>
-                <span class="nasi-desc">Nasdaq McClellan Summation · RSI(14)</span>
-              </div>
-              <!-- The summation *level* is a running total with an arbitrary
-                   origin, so it can never match a vendor's chart and is not shown
-                   as a figure. The oscillator and the RSI both are comparable. -->
-              <div class="nasi-readout">
-                <span class="nasi-stat">
-                  <span class="nasi-stat-lbl">OSC</span>
-                  <span class="nasi-stat-val" id="nasi-osc">—</span>
-                </span>
-                <span class="nasi-stat">
-                  <span class="nasi-stat-lbl">RSI</span>
-                  <span class="nasi-stat-val" id="nasi-rsi">—</span>
-                </span>
-              </div>
-            </div>
-            <!-- role="img" would declare this non-interactive; the chart takes
-                 pointer input for the crosshair readout below, so it carries an
-                 img-like description without the contradicting role. -->
-            <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 152"
-                 preserveAspectRatio="none"
-                 aria-label="Nasdaq McClellan Summation Index and its 14-day RSI"></svg>
-            <!-- Crosshair readout. Replaces the former range + legend row: that
-                 text was read once, this is read every time the chart is. The
-                 summation level is deliberately absent — it is origin-relative
-                 and never comparable to a vendor chart (see NASI in CLAUDE.md);
-                 OSC and RSI are the two portable figures, matching the header. -->
-            <div class="nasi-foot" id="nasi-readout">
-              <span class="nasi-ro-date" id="nasi-ro-date">—</span>
-              <span class="nasi-ro-stats">
-                <span class="nasi-ro-lbl">OSC</span>
-                <span class="nasi-ro-val" id="nasi-ro-osc">—</span>
-                <span class="nasi-ro-lbl">RSI</span>
-                <span class="nasi-ro-val" id="nasi-ro-rsi">—</span>
-              </span>
-            </div>
           </div>
         </div>
 

@@ -824,9 +824,10 @@
     });
     // Both thresholds are amber; the dashed --border2 treatment stays
     // exclusive to the 12 major-low band. Rail hue is deliberately NOT the
-    // marker hue: the 80 rail sits at y 116 and its markers span y 112.9-117.5,
-    // so a red rail would sit under the red markers it labels and the pair
-    // would read as one thickened line. The markers carry the signal colour;
+    // marker hue: the 80 rail sits at y 116 and the markers there cover
+    // y 110.9-117.5 (centres 112.9-115.5, plus ry: 2), so a red rail would sit
+    // under the red markers it labels and the pair would read as one
+    // thickened line. The markers carry the signal colour;
     // the rails stay neutral on both sides. Position separates the two
     // thresholds — they are 28 viewBox units apart.
     [

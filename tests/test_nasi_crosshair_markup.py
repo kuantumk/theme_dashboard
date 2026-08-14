@@ -190,11 +190,22 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
     # symptom on screen -- the crosshair just names a neighbouring session.
 
     def test_chart_window_is_a_named_constant(self) -> None:
-        self.assertRegex(
-            self.js,
-            r"const\s+NASI_CHART_SESSIONS\s*=\s*\d+",
+        """A zero would silently restore the full export.
+
+        `slice(-0)` is `slice(0)`, which returns the whole array, so a window of
+        0 plots every retained session with every other guard still green.
+        """
+        match = re.search(r"const\s+NASI_CHART_SESSIONS\s*=\s*(\d+)", self.js)
+        self.assertIsNotNone(
+            match,
             "docs/app.js does not declare NASI_CHART_SESSIONS; the plotted "
             "window must be a named constant, not a literal at the slice site",
+        )
+        self.assertGreater(
+            int(match.group(1)),
+            0,
+            "NASI_CHART_SESSIONS is 0; slice(-0) returns the whole array, so "
+            "the chart would plot the full retained export",
         )
 
     def test_history_and_oscillator_share_one_window(self) -> None:
@@ -222,12 +233,29 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
         result keeps a real oscillator for every plotted session.
         """
         load = self._extract_function("loadNasiData")
+        # Bind the identifier the slice reads from, then require the derivation
+        # to take that same one. A bare `\w+` here matches `nasiHistory` — the
+        # already-sliced array — just as happily as the payload, so the
+        # one-token regression this guard is named after would pass it.
+        source = re.search(
+            r"nasiHistory\s*=\s*(\w+)\.slice\(\s*-\s*NASI_CHART_SESSIONS\s*\)", load
+        )
+        self.assertIsNotNone(
+            source, "loadNasiData does not slice nasiHistory by NASI_CHART_SESSIONS"
+        )
+        payload = source.group(1)
         self.assertRegex(
             load,
-            r"deriveNasiOscillator\(\s*\w+\s*\)",
+            rf"deriveNasiOscillator\(\s*{re.escape(payload)}\s*\)",
             "deriveNasiOscillator is not called on the whole payload; deriving "
             "from an already-sliced array leaves the oldest plotted session "
             "showing an em dash for OSC",
+        )
+        self.assertNotRegex(
+            load,
+            r"deriveNasiOscillator\(\s*nasiHistory\s*\)",
+            "deriveNasiOscillator is called on the sliced array; derive from "
+            "the payload first, then slice the result",
         )
 
     def test_render_and_first_readout_use_the_sliced_history(self) -> None:
@@ -286,9 +314,10 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
     def test_rails_are_not_the_marker_colour(self) -> None:
         """A red rail would sit under the red markers it labels.
 
-        The 80 rail lands at y 116 and its markers span y 112.9-117.5, so the
-        pair would read as one thickened line. Rails stay amber on both sides;
-        the markers carry the signal colour.
+        The 80 rail lands at y 116 and the markers there cover y 110.9-117.5
+        (centres 112.9-115.5, plus ry: 2), so the pair would read as one
+        thickened line. Rails stay amber on both sides; the markers carry the
+        signal colour.
         """
         render = self._extract_function("renderNasiChart")
         self.assertRegex(
@@ -305,36 +334,53 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
         crossing test would have drawn a single marker. The oversold side has
         always been a level test; this pins the overbought side to match.
         """
-        render = self._extract_function("renderNasiChart")
+        loop = self._marker_region()
         self.assertRegex(
-            render,
+            loop,
             r"pt\.rsi\s*<=\s*NASI_OVERSOLD",
             "the oversold marker rule is not a level test",
         )
         self.assertRegex(
-            render,
+            loop,
             r"pt\.rsi\s*>=\s*NASI_OVERBOUGHT",
             "the overbought marker rule is not a level test against the "
             "session's own RSI",
         )
-        self.assertNotRegex(
-            render,
-            r"history\[\s*i\s*[-+]\s*1\s*\]",
-            "renderNasiChart looks at an adjacent session; the band markers "
-            "are level tests, not crossing tests, because the panel reports a "
-            "phase rather than a signal date (see NASI in CLAUDE.md)",
+        # Count threshold references rather than hunting for one crossing
+        # shape. A level test names each constant exactly once; every crossing
+        # form needs a second comparison per band, whether it is spelled
+        # history[i-1], a `prev` accumulator, or anything else.
+        self.assertEqual(
+            len(re.findall(r"NASI_(?:OVERSOLD|OVERBOUGHT)", loop)),
+            2,
+            "the marker block compares against a band threshold more than "
+            "once per band; the markers are level tests, not crossing tests, "
+            "because the panel reports a phase rather than a signal date "
+            "(see NASI in CLAUDE.md)",
         )
 
     def test_one_marker_loop_emits_both_band_colours(self) -> None:
-        """Two loops would let the two band rules drift apart."""
-        render = self._extract_function("renderNasiChart")
+        """Two loops would let the two band rules drift apart.
+
+        Both halves matter. Counting the loops is what the name claims; a bare
+        substring search for the two colours passes on two independent passes,
+        and passes on comment text alone with no marker drawn at all.
+        """
+        loop = self._marker_region()
+        self.assertEqual(
+            loop.count("history.forEach("),
+            1,
+            "the marker block does not iterate exactly once; both bands are "
+            "marked from one loop so neither rule can change unseen",
+        )
         for colour in ("var(--green)", "var(--red)"):
             with self.subTest(colour=colour):
-                self.assertIn(
-                    colour,
-                    render,
-                    f"renderNasiChart never emits {colour}; both bands are "
-                    "marked from one loop so neither rule can change unseen",
+                self.assertRegex(
+                    loop,
+                    rf"fill\s*(?:=|:)\s*'{re.escape(colour)}'",
+                    f"the marker block never assigns {colour} as a fill; "
+                    "matching the bare colour string would also accept a "
+                    "comment that merely names it",
                 )
 
     def test_markers_are_scale_corrected_ellipses(self) -> None:
@@ -364,6 +410,27 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
             'preserveAspectRatio="none" its r is a viewBox length, so it '
             "renders as an ellipse whose shape drifts with panel width",
         )
+
+    def _marker_region(self) -> str:
+        """The band-marker block: the live x-scale read up to the crosshair append.
+
+        Guards on the marker rules scope to this region rather than to the
+        whole of `renderNasiChart`. `_extract_function` returns comments and
+        string literals verbatim, and the function is long enough that a
+        whole-body match can be satisfied by prose elsewhere in it, or by a
+        second loop the guard was meant to reject.
+        """
+        render = self._extract_function("renderNasiChart")
+        start = render.find("const sx")
+        end = render.find("nasiCrosshair = add(")
+        self.assertNotEqual(
+            start, -1, "the live x-scale read that opens the marker block is missing"
+        )
+        self.assertNotEqual(
+            end, -1, "the crosshair append that closes the marker block is missing"
+        )
+        self.assertLess(start, end, "the marker block anchors are out of order")
+        return render[start:end]
 
     def _extract_function(self, name: str) -> str:
         """Return the balanced body of `function <name>(...) { ... }`."""

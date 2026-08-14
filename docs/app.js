@@ -39,6 +39,11 @@
   // useless here: this series crosses it constantly.
   const NASI_LOW_BAND = 12;
   const NASI_WATCH = 20;
+  // A convention, not a calibrated level. Unlike NASI_OVERSOLD above — checked
+  // against StockCharts $NASI in 2026-08 — 80 has never been compared against
+  // an external reference. It arrived as a header tint and is now a plotted
+  // rail, which lends it authority it has not earned. Re-verify it the same way
+  // if the issue universe changes.
   const NASI_OVERBOUGHT = 80;
   // Sessions plotted, ~1 trading year. The window lives here and not in
   // compute_nasi.py's EXPORT_SESSIONS (378) on purpose: code PRs reset

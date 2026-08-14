@@ -39,7 +39,17 @@
   // useless here: this series crosses it constantly.
   const NASI_LOW_BAND = 12;
   const NASI_WATCH = 20;
+  // A convention, not a calibrated level. Unlike NASI_OVERSOLD above — checked
+  // against StockCharts $NASI in 2026-08 — 80 has never been compared against
+  // an external reference. It arrived as a header tint and is now a plotted
+  // rail, which lends it authority it has not earned. Re-verify it the same way
+  // if the issue universe changes.
   const NASI_OVERBOUGHT = 80;
+  // Sessions plotted, ~1 trading year. The window lives here and not in
+  // compute_nasi.py's EXPORT_SESSIONS (378) on purpose: code PRs reset
+  // docs/data/, so trimming the exporter would leave the deployed chart at 18
+  // months until the next daily workflow run. The export is retention headroom.
+  const NASI_CHART_SESSIONS = 252;
   const MACRO_DATA_URL = 'data/macro_data.json';
   const INDUSTRY_ETF_URL = 'data/industry_etf.json';
   const META_URL = 'data/report_meta.json';
@@ -670,11 +680,22 @@
           rsiEl.className = 'nasi-stat-val ' + nasiRsiState(cur.rsi);
         }
 
-        const hist = data.history || [];
-        nasiHistory = hist;
-        nasiOsc = deriveNasiOscillator(hist);
-        renderNasiChart(hist);
-        showNasiReadout(hist.length - 1);
+        // Slice once, here, so every consumer shares one index space:
+        // renderNasiChart plots at it, nasiIndexAt and initNasiCrosshair divide
+        // by it, showNasiReadout indexes into it. Slicing further downstream —
+        // or leaving one of the two calls below on the full payload — would
+        // plot 378 sessions against 252-session pointer math, and the crosshair
+        // would silently name a neighbouring session.
+        //
+        // The oscillator is derived from the whole payload and only then
+        // sliced by the same window, so nasiOsc stays parallel to nasiHistory
+        // AND the oldest visible session keeps a real oscillator. Deriving
+        // after the slice would cost that session its predecessor.
+        const full = data.history || [];
+        nasiHistory = full.slice(-NASI_CHART_SESSIONS);
+        nasiOsc = deriveNasiOscillator(full).slice(-NASI_CHART_SESSIONS);
+        renderNasiChart(nasiHistory);
+        showNasiReadout(nasiHistory.length - 1);
       })
       .catch(err => console.error('Error loading NASI:', err));
   }
@@ -794,20 +815,39 @@
     line(path('summation', yNasi), 'var(--text)', 1.4);
 
     // RSI pane: oversold band, threshold rails, then the RSI track.
+    // The band fill stays exclusive to the oversold side; the overbought side
+    // is marked by its rail and markers alone.
     add('rect', {
       x: 0, y: yRsi(NASI_OVERSOLD), width: g.w,
       height: g.rsiBot - yRsi(NASI_OVERSOLD),
       fill: 'var(--amber)', opacity: 0.16
     });
-    [NASI_OVERSOLD, NASI_LOW_BAND].forEach(lvl => {
+    // Both thresholds are amber; the dashed --border2 treatment stays
+    // exclusive to the 12 major-low band. Rail hue is deliberately NOT the
+    // marker hue: the 80 rail sits at y 116 and the markers there cover
+    // y 110.9-117.5 (centres 112.9-115.5, plus ry: 2), so a red rail would sit
+    // under the red markers it labels and the pair would read as one
+    // thickened line. The markers carry the signal colour;
+    // the rails stay neutral on both sides. Position separates the two
+    // thresholds — they are 28 viewBox units apart.
+    [
+      [NASI_OVERSOLD, 'var(--amber)', null],
+      [NASI_OVERBOUGHT, 'var(--amber)', null],
+      [NASI_LOW_BAND, 'var(--border2)', '3 3'],
+    ].forEach(([lvl, stroke, dash]) => {
       line(`M0,${yRsi(lvl).toFixed(2)}L${g.w},${yRsi(lvl).toFixed(2)}`,
-           lvl === NASI_OVERSOLD ? 'var(--amber)' : 'var(--border2)', 1,
-           lvl === NASI_OVERSOLD ? null : '3 3');
+           stroke, 1, dash);
     });
     line(path('rsi', yRsi), 'var(--text2)', 1.2);
 
-    // Mark every session that actually reached the oversold band — these are the
+    // Mark every session that actually reached either band — these are the
     // signal dates, and they are easy to miss on a 40px-tall pane.
+    //
+    // Both bands use a *level* test, never a crossing test. The panel reports a
+    // phase, not a signal date, so an overbought stretch has to read as a run:
+    // in the plotted year, 18 consecutive sessions sat at or above 80 where a
+    // crossing test would have drawn one marker. One loop emits both colours so
+    // the two rules cannot drift apart.
     //
     // An <ellipse> with rx divided by the live x-scale, not a <circle>: under
     // preserveAspectRatio="none" the x and y scales differ at every panel width
@@ -816,12 +856,20 @@
     // vector-effect does not help — it protects stroke width, not geometry, and
     // is inert on a fill-only shape. Since the scale is read at render time,
     // renderNasiChart must re-run on resize (see initNasiResize).
+    //
+    // Sessions sit ~1.35 CSS px apart against a 4 CSS px marker at the default
+    // panel width, so a contiguous run draws as one band with rounded ends
+    // rather than separate dots. That is the intended read for a phase.
     const sx = (svg.getBoundingClientRect().width / g.w) || 1;
     history.forEach((pt, i) => {
-      if (pt.rsi == null || pt.rsi > NASI_OVERSOLD) return;
+      if (pt.rsi == null) return;
+      let fill = null;
+      if (pt.rsi <= NASI_OVERSOLD) fill = 'var(--green)';
+      else if (pt.rsi >= NASI_OVERBOUGHT) fill = 'var(--red)';
+      if (fill === null) return;
       add('ellipse', {
         cx: xAt(i).toFixed(2), cy: yRsi(pt.rsi).toFixed(2),
-        rx: (2 / sx).toFixed(3), ry: 2, fill: 'var(--green)'
+        rx: (2 / sx).toFixed(3), ry: 2, fill
       });
     });
 

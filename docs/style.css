@@ -888,7 +888,13 @@ tr.filtered-out:hover td {
 /* ── NASI (Nasdaq McClellan Summation + RSI) ──────────────
    Sits under the breadth grid as one full-width block. Colors come from the
    existing palette only: --green/--red for direction, --accent for the MA,
-   --amber for the oversold band. */
+   --amber for the oversold band.
+
+   In the RSI pane the two roles are kept apart: --amber draws both threshold
+   rails (10 and 80) and the oversold band fill, while --green/--red are
+   reserved for the band markers that carry the signal. A rail drawn in its
+   own markers' colour merges with them — the 80 rail sits inside its markers'
+   vertical span — so rail hue stays neutral on both sides. */
 .nasi-panel {
   border-top: 1px solid var(--border);
   padding: 12px 14px 10px;

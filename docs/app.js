@@ -40,6 +40,11 @@
   const NASI_LOW_BAND = 12;
   const NASI_WATCH = 20;
   const NASI_OVERBOUGHT = 80;
+  // Sessions plotted, ~1 trading year. The window lives here and not in
+  // compute_nasi.py's EXPORT_SESSIONS (378) on purpose: code PRs reset
+  // docs/data/, so trimming the exporter would leave the deployed chart at 18
+  // months until the next daily workflow run. The export is retention headroom.
+  const NASI_CHART_SESSIONS = 252;
   const MACRO_DATA_URL = 'data/macro_data.json';
   const INDUSTRY_ETF_URL = 'data/industry_etf.json';
   const META_URL = 'data/report_meta.json';
@@ -670,11 +675,22 @@
           rsiEl.className = 'nasi-stat-val ' + nasiRsiState(cur.rsi);
         }
 
-        const hist = data.history || [];
-        nasiHistory = hist;
-        nasiOsc = deriveNasiOscillator(hist);
-        renderNasiChart(hist);
-        showNasiReadout(hist.length - 1);
+        // Slice once, here, so every consumer shares one index space:
+        // renderNasiChart plots at it, nasiIndexAt and initNasiCrosshair divide
+        // by it, showNasiReadout indexes into it. Slicing further downstream —
+        // or leaving one of the two calls below on the full payload — would
+        // plot 378 sessions against 252-session pointer math, and the crosshair
+        // would silently name a neighbouring session.
+        //
+        // The oscillator is derived from the whole payload and only then
+        // sliced by the same window, so nasiOsc stays parallel to nasiHistory
+        // AND the oldest visible session keeps a real oscillator. Deriving
+        // after the slice would cost that session its predecessor.
+        const full = data.history || [];
+        nasiHistory = full.slice(-NASI_CHART_SESSIONS);
+        nasiOsc = deriveNasiOscillator(full).slice(-NASI_CHART_SESSIONS);
+        renderNasiChart(nasiHistory);
+        showNasiReadout(nasiHistory.length - 1);
       })
       .catch(err => console.error('Error loading NASI:', err));
   }

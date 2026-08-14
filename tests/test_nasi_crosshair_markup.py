@@ -29,6 +29,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 INDEX_HTML = _ROOT / "docs" / "index.html"
 APP_JS = _ROOT / "docs" / "app.js"
 STYLE_CSS = _ROOT / "docs" / "style.css"
+COMPUTE_NASI_PY = _ROOT / "src" / "data_collection" / "compute_nasi.py"
 
 # Element IDs the readout writes into.
 READOUT_IDS = ("nasi-ro-date", "nasi-ro-osc", "nasi-ro-rsi")
@@ -49,6 +50,7 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
         cls.html = INDEX_HTML.read_text(encoding="utf-8")
         cls.js = APP_JS.read_text(encoding="utf-8")
         cls.css = STYLE_CSS.read_text(encoding="utf-8")
+        cls.compute_nasi = COMPUTE_NASI_PY.read_text(encoding="utf-8")
 
     def test_readout_elements_exist(self) -> None:
         for element_id in READOUT_IDS:
@@ -177,6 +179,92 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
             svg.group(0),
             "the chart lost its aria-label; it is the only description "
             "assistive tech gets for this panel",
+        )
+
+    # ── Chart window ────────────────────────────────────────────────
+    #
+    # The panel plots the newest NASI_CHART_SESSIONS sessions out of a longer
+    # exported payload. Every guard below defends one shared index space: the
+    # renderer, the pointer-to-index mapper, the crosshair handler and the
+    # readout must all count the same number of sessions. A mismatch has no
+    # symptom on screen -- the crosshair just names a neighbouring session.
+
+    def test_chart_window_is_a_named_constant(self) -> None:
+        self.assertRegex(
+            self.js,
+            r"const\s+NASI_CHART_SESSIONS\s*=\s*\d+",
+            "docs/app.js does not declare NASI_CHART_SESSIONS; the plotted "
+            "window must be a named constant, not a literal at the slice site",
+        )
+
+    def test_history_and_oscillator_share_one_window(self) -> None:
+        """nasiOsc is indexed in parallel with nasiHistory, so both are sliced."""
+        load = self._extract_function("loadNasiData")
+        self.assertRegex(
+            load,
+            r"nasiHistory\s*=\s*\w+\.slice\(\s*-\s*NASI_CHART_SESSIONS\s*\)",
+            "loadNasiData does not bound nasiHistory by NASI_CHART_SESSIONS",
+        )
+        self.assertRegex(
+            load,
+            r"nasiOsc\s*=\s*deriveNasiOscillator\([^)]*\)"
+            r"\.slice\(\s*-\s*NASI_CHART_SESSIONS\s*\)",
+            "loadNasiData does not bound nasiOsc by the same window as "
+            "nasiHistory; the two arrays are indexed in parallel, so slicing "
+            "only one desyncs the crosshair readout from the plotted session",
+        )
+
+    def test_oscillator_is_derived_before_the_slice(self) -> None:
+        """Deriving after the slice costs the oldest visible session its value.
+
+        `deriveNasiOscillator` differences consecutive summations, so index 0
+        has no predecessor. Running it on the full payload and slicing the
+        result keeps a real oscillator for every plotted session.
+        """
+        load = self._extract_function("loadNasiData")
+        self.assertRegex(
+            load,
+            r"deriveNasiOscillator\(\s*\w+\s*\)",
+            "deriveNasiOscillator is not called on the whole payload; deriving "
+            "from an already-sliced array leaves the oldest plotted session "
+            "showing an em dash for OSC",
+        )
+
+    def test_render_and_first_readout_use_the_sliced_history(self) -> None:
+        """The two call sites that take an argument, not the module variable.
+
+        `renderNasiChart` receives its history as a parameter and the
+        first-paint readout receives an index, so neither inherits the window
+        from `nasiHistory` the way `nasiIndexAt` and `initNasiCrosshair` do.
+        Leaving either on the fetched payload plots the full export against a
+        windowed pointer space, and nothing on screen says so.
+        """
+        load = self._extract_function("loadNasiData")
+        self.assertRegex(
+            load,
+            r"renderNasiChart\(\s*nasiHistory\s*\)",
+            "loadNasiData does not pass the sliced history to renderNasiChart",
+        )
+        self.assertRegex(
+            load,
+            r"showNasiReadout\(\s*nasiHistory\.length\s*-\s*1\s*\)",
+            "loadNasiData does not derive the first-paint readout index from "
+            "the sliced history",
+        )
+
+    def test_exporter_window_is_untouched(self) -> None:
+        """The chart window is a view decision; the export is retention.
+
+        Trimming EXPORT_SESSIONS instead would leave the deployed chart at the
+        old span until the next daily workflow run, because code PRs reset
+        docs/data/. Changing this deliberately means updating this test too.
+        """
+        self.assertRegex(
+            self.compute_nasi,
+            r"EXPORT_SESSIONS\s*=\s*378",
+            "src/data_collection/compute_nasi.py no longer exports 378 "
+            "sessions; the chart window is applied client-side and the export "
+            "is deliberately wider (see NASI in CLAUDE.md)",
         )
 
     def _extract_function(self, name: str) -> str:

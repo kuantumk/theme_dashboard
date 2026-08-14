@@ -810,20 +810,38 @@
     line(path('summation', yNasi), 'var(--text)', 1.4);
 
     // RSI pane: oversold band, threshold rails, then the RSI track.
+    // The band fill stays exclusive to the oversold side; the overbought side
+    // is marked by its rail and markers alone.
     add('rect', {
       x: 0, y: yRsi(NASI_OVERSOLD), width: g.w,
       height: g.rsiBot - yRsi(NASI_OVERSOLD),
       fill: 'var(--amber)', opacity: 0.16
     });
-    [NASI_OVERSOLD, NASI_LOW_BAND].forEach(lvl => {
+    // Both thresholds are amber; the dashed --border2 treatment stays
+    // exclusive to the 12 major-low band. Rail hue is deliberately NOT the
+    // marker hue: the 80 rail sits at y 116 and its markers span y 112.9-117.5,
+    // so a red rail would sit under the red markers it labels and the pair
+    // would read as one thickened line. The markers carry the signal colour;
+    // the rails stay neutral on both sides. Position separates the two
+    // thresholds — they are 28 viewBox units apart.
+    [
+      [NASI_OVERSOLD, 'var(--amber)', null],
+      [NASI_OVERBOUGHT, 'var(--amber)', null],
+      [NASI_LOW_BAND, 'var(--border2)', '3 3'],
+    ].forEach(([lvl, stroke, dash]) => {
       line(`M0,${yRsi(lvl).toFixed(2)}L${g.w},${yRsi(lvl).toFixed(2)}`,
-           lvl === NASI_OVERSOLD ? 'var(--amber)' : 'var(--border2)', 1,
-           lvl === NASI_OVERSOLD ? null : '3 3');
+           stroke, 1, dash);
     });
     line(path('rsi', yRsi), 'var(--text2)', 1.2);
 
-    // Mark every session that actually reached the oversold band — these are the
+    // Mark every session that actually reached either band — these are the
     // signal dates, and they are easy to miss on a 40px-tall pane.
+    //
+    // Both bands use a *level* test, never a crossing test. The panel reports a
+    // phase, not a signal date, so an overbought stretch has to read as a run:
+    // in the plotted year, 18 consecutive sessions sat at or above 80 where a
+    // crossing test would have drawn one marker. One loop emits both colours so
+    // the two rules cannot drift apart.
     //
     // An <ellipse> with rx divided by the live x-scale, not a <circle>: under
     // preserveAspectRatio="none" the x and y scales differ at every panel width
@@ -832,12 +850,20 @@
     // vector-effect does not help — it protects stroke width, not geometry, and
     // is inert on a fill-only shape. Since the scale is read at render time,
     // renderNasiChart must re-run on resize (see initNasiResize).
+    //
+    // Sessions sit ~1.35 CSS px apart against a 4 CSS px marker at the default
+    // panel width, so a contiguous run draws as one band with rounded ends
+    // rather than separate dots. That is the intended read for a phase.
     const sx = (svg.getBoundingClientRect().width / g.w) || 1;
     history.forEach((pt, i) => {
-      if (pt.rsi == null || pt.rsi > NASI_OVERSOLD) return;
+      if (pt.rsi == null) return;
+      let fill = null;
+      if (pt.rsi <= NASI_OVERSOLD) fill = 'var(--green)';
+      else if (pt.rsi >= NASI_OVERBOUGHT) fill = 'var(--red)';
+      if (fill === null) return;
       add('ellipse', {
         cx: xAt(i).toFixed(2), cy: yRsi(pt.rsi).toFixed(2),
-        rx: (2 / sx).toFixed(3), ry: 2, fill: 'var(--green)'
+        rx: (2 / sx).toFixed(3), ry: 2, fill
       });
     });
 

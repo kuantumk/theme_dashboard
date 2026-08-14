@@ -267,6 +267,104 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
             "is deliberately wider (see NASI in CLAUDE.md)",
         )
 
+    # ── Band rails and markers ──────────────────────────────────────
+    #
+    # The RSI pane marks both ends of the series: oversold at or below 10,
+    # overbought at or above 80. Nothing on screen records why these are
+    # *level* tests rather than crossing tests, or why the rails are not the
+    # marker colour, so the guards below carry that.
+
+    def test_rsi_pane_draws_an_overbought_rail(self) -> None:
+        render = self._extract_function("renderNasiChart")
+        self.assertRegex(
+            render,
+            r"\[\s*NASI_OVERBOUGHT\s*,",
+            "renderNasiChart draws no rail at NASI_OVERBOUGHT; the overbought "
+            "markers would sit on an unlabelled stretch of the pane",
+        )
+
+    def test_rails_are_not_the_marker_colour(self) -> None:
+        """A red rail would sit under the red markers it labels.
+
+        The 80 rail lands at y 116 and its markers span y 112.9-117.5, so the
+        pair would read as one thickened line. Rails stay amber on both sides;
+        the markers carry the signal colour.
+        """
+        render = self._extract_function("renderNasiChart")
+        self.assertRegex(
+            render,
+            r"\[\s*NASI_OVERBOUGHT\s*,\s*'var\(--amber\)'",
+            "the NASI_OVERBOUGHT rail is not amber; a rail drawn in the "
+            "marker colour merges with the markers it is meant to label",
+        )
+
+    def test_both_bands_are_level_tests_not_crossing_tests(self) -> None:
+        """The panel reports a phase, so a band must read as a run.
+
+        In the plotted year 18 consecutive sessions sat at or above 80, where a
+        crossing test would have drawn a single marker. The oversold side has
+        always been a level test; this pins the overbought side to match.
+        """
+        render = self._extract_function("renderNasiChart")
+        self.assertRegex(
+            render,
+            r"pt\.rsi\s*<=\s*NASI_OVERSOLD",
+            "the oversold marker rule is not a level test",
+        )
+        self.assertRegex(
+            render,
+            r"pt\.rsi\s*>=\s*NASI_OVERBOUGHT",
+            "the overbought marker rule is not a level test against the "
+            "session's own RSI",
+        )
+        self.assertNotRegex(
+            render,
+            r"history\[\s*i\s*[-+]\s*1\s*\]",
+            "renderNasiChart looks at an adjacent session; the band markers "
+            "are level tests, not crossing tests, because the panel reports a "
+            "phase rather than a signal date (see NASI in CLAUDE.md)",
+        )
+
+    def test_one_marker_loop_emits_both_band_colours(self) -> None:
+        """Two loops would let the two band rules drift apart."""
+        render = self._extract_function("renderNasiChart")
+        for colour in ("var(--green)", "var(--red)"):
+            with self.subTest(colour=colour):
+                self.assertIn(
+                    colour,
+                    render,
+                    f"renderNasiChart never emits {colour}; both bands are "
+                    "marked from one loop so neither rule can change unseen",
+                )
+
+    def test_markers_are_scale_corrected_ellipses(self) -> None:
+        """A <circle> deforms under preserveAspectRatio="none".
+
+        Its `r` is a viewBox length, so it renders as an ellipse whose shape
+        drifts with panel width. Matching the creation call rather than the
+        bare word matters: the geometry comment this guard protects names
+        `circle` twice, and `_extract_function` returns comments verbatim.
+        """
+        render = self._extract_function("renderNasiChart")
+        self.assertRegex(
+            render,
+            r"add\(\s*'ellipse'",
+            "band markers are not <ellipse> elements",
+        )
+        self.assertRegex(
+            render,
+            r"rx:\s*\(\s*2\s*/\s*sx\s*\)",
+            "marker rx is not divided by the measured x-scale, so markers "
+            "stretch as the panel is dragged",
+        )
+        self.assertNotRegex(
+            render,
+            r"""add\(\s*['"]circle['"]""",
+            "renderNasiChart creates a <circle>; under "
+            'preserveAspectRatio="none" its r is a viewBox length, so it '
+            "renders as an ellipse whose shape drifts with panel width",
+        )
+
     def _extract_function(self, name: str) -> str:
         """Return the balanced body of `function <name>(...) { ... }`."""
         marker = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", self.js)

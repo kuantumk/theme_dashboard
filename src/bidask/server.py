@@ -33,6 +33,11 @@ from src.bidask.grouping import build_columns, load_themes
 from src.bidask.session import SessionAccumulator
 from src.bidask.tvquote import QuoteStream, merge_quotes
 from src.bidask.universe import build_universe
+from src.bidask.volume_curve import (
+    SESSION_CLOSE_MIN,
+    SESSION_OPEN_MIN,
+    expected_fraction,
+)
 
 ET = ZoneInfo("America/New_York")
 WEB_DIR = Path(__file__).resolve().parent / "web"
@@ -78,8 +83,11 @@ def _equity_session_context(now: Optional[datetime] = None) -> tuple[str, bool]:
     """
     cfg = load_config()
     now_et = (now or datetime.now(tz=ET)).astimezone(ET)
-    open_min = 9 * 60 + 30
-    close_min = 16 * 60
+    # Borrowed from `volume_curve` rather than restated. The caller reads the
+    # clock once so the session date, this test and the pace divisor agree;
+    # that guarantee is empty if each of them defines the session separately.
+    open_min = SESSION_OPEN_MIN
+    close_min = SESSION_CLOSE_MIN
     minutes = now_et.hour * 60 + now_et.minute
     # Both windows are bounded. An unbounded lower test (`minutes < open+15`)
     # is also true at 04:00 and 08:00, which would reject every pre-market and
@@ -147,9 +155,20 @@ class TapeEngine:
                 continue
             any_ok = True
 
+            # One clock read for the whole market, so the session date, the
+            # auction test and the volume-pace divisor cannot disagree.
+            if market == "equity":
+                now_et = datetime.now(tz=ET)
+                session_date, in_auction = _equity_session_context(now_et)
+                session_fraction = expected_fraction(now_et)
+            else:
+                session_date, in_auction = _crypto_session_context()
+                session_fraction = None
+
             rows = build_universe(
                 payload.rows, self.cfg,
                 in_play=(market == "equity"), market=market,
+                session_fraction=session_fraction,
             )
             records = rows.to_dict("records")
             if market == "equity" and self.quotes is not None:
@@ -159,9 +178,6 @@ class TapeEngine:
                 # observation before it can classify anything anyway.
                 self.quotes.sync(rows["ticker"].tolist() if "ticker" in rows else [])
                 records, self.quoted[market] = merge_quotes(records, self.quotes.snapshot())
-            session_date, in_auction = (
-                _equity_session_context() if market == "equity" else _crypto_session_context()
-            )
             self.accumulators[market].apply(
                 records,
                 session_date=session_date,

@@ -47,30 +47,76 @@ class TestLiquidity(unittest.TestCase):
 
 
 class TestInPlayGate(unittest.TestCase):
-    def test_admits_on_relative_volume_alone(self):
-        df = frame([{"symbol": "AAA", "rvol": 3.0, "change_pct": 0.2}])
-        self.assertEqual(len(apply_in_play(df, CFG)), 1)
+    """The volume leg reads a time-of-day pace, not the raw screener figure.
+
+    `relative_volume_10d_calc` divides session-to-date volume by a FULL-DAY
+    average, so a fixed floor on it is a different filter every hour. Every
+    case below therefore pins an explicit `session_fraction`.
+    """
+
+    # Expected share of the session's volume done by 10:00 and by 15:00.
+    MORNING = 0.1926
+    LATE = 0.8103
+
+    def test_admits_on_volume_pace_alone(self):
+        # 3x normal pace at 10:00 is a raw rvol of 0.58 — far under the old floor.
+        df = frame([{"symbol": "AAA", "rvol": 3.0 * self.MORNING, "change_pct": 0.2}])
+        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.MORNING)), 1)
 
     def test_admits_on_change_alone(self):
         df = frame([{"symbol": "AAA", "rvol": 0.4, "change_pct": -8.0}])
-        self.assertEqual(len(apply_in_play(df, CFG)), 1)
+        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 1)
 
     def test_rejects_when_neither_leg_qualifies(self):
-        df = frame([{"symbol": "AAA", "rvol": 0.5, "change_pct": 0.3}])
-        self.assertEqual(len(apply_in_play(df, CFG)), 0)
+        # 0.6x normal pace at 15:00, and barely moved.
+        df = frame([{"symbol": "AAA", "rvol": 0.6 * self.LATE, "change_pct": 0.3}])
+        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 0)
+
+    def test_the_same_pace_is_admitted_at_any_hour(self):
+        """The defect this replaces: the old floor let nothing in before noon.
+
+        BE/FCEL, 2026-08-14. FCEL held ~2x normal participation from 10:00 while
+        up double digits, and the raw floor rejected it until roughly 13:00.
+        """
+        for fraction in (0.0908, self.MORNING, 0.2982, 0.5021, self.LATE):
+            df = frame([{"symbol": "AAA", "rvol": 2.0 * fraction, "change_pct": 0.1}])
+            kept = apply_in_play(df, CFG, session_fraction=fraction)
+            self.assertEqual(len(kept), 1, f"2x pace rejected at fraction {fraction}")
+
+    def test_thin_tape_is_rejected_at_any_hour(self):
+        """BE traded at 0.55-0.70x its normal pace all session on 2026-08-14."""
+        for fraction in (0.0908, self.MORNING, 0.2982, 0.5021, self.LATE):
+            df = frame([{"symbol": "BE", "rvol": 0.65 * fraction, "change_pct": 1.4}])
+            self.assertEqual(len(apply_in_play(df, CFG, session_fraction=fraction)), 0)
 
     def test_disabling_both_legs_passes_everything_through(self):
-        cfg = load_config({"in_play_min_rvol": None, "in_play_min_change_pct": None})
         # load_config's override drops None values, so build a config whose legs
         # are genuinely absent by replacing them on the frozen instance.
         from dataclasses import replace
-        cfg = replace(cfg, in_play_min_rvol=None, in_play_min_change_pct=None)
+        cfg = replace(CFG, in_play_min_volume_pace=None, in_play_min_change_pct=None)
         df = frame([{"symbol": "AAA", "rvol": 0.1, "change_pct": 0.1}])
-        self.assertEqual(len(apply_in_play(df, cfg)), 1)
+        self.assertEqual(len(apply_in_play(df, cfg, session_fraction=self.LATE)), 1)
 
     def test_missing_metrics_do_not_crash(self):
         df = frame([{"symbol": "AAA", "rvol": None, "change_pct": None}])
+        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 0)
+
+    def test_omitted_fraction_falls_back_to_the_clock(self):
+        """Callers may omit it; the gate must not then admit everything."""
+        df = frame([{"symbol": "AAA", "rvol": 0.0, "change_pct": 0.0}])
         self.assertEqual(len(apply_in_play(df, CFG)), 0)
+
+
+class TestRetiredConfigKey(unittest.TestCase):
+    def test_old_raw_rvol_key_is_rejected_with_a_migration_message(self):
+        """Silently ignoring it would disable the volume leg with no signal.
+
+        That is the failure mode the whole module exists to prevent, so it must
+        not be reintroduced by a stale config file.
+        """
+        with self.assertRaises(ValueError) as caught:
+            load_config({"in_play_min_rvol": 1.5})
+        self.assertIn("in_play_min_volume_pace", str(caught.exception))
 
 
 class TestStablecoinExclusion(unittest.TestCase):

@@ -12,7 +12,11 @@ Two distinct cuts, deliberately separated:
 
 from __future__ import annotations
 
+from typing import Optional
+
 import pandas as pd
+
+from src.bidask.volume_curve import expected_fraction, pace_divisor
 
 
 def apply_liquidity(df: pd.DataFrame, cfg) -> pd.DataFrame:
@@ -34,23 +38,40 @@ def apply_liquidity(df: pd.DataFrame, cfg) -> pd.DataFrame:
     return out
 
 
-def apply_in_play(df: pd.DataFrame, cfg) -> pd.DataFrame:
+def apply_in_play(
+    df: pd.DataFrame, cfg, *, session_fraction: Optional[float] = None
+) -> pd.DataFrame:
     """Keep rows that are actually moving.
 
     The two legs are independent and either can be disabled by setting its
     config value to null. With both disabled the liquidity-filtered set passes
     through untouched.
+
+    The volume leg floors a **pace**, not the screener's raw relative-volume
+    figure. That figure divides session-to-date volume by a full-day average, so
+    flooring it directly demands 16x normal participation at 09:35 and 1.8x at
+    15:00 — strictest exactly when a momentum trader needs it loosest. Dividing
+    by the expected share of the session's volume makes the floor mean one thing
+    all day. See `src/bidask/volume_curve.py`.
+
+    `session_fraction` is passed in rather than read from the clock here so the
+    gate stays a pure function of its inputs; omitting it falls back to now.
     """
     if df.empty:
         return df
-    rvol_floor = cfg.in_play_min_rvol
+    pace_floor = cfg.in_play_min_volume_pace
     change_floor = cfg.in_play_min_change_pct
-    if rvol_floor is None and change_floor is None:
+    if pace_floor is None and change_floor is None:
         return df
 
     keep = pd.Series(False, index=df.index)
-    if rvol_floor is not None and "rvol" in df.columns:
-        keep |= pd.to_numeric(df["rvol"], errors="coerce").fillna(0) >= rvol_floor
+    if pace_floor is not None and "rvol" in df.columns:
+        fraction = expected_fraction() if session_fraction is None else session_fraction
+        # Same rule as the scalar `volume_pace`, applied to a whole column: an
+        # unknown or negative reading is 0, never a free pass. The clamped
+        # divisor is shared rather than rewritten so the two cannot drift.
+        raw = pd.to_numeric(df["rvol"], errors="coerce").fillna(0.0).clip(lower=0.0)
+        keep |= (raw / pace_divisor(fraction)) >= pace_floor
     if change_floor is not None and "change_pct" in df.columns:
         keep |= pd.to_numeric(df["change_pct"], errors="coerce").abs().fillna(0) >= change_floor
     return df[keep]
@@ -70,11 +91,16 @@ def exclude_symbols(df: pd.DataFrame, excluded) -> pd.DataFrame:
 
 
 def build_universe(
-    df: pd.DataFrame, cfg, *, in_play: bool = True, market: str = "equity"
+    df: pd.DataFrame,
+    cfg,
+    *,
+    in_play: bool = True,
+    market: str = "equity",
+    session_fraction: Optional[float] = None,
 ) -> pd.DataFrame:
     out = apply_liquidity(df, cfg)
     if market == "crypto":
         out = exclude_symbols(out, cfg.crypto_exclude)
     if in_play:
-        out = apply_in_play(out, cfg)
+        out = apply_in_play(out, cfg, session_fraction=session_fraction)
     return out

@@ -24,7 +24,9 @@ class BidAskConfig:
     min_avg_dollar_vol: float
     min_avg_volume: float
     avg_window_days: int
-    in_play_min_rvol: Optional[float]
+    # A multiple of normal participation for the time of day, NOT the screener's
+    # raw `relative_volume_10d_calc`. See `src/bidask/volume_curve.py`.
+    in_play_min_volume_pace: Optional[float]
     in_play_min_change_pct: Optional[float]
     band_frac: float
     max_spread_pct: float
@@ -62,6 +64,18 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
     if overrides:
         raw.update({k: v for k, v in overrides.items() if v is not None})
 
+    # The volume leg used to floor the screener's raw relative-volume figure,
+    # which is session-to-date volume over a FULL-DAY average and therefore a
+    # different filter every hour. Ignoring a leftover key would silently
+    # disable the leg — the exact failure this replaced — so say so instead.
+    if "in_play_min_rvol" in raw:
+        raise ValueError(
+            "bidask.in_play_min_rvol has been replaced by "
+            "bidask.in_play_min_volume_pace, which floors a time-of-day pace "
+            "(1.0 = normal participation for this hour) rather than the raw "
+            "screener figure. Rename the key in config/workflow_config.yaml."
+        )
+
     window = int(raw.get("avg_window_days", 30))
     if window not in VALID_AVG_WINDOWS:
         raise ValueError(
@@ -80,7 +94,7 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         min_avg_dollar_vol=float(raw.get("min_avg_dollar_vol", 10_000_000)),
         min_avg_volume=float(raw.get("min_avg_volume", 750_000)),
         avg_window_days=window,
-        in_play_min_rvol=_opt("in_play_min_rvol"),
+        in_play_min_volume_pace=_opt("in_play_min_volume_pace"),
         in_play_min_change_pct=_opt("in_play_min_change_pct"),
         band_frac=float(raw.get("band_frac", 0.30)),
         max_spread_pct=float(raw.get("max_spread_pct", 2.0)),

@@ -146,7 +146,13 @@ bidask:
   avg_window_days: 30           # one of 10/30/60/90 — the feed returns null for 20
 
   # "In play" gate: what is worth displaying, not what is worth polling.
-  in_play_min_rvol: 1.5         # relative volume; null disables this leg
+  # The volume leg floors a time-of-day PACE, not the screener's raw relative
+  # volume. 1.0 = trading at exactly its normal rate for this hour. The raw
+  # figure divides session-to-date volume by a full-day average, so flooring it
+  # directly demands 16x normal pace at 09:35 and 1.8x at 15:00 -- see
+  # src/bidask/volume_curve.py. Renamed from in_play_min_rvol; the old key now
+  # raises rather than silently disabling the leg.
+  in_play_min_volume_pace: 1.5  # multiple of normal pace; null disables this leg
   in_play_min_change_pct: 3.0   # absolute % change; null disables this leg
 
   # Classification (see KTD2/KTD3 in the plan). The band is CLNV's 30% of spread:

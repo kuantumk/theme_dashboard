@@ -39,6 +39,8 @@
     minVolumeVal: document.getElementById('min-volume-val'),
     market: document.getElementById('market-pill'),
     quotes: document.getElementById('quotes-pill'),
+    strongMeta: document.getElementById('strong-meta'),
+    weakMeta: document.getElementById('weak-meta'),
   };
 
   // Liquidity spans orders of magnitude, so a linear slider would spend most of
@@ -155,7 +157,40 @@
     return 'No tickers above the current thresholds yet.';
   }
 
-  function renderColumn(groups, container, side, emptyMsg) {
+  // The server caps each column at a fixed number of rows, so most of the board
+  // never reaches the page — measured 2026-08-14, the strong column rendered 13
+  // of 124 themes and 111 of 367 in-play tickers. Saying nothing made a theme
+  // that was genuinely bid look identical to one nobody was tracking: FCEL ran
+  // +14% on twice normal participation inside a two-name theme that ranked
+  // 105th, and the page gave no hint it existed. The server publishes only the
+  // totals; the shown half is counted here, after the sliders above, because a
+  // count sent from the server would be pre-slider and would disagree with what
+  // is on screen.
+  function renderColumnMeta(el, kept, meta) {
+    if (!el) return;
+    if (!meta || !meta.groups_total) {
+      // Reset the class too. The tabs share one element, so a crypto view left
+      // the amber "hiding" state on an empty label after an equity render.
+      el.textContent = '';
+      el.className = 'column-meta';
+      el.title = '';
+      return;
+    }
+    const groups = kept.length;
+    const tickers = kept.reduce((n, g) => n + g.members.length, 0);
+    const hiding = groups < meta.groups_total || tickers < meta.tickers_total;
+    el.textContent = hiding
+      ? `${groups}/${meta.groups_total} themes · ${tickers}/${meta.tickers_total} tickers`
+      : `${groups} themes · ${tickers} tickers`;
+    el.className = 'column-meta' + (hiding ? ' hiding' : '');
+    el.title = hiding
+      ? 'Shown / accumulating. The column is capped, and themes are ranked by '
+        + 'the SUM of member margins — so a one- or two-name theme is hard to '
+        + 'surface however strong its tape. Loosen the sliders to see more.'
+      : 'Every theme with a classified tape is on screen.';
+  }
+
+  function renderColumn(groups, container, side, emptyMsg, meta, metaEl) {
     const f = filters();
     const kept = [];
     (groups || []).forEach(group => {
@@ -168,6 +203,7 @@
     // Re-sort after filtering so the displayed score, not the unfiltered one,
     // decides the order. Group totals always equal the sum of visible members.
     kept.sort((a, b) => (side === 'strong' ? b.score - a.score : a.score - b.score));
+    renderColumnMeta(metaEl, kept, meta);
 
     if (!kept.length) {
       container.innerHTML = `<div class="empty">${emptyMsg || 'No tickers above the current thresholds yet.'}</div>`;
@@ -257,8 +293,10 @@
     // surface in the project that re-renders while being actively read.
     const y = window.scrollY;
     const reason = emptyReason(view);
-    renderColumn(view.columns && view.columns.strong, els.strong, 'strong', reason);
-    renderColumn(view.columns && view.columns.weak, els.weak, 'weak', reason);
+    const cols = view.columns || {};
+    const cut = cols.truncated || {};
+    renderColumn(cols.strong, els.strong, 'strong', reason, cut.strong, els.strongMeta);
+    renderColumn(cols.weak, els.weak, 'weak', reason, cut.weak, els.weakMeta);
     window.scrollTo(0, y);
   }
 

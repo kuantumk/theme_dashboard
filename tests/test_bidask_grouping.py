@@ -106,6 +106,74 @@ class TestGrouping(unittest.TestCase):
         total = sum(len(g["members"]) for g in cols["strong"])
         self.assertLessEqual(total, CFG.max_rows_per_column)
 
+class TestTruncationIsReported(unittest.TestCase):
+    """The column cap drops most of the board, and used to do so silently.
+
+    Measured 2026-08-14: 13 of 124 strong groups and 111 of 367 in-play tickers
+    reached the screen. `Clean Energy / Fuel Cell & Hydrogen` held FCEL while it
+    ran +14% on twice normal participation, ranked 105th of 124, and never
+    appeared. Nothing on the page said anything had been dropped.
+    """
+
+    def test_only_totals_are_published(self):
+        """The "shown" half is the browser's to count, after its own sliders.
+
+        A count sent from here would be pre-slider and would disagree with the
+        screen, which is the confusion this counter exists to end.
+        """
+        cols = build_columns([state("NVDA", 10, 2)], THEMES, CFG)
+        self.assertEqual(set(cols["truncated"]["strong"]),
+                         {"groups_total", "tickers_total"})
+
+    def test_nothing_hidden_still_reports_the_totals(self):
+        cols = build_columns([state("NVDA", 10, 2)], THEMES, CFG)
+        meta = cols["truncated"]["strong"]
+        self.assertEqual(meta["groups_total"], len(cols["strong"]))
+        self.assertEqual(meta["tickers_total"], 1)
+
+    def test_dropped_groups_are_counted(self):
+        # 20 industries of 5 members each is 100 rows against a 60-row budget.
+        many = [state(f"T{i}", 20 - i % 5, 0, industry=f"Ind{i // 5}")
+                for i in range(100)]
+        cols = build_columns(many, THEMES, CFG)
+        meta = cols["truncated"]["strong"]
+        self.assertEqual(meta["groups_total"], 20)
+        self.assertLess(len(cols["strong"]), meta["groups_total"])
+
+    def test_dropped_tickers_are_counted_distinctly(self):
+        many = [state(f"T{i}", 9, 0, industry=f"Ind{i // 5}") for i in range(100)]
+        cols = build_columns(many, THEMES, CFG)
+        meta = cols["truncated"]["strong"]
+        self.assertEqual(meta["tickers_total"], 100)
+        rendered = {m["symbol"] for g in cols["strong"] for m in g["members"]}
+        self.assertLessEqual(len(rendered), CFG.max_rows_per_column)
+        self.assertLess(len(rendered), meta["tickers_total"])
+
+    def test_a_dual_role_ticker_counts_once(self):
+        """DUAL sits in two theme leaves; it is still one ticker."""
+        cols = build_columns([state("DUAL", 10, 2)], THEMES, CFG)
+        meta = cols["truncated"]["strong"]
+        self.assertEqual(meta["groups_total"], 2)
+        self.assertEqual(meta["tickers_total"], 1)
+
+    def test_both_sides_are_reported(self):
+        cols = build_columns([state("NVDA", 10, 2), state("MEH", 1, 9,
+                                                          industry="Retail")],
+                             THEMES, CFG)
+        self.assertIn("strong", cols["truncated"])
+        self.assertIn("weak", cols["truncated"])
+        self.assertEqual(cols["truncated"]["weak"]["tickers_total"], 1)
+
+    def test_crypto_flat_path_reports_too(self):
+        rows = [state(f"C{i}", 9, 0) for i in range(80)]
+        cols = build_columns(rows, {}, CFG, grouped=False)
+        meta = cols["truncated"]["strong"]
+        self.assertEqual(meta["tickers_total"], 80)
+        self.assertEqual(len(cols["strong"][0]["members"]),
+                         CFG.max_rows_per_column)
+
+
+class TestCryptoPath(unittest.TestCase):
     def test_crypto_path_is_flat(self):
         cols = build_columns([state("BTC", 9, 1)], {}, CFG, grouped=False)
         self.assertEqual(len(cols["strong"]), 1)

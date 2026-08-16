@@ -146,7 +146,24 @@ bidask:
   avg_window_days: 30           # one of 10/30/60/90 — the feed returns null for 20
 
   # "In play" gate: what is worth displaying, not what is worth polling.
-  in_play_min_rvol: 1.5         # relative volume; null disables this leg
+  #
+  # The volume leg is Relative Volume at Time (TradingView's Cumulative mode):
+  # this ticker's volume since 09:30 over the mean of ITS OWN 09:30-to-now
+  # volume across the last 10 sessions. 1.0 = exactly its usual participation
+  # by this point in the day. The screener's raw relative_volume_10d_calc
+  # divides by a full-day average instead, so flooring it directly demands 16x
+  # normal participation at 09:35 and 1.8x at 15:00 -- see
+  # src/bidask/rvol_at_time.py. The retired in_play_min_rvol key raises.
+  #
+  # Floors step up through the session because the denominator is small and the
+  # ratio noisy early on: [minutes since 09:30, floor]. Each floor holds until
+  # the next mark, and the first also covers the minutes before it.
+  in_play_rvol_schedule:
+    - [5, 0.8]
+    - [15, 1.0]
+    - [30, 1.2]
+    - [60, 1.5]
+  in_play_rvol_sessions: 10     # sessions behind the historical average
   in_play_min_change_pct: 3.0   # absolute % change; null disables this leg
 
   # Classification (see KTD2/KTD3 in the plan). The band is CLNV's 30% of spread:

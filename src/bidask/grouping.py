@@ -43,11 +43,29 @@ def _leaves_for(symbol: str, meta: dict, themes: dict) -> list[tuple[str, str]]:
     return [(UNCLASSIFIED_GROUP, "industry")]
 
 
+def _tally(total_groups: int, total_tickers: int) -> dict:
+    """How much there was to show, so the page can say what it is not showing.
+
+    The cap is deliberate — an industry fallback can hold 70 tickers and would
+    otherwise consume the column. Reporting it is what was missing: on
+    2026-08-14 the strong column rendered 13 of 124 groups and the page gave no
+    hint that the other 111 existed, so a theme that was genuinely bid looked
+    identical to one that was not being tracked at all.
+
+    Only the totals are published. The matching "shown" half is the browser's
+    to count, because it applies its own sliders after this cap — a count sent
+    from here would be pre-slider and would disagree with the screen.
+    """
+    return {"groups_total": total_groups, "tickers_total": total_tickers}
+
+
 def build_columns(states, themes: dict, cfg, *, grouped: bool = True) -> dict:
     """Split accumulated states into strong-tape and weak-tape columns.
 
     Strong tape is ask hits exceeding bid hits. Tickers with a zero margin
     belong to neither column — the tape has not spoken on them.
+
+    `truncated` carries per-side counts of what the display caps dropped.
     """
     strong_rows, weak_rows = [], []
     for state in states:
@@ -60,32 +78,37 @@ def build_columns(states, themes: dict, cfg, *, grouped: bool = True) -> dict:
         elif state.margin < 0:
             weak_rows.append(payload)
 
-    if not grouped:
-        return {
-            "strong": _flat(strong_rows, cfg, reverse=True),
-            "weak": _flat(weak_rows, cfg, reverse=False),
-        }
+    split = _flat if not grouped else _grouped
+    strong, strong_meta = split(strong_rows, themes, cfg, reverse=True)
+    weak, weak_meta = split(weak_rows, themes, cfg, reverse=False)
     return {
-        "strong": _grouped(strong_rows, themes, cfg, reverse=True),
-        "weak": _grouped(weak_rows, themes, cfg, reverse=False),
+        "strong": strong,
+        "weak": weak,
+        "truncated": {"strong": strong_meta, "weak": weak_meta},
     }
 
 
-def _flat(rows: list[dict], cfg, *, reverse: bool) -> list[dict]:
-    """Crypto path: one pseudo-group, ranked. The taxonomy is equities-only."""
+def _flat(rows: list[dict], _themes: dict, cfg, *, reverse: bool) -> tuple[list[dict], dict]:
+    """Crypto path: one pseudo-group, ranked. The taxonomy is equities-only.
+
+    `_themes` is unused and named so; it exists only to match `_grouped`, which
+    `build_columns` selects between and calls with one argument list.
+    """
     ordered = sorted(rows, key=lambda r: r["margin"], reverse=reverse)
     ordered = ordered[: cfg.max_rows_per_column]
+    total_tickers = len({r["symbol"] for r in rows})
     if not ordered:
-        return []
-    return [{
+        return [], _tally(0, total_tickers)
+    shown = [{
         "name": "All",
         "origin": "flat",
         "score": sum(r["margin"] for r in ordered),
         "members": ordered,
     }]
+    return shown, _tally(1, total_tickers)
 
 
-def _grouped(rows: list[dict], themes: dict, cfg, *, reverse: bool) -> list[dict]:
+def _grouped(rows: list[dict], themes: dict, cfg, *, reverse: bool) -> tuple[list[dict], dict]:
     buckets: dict[str, dict] = {}
     for payload in rows:
         for name, origin in _leaves_for(payload["symbol"], payload, themes):
@@ -110,4 +133,4 @@ def _grouped(rows: list[dict], themes: dict, cfg, *, reverse: bool) -> list[dict
         bucket["members"] = bucket["members"][:take]
         budget -= len(bucket["members"])
         capped.append(bucket)
-    return capped
+    return capped, _tally(len(groups), len({r["symbol"] for r in rows}))

@@ -167,6 +167,10 @@ body {
 .column { background: var(--bg); padding: 10px 12px 40px; }
 
 .column-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   font-family: var(--display);
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -178,6 +182,20 @@ body {
 
 .column.strong .column-head { color: var(--green); }
 .column.weak .column-head { color: var(--red); }
+
+/* How much of the column reached the page. The count is muted while every
+   theme fits and amber once the cap is dropping some, so a truncated board
+   announces itself instead of reading as the whole market. */
+.column-meta {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.column-meta.hiding { color: var(--amber); }
 
 /* ── groups ───────────────────────────────────────────── */
 

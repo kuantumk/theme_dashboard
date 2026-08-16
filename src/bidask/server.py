@@ -33,10 +33,14 @@ from src.bidask.grouping import build_columns, load_themes
 from src.bidask.session import SessionAccumulator
 from src.bidask.tvquote import QuoteStream, merge_quotes
 from src.bidask.universe import build_universe
-from src.bidask.volume_curve import (
+from src.bidask.rvol_at_time import (
     SESSION_CLOSE_MIN,
     SESSION_OPEN_MIN,
-    expected_fraction,
+    build_for_symbols,
+    load_profiles,
+    minutes_since_open,
+    prune_cache,
+    save_profiles,
 )
 
 ET = ZoneInfo("America/New_York")
@@ -83,9 +87,9 @@ def _equity_session_context(now: Optional[datetime] = None) -> tuple[str, bool]:
     """
     cfg = load_config()
     now_et = (now or datetime.now(tz=ET)).astimezone(ET)
-    # Borrowed from `volume_curve` rather than restated. The caller reads the
-    # clock once so the session date, this test and the pace divisor agree;
-    # that guarantee is empty if each of them defines the session separately.
+    # Borrowed from `rvol_at_time` rather than restated. The caller reads the
+    # clock once so the session date, this test and the elapsed-minutes figure
+    # agree; that guarantee is empty if each defines the session separately.
     open_min = SESSION_OPEN_MIN
     close_min = SESSION_CLOSE_MIN
     minutes = now_et.hour * 60 + now_et.minute
@@ -130,6 +134,58 @@ class TapeEngine:
         # already sitting in rather than finishing the old interval first.
         self.wake = threading.Event()
         self._lock = threading.Lock()
+        # Relative Volume at Time baselines: one cumulative-volume curve per
+        # ticker, from its own recent sessions. Built once per session in the
+        # background because it depends only on completed sessions, then read
+        # by every poll. Empty until the warm-up lands, which fails the volume
+        # leg closed rather than admitting everything.
+        self.profiles: dict = {}
+        self.profile_date: Optional[str] = None
+        self.profile_status = "pending"
+        self._profile_thread: Optional[threading.Thread] = None
+
+    def ensure_profiles(self, session_date: str, rows) -> None:
+        """Start the session's baseline warm-up once, off the poll thread.
+
+        The download takes ~1.7 minutes for the whole universe, which would
+        stall the poll loop and the quote socket if it ran inline.
+        """
+        if self.profile_date == session_date:
+            return
+        if self._profile_thread is not None and self._profile_thread.is_alive():
+            return
+        symbols = [str(s) for s in rows["symbol"].tolist()] if "symbol" in rows else []
+        if not symbols:
+            return
+
+        def warm() -> None:
+            cached = load_profiles(self.out_path.parent, session_date)
+            if cached:
+                self.profiles = cached
+                self.profile_date = session_date
+                self.profile_status = f"cached ({len(cached)})"
+                print(f"  rvol baselines: reused {len(cached)} from today's cache")
+                return
+            print(f"  rvol baselines: building for {len(symbols)} tickers…")
+            started = time.time()
+            try:
+                built = build_for_symbols(symbols, sessions=self.cfg.in_play_rvol_sessions)
+            except Exception as exc:  # noqa: BLE001 — the tape must keep running
+                self.profile_status = f"failed ({type(exc).__name__})"
+                print(f"  rvol baselines: build failed ({type(exc).__name__});"
+                      " volume leg stays closed, change leg still admits")
+                return
+            self.profiles = built
+            self.profile_date = session_date
+            self.profile_status = f"ready ({len(built)}/{len(symbols)})"
+            save_profiles(built, self.out_path.parent, session_date)
+            prune_cache(self.out_path.parent, session_date)
+            print(f"  rvol baselines: {len(built)}/{len(symbols)} ready "
+                  f"in {time.time() - started:.0f}s")
+
+        self._profile_thread = threading.Thread(target=warm, daemon=True,
+                                                name="bidask-rvol-warmup")
+        self._profile_thread.start()
 
     def set_poll_seconds(self, seconds) -> int:
         """Retune cadence at runtime, bounded by config. Returns the value set."""
@@ -156,19 +212,20 @@ class TapeEngine:
             any_ok = True
 
             # One clock read for the whole market, so the session date, the
-            # auction test and the volume-pace divisor cannot disagree.
+            # auction test and the elapsed-minutes figure cannot disagree.
             if market == "equity":
                 now_et = datetime.now(tz=ET)
                 session_date, in_auction = _equity_session_context(now_et)
-                session_fraction = expected_fraction(now_et)
+                elapsed = minutes_since_open(now_et)
+                self.ensure_profiles(session_date, payload.rows)
             else:
                 session_date, in_auction = _crypto_session_context()
-                session_fraction = None
+                elapsed = None
 
             rows = build_universe(
                 payload.rows, self.cfg,
                 in_play=(market == "equity"), market=market,
-                session_fraction=session_fraction,
+                profiles=self.profiles, elapsed_minutes=elapsed,
             )
             records = rows.to_dict("records")
             if market == "equity" and self.quotes is not None:
@@ -226,6 +283,12 @@ class TapeEngine:
                 # went unnoticed for a full session.
                 state[market]["quotes"] = {**self.quotes.status(),
                                            "merged": self.quoted[market]}
+                # Same reasoning for the volume leg: while the baselines are
+                # still downloading, every ticker scores 0 on Relative Volume
+                # at Time and only the change leg admits. A thin board then
+                # looks like a quiet market rather than a warm-up in progress.
+                state[market]["rvol"] = {"status": self.profile_status,
+                                         "tickers": len(self.profiles)}
         return state
 
     def write_state(self) -> bool:

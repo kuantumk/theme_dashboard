@@ -2,10 +2,12 @@
 
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from src.bidask.config import load_config
 from src.bidask.feed import _bare_ticker
+from src.bidask.rvol_at_time import BARS_PER_SESSION
 from src.bidask.universe import apply_in_play, apply_liquidity, build_universe
 
 CFG = load_config()
@@ -47,76 +49,117 @@ class TestLiquidity(unittest.TestCase):
 
 
 class TestInPlayGate(unittest.TestCase):
-    """The volume leg reads a time-of-day pace, not the raw screener figure.
+    """The volume leg is Relative Volume at Time, against each ticker's own past.
 
-    `relative_volume_10d_calc` divides session-to-date volume by a FULL-DAY
-    average, so a fixed floor on it is a different filter every hour. Every
-    case below therefore pins an explicit `session_fraction`.
+    The gate divides today's session volume by that ticker's mean volume by the
+    same time of day, so every case below supplies a baseline profile and an
+    explicit elapsed-minutes value rather than reading the clock.
     """
 
-    # Expected share of the session's volume done by 10:00 and by 15:00.
-    MORNING = 0.1926
-    LATE = 0.8103
+    @staticmethod
+    def profile(total_by_close):
+        return np.cumsum(np.full(BARS_PER_SESSION, total_by_close / BARS_PER_SESSION))
 
-    def test_admits_on_volume_pace_alone(self):
-        # 3x normal pace at 10:00 is a raw rvol of 0.58 — far under the old floor.
-        df = frame([{"symbol": "AAA", "rvol": 3.0 * self.MORNING, "change_pct": 0.2}])
-        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.MORNING)), 1)
+    def setUp(self):
+        # A ticker that normally trades 780k shares evenly: 10k per 5-min bar,
+        # so 60 minutes in it has usually done 120k.
+        self.profiles = {"AAA": self.profile(780_000), "BE": self.profile(780_000)}
+
+    def test_admits_on_volume_alone(self):
+        # 2x its usual by 60 minutes, and barely moved on price.
+        df = frame([{"symbol": "AAA", "volume": 240_000, "change_pct": 0.2}])
+        kept = apply_in_play(df, CFG, profiles=self.profiles, elapsed_minutes=60)
+        self.assertEqual(len(kept), 1)
 
     def test_admits_on_change_alone(self):
-        df = frame([{"symbol": "AAA", "rvol": 0.4, "change_pct": -8.0}])
-        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 1)
+        df = frame([{"symbol": "AAA", "volume": 1_000, "change_pct": -8.0}])
+        kept = apply_in_play(df, CFG, profiles=self.profiles, elapsed_minutes=60)
+        self.assertEqual(len(kept), 1)
 
     def test_rejects_when_neither_leg_qualifies(self):
-        # 0.6x normal pace at 15:00, and barely moved.
-        df = frame([{"symbol": "AAA", "rvol": 0.6 * self.LATE, "change_pct": 0.3}])
-        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 0)
+        # 0.65x its usual by 60 minutes, and barely moved.
+        df = frame([{"symbol": "AAA", "volume": 78_000, "change_pct": 0.3}])
+        kept = apply_in_play(df, CFG, profiles=self.profiles, elapsed_minutes=60)
+        self.assertEqual(len(kept), 0)
 
-    def test_the_same_pace_is_admitted_at_any_hour(self):
-        """The defect this replaces: the old floor let nothing in before noon.
+    def test_the_same_relative_volume_reads_the_same_at_any_hour(self):
+        """The defect this replaces: the raw floor let nothing in before noon.
 
-        BE/FCEL, 2026-08-14. FCEL held ~2x normal participation from 10:00 while
-        up double digits, and the raw floor rejected it until roughly 13:00.
+        FCEL held ~2x its usual participation from 10:00 on 2026-08-14 while up
+        double digits, and the raw figure could not clear 1.5 until mid-session.
         """
-        for fraction in (0.0908, self.MORNING, 0.2982, 0.5021, self.LATE):
-            df = frame([{"symbol": "AAA", "rvol": 2.0 * fraction, "change_pct": 0.1}])
-            kept = apply_in_play(df, CFG, session_fraction=fraction)
-            self.assertEqual(len(kept), 1, f"2x pace rejected at fraction {fraction}")
+        for minutes in (15, 30, 60, 120, 300):
+            usual = 10_000 * (minutes / 5.0)
+            df = frame([{"symbol": "AAA", "volume": 2.0 * usual, "change_pct": 0.1}])
+            kept = apply_in_play(df, CFG, profiles=self.profiles,
+                                 elapsed_minutes=minutes)
+            self.assertEqual(len(kept), 1, f"2x usual rejected at t={minutes}")
 
     def test_thin_tape_is_rejected_at_any_hour(self):
-        """BE traded at 0.55-0.70x its normal pace all session on 2026-08-14."""
-        for fraction in (0.0908, self.MORNING, 0.2982, 0.5021, self.LATE):
-            df = frame([{"symbol": "BE", "rvol": 0.65 * fraction, "change_pct": 1.4}])
-            self.assertEqual(len(apply_in_play(df, CFG, session_fraction=fraction)), 0)
+        """BE traded at 0.55-0.70x its usual participation all session."""
+        for minutes in (15, 30, 60, 120, 300):
+            usual = 10_000 * (minutes / 5.0)
+            df = frame([{"symbol": "BE", "volume": 0.65 * usual, "change_pct": 1.4}])
+            kept = apply_in_play(df, CFG, profiles=self.profiles,
+                                 elapsed_minutes=minutes)
+            self.assertEqual(len(kept), 0, f"thin tape admitted at t={minutes}")
+
+    def test_early_bands_are_looser_than_late_ones(self):
+        """0.9x its usual clears the 09:35 floor but not the 10:30 one."""
+        for minutes, expected in ((10, 1), (120, 0)):
+            usual = 10_000 * (minutes / 5.0)
+            df = frame([{"symbol": "AAA", "volume": 0.9 * usual, "change_pct": 0.1}])
+            kept = apply_in_play(df, CFG, profiles=self.profiles,
+                                 elapsed_minutes=minutes)
+            self.assertEqual(len(kept), expected, f"wrong at t={minutes}")
+
+    def test_a_ticker_with_no_baseline_is_not_admitted_on_volume(self):
+        """Warm-up still running, fresh listing, or a download miss."""
+        df = frame([{"symbol": "ZZZ", "volume": 99_000_000, "change_pct": 0.1}])
+        kept = apply_in_play(df, CFG, profiles=self.profiles, elapsed_minutes=60)
+        self.assertEqual(len(kept), 0)
+
+    def test_that_ticker_still_reaches_the_board_on_price(self):
+        """Failing closed on volume must not blind the change leg."""
+        df = frame([{"symbol": "ZZZ", "volume": 99_000_000, "change_pct": 7.0}])
+        kept = apply_in_play(df, CFG, profiles={}, elapsed_minutes=60)
+        self.assertEqual(len(kept), 1)
 
     def test_disabling_both_legs_passes_everything_through(self):
-        # load_config's override drops None values, so build a config whose legs
-        # are genuinely absent by replacing them on the frozen instance.
         from dataclasses import replace
-        cfg = replace(CFG, in_play_min_volume_pace=None, in_play_min_change_pct=None)
-        df = frame([{"symbol": "AAA", "rvol": 0.1, "change_pct": 0.1}])
-        self.assertEqual(len(apply_in_play(df, cfg, session_fraction=self.LATE)), 1)
+        cfg = replace(CFG, in_play_rvol_schedule=(), in_play_min_change_pct=None)
+        df = frame([{"symbol": "AAA", "volume": 1, "change_pct": 0.1}])
+        self.assertEqual(len(apply_in_play(df, cfg, elapsed_minutes=60)), 1)
 
     def test_missing_metrics_do_not_crash(self):
-        df = frame([{"symbol": "AAA", "rvol": None, "change_pct": None}])
-        self.assertEqual(len(apply_in_play(df, CFG, session_fraction=self.LATE)), 0)
+        df = frame([{"symbol": "AAA", "volume": None, "change_pct": None}])
+        kept = apply_in_play(df, CFG, profiles=self.profiles, elapsed_minutes=60)
+        self.assertEqual(len(kept), 0)
 
-    def test_omitted_fraction_falls_back_to_the_clock(self):
+    def test_omitted_elapsed_falls_back_to_the_clock(self):
         """Callers may omit it; the gate must not then admit everything."""
-        df = frame([{"symbol": "AAA", "rvol": 0.0, "change_pct": 0.0}])
-        self.assertEqual(len(apply_in_play(df, CFG)), 0)
+        df = frame([{"symbol": "AAA", "volume": 0, "change_pct": 0.0}])
+        self.assertEqual(len(apply_in_play(df, CFG, profiles=self.profiles)), 0)
 
 
-class TestRetiredConfigKey(unittest.TestCase):
-    def test_old_raw_rvol_key_is_rejected_with_a_migration_message(self):
-        """Silently ignoring it would disable the volume leg with no signal.
+class TestRetiredConfigKeys(unittest.TestCase):
+    """Silently ignoring a retired key would disable the volume leg with no
+    signal — the exact failure this whole module exists to prevent."""
 
-        That is the failure mode the whole module exists to prevent, so it must
-        not be reintroduced by a stale config file.
-        """
+    def test_raw_rvol_key_is_rejected_with_a_migration_message(self):
         with self.assertRaises(ValueError) as caught:
             load_config({"in_play_min_rvol": 1.5})
-        self.assertIn("in_play_min_volume_pace", str(caught.exception))
+        self.assertIn("in_play_rvol_schedule", str(caught.exception))
+
+    def test_the_interim_pace_key_is_also_rejected(self):
+        with self.assertRaises(ValueError) as caught:
+            load_config({"in_play_min_volume_pace": 1.5})
+        self.assertIn("in_play_rvol_schedule", str(caught.exception))
+
+    def test_a_malformed_schedule_entry_raises(self):
+        """A skipped band is a hole in the gate at one time of day only."""
+        with self.assertRaises(ValueError):
+            load_config({"in_play_rvol_schedule": [[5, 0.8], "nonsense"]})
 
 
 class TestStablecoinExclusion(unittest.TestCase):

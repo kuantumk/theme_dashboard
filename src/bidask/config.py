@@ -24,9 +24,11 @@ class BidAskConfig:
     min_avg_dollar_vol: float
     min_avg_volume: float
     avg_window_days: int
-    # A multiple of normal participation for the time of day, NOT the screener's
-    # raw `relative_volume_10d_calc`. See `src/bidask/volume_curve.py`.
-    in_play_min_volume_pace: Optional[float]
+    # Stepped floors on Relative Volume at Time, as [minutes since 09:30, floor].
+    # NOT the screener's raw `relative_volume_10d_calc`, which is divided by a
+    # full-day average. See `src/bidask/rvol_at_time.py`.
+    in_play_rvol_schedule: tuple
+    in_play_rvol_sessions: int
     in_play_min_change_pct: Optional[float]
     band_frac: float
     max_spread_pct: float
@@ -68,13 +70,15 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
     # which is session-to-date volume over a FULL-DAY average and therefore a
     # different filter every hour. Ignoring a leftover key would silently
     # disable the leg — the exact failure this replaced — so say so instead.
-    if "in_play_min_rvol" in raw:
-        raise ValueError(
-            "bidask.in_play_min_rvol has been replaced by "
-            "bidask.in_play_min_volume_pace, which floors a time-of-day pace "
-            "(1.0 = normal participation for this hour) rather than the raw "
-            "screener figure. Rename the key in config/workflow_config.yaml."
-        )
+    for retired in ("in_play_min_rvol", "in_play_min_volume_pace"):
+        if retired in raw:
+            raise ValueError(
+                f"bidask.{retired} has been replaced by "
+                "bidask.in_play_rvol_schedule, a stepped floor on Relative "
+                "Volume at Time (this ticker's volume since 09:30 over its own "
+                "average by the same time of day). Update the key in "
+                "config/workflow_config.yaml."
+            )
 
     window = int(raw.get("avg_window_days", 30))
     if window not in VALID_AVG_WINDOWS:
@@ -88,13 +92,36 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         value = raw.get(key)
         return None if value is None else float(value)
 
+    def _schedule(value) -> tuple:
+        """Normalise the stepped floors, sorted by minute mark.
+
+        An empty list disables the volume leg, matching how a null disables the
+        change leg. A malformed entry raises rather than being skipped: a
+        silently dropped band is a hole in the gate at exactly one time of day,
+        which is close to impossible to notice from the board.
+        """
+        if not value:
+            return ()
+        bands = []
+        for entry in value:
+            try:
+                minutes, floor = entry
+                bands.append((float(minutes), float(floor)))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"bidask.in_play_rvol_schedule entry {entry!r} is not a "
+                    "[minutes, floor] pair."
+                ) from exc
+        return tuple(sorted(bands))
+
     return BidAskConfig(
         poll_seconds=int(raw.get("poll_seconds", 10)),
         min_today_dollar_vol=float(raw.get("min_today_dollar_vol", 1_000_000)),
         min_avg_dollar_vol=float(raw.get("min_avg_dollar_vol", 10_000_000)),
         min_avg_volume=float(raw.get("min_avg_volume", 750_000)),
         avg_window_days=window,
-        in_play_min_volume_pace=_opt("in_play_min_volume_pace"),
+        in_play_rvol_schedule=_schedule(raw.get("in_play_rvol_schedule")),
+        in_play_rvol_sessions=int(raw.get("in_play_rvol_sessions", 10)),
         in_play_min_change_pct=_opt("in_play_min_change_pct"),
         band_frac=float(raw.get("band_frac", 0.30)),
         max_spread_pct=float(raw.get("max_spread_pct", 2.0)),

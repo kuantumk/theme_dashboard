@@ -9,10 +9,12 @@ trade happened at all by observing cumulative volume increase.
 
 Two consequences follow, and both are load-bearing:
 
-1. The quote we compare against may be *newer* than the trade that set `last`,
-   by up to a full poll interval. Lee & Ready's entire 5-second construction
-   exists to prevent misalignment of a few hundred milliseconds; we structurally
-   guarantee a larger one. `_drift_override` below is the mitigation.
+1. The quote in the current snapshot is *newer* than the trade that set `last`,
+   and has already reacted to it. Lee & Ready's 5-second construction exists to
+   prevent misalignment of a few hundred milliseconds; a poll interval
+   guarantees a larger one. So the quote rule reads the PREVIOUS poll's book —
+   the one that prevailed before this interval's trades — and the tick rule wins
+   every disagreement. See `_quote_sign` for the measurements behind both.
 2. One observation represents the terminal trade of the interval, not the
    interval's flow. Whether 1 or 50,000 trades printed, we emit one sign.
 
@@ -97,6 +99,54 @@ def _tick_sign(last: float, prior_different_price: Optional[float]) -> int:
     return 0
 
 
+def _quote_sign(last: float, book: Optional[Tick], cfg) -> int:
+    """CLNV-shaped band against `book`; 0 when the book cannot answer.
+
+    `book` is the *previous* poll's quote — the one that prevailed before this
+    interval's trades. Reading the current snapshot instead inverts the rule,
+    because by the time we look the book has already reacted to the trade that
+    set `last`. Measured live on 2026-08-20 over 13,821 observations: against
+    the current snapshot, Spearman with the same-window mid return is -0.185
+    (-0.009 against an independent 1-minute series); against the previous
+    poll's book it is +0.339. Prints average 0.353 of the spread when the mid
+    rose and 0.633 when it fell.
+
+    The corroborating figure is the disagreement rate with the tick rule, which
+    is built from different information entirely: 14.7% of classified
+    observations against the current snapshot, 7.2% against the previous poll's
+    book. Two independent rules agreeing twice as often is what you expect when
+    both are finally measuring the same real thing. It also means `uncertain`
+    falls after this change rather than rising, even though the override below
+    is now ungated — fewer disagreements to resolve.
+
+    An unusable previous book returns 0 rather than falling back to the current
+    one. Falling back would reinstate the inversion on exactly the polls where
+    it cannot be detected.
+
+    `max_spread_pct` is applied here as well as to the current snapshot, because
+    a poll rejected as `wide_spread` still becomes the next poll's `prev` — the
+    accumulator stores every snapshot, rejected or not. Without this test the
+    band would be 30% of a stale, absurd spread, which classifies essentially
+    any print as a lift or a hit at random.
+    """
+    if book is None:
+        return 0
+    bid, ask = book.bid, book.ask
+    if not (math.isfinite(bid) and math.isfinite(ask)):
+        return 0
+    if bid <= 0 or ask <= bid:
+        return 0
+    mid = (ask + bid) / 2.0
+    if mid <= 0 or (ask - bid) / mid * 100.0 > cfg.max_spread_pct:
+        return 0
+    band = cfg.band_frac * (ask - bid)
+    if last >= ask - band:
+        return 1
+    if last <= bid + band:
+        return -1
+    return 0
+
+
 def classify(
     *,
     cur: Tick,
@@ -141,31 +191,37 @@ def classify(
     if in_auction_window:
         return _rejected(REJECT_AUCTION, volume_delta)
 
-    # Quote rule with a CLNV tolerance band rather than exact equality.
-    band = cfg.band_frac * spread
-    if cur.last >= cur.ask - band:
-        quote_sign = 1
-    elif cur.last <= cur.bid + band:
-        quote_sign = -1
-    else:
-        quote_sign = 0
+    # Quote rule with a CLNV tolerance band rather than exact equality, applied
+    # to the book that prevailed BEFORE this interval's trades.
+    quote_sign = _quote_sign(cur.last, prev, cfg)
 
     tick = _tick_sign(cur.last, prior_different_price)
 
     # Mid-spread prints have no quote-rule answer; the tick rule decides, and
-    # when it cannot, the observation is honestly unclassified.
+    # when it cannot, the observation is honestly unclassified. An unusable
+    # previous book lands here too, for the same reason: no answer is better
+    # than an answer from the wrong book.
     if quote_sign == 0:
         if tick == 0:
             return _rejected(UNCLASSIFIED, volume_delta)
         return Observation(sign=tick, certain=True, reason="", volume_delta=volume_delta)
 
-    # Quote-drift override. If the book moved between polls, `last` may be
-    # stranded on the wrong side of a quote that has already advanced past it —
-    # which misclassifies buys as sells exactly during fast up-moves, a
-    # systematic anti-momentum bias. The tick rule degrades far less under quote
-    # churn, so it wins the disagreement and the result is marked uncertain.
-    quote_moved = cur.bid != prev.bid or cur.ask != prev.ask
-    if quote_moved and tick != 0 and tick != quote_sign:
+    # Quote-drift override: the tick rule wins every disagreement.
+    #
+    # This is deliberately UNGATED. It used to fire only when the book had moved
+    # between polls, on the reasoning that a frozen book cannot have stranded
+    # `last` on the wrong side. The reasoning is right and the conclusion is
+    # backwards: a frozen book means the mid did not move, so the poll carries
+    # no directional information at all — yet the quote rule still emits a sign,
+    # and that sign is this ticker's habitual position inside its own spread.
+    # Those observations are pure bias with no offsetting signal, and the
+    # accumulator sums them.
+    #
+    # Measured live on 2026-08-20: the gate handed 3.4% of observations to the
+    # quote rule, and every one of them had a zero mid move. Removing it drops
+    # the board's correlation with a static position-in-spread from +0.217 to
+    # +0.045 while nudging its correlation with price up from +0.426 to +0.438.
+    if tick != 0 and tick != quote_sign:
         return Observation(sign=tick, certain=False, reason="", volume_delta=volume_delta)
 
     return Observation(sign=quote_sign, certain=True, reason="", volume_delta=volume_delta)

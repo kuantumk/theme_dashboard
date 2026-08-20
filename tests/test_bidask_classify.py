@@ -193,12 +193,87 @@ class TestPreconditions(unittest.TestCase):
         self.assertEqual(obs.sign, +1)
 
 
+class TestPreTradeBook(unittest.TestCase):
+    """The quote rule reads the book that prevailed BEFORE the interval's trades.
+
+    Measured live on 2026-08-20 over 13,821 observations: scored against the
+    book snapshotted *after* the trade, the quote rule's sign runs backwards --
+    Spearman against the same-window mid return is -0.185, and against an
+    independent 1-minute price series it is -0.009. Scored against the previous
+    poll's book it is +0.339. The average print sits at 0.353 of the spread when
+    the mid rose and 0.633 when it fell, because the book has already reacted to
+    the trade by the time we look. This is the misalignment Lee & Ready's lag
+    rule exists to prevent.
+
+    The tick rule masks it whenever it disagrees, so both cases below hold the
+    tick rule silent. That is the state a run of same-price prints produces, and
+    it is where the wrong book decides alone.
+    """
+
+    def test_sliding_book_reads_a_bid_hit_not_a_lift(self):
+        # A seller hit the bid at 10.10. The book then slid to 10.08 x 10.10, so
+        # 10.10 is now the OFFER and the post-trade book reads it as a lift.
+        obs = classify(
+            cur=tick(last=10.10, bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.10, bid=10.10, ask=10.12, volume=1000),
+            prior_different_price=10.10,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.sign, -1)
+
+    def test_rising_book_reads_a_lift_not_a_bid_hit(self):
+        # The mirror. A buyer lifted the offer at 10.10 and the book ratcheted to
+        # 10.10 x 10.12, so 10.10 is now the BID.
+        obs = classify(
+            cur=tick(last=10.10, bid=10.10, ask=10.12, volume=2000),
+            prev=tick(last=10.10, bid=10.08, ask=10.10, volume=1000),
+            prior_different_price=10.10,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.sign, +1)
+
+    def test_unusable_previous_book_leaves_the_tick_rule_to_decide(self):
+        # The previous poll carried no quote, so there is no pre-trade book to
+        # classify against. Abstain rather than fall back to the post-trade one.
+        obs = classify(
+            cur=tick(last=10.10, bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.05, bid=0.0, ask=0.0, volume=1000),
+            prior_different_price=10.05,
+            cfg=CFG,
+        )
+        self.assertEqual(obs.sign, +1)   # from the tick rule, 10.10 > 10.05
+
+    def test_a_stale_wide_previous_book_does_not_classify(self):
+        """A `wide_spread` poll still becomes the next poll's `prev`.
+
+        The accumulator stores every snapshot, rejected or not. A 20% band off a
+        stale quote swallows any print, so the same staleness cap applies to the
+        book the quote rule reads, not only to the current snapshot.
+        """
+        obs = classify(
+            cur=tick(last=10.10, bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.10, bid=10.00, ask=12.00, volume=1000),
+            prior_different_price=10.10,
+            cfg=CFG,
+        )
+        self.assertFalse(obs.classified)
+
+    def test_unusable_previous_book_with_silent_tick_is_unclassified(self):
+        obs = classify(
+            cur=tick(last=10.10, bid=10.08, ask=10.10, volume=2000),
+            prev=tick(last=10.10, bid=0.0, ask=0.0, volume=1000),
+            prior_different_price=10.10,
+            cfg=CFG,
+        )
+        self.assertFalse(obs.classified)
+
+
 class TestQuoteDriftOverride(unittest.TestCase):
-    def test_drifted_quote_with_rising_tick_overrides_to_buy(self):
-        # The inversion case. A buyer lifted the offer at 10.10; by this poll the
-        # book has ratcheted to 10.10 x 10.12, leaving `last` sitting on the new
-        # BID. The quote rule would call this a sell. The tick is rising, and the
-        # quote moved, so the tick rule wins and the observation is uncertain.
+    def test_drifted_quote_with_rising_tick_agrees_once_the_book_is_lagged(self):
+        # A buyer lifted the offer at 10.10; by this poll the book has ratcheted
+        # to 10.10 x 10.12, leaving `last` on the new BID. Against the pre-trade
+        # book the quote rule already calls this a lift, so there is nothing for
+        # the tick rule to override and the observation is certain.
         obs = classify(
             cur=tick(last=10.10, bid=10.10, ask=10.12, volume=2000),
             prev=tick(last=10.09, bid=10.08, ask=10.10, volume=1000),
@@ -206,19 +281,25 @@ class TestQuoteDriftOverride(unittest.TestCase):
             cfg=CFG,
         )
         self.assertEqual(obs.sign, +1)
-        self.assertFalse(obs.certain)
+        self.assertTrue(obs.certain)
 
-    def test_stable_quote_keeps_band_result_despite_tick_disagreement(self):
-        # Quote did not move, so there is no drift to correct for: the band
-        # result stands even though the tick rule disagrees.
+    def test_frozen_book_still_yields_to_a_disagreeing_tick(self):
+        # The override must NOT be gated on the book having moved. A frozen book
+        # means the mid did not move, so the poll carries no directional
+        # information -- but the quote rule still emits a sign, and that sign is
+        # this ticker's habitual position inside its own spread. Measured live on
+        # 2026-08-20: handing that cohort to the quote rule is 3.4% of
+        # observations and it lifts the board's correlation with a static
+        # position-in-spread from +0.045 to +0.217, while adding nothing to its
+        # correlation with price. Those counts are pure accumulated bias.
         obs = classify(
             cur=tick(last=10.08, bid=10.08, ask=10.10, volume=2000),
             prev=tick(last=10.05, bid=10.08, ask=10.10, volume=1000),
             prior_different_price=10.05,
             cfg=CFG,
         )
-        self.assertEqual(obs.sign, -1)
-        self.assertTrue(obs.certain)
+        self.assertEqual(obs.sign, +1)
+        self.assertFalse(obs.certain)
 
     def test_drifted_quote_with_agreeing_tick_stays_certain(self):
         obs = classify(

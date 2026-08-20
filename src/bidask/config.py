@@ -6,6 +6,7 @@ so thresholds are never hardcoded in the pipeline modules.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import FrozenSet, Optional
 
@@ -35,6 +36,8 @@ class BidAskConfig:
     open_auction_minutes: int
     close_auction_minutes: int
     winsor_multiple: float
+    # Minutes of tape each hit counter covers. 0 disables the window.
+    hit_window_minutes: float
     min_hits_to_show: int
     max_rows_per_column: int
     max_rows_per_group: int
@@ -92,6 +95,41 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         value = raw.get(key)
         return None if value is None else float(value)
 
+    def _window_minutes(value) -> float:
+        """Minutes of tape per hit counter. 0 disables the window.
+
+        Raises rather than coercing. This value reaches the state payload, which
+        is serialized with `allow_nan=False`, and a NaN there costs the whole
+        document rather than one field. A negative value would prune every
+        observation the moment it was recorded, emptying the board with no
+        visible cause.
+        """
+        if value is None:
+            return 0.0
+        # `float(True)` is 1.0, so YAML `hit_window_minutes: true` — a natural
+        # way to write "yes, enable it" against a key documented as "0
+        # disables" — would silently become a one-minute horizon. At a 10s
+        # cadence that is ~6 observations per ticker, below `min_hits_to_show`,
+        # so the columns empty with no error. `_schedule` raises on malformed
+        # input for the same reason.
+        if isinstance(value, bool):
+            raise ValueError(
+                f"bidask.hit_window_minutes={value!r} is a boolean. Give a "
+                "number of minutes (0 disables the window)."
+            )
+        try:
+            minutes = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"bidask.hit_window_minutes={value!r} is not a number."
+            ) from exc
+        if not math.isfinite(minutes) or minutes < 0:
+            raise ValueError(
+                f"bidask.hit_window_minutes={value!r} must be a finite, "
+                "non-negative number of minutes (0 disables the window)."
+            )
+        return minutes
+
     def _schedule(value) -> tuple:
         """Normalise the stepped floors, sorted by minute mark.
 
@@ -128,6 +166,7 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         open_auction_minutes=int(raw.get("open_auction_minutes", 15)),
         close_auction_minutes=int(raw.get("close_auction_minutes", 5)),
         winsor_multiple=float(raw.get("winsor_multiple", 10.0)),
+        hit_window_minutes=_window_minutes(raw.get("hit_window_minutes", 30.0)),
         min_hits_to_show=int(raw.get("min_hits_to_show", 3)),
         max_rows_per_column=int(raw.get("max_rows_per_column", 60)),
         max_rows_per_group=int(raw.get("max_rows_per_group", 12)),

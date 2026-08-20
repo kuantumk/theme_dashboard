@@ -4,7 +4,7 @@ import math
 import unittest
 
 from src.bidask.config import load_config
-from src.bidask.session import MIN_SAMPLES_FOR_WINSOR, SessionAccumulator
+from src.bidask.session import MIN_SAMPLES_FOR_WINSOR, SessionAccumulator, TickerState
 
 CFG = load_config()
 
@@ -98,7 +98,11 @@ class TestCoverage(unittest.TestCase):
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000)], session_date="d")  # no trade
         acc.apply([row("AAA", 10.10, 10.11, 10.10, 1500)], session_date="d")  # crossed
-        acc.apply([row("AAA", 10.10, 10.08, 10.10, 2000)], session_date="d")  # good
+        # The good poll prints at a *different* price, so the tick rule can
+        # speak. It has to: the poll before it was crossed, so there is no
+        # usable pre-trade book for the quote rule to read, and a same-price
+        # print here would be honestly unclassified rather than counted.
+        acc.apply([row("AAA", 10.09, 10.08, 10.10, 2000)], session_date="d")  # good
         stats = acc.snapshot_stats()
         self.assertEqual(stats["attempted"], 3)
         self.assertEqual(stats["traded"], 2)     # the no-trade poll is excluded
@@ -235,6 +239,125 @@ class TestNonFinitePayload(unittest.TestCase):
         acc.apply([row("AAA", 10.10, 10.08, 10.10, float("nan"))], session_date="d")
         acc.apply([row("AAA", 10.10, 10.08, 10.10, 2000)], session_date="d")
         self.assertTrue(math.isfinite(acc.states["AAA"].delta))
+
+
+class TestRollingWindow(unittest.TestCase):
+    """Counters cover a trailing window, not the whole session.
+
+    Measured live on 2026-08-20 against the running dashboard: the app's hit
+    increments track price well over minutes (Spearman +0.31 at 30s, +0.40 at
+    60s, +0.47 at 3min) while its cumulative session margin over the same
+    stretch scored +0.18, and against the day's move +0.10. The reason is
+    arithmetic: each poll contributes a small constant per-ticker bias on top of
+    the directional signal, so the bias grows with the poll count while the
+    signal stays bounded by the day's net move. A trailing window bounds the
+    bias term instead of letting it compound.
+    """
+
+    def setUp(self):
+        self.cfg = load_config({"hit_window_minutes": 5})
+
+    def _one_sided(self, acc, polls, start=0.0, step=10.0):
+        """Identical ask-side prints, one per `step` seconds."""
+        for i in range(polls):
+            acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000 + i * 500)],
+                      session_date="d", now=start + i * step)
+
+    def test_margin_is_bounded_by_the_window_not_the_session(self):
+        acc = SessionAccumulator(self.cfg)
+        self._one_sided(acc, 400)          # 400 polls x 10s = 66 minutes
+        # 5-minute window at a 10s cadence holds at most 31 observations.
+        self.assertLessEqual(acc.states["AAA"].total_hits, 31)
+        self.assertGreater(acc.states["AAA"].total_hits, 25)
+
+    def test_the_window_is_measured_in_time_not_polls(self):
+        # The in-app cadence control retunes the poll rate at runtime. A window
+        # counted in polls would silently change horizon with it.
+        fast = SessionAccumulator(self.cfg)
+        self._one_sided(fast, 200, step=5.0)
+        slow = SessionAccumulator(self.cfg)
+        self._one_sided(slow, 200, step=20.0)
+        self.assertGreater(fast.states["AAA"].total_hits,
+                           slow.states["AAA"].total_hits * 3)
+
+    def test_a_ticker_that_stops_printing_leaves_the_board(self):
+        acc = SessionAccumulator(self.cfg)
+        self._one_sided(acc, 20)
+        self.assertGreater(acc.states["AAA"].total_hits, 0)
+        # Ten minutes later the feed still carries it, but nothing has traded.
+        acc.apply([row("BBB", 10.09, 10.08, 10.10, 1000)],
+                  session_date="d", now=600.0)
+        self.assertEqual(acc.states["AAA"].total_hits, 0)
+        self.assertEqual(acc.active(min_hits=1), [])
+
+    def test_volume_delta_ages_out_with_its_observation(self):
+        acc = SessionAccumulator(self.cfg)
+        self._one_sided(acc, 20)
+        self.assertGreater(acc.states["AAA"].delta, 0)
+        acc.apply([row("BBB", 10.09, 10.08, 10.10, 1000)],
+                  session_date="d", now=600.0)
+        self.assertEqual(acc.states["AAA"].delta, 0.0)
+
+    def test_the_window_clock_is_monotonic_not_wall_clock(self):
+        """A wall clock steps backwards; a duration must not.
+
+        On an NTP correction or a resume from sleep `time.time()` can jump back,
+        which pushes `cutoff` further into the past than the window is wide.
+        Nothing prunes until wall time catches up, so the horizon silently
+        widens while the pill still reads its configured value.
+        """
+        import inspect
+        from src.bidask import session as mod
+        src = inspect.getsource(mod.SessionAccumulator.apply)
+        self.assertIn("time.monotonic()", src)
+        self.assertNotIn("time.time()", src)
+
+    def test_a_zero_sign_is_not_booked_as_a_hit(self):
+        """`record` is a named entry point now, not inline inside the guard."""
+        st = TickerState(symbol="AAA")
+        st.record(at=0.0, sign=0, signed_volume=900.0, uncertain=False, windowed=True)
+        self.assertEqual((st.ask_hits, st.bid_hits, st.delta), (0, 0, 0.0))
+        self.assertEqual(len(st.events), 0)
+
+    def test_a_null_window_keeps_the_cumulative_behaviour(self):
+        acc = SessionAccumulator(load_config({"hit_window_minutes": 0}))
+        for i in range(50):
+            acc.apply([row("AAA", 10.10, 10.08, 10.10, 1000 + i * 500)],
+                      session_date="d", now=float(i * 10))
+        self.assertEqual(acc.states["AAA"].total_hits, 49)
+
+
+class TestWindowConfigGuard(unittest.TestCase):
+    """The window reaches the state payload, serialized with allow_nan=False.
+
+    A NaN there costs the whole document, not one field, and the page then
+    reports the server as unreachable. A negative window would prune every
+    observation the moment it was recorded and empty the board with no visible
+    cause. Both raise instead.
+    """
+
+    def test_a_non_finite_window_raises(self):
+        with self.assertRaises(ValueError) as caught:
+            load_config({"hit_window_minutes": float("nan")})
+        self.assertIn("hit_window_minutes", str(caught.exception))
+
+    def test_a_negative_window_raises(self):
+        with self.assertRaises(ValueError):
+            load_config({"hit_window_minutes": -5})
+
+    def test_a_boolean_window_raises(self):
+        """`float(True)` is 1.0, so `hit_window_minutes: true` would silently
+        become a one-minute horizon against a key documented as "0 disables"."""
+        with self.assertRaises(ValueError) as caught:
+            load_config({"hit_window_minutes": True})
+        self.assertIn("boolean", str(caught.exception))
+
+    def test_a_non_numeric_window_raises(self):
+        with self.assertRaises(ValueError):
+            load_config({"hit_window_minutes": "half an hour"})
+
+    def test_zero_is_accepted_as_the_disable_switch(self):
+        self.assertEqual(load_config({"hit_window_minutes": 0}).hit_window_minutes, 0.0)
 
 
 class TestSerialization(unittest.TestCase):

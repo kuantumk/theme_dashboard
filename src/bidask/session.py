@@ -1,7 +1,33 @@
-"""Session accumulator — cumulative tape pressure per ticker.
+"""Session accumulator — trailing-window tape pressure per ticker.
 
-Holds, per symbol and since session start: ask-side hit count, bid-side hit
+Holds, per symbol and over a trailing window: ask-side hit count, bid-side hit
 count, and a volume-weighted signed delta.
+
+Counters used to run cumulatively from the open, and that is arithmetically
+hostile to what they measure. Each poll contributes the
+directional signal plus a small constant per-ticker bias — a ticker whose prints
+habitually sit high in its own spread earns a sliver of ask-side surplus on
+every poll, whether or not it moves. The signal is bounded by the day's net
+move; the bias grows with the poll count. Given enough polls the bias wins.
+
+Measured live on 2026-08-20 against the running dashboard: its hit increments
+tracked price at Spearman +0.31 over 30 seconds, +0.40 over a minute and +0.47
+over three minutes, while its cumulative session margin scored +0.18 over that
+same stretch and +0.10 against the day's move. The strong column then averaged
+-1.03% since 09:30 against the weak column's -1.28%.
+
+Be precise about how much of that the window fixes, because it is less than it
+looks. Most of the constant bias came from the quote rule reading the wrong
+book, and `classify.py` fixes that at the source: on a 55-minute tape the
+board's correlation with a static position-in-spread is now +0.04 at every
+window length from 5 minutes to no window at all. Swept against each window's
+OWN horizon, 5/10/15/20/30/45 minutes and cumulative all score +0.30 to +0.40 —
+there is no measured optimum in that range. The window is kept for three
+reasons, none of which is a peak in that sweep: it bounds whatever bias
+survives, it bounds the dwell bias below, and "offers being lifted" is a claim
+about now rather than about 09:12. Set the config key to 0 to compare directly.
+That sweep does NOT clear a full trading session -- it covers 55 minutes, and
+no measurement here tests six hours of accumulation under the corrected rule.
 
 Both are kept deliberately. Counts match how the source tool presents its
 numbers and bound each misclassification's cost at 1. Volume-weighted delta is
@@ -20,7 +46,8 @@ from __future__ import annotations
 
 import math
 import statistics
-from collections import Counter
+import time
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -46,6 +73,53 @@ class TickerState:
     # ticker left the in-play universe and returned; bridging it would book the
     # whole absence as one signed print.
     last_seen_poll: Optional[int] = None
+    # Observations still inside the trailing window, oldest first:
+    # (timestamp, sign, signed volume, uncertain). Kept only so the counters
+    # above can be *un*-counted as observations age out. Empty when the window
+    # is disabled, in which case the counters run cumulatively as before.
+    events: deque = field(default_factory=deque)
+
+    def record(self, *, at: float, sign: int, signed_volume: float,
+               uncertain: bool, windowed: bool) -> None:
+        """Book one classified observation. A zero sign is not an observation.
+
+        The caller guards with `obs.classified`, but this used to be inline
+        inside that guard and is now a named method the next caller can reach
+        directly. An `else` branch would book an unclassified poll as selling
+        pressure and then hand `prune` a bid hit to un-count later.
+        """
+        if sign == 0:
+            return
+        if sign > 0:
+            self.ask_hits += 1
+        else:
+            self.bid_hits += 1
+        self.delta += signed_volume
+        if uncertain:
+            self.uncertain += 1
+        if windowed:
+            self.events.append((at, sign, signed_volume, uncertain))
+
+    def prune(self, cutoff: float) -> None:
+        """Drop observations older than `cutoff`, un-counting each one.
+
+        Only called when the window is enabled. An emptied window snaps the
+        counters to exact zero rather than leaving float residue behind: `delta`
+        is a running sum, and an empty window means no observations, which must
+        read as no pressure and not as a rounding artefact.
+        """
+        while self.events and self.events[0][0] < cutoff:
+            _, sign, signed_volume, uncertain = self.events.popleft()
+            if sign > 0:
+                self.ask_hits -= 1
+            else:
+                self.bid_hits -= 1
+            self.delta -= signed_volume
+            if uncertain:
+                self.uncertain -= 1
+        if not self.events:
+            self.ask_hits = self.bid_hits = self.uncertain = 0
+            self.delta = 0.0
 
     @property
     def total_hits(self) -> int:
@@ -94,6 +168,9 @@ class SessionAccumulator:
     def __init__(self, cfg, market: str = "equity"):
         self.cfg = cfg
         self.market = market
+        # Seconds of tape each counter covers. 0 disables the window and
+        # restores cumulative-since-open behaviour.
+        self.window_seconds = max(0.0, float(cfg.hit_window_minutes or 0) * 60.0)
         self.states: dict[str, TickerState] = {}
         self.reasons: Counter = Counter()
         self.attempted = 0
@@ -139,10 +216,36 @@ class SessionAccumulator:
         *,
         session_date: Optional[str] = None,
         in_auction_window: bool = False,
+        now: Optional[float] = None,
     ) -> bool:
-        """Fold one poll's rows into the accumulator. Returns True if it rolled."""
+        """Fold one poll's rows into the accumulator. Returns True if it rolled.
+
+        `now` is the poll's timestamp, injected so the window is testable and so
+        one clock read covers the whole poll. The window is measured in seconds,
+        never in polls: the in-app cadence control retunes the poll rate at
+        runtime, and a poll-counted window would silently change horizon with it.
+
+        The clock is `monotonic`, never `time()`. A wall clock steps backwards
+        on an NTP correction or a resume from sleep, and `cutoff` then moves
+        further into the past than the window is wide, so nothing prunes until
+        wall time catches up — the horizon silently widens while the pill still
+        reads "last 30 min". A backwards step also appends an out-of-order
+        timestamp, which `prune`'s single head-scan cannot evict on time. Both
+        are the same silent-horizon failure this window is counted in seconds to
+        avoid. Nothing here is ever compared against a wall-clock value.
+        """
         rolled = self._roll_if_needed(session_date)
         self.polls += 1
+        at = time.monotonic() if now is None else float(now)
+
+        # Age out first, so this poll's own observations are never pruned. Every
+        # state is swept, not just the ones in this poll's rows: a ticker that
+        # left the in-play universe must decay off the board like any other,
+        # rather than freezing at whatever it last scored.
+        if self.window_seconds:
+            cutoff = at - self.window_seconds
+            for state in self.states.values():
+                state.prune(cutoff)
 
         for row in rows:
             symbol = _clean_symbol(row.get("symbol"))
@@ -195,14 +298,13 @@ class SessionAccumulator:
                 if cap is not None:
                     capped = min(capped, cap)
                 state.vol_deltas.append(obs.volume_delta)
-                if obs.is_buy:
-                    state.ask_hits += 1
-                    state.delta += capped
-                else:
-                    state.bid_hits += 1
-                    state.delta -= capped
-                if not obs.certain:
-                    state.uncertain += 1
+                state.record(
+                    at=at,
+                    sign=obs.sign,
+                    signed_volume=capped if obs.is_buy else -capped,
+                    uncertain=not obs.certain,
+                    windowed=bool(self.window_seconds),
+                )
 
             state.prev = cur
             state.meta = _display_meta(row)

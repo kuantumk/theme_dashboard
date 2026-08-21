@@ -31,6 +31,31 @@ class TestCounterElementsExist(unittest.TestCase):
                                                        "columns.truncated"))
 
 
+class TestWindowPill(unittest.TestCase):
+    """The horizon has to be on screen.
+
+    The chips show raw hit counts. Those counts used to run from the session
+    open and now cover a trailing window, and nothing else on the page says so —
+    a reader who assumes "since open" reads a 30-minute figure as a whole
+    session. Same three-file join as the counter above: the span, the render,
+    and the server key that feeds it.
+    """
+
+    def test_the_status_bar_carries_the_pill(self):
+        self.assertIn('id="window-pill"', HTML)
+
+    def test_app_looks_it_up_and_renders_both_states(self):
+        self.assertIn("getElementById('window-pill')", APP)
+        self.assertIn("hit_window_minutes", APP)
+        # A disabled window is a real configuration, not an error state.
+        self.assertIn("since open", APP)
+
+    def test_the_server_publishes_the_key_the_client_reads(self):
+        server = (Path(__file__).resolve().parents[1] / "src" / "bidask"
+                  / "server.py").read_text(encoding="utf-8")
+        self.assertIn('"hit_window_minutes": self.cfg.hit_window_minutes', server)
+
+
 class TestEmptyBranchResetsTheClass(unittest.TestCase):
     def test_the_no_data_branch_clears_the_hiding_state(self):
         """Regression: the tabs share one element.

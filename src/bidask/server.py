@@ -251,6 +251,10 @@ class TapeEngine:
         state = {"poll_seconds": self.poll_seconds,
                  "min_poll_seconds": self.cfg.min_poll_seconds,
                  "max_poll_seconds": self.cfg.max_poll_seconds,
+                 # How much tape the hit counters cover. Published because the
+                 # page shows raw counts: without it "112 ask / 58 bid" reads as
+                 # the whole session, which is what it used to mean.
+                 "hit_window_minutes": self.cfg.hit_window_minutes,
                  "generated_at": datetime.now().strftime("%H:%M:%S")}
         for market in self.markets:
             acc = self.accumulators[market]

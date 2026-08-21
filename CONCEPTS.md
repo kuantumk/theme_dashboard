@@ -118,10 +118,17 @@ Volume so far today compared with volume by the same point in previous sessions,
 ## Tape pressure
 
 ### Tape pressure
-A reading of whether buyers or sellers are the aggressors right now, accumulated per stock across a session. It is an approximation inferred from periodic snapshots, not a measured share of buying volume, and is meaningful only in relative terms — a stock against its own history, or ranked against peers observed on the same cadence.
+A reading of whether buyers or sellers are the aggressors right now, accumulated per stock over a trailing window rather than a whole session. It is an approximation inferred from periodic snapshots, not a measured share of buying volume, and is meaningful only in relative terms — a stock against its own history, or ranked against peers observed on the same cadence.
+
+The window is not a display preference. Each observation carries a small constant bias particular to the stock on top of the directional signal; the signal is bounded by the day's move while the bias grows with the number of observations, so an unbounded accumulation eventually reports the bias instead of the tape.
 
 ### Ask hit
 An observation classified as buyer-initiated: the trade printed at or near the offer, meaning a buyer crossed the spread to get filled. The mirror case is a bid hit, where a seller crossed the spread downward.
+
+Which offer is load-bearing. The comparison is against the book that prevailed *before* the trade, never the book observed after it — a book seen afterwards has already repriced in response to the trade, and comparing against it inverts the classification.
+
+### Position in spread
+Where a trade printed between the prevailing bid and offer, expressed as a fraction of the spread. Each stock has a habitual value that reflects how its order flow is routed and says nothing about direction, so it is the contaminant a tape-pressure reading must be scored against to show that the reading measures flow rather than that habit.
 
 ### Imbalance
 The margin between a stock's buyer- and seller-initiated observations, normalized so that stocks observed for different lengths of time remain comparable. Raw counts alone partly measure observation cadence rather than genuine flow, which is what the normalization removes.

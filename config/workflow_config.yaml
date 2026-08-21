@@ -174,6 +174,21 @@ bidask:
   close_auction_minutes: 5      # equity only: reject prints inside the closing window
   winsor_multiple: 10.0         # cap a poll's volume delta at this x its running median
 
+  # Minutes of tape each hit counter covers. 0 restores cumulative-since-open.
+  #
+  # Counters cannot run cumulatively: every poll adds the directional signal
+  # plus a small constant per-ticker bias, so the bias grows with the poll count
+  # while the signal stays bounded by the day's net move. Measured live
+  # 2026-08-20, the dashboard's hit increments tracked price at Spearman +0.40
+  # over a minute and +0.47 over three, while its cumulative session margin
+  # scored +0.10 against the day's move.
+  #
+  # 30 is NOT a measured optimum: swept against each window's own horizon on a
+  # 55-minute tape, 5 through 45 minutes and cumulative all scored +0.30 to
+  # +0.40. It is a density choice -- 167 median hits per ticker, 462 of 505
+  # tickers still on the board. See src/bidask/session.py.
+  hit_window_minutes: 30
+
   # Runtime cadence bounds for the in-app control. The floor protects an
   # undocumented endpoint from being hammered under a personal account.
   min_poll_seconds: 3

@@ -24,6 +24,7 @@
     feed: document.getElementById('feed-pill'),
     coverage: document.getElementById('coverage-pill'),
     polls: document.getElementById('polls-pill'),
+    window: document.getElementById('window-pill'),
     scan: document.getElementById('scan-pill'),
     buyLabel: document.getElementById('buy-label'),
     sellLabel: document.getElementById('sell-label'),
@@ -267,6 +268,16 @@
     els.coverage.title = 'share of actual trades classified · share of scans where a trade printed';
     els.polls.textContent = `${(view.stats && view.stats.polls) || 0} scans`;
     els.scan.textContent = view.scanned_at || '—';
+    // The counters cover a trailing window, not the session. The chips show raw
+    // hit counts, so the horizon has to be on screen or they read as
+    // since-the-open — which is what they used to be.
+    const win = state && state.hit_window_minutes;
+    els.window.textContent = win ? `last ${win} min` : 'since open';
+    els.window.title = win
+      ? `Hit counts cover the last ${win} minutes of tape. Older observations `
+        + 'age out. Cumulative counts accumulate a per-ticker bias that grows '
+        + 'with the scan count, so a full session of them stops tracking price.'
+      : 'Hit counts run cumulatively from the session open.';
 
     // Only equities carry a quote socket; the crypto screener serves bid/ask
     // directly, so the pill would be meaningless on that tab.

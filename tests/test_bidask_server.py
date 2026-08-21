@@ -120,5 +120,41 @@ class TestServerRouting(unittest.TestCase):
             self.assertEqual(status, 404, f"{path} must not resolve")
 
 
+class TestAllDroppedAlarm(unittest.TestCase):
+    """A 100% drop rate is upstream breakage, not a quiet market.
+
+    `Value.Traded` went dark for a full trading session because the screener's
+    own match count was computed on every poll and read by nothing. The pair
+    (`matched`, `universe`) is what separates "the vendor sent nothing" from
+    "our floors removed all 2,806 rows", and that distinction is the diagnosis.
+    """
+
+    def engine(self):
+        from src.bidask.config import load_config
+        from src.bidask.server import TapeEngine
+        with TemporaryDirectory() as tmp:
+            return TapeEngine(load_config(), Path(tmp), markets=("equity",))
+
+    def test_state_carries_the_match_and_universe_pair(self):
+        eng = self.engine()
+        eng.matched["equity"], eng.universe["equity"] = 2806, 0
+        state = eng.build_state()["equity"]
+        self.assertEqual(state["matched"], 2806)
+        self.assertEqual(state["universe"], 0)
+
+    def test_the_page_names_the_drop_before_it_blames_the_cookie(self):
+        # With no universe nothing is subscribed, so the quote-health branches
+        # would accuse the session cookie of a vendor field change. Order is
+        # the whole point of this pin; nothing on screen shows it.
+        app = (PROJECT_ROOT / "src" / "bidask" / "web" / "app.js").read_text(encoding="utf-8")
+        body = app.split("function emptyReason(")[1]
+        reason = body.split("function ")[0]
+        self.assertIn("view.matched > 0 && !view.universe", reason,
+                      "emptyReason no longer names a fully-dropped universe")
+        self.assertLess(reason.index("view.matched > 0 && !view.universe"),
+                        reason.index("view.quotes"),
+                        "the all-dropped test must precede the quote-health tests")
+
+
 if __name__ == "__main__":
     unittest.main()

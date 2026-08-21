@@ -346,21 +346,23 @@ def screener_row(**overrides):
     return row
 
 
-class TestTradedValueFieldIsGone(unittest.TestCase):
-    """`Value.Traded` is not a field the `america` scanner serves.
+class TestTradedValueFieldIsUnreliable(unittest.TestCase):
+    """`Value.Traded` is an unlisted alias, not a supported scanner field.
 
-    Selecting a field the scanner does not publish does NOT error — it returns
-    null for every row, the same trap `tvquote.py` documents for `bid`/`ask`.
-    A server-side floor on it therefore matches zero rows, and an empty frame
-    is indistinguishable from a closed market: verified 2026-08-21 at 09:34 ET
-    with the market open and `volume`/`close` both live, `Value.Traded` was
-    null on every row and `Value.Traded >= $1M` matched 0 of 13,661, while the
-    average-volume leg alone matched 2,806. The field is absent from the
-    scanner's 3,771-field metainfo, which lists every other column selected
-    here.
+    It has never appeared in the 3,771-field metainfo, which lists every other
+    column selected here — yet the scanner resolves it, which is what makes it
+    dangerous. Selecting an unpublished field does NOT error; it returns null
+    whenever the vendor has no value, the same trap `tvquote.py` documents for
+    `bid`/`ask`. Verified 2026-08-21: null for every row through pre-market and
+    for at least the first four minutes of the session (`Value.Traded >= $1M`
+    matched 0 of 13,661 at 09:34 ET with `current_session` reading `market` and
+    `close`/`volume` live, against 2,806 for the average-volume leg alone), and
+    4,231 by 17:21 ET. A server-side floor on it therefore empties the universe
+    through the open, and an empty frame is indistinguishable from a closed
+    market.
     """
 
-    def test_the_query_never_names_the_missing_field(self):
+    def test_the_query_never_names_the_unpublished_field(self):
         from src.bidask.feed import fetch_equities
         with stub_screener([screener_row()]):
             fetch_equities(CFG)

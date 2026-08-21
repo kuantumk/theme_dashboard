@@ -13,16 +13,24 @@ Two library constraints shape this module:
 
 ⛔ A field the scanner does not publish returns null for every row rather than
 erroring, and a server-side floor on it then matches nothing at all.
-`Value.Traded` — session-to-date traded value — is the case that bit. It served
-values until 2026-08-20 and by 2026-08-21 it was gone from the scanner's
-3,771-field metainfo (which lists every other column selected here) and null on
-every row. Measured that morning at 09:34 ET with the market open and
-`close`/`volume` both live: `Value.Traded >= $1M` matched 0 of 13,661 rows,
-while the average-volume leg alone matched 2,806. The universe was therefore
-empty on every poll and the equity tab went dark for a whole session with no
-error anywhere — the same silent shape `tvquote.py` documents for `bid`/`ask`.
-Today's traded value is now derived from `close * volume` and floored after the
-fetch. Before pushing any new floor server-side, check the field is in metainfo.
+`Value.Traded` — session-to-date traded value — is the case that bit, and the
+detail that makes it dangerous is that **the scanner resolves it anyway**. It
+has never appeared in the 3,771-field metainfo (which lists every other column
+selected here), so it is an unlisted alias: unsupported, and populated only
+when the vendor feels like it. Measured 2026-08-21, it was null for every row
+through pre-market AND for at least the first four minutes of the regular
+session — `Value.Traded >= $1M` matched 0 of 13,661 rows at 09:34 ET with
+`current_session` reading `market` and `close`/`volume` both live, while the
+average-volume leg alone matched 2,806. By 17:21 ET the same filter matched
+4,231. The universe was therefore empty on every poll until mid-morning and the
+equity tab was dark through the open — the same silent shape `tvquote.py`
+documents for `bid`/`ask`.
+
+Do not read that as "the field was withdrawn and may come back". It was never
+supported. Today's traded value is derived from `close * volume`, which is
+defined in every session state, and floored after the fetch. Before pushing any
+new floor server-side, check the field is in metainfo — not because an
+unpublished field always fails, but because nothing obliges it to work.
 """
 
 from __future__ import annotations

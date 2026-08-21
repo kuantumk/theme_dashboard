@@ -1,6 +1,7 @@
 """Universe filter tests."""
 
 import unittest
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -284,6 +285,185 @@ class TestConfigValidation(unittest.TestCase):
     def test_avg_volume_field_tracks_the_window(self):
         self.assertEqual(load_config({"avg_window_days": 30}).avg_volume_field,
                          "average_volume_30d_calc")
+
+
+
+class _StubQuery:
+    """Stands in for the screener builder and records what was asked for.
+
+    The fetchers build their query as one long method chain, so every builder
+    method returns `self` and only `get_scanner_data` produces anything. The
+    recorded `selected` / `filters` / `ordered` are what let a test assert on
+    the request rather than only on the response.
+    """
+
+    last = None
+
+    def __init__(self, matched, df):
+        self._matched, self._df = matched, df
+        self.selected, self.filters, self.ordered = (), (), None
+        type(self).last = self
+
+    def set_markets(self, *args):
+        return self
+
+    def select(self, *columns):
+        self.selected = columns
+        return self
+
+    def where(self, *conditions):
+        self.filters = conditions
+        return self
+
+    def order_by(self, field, **kwargs):
+        self.ordered = field
+        return self
+
+    def limit(self, count):
+        return self
+
+    def get_scanner_data(self, **kwargs):
+        return self._matched, self._df
+
+
+def stub_screener(rows, matched=None):
+    """Patch the screener with a canned response for one fetch."""
+    df = frame(rows)
+    return mock.patch("src.bidask.feed.Query",
+                      lambda: _StubQuery(len(df) if matched is None else matched, df))
+
+
+# One screener row, shaped as the live feed shapes it. `Value.Traded` is absent
+# on purpose — that is the whole point of these tests.
+def screener_row(**overrides):
+    row = {"ticker": "NASDAQ:AAA", "name": "AAA", "close": 20.0, "bid": None,
+           "ask": None, "change": 4.0, "volume": 5_000_000,
+           "relative_volume_10d_calc": 1.4, "market_cap_basic": 1e9,
+           "sector": "Technology", "industry": "Software",
+           "update_mode": "streaming", "current_session": "pre_market",
+           CFG.avg_volume_field: 4_000_000}
+    row.update(overrides)
+    return row
+
+
+class TestTradedValueFieldIsUnreliable(unittest.TestCase):
+    """`Value.Traded` is an unlisted alias, not a supported scanner field.
+
+    It has never appeared in the 3,771-field metainfo, which lists every other
+    column selected here — yet the scanner resolves it, which is what makes it
+    dangerous. Selecting an unpublished field does NOT error; it returns null
+    whenever the vendor has no value, the same trap `tvquote.py` documents for
+    `bid`/`ask`. Verified 2026-08-21: null for every row through pre-market and
+    for at least the first four minutes of the session (`Value.Traded >= $1M`
+    matched 0 of 13,661 at 09:34 ET with `current_session` reading `market` and
+    `close`/`volume` live, against 2,806 for the average-volume leg alone), and
+    4,231 by 17:21 ET. A server-side floor on it therefore empties the universe
+    through the open, and an empty frame is indistinguishable from a closed
+    market.
+    """
+
+    def test_the_query_never_names_the_unpublished_field(self):
+        from src.bidask.feed import fetch_equities
+        with stub_screener([screener_row()]):
+            fetch_equities(CFG)
+        query = _StubQuery.last
+        self.assertNotIn("Value.Traded", query.selected)
+        self.assertNotIn("Value.Traded", [c.get("left") for c in query.filters])
+        self.assertNotEqual(query.ordered, "Value.Traded")
+
+    def test_a_frame_without_the_field_still_yields_a_universe(self):
+        # The regression: with the floor pushed server-side against a null
+        # column, this came back empty on every poll and the board went dark.
+        from src.bidask.feed import fetch_equities
+        with stub_screener([screener_row()]):
+            payload = fetch_equities(CFG)
+        self.assertEqual(payload.rows["symbol"].tolist(), ["AAA"])
+        self.assertEqual(payload.rows.iloc[0]["dollar_vol"], 100_000_000)
+
+    def test_todays_traded_value_floor_still_cuts(self):
+        # The replacement must be a real floor, not a no-op that admits the
+        # whole screener. close x volume is this file's own long-standing
+        # definition of the same quantity.
+        from src.bidask.feed import fetch_equities
+        thin = screener_row(ticker="NASDAQ:BBB", name="BBB", close=0.10,
+                            volume=1_000)  # $100 traded
+        with stub_screener([screener_row(), thin]):
+            payload = fetch_equities(CFG)
+        self.assertEqual(payload.rows["symbol"].tolist(), ["AAA"])
+
+    def test_an_unusable_reading_fails_closed(self):
+        # A missing price or volume is an unknown, and an unknown must not
+        # clear a floor as though it had qualified.
+        from src.bidask.feed import fetch_equities
+        with stub_screener([screener_row(volume=np.nan)]):
+            self.assertTrue(fetch_equities(CFG).rows.empty)
+
+    def test_a_text_typed_column_cannot_kill_the_poll(self):
+        # The derivation sits OUTSIDE the fetcher's try block, so a raise here
+        # escapes `poll_once` to the poll loop, which never writes the state
+        # file — the page then freezes on the last good poll while the console
+        # scrolls one line. On a text column `"20.0" * 5_000_000` builds a
+        # 35MB string and comparing it against the floor raises TypeError.
+        # Coercing both legs keeps the poll alive: a parseable figure is
+        # recovered, an unparseable one becomes NaN and fails the floor.
+        from src.bidask.feed import fetch_equities
+        rows = [
+            screener_row(close="20.0"),                      # $100M, parseable
+            screener_row(ticker="NASDAQ:CCC", name="CCC", close="n/a"),
+        ]
+        with stub_screener(rows):
+            payload = fetch_equities(CFG)
+        self.assertEqual(payload.rows["symbol"].tolist(), ["AAA"])
+        self.assertEqual(payload.rows.iloc[0]["dollar_vol"], 100_000_000)
+
+
+    def test_a_withdrawn_column_surfaces_as_a_feed_error(self):
+        # The derivation reads df["close"] directly, so the next withdrawn
+        # column raises KeyError rather than nulling. Nothing above catches it
+        # — not poll_once — so the poll loop would swallow it and never write
+        # the state file, freezing every field on the page including the
+        # clock. A visible feed error is the whole point of the guard.
+        from src.bidask.feed import fetch_equities
+        row = screener_row()
+        row.pop("close")
+        with stub_screener([row]):
+            payload = fetch_equities(CFG)
+        self.assertEqual(payload.error, "KeyError")
+        self.assertTrue(payload.rows.empty)
+        # The reading the response did carry survives the failure, so the
+        # session pill keeps telling the truth while the feed pill reports.
+        self.assertEqual(payload.market_status, "pre-market")
+
+
+class TestEmptyResultStillReportsTheFeed(unittest.TestCase):
+    """An empty board must not be reported as an unknown market on a dead feed.
+
+    `market_status=""` renders as the literal word "unknown" and `feed=""`
+    renders as "delayed feed", so dropping both on the empty path turned a
+    real-time pre-market session into two false claims on screen. That is what
+    made the missing-field failure above unreadable for a full session.
+    """
+
+    def test_equity_feed_and_session_survive_a_fully_filtered_frame(self):
+        from src.bidask.feed import fetch_equities
+        thin = screener_row(close=0.10, volume=1_000)  # below every floor
+        with stub_screener([thin]):
+            payload = fetch_equities(CFG)
+        self.assertTrue(payload.rows.empty)
+        self.assertEqual(payload.market_status, "pre-market")
+        self.assertEqual(payload.feed, "streaming")
+        self.assertFalse(payload.delayed)
+
+    def test_crypto_feed_survives_a_frame_of_unnamed_rows(self):
+        from src.bidask.feed import fetch_crypto
+        with mock.patch("src.bidask.feed.screeners") as screeners:
+            df = frame([{"base_currency": None, "close": 1.0, "volume": 1.0,
+                         "update_mode": "streaming"}])
+            screeners.crypto = lambda: _StubQuery(1, df)
+            payload = fetch_crypto(CFG)
+        self.assertTrue(payload.rows.empty)
+        self.assertEqual(payload.feed, "streaming")
+        self.assertEqual(payload.market_status, "24/7")
 
 
 if __name__ == "__main__":

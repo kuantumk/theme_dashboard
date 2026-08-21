@@ -120,6 +120,15 @@ class TapeEngine:
         self.errors = {m: "" for m in markets}
         self.feeds = {m: "" for m in markets}
         self.market_status = {m: "" for m in markets}
+        # Rows the screener matched server-side, and rows that survived our own
+        # floors. Published as a pair because the ratio is the diagnosis: a
+        # healthy `matched` beside a zero `universe` is an upstream field
+        # change, and it is indistinguishable from a quiet market without both.
+        self.matched = {m: 0 for m in markets}
+        self.universe = {m: 0 for m in markets}
+        # Latched so the alarm prints on the transition rather than 360 times
+        # an hour. A line per poll is noise, and noise is not a signal.
+        self._all_dropped = {m: False for m in markets}
         self.consecutive_failures = 0
         # Equity quotes come from the socket, never the screener: the `america`
         # scanner has no bid/ask field, so every equity observation would be
@@ -203,13 +212,36 @@ class TapeEngine:
             self.errors[market] = payload.error
             self.feeds[market] = payload.feed
             self.market_status[market] = payload.market_status
+            self.matched[market] = payload.matched
+            self.universe[market] = len(payload.rows)
+            # A 100% drop rate is an upstream-breakage signal, not a quiet
+            # market — the same alarm the EP scan grew after Finviz mangled its
+            # tickers. `Value.Traded` went dark for a whole session precisely
+            # because this ratio was computed every poll and never read.
+            dropped = bool(payload.matched) and payload.rows.empty and not payload.error
+            if dropped != self._all_dropped[market]:
+                self._all_dropped[market] = dropped
+                if dropped:
+                    print(f"  WARNING {market}: screener matched {payload.matched} rows "
+                          "and every one failed the local floors — an upstream field "
+                          "change is the usual cause, not a quiet market")
+                else:
+                    print(f"  {market}: universe recovered ({len(payload.rows)} rows)")
             # Reset before the early exit: a merge count left over from the last
             # good poll would report healthy quotes through a feed outage, which
             # is the failure mode this whole field exists to expose.
             self.quoted[market] = 0
-            if payload.error or payload.rows.empty:
+            if payload.error:
                 continue
-            any_ok = True
+            # A feed reading proves the response arrived, so the poll succeeded
+            # even when no row survived our own floors. Charging the backoff
+            # counter for that throttles 10s to 150s and prints "feed
+            # unavailable" about a vendor that is streaming — the same
+            # misdirection this module was just fixed to stop.
+            if payload.feed or not payload.rows.empty:
+                any_ok = True
+            if payload.rows.empty:
+                continue
 
             # One clock read for the whole market, so the session date, the
             # auction test and the elapsed-minutes figure cannot disagree.
@@ -277,6 +309,9 @@ class TapeEngine:
                 # Distinct from `feed`: a real-time entitlement on a closed
                 # market is still a closed market.
                 "market_status": self.market_status[market],
+                # The pair the empty column needs to name its own cause.
+                "matched": self.matched[market],
+                "universe": self.universe[market],
                 "error": self.errors[market],
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }

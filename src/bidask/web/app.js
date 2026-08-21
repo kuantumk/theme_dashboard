@@ -136,6 +136,16 @@
   function emptyReason(view) {
     if (!view) return 'Waiting for the first scans…';
     if (view.error) return `Feed error: ${esc(view.error)}. Nothing can be classified until it clears.`;
+    // The screener answered and our own floors then removed every row. This is
+    // tested BEFORE the quote branch on purpose: with no universe nothing is
+    // subscribed, so the quote checks below would blame the session cookie for
+    // a vendor field change. A 100% drop is upstream breakage, not a quiet
+    // market — `Value.Traded` cost a full session because nothing said so.
+    if (view.matched > 0 && !view.universe) {
+      return `The screener matched ${view.matched} rows and every one failed the local `
+        + 'liquidity floors. A 100% drop is almost always an upstream field change, not a '
+        + 'quiet market — check that the columns the filters read are still served.';
+    }
     const q = view.quotes;
     if (q) {
       if (!q.connected) {
@@ -255,8 +265,14 @@
     els.market.textContent = status;
     els.market.className = 'pill ' + (open ? 'live' : 'delayed');
 
+    // An absent reading must not assert a stale vendor. `feed` is read off the
+    // rows, so a response that carried none leaves it empty — and calling that
+    // "delayed feed" is what accused a streaming vendor during the outage.
+    // `delayed` stays true either way, so the styling and the never-claim-live
+    // fail-safe are untouched; only the wording stops overclaiming.
     els.feed.textContent = view.error ? `feed error: ${esc(view.error)}`
-      : (view.delayed ? 'delayed feed' : 'real-time feed');
+      : (view.feed ? (view.delayed ? 'delayed feed' : 'real-time feed')
+                   : 'feed unknown');
     els.feed.className = 'pill ' + (view.error ? 'error' : (view.delayed ? 'delayed' : 'live'));
     // Coverage is classification quality (share of actual trades classified),
     // not trade frequency — most symbols do not print every interval.

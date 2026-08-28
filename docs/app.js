@@ -605,6 +605,19 @@
   }
 
   // ── MARKET BREADTH DATA ───────────────────────────────
+  const AAII_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Split the ISO string rather than `new Date(iso)`: a bare date parses as UTC
+  // midnight, so every viewer west of Greenwich would see the previous day —
+  // and this label is the tile's staleness signal, so an off-by-one there reads
+  // as a survey that has not updated.
+  function formatAaiiWeek(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return iso;
+    return AAII_MONTHS[+m[2] - 1] + ' ' + (+m[3]);
+  }
+
   function loadBreadthData() {
     fetch(withCacheBust(BREADTH_DATA_URL))
       .then(r => r.json())
@@ -619,12 +632,34 @@
           }
         }
 
-        // NAAIM
-        if (data.naaim && data.naaim.value != null) {
-          const el = document.getElementById('naaim-value');
-          const val = data.naaim.value;
-          el.textContent = val.toFixed(2) + '%';
-          el.className = 'breadth-value ' + (val < 40 ? 'up' : val > 95 ? 'dn' : 'neu');
+        // AAII Sentiment. Three figures, no tint — see the .aaii-parts comment
+        // in style.css. With no aaii block at all (the window between a code
+        // deploy and the next workflow run, since code PRs reset docs/data/)
+        // this branch does not run and the tile keeps its markup em dashes,
+        // which is the intended empty state.
+        if (data.aaii) {
+          // Keyed by the full element id rather than a suffix so the ids stay
+          // greppable against index.html; a concatenated id hides a mismatch
+          // from both a reader and the markup guard in tests/.
+          const slots = {
+            'aaii-bull': 'bullish',
+            'aaii-neut': 'neutral',
+            'aaii-bear': 'bearish',
+          };
+          Object.entries(slots).forEach(([elementId, key]) => {
+            const el = document.getElementById(elementId);
+            const val = data.aaii[key];
+            if (el) el.textContent = val != null ? val.toFixed(1) + '%' : '—';
+          });
+          const wk = document.getElementById('aaii-week');
+          // Name the gap rather than leaving the line blank: the date is the
+          // only thing separating a frozen fetch from an ordinary mid-week
+          // view, so its absence has to read as absence.
+          if (wk) {
+            wk.textContent = data.aaii.week_ending
+              ? 'Week ending ' + formatAaiiWeek(data.aaii.week_ending)
+              : 'week ending unknown';
+          }
         }
 
         // Render each breadth indicator with history as numbers

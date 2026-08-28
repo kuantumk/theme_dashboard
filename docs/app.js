@@ -30,14 +30,23 @@
   // Oversold line for OUR series. Not portable from a vendor's chart: RSI at the
   // floor is a ratio between a decayed memory of the last rally and the current
   // decline, so it shifts with issue coverage. Calibrated 2026-08 against
-  // StockCharts $NASI (ours 9.97 vs their 8.85 on 2026-07-30).
-  const NASI_OVERSOLD = 10;
-  // Second rail. Every major low in the exported window bottomed at or below
-  // 12 — 2025-03-14 (11.01), 2025-04-11 (11.31), 2025-11-21 (5.43), 2026-03-30
-  // (10.95, the SPY year low), 2026-07-31 (9.23) — but only two of the five
-  // broke 10, so a lone 10-line hides most of them. The classic RSI 30 rail is
-  // useless here: this series crosses it constantly.
-  const NASI_LOW_BAND = 12;
+  // StockCharts $NASI, where ours reads ~1.0–1.1 higher at a trough (ours 9.97
+  // vs their 8.85 on 2026-07-30), so 11 here is their 10.
+  //
+  // 11 rather than 10 for a second, independent reason: compute_nasi refreshes
+  // a trailing 90 calendar days of A/D data on every run, so past sessions get
+  // revised. 2026-07-30 read 9.84, 9.86, 9.87, 9.88, 9.94, 9.96, 10.02 and
+  // 10.15 across 14 consecutive daily commits — its marker appeared and
+  // vanished between deploys with nothing on screen to explain it. At 11 it
+  // does not move.
+  //
+  // 11 also inherits the job of the retired dashed 12 rail, which marked the
+  // major lows a lone 10-line hid: 2025-03-14 (11.01), 2025-04-11 (11.31),
+  // 2025-11-21 (5.43), 2026-03-30 (10.95, the SPY year low) and 2026-07-31
+  // (9.38). In the plotted 252 sessions 11 and 12 mark the same three episodes,
+  // and at 0.4 CSS px apart the two rails drew as one line. The classic RSI 30
+  // rail is useless here: this series crosses it constantly.
+  const NASI_OVERSOLD = 11;
   const NASI_WATCH = 20;
   // A convention, not a calibrated level. Unlike NASI_OVERSOLD above — checked
   // against StockCharts $NASI in 2026-08 — 80 has never been compared against
@@ -857,18 +866,20 @@
       height: g.rsiBot - yRsi(NASI_OVERSOLD),
       fill: 'var(--amber)', opacity: 0.16
     });
-    // Both thresholds are amber; the dashed --border2 treatment stays
-    // exclusive to the 12 major-low band. Rail hue is deliberately NOT the
-    // marker hue: the 80 rail sits at y 116 and the markers there cover
-    // y 110.9-117.5 (centres 112.9-115.5, plus ry: 2), so a red rail would sit
-    // under the red markers it labels and the pair would read as one
-    // thickened line. The markers carry the signal colour;
-    // the rails stay neutral on both sides. Position separates the two
-    // thresholds — they are 28 viewBox units apart.
+    // Two rails, both amber. Rail hue is deliberately NOT the marker hue: the
+    // 80 rail sits at y 116 and the markers there cover y 110.9-117.5 (centres
+    // 112.9-115.5, plus ry: 2), so a red rail would sit under the red markers
+    // it labels and the pair would read as one thickened line. The markers
+    // carry the signal colour; the rails stay neutral on both sides. Position
+    // separates the two thresholds — they are 27.6 viewBox units apart.
+    //
+    // Do not add a third rail near the oversold end. The pane gives 40 units to
+    // 0-100 at a 1:1 vertical scale, so one RSI point is 0.4 CSS px: the
+    // retired 12 rail drew as one thickened line against 11 and marked the same
+    // three episodes in the plotted window.
     [
       [NASI_OVERSOLD, 'var(--amber)', null],
       [NASI_OVERBOUGHT, 'var(--amber)', null],
-      [NASI_LOW_BAND, 'var(--border2)', '3 3'],
     ].forEach(([lvl, stroke, dash]) => {
       line(`M0,${yRsi(lvl).toFixed(2)}L${g.w},${yRsi(lvl).toFixed(2)}`,
            stroke, 1, dash);

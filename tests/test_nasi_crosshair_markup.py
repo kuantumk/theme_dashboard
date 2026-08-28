@@ -411,6 +411,69 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
             "renders as an ellipse whose shape drifts with panel width",
         )
 
+    # ── Oversold level ──────────────────────────────────────────────
+    #
+    # The level moved 10 -> 11 in 2026-08. Two independent reasons, neither
+    # visible on screen, so they are pinned here alongside the value.
+
+    def test_oversold_level_is_eleven(self) -> None:
+        """Pinned like NASI_CHART_SESSIONS and EXPORT_SESSIONS above.
+
+        Our summation-RSI reads ~1.0-1.1 above StockCharts $NASI at a trough
+        (ours 9.97 vs their 8.85 on 2026-07-30), so 11 here is their 10.
+        Independently, compute_nasi refreshes a trailing 90 days of A/D data
+        every run, so past sessions get revised: 2026-07-30 read 9.84 through
+        10.15 across 14 consecutive daily commits. At a rail of 10 that
+        session's marker appears and disappears between deploys; at 11 it does
+        not move.
+        """
+        self.assertRegex(
+            self.js,
+            r"NASI_OVERSOLD\s*=\s*11\b",
+            "the NASI oversold level is not 11; at 10 the rail sits inside the "
+            "revision noise of its own series (see NASI in CLAUDE.md)",
+        )
+
+    def test_the_rsi_pane_draws_exactly_two_rails(self) -> None:
+        """The dashed 12 rail was removed when the oversold level became 11.
+
+        The RSI pane spans 40 viewBox units for 0-100 and the chart renders at
+        a 1:1 vertical scale, so one RSI point is 0.4 CSS px: rails at 11 and
+        12 draw as a single thickened line. In the plotted 252 sessions both
+        thresholds mark the same three episodes, so 11 does the 12 band's job
+        on its own.
+        """
+        render = self._extract_function("renderNasiChart")
+        start = render.find("[NASI_OVERSOLD")
+        end = render.find("].forEach", start)
+        self.assertNotEqual(start, -1, "the RSI rail array is missing")
+        self.assertNotEqual(end, -1, "the RSI rail array is not iterated")
+        rails = render[start:end]
+        # Count entries, not brackets: each rail entry opens with its threshold
+        # constant, so this does not depend on how the array literal is wrapped.
+        self.assertEqual(
+            len(re.findall(r"\[\s*NASI_[A-Z_]+\s*,", rails)),
+            2,
+            "the RSI pane does not draw exactly two rails; a third rail within "
+            "a point or two of the oversold level renders as one thickened line",
+        )
+        self.assertEqual(
+            rails.count("var(--amber)"),
+            2,
+            "both RSI rails must be amber -- a rail drawn in its markers' "
+            "colour merges with the markers it labels",
+        )
+
+    def test_the_retired_low_band_constant_is_gone(self) -> None:
+        """A constant with no remaining consumer invites a rail being drawn
+        from it again."""
+        self.assertNotIn(
+            "NASI_LOW_BAND",
+            self.js,
+            "NASI_LOW_BAND still exists in docs/app.js; the 12 rail was "
+            "retired when the oversold level moved to 11",
+        )
+
     def _marker_region(self) -> str:
         """The band-marker block: the live x-scale read up to the crosshair append.
 

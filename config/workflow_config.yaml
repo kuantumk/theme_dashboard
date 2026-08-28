@@ -24,6 +24,13 @@ market_breadth:
   ncfd_url: "https://www.barchart.com/stocks/quotes/$NCFD/overview"
   mmfi_url: "https://www.barchart.com/stocks/quotes/$MMFI/overview"
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  aaii_url: "https://www.aaii.com/sentimentsurvey"
+  # AAII sits behind a bot manager that rejects the truncated user_agent above
+  # (403 with or without a full header set). Measured 2026-08-27: the complete
+  # Chrome string returns 200 on its own, and no other header changes the
+  # outcome. Its own key because the shared value works for barchart and there
+  # is no reason to risk a working scraper.
+  aaii_user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
 themes:
   metadata_file: "data/ticker_themes.json"

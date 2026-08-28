@@ -419,10 +419,16 @@ def update_breadth_history():
     if fng is not None:
         history['fear_greed'] = fng
 
-    # NAAIM Exposure
-    naaim = fetch_naaim_exposure()
-    if naaim is not None:
-        history['naaim'] = naaim
+    # AAII Sentiment Survey (weekly, published Thursdays)
+    aaii = fetch_aaii_sentiment()
+    if aaii is not None:
+        history['aaii'] = aaii
+
+    # NAAIM retired 2026-08: the current reading moved behind a membership wall,
+    # so the scraper served a frozen number the tile had no way to flag. The pop
+    # is what clears the dead key, because this function only ever overwrites
+    # keys it fetches -- an untouched key would survive every future run.
+    history.pop('naaim', None)
 
     history['timestamp'] = current.get('timestamp', datetime.now().isoformat())
 
@@ -520,22 +526,91 @@ def fetch_cnn_fear_greed():
     return None
 
 
-def fetch_naaim_exposure():
-    """Fetch NAAIM Exposure Index from their website."""
-    try:
-        url = 'https://www.naaim.org/programs/naaim-exposure-index/'
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            html = resp.read().decode('utf-8')
+# Month names are matched explicitly rather than through strptime('%B'), which
+# reads LC_TIME and would fail on a runner with a non-English locale.
+_AAII_MONTHS = {
+    'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+    'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11,
+    'december': 12,
+}
 
-        matches = re.findall(r'\[new Date\(\d{4},\s*\d+,\s*\d+\),\s*([-\d.]+)\s*\]', html)
-        if matches:
-            naaim_values = [float(m) for m in matches if float(m) < 1000]
-            if naaim_values:
-                return {'value': naaim_values[-1]}
+# The current-week figures hang off `ssv2-snum`; the historical averages beside
+# them use `ssv2-savg` and also sum to 100, so the class is the only thing that
+# separates the two. `ssv2` is a redesign version prefix -- a v3 rename breaks
+# both patterns at once, which is what the split warning below is for.
+_AAII_FIGURE_RE = re.compile(r'ssv2-snum\s+(bull|neut|bear)"\s*>\s*([\d.]+)\s*%')
+_AAII_WEEK_RE = re.compile(
+    r'ssv2-gauge-week"\s*>\s*Week ending\s+([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})'
+)
+
+
+def parse_aaii_sentiment(html):
+    """Extract the current week's AAII figures from the survey page markup.
+
+    Returns ``{'bullish', 'neutral', 'bearish', 'week_ending'}`` or ``None``.
+    All three percentages or nothing: a two-of-three reading renders as a real
+    survey result rather than as a broken parse. ``week_ending`` alone may be
+    ``None`` -- losing the date is not a reason to drop three good figures, and
+    the tile names that gap on screen.
+    """
+    figures = {}
+    for key, raw in _AAII_FIGURE_RE.findall(html):
+        if key in figures:
+            return None  # two gauges on one page: the layout moved under us
+        figures[key] = float(raw)
+
+    if set(figures) != {'bull', 'neut', 'bear'}:
+        return None
+    if any(not 0 <= v <= 100 for v in figures.values()):
+        return None
+    # Catches a shape change that still matches the hooks but grabs the wrong
+    # numbers. AAII rounds to 0.1, so the three rarely sum to exactly 100.
+    if abs(sum(figures.values()) - 100) > 1.5:
+        return None
+
+    week_ending = None
+    week = _AAII_WEEK_RE.search(html)
+    if week:
+        month = _AAII_MONTHS.get(week.group(1).lower())
+        if month:
+            week_ending = f"{int(week.group(3)):04d}-{month:02d}-{int(week.group(2)):02d}"
+
+    return {
+        'bullish': figures['bull'],
+        'neutral': figures['neut'],
+        'bearish': figures['bear'],
+        'week_ending': week_ending,
+    }
+
+
+def fetch_aaii_sentiment():
+    """Fetch the latest AAII Sentiment Survey reading.
+
+    The two failure paths log differently on purpose. A transport error or non-200
+    means the request did not land. A 200 that parses to nothing means the page
+    shape changed -- that is an upstream-redesign signal, and reporting it as a
+    fetch problem is what let the NAAIM tile sit stale for weeks.
+    """
+    cfg = CONFIG["market_breadth"]
+    try:
+        req = urllib.request.Request(
+            cfg["aaii_url"], headers={'User-Agent': cfg["aaii_user_agent"]}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode('utf-8', 'replace')
     except Exception as e:
-        print(f"  Warning: Could not fetch NAAIM: {e}")
-    return None
+        print(f"  Warning: Could not fetch AAII sentiment: {e}")
+        return None
+
+    reading = parse_aaii_sentiment(html)
+    if reading is None:
+        print("  Warning: AAII page fetched but no reading parsed -- the page "
+              "shape likely changed (see the ssv2- hooks in parse_aaii_sentiment)")
+        return None
+
+    print(f"    AAII = {reading['bullish']}% bull / {reading['neutral']}% neut "
+          f"/ {reading['bearish']}% bear (week ending {reading['week_ending']})")
+    return reading
 
 
 def fetch_sheet_csv(url):

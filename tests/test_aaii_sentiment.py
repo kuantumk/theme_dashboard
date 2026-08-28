@@ -132,10 +132,25 @@ class ParseAaiiSentimentTests(unittest.TestCase):
         )
         self.assertIsNone(edd.parse_aaii_sentiment(html))
 
-    def test_a_duplicated_figure_block_yields_nothing(self):
-        """Two gauges on one page means the layout changed underneath us; there
-        is no basis for picking one."""
-        self.assertIsNone(edd.parse_aaii_sentiment(LIVE_MARKUP + LIVE_MARKUP))
+    def test_an_agreeing_duplicate_gauge_still_parses(self):
+        """A responsive layout can render the gauge twice, desktop and mobile.
+
+        Both copies carry the same reading, so blanking the tile over it would
+        be a false negative on a perfectly readable page.
+        """
+        reading = edd.parse_aaii_sentiment(LIVE_MARKUP + LIVE_MARKUP)
+        self.assertIsNotNone(reading)
+        self.assertEqual(reading["bullish"], 32.9)
+        self.assertEqual(reading["bearish"], 44.4)
+
+    def test_disagreeing_duplicate_gauges_yield_nothing(self):
+        """Two different readings on one page: no basis for picking either, and
+        the layout has genuinely moved."""
+        second = LIVE_MARKUP.replace(
+            '<div class="ssv2-snum bull">32.9%</div>',
+            '<div class="ssv2-snum bull">41.0%</div>',
+        )
+        self.assertIsNone(edd.parse_aaii_sentiment(LIVE_MARKUP + second))
 
 
 class UpdateBreadthHistoryAaiiTests(unittest.TestCase):

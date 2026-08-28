@@ -555,10 +555,8 @@ def parse_aaii_sentiment(html):
     """
     figures = {}
     for key, raw in _AAII_FIGURE_RE.findall(html):
-        if key in figures:
-            return None  # two gauges on one page: the layout moved under us
         try:
-            figures[key] = float(raw)
+            value = float(raw)
         except ValueError:
             # `[\d.]+` matches strings float() rejects ("3.2.9", "."). Returning
             # None keeps the documented contract: this function reports a bad
@@ -567,6 +565,14 @@ def parse_aaii_sentiment(html):
             # try, and neither update_breadth_history nor export_all guards the
             # chain, so a malformed figure would abort the whole daily export.
             return None
+
+        # A responsive layout can render the same gauge twice (desktop + mobile
+        # copy), so a repeat is only a problem when the copies disagree --
+        # then there is no basis for picking one and the page shape has really
+        # moved. Agreeing copies are the same reading and stay usable.
+        if key in figures and figures[key] != value:
+            return None
+        figures[key] = value
 
     if set(figures) != {'bull', 'neut', 'bear'}:
         return None

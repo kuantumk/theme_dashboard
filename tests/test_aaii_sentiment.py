@@ -118,6 +118,20 @@ class ParseAaiiSentimentTests(unittest.TestCase):
         )
         self.assertIsNone(edd.parse_aaii_sentiment(html))
 
+    def test_a_malformed_figure_yields_nothing_rather_than_raising(self):
+        """`[\\d.]+` matches strings float() rejects.
+
+        This must return None, not raise: fetch_aaii_sentiment calls the parse
+        outside its request try, and neither update_breadth_history nor
+        export_all guards the chain, so an escaping ValueError would abort the
+        entire daily export rather than just blanking one tile.
+        """
+        html = LIVE_MARKUP.replace(
+            '<div class="ssv2-snum bull">32.9%</div>',
+            '<div class="ssv2-snum bull">3.2.9%</div>',
+        )
+        self.assertIsNone(edd.parse_aaii_sentiment(html))
+
     def test_a_duplicated_figure_block_yields_nothing(self):
         """Two gauges on one page means the layout changed underneath us; there
         is no basis for picking one."""

@@ -557,7 +557,16 @@ def parse_aaii_sentiment(html):
     for key, raw in _AAII_FIGURE_RE.findall(html):
         if key in figures:
             return None  # two gauges on one page: the layout moved under us
-        figures[key] = float(raw)
+        try:
+            figures[key] = float(raw)
+        except ValueError:
+            # `[\d.]+` matches strings float() rejects ("3.2.9", "."). Returning
+            # None keeps the documented contract: this function reports a bad
+            # page, it never raises. An escaping ValueError would not stop at
+            # the tile -- fetch_aaii_sentiment calls this outside its request
+            # try, and neither update_breadth_history nor export_all guards the
+            # chain, so a malformed figure would abort the whole daily export.
+            return None
 
     if set(figures) != {'bull', 'neut', 'bear'}:
         return None

@@ -67,9 +67,28 @@
               <div class="breadth-value" id="fg-value">—</div>
               <div class="breadth-sub" id="fg-rating"></div>
             </div>
+            <!-- The one tile carrying three figures rather than one, so it uses
+                 .aaii-parts instead of .breadth-value (see style.css). The
+                 week-ending line is the staleness signal: AAII publishes on
+                 Thursdays, so the same figures stand all week and a dead fetch
+                 is otherwise indistinguishable from a normal Monday. -->
             <div class="breadth-item">
-              <div class="breadth-label">NAAIM Exposure</div>
-              <div class="breadth-value" id="naaim-value">—</div>
+              <div class="breadth-label">AAII Sentiment</div>
+              <div class="aaii-parts">
+                <div class="aaii-part">
+                  <div class="aaii-num" id="aaii-bull">—</div>
+                  <div class="aaii-plabel">Bull</div>
+                </div>
+                <div class="aaii-part">
+                  <div class="aaii-num" id="aaii-neut">—</div>
+                  <div class="aaii-plabel">Neut</div>
+                </div>
+                <div class="aaii-part">
+                  <div class="aaii-num" id="aaii-bear">—</div>
+                  <div class="aaii-plabel">Bear</div>
+                </div>
+              </div>
+              <div class="breadth-sub" id="aaii-week"></div>
             </div>
             <div class="breadth-item">
               <div class="breadth-label">NCFD</div>

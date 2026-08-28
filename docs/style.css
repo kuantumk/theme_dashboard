@@ -885,13 +885,49 @@ tr.filtered-out:hover td {
   letter-spacing: -1.2px;
 }
 
+/* AAII tile. The only tile in the grid carrying three figures, so it needs its
+   own type scale rather than a .breadth-value override: at the list panel's
+   400px default a half-width tile has ~140px of text room, and three numbers at
+   28px do not fit.
+
+   The figures are deliberately uncoloured. Every other tile here tints by
+   contrarian meaning -- a low NCFD reads green because washed-out breadth is a
+   bullish setup -- and applying that logic to AAII would paint high bearish
+   sentiment green, contradicting the "Bear" label printed directly beneath it.
+   Tinting by the label instead would assert a directional read no threshold in
+   this repo has been calibrated for. The labels carry the meaning; the numbers
+   stay neutral. */
+.aaii-parts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.aaii-num {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 200;
+  letter-spacing: -0.6px;
+  color: var(--text);
+}
+
+.aaii-plabel {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 300;
+  color: var(--text3);
+  letter-spacing: 0;
+  margin-top: 1px;
+}
+
 /* ── NASI (Nasdaq McClellan Summation + RSI) ──────────────
    Sits under the breadth grid as one full-width block. Colors come from the
    existing palette only: --green/--red for direction, --accent for the MA,
    --amber for the oversold band.
 
    In the RSI pane the two roles are kept apart: --amber draws both threshold
-   rails (10 and 80) and the oversold band fill, while --green/--red are
+   rails (11 and 80) and the oversold band fill, while --green/--red are
    reserved for the band markers that carry the signal. A rail drawn in its
    own markers' colour merges with them — the 80 rail sits inside its markers'
    vertical span — so rail hue stays neutral on both sides. */

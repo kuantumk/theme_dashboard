@@ -614,7 +614,7 @@
   }
 
   // ── MARKET BREADTH DATA ───────────────────────────────
-  const AAII_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  const SURVEY_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   // Split the ISO string rather than `new Date(iso)`: a bare date parses as UTC
@@ -624,10 +624,10 @@
   //
   // Shared by the AAII and NAAIM tiles; both carry a weekly survey date and
   // both need the same UTC-parsing avoidance for the same reason.
-  function formatAaiiWeek(iso) {
+  function formatSurveyWeek(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
     if (!m) return iso;
-    return AAII_MONTHS[+m[2] - 1] + ' ' + (+m[3]);
+    return SURVEY_MONTHS[+m[2] - 1] + ' ' + (+m[3]);
   }
 
   function loadBreadthData() {
@@ -644,17 +644,7 @@
           }
         }
 
-        // NAAIM Exposure. Placed BEFORE the AAII branch deliberately: the
-        // markup guard in tests/ slices the "AAII render block" as everything
-        // between the AAII branch below and the breadth loop after it, then
-        // asserts no colour class appears in that slice. A NAAIM branch
-        // sitting between them would fall inside it, so an untinted NAAIM
-        // passes today but a future tint would fail a test named for AAII.
-        // Keeping it above the slice keeps that guard honest.
-        //
-        // For the same reason this comment must not spell the token that guard
-        // searches for -- doing so moved the slice's start into this comment
-        // and swallowed the whole NAAIM branch.
+        // NAAIM Exposure.
         //
         // No tint (see the .aaii-parts comment in style.css for the full
         // reasoning). High exposure is contrarian-bearish, but no threshold for
@@ -677,7 +667,7 @@
           // absence has to read as absence.
           if (na) {
             na.textContent = data.naaim.as_of
-              ? 'Survey ' + formatAaiiWeek(data.naaim.as_of)
+              ? 'Survey ' + formatSurveyWeek(data.naaim.as_of)
               : 'date unknown';
           }
         }
@@ -707,7 +697,7 @@
           // view, so its absence has to read as absence.
           if (wk) {
             wk.textContent = data.aaii.week_ending
-              ? 'Week ending ' + formatAaiiWeek(data.aaii.week_ending)
+              ? 'Week ending ' + formatSurveyWeek(data.aaii.week_ending)
               : 'week ending unknown';
           }
         }

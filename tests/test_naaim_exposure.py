@@ -113,6 +113,54 @@ class ParseNaaimSeriesTests(unittest.TestCase):
         lines[-1] = "09/01/2026,    102.660"
         self.assertIsNone(edd.parse_naaim_series("\n".join(lines)))
 
+    def test_another_instruments_series_yields_nothing(self):
+        """The wrong-series guard, and the load-bearing half of it.
+
+        The response names its own symbol on the title line above the header,
+        so identity is checked rather than inferred. The range check alone
+        cannot do this job: -200..200 covers the ordinary price of most listed
+        equities and every 0-100 breadth percentage on this same dashboard, so
+        a plausible wrong instrument sails straight through it.
+        """
+        wrong = THREE_WEEKS.replace("!NAAIM, Daily", "!NCFD, Daily")
+        self.assertIsNone(edd.parse_naaim_series(wrong))
+
+    def test_an_in_range_wrong_instrument_still_yields_nothing(self):
+        """The case the range guard provably cannot catch on its own."""
+        body = _csv([("08/19/2026", 49.25), ("08/26/2026", 51.43)])
+        self.assertIsNotNone(edd.parse_naaim_series(body))
+        self.assertIsNone(
+            edd.parse_naaim_series(body.replace("!NAAIM", "!NCFD"))
+        )
+
+    def test_a_descending_series_yields_nothing(self):
+        """The one malformed shape that would fail OPEN rather than closed.
+
+        On a newest-first response `rows[-1]` is the OLDEST bar, so the tile
+        would publish a two-month-old reading while the header, identity, range
+        and change-free checks all pass cleanly. Refused rather than sorted: a
+        reordering means the endpoint's contract moved, and sorting would paper
+        over that while the next shape change goes unnoticed.
+        """
+        head = THREE_WEEKS.splitlines()[:2]
+        rows = THREE_WEEKS.splitlines()[2:]
+        self.assertIsNone(edd.parse_naaim_series("\n".join(head + rows[::-1])))
+
+    def test_a_nan_close_yields_nothing(self):
+        """`float()` accepts "nan"/"inf" without raising, so the ValueError
+        guard does not catch them. A NaN close is worse than a rejected one:
+        NaN != anything is True, so the run-walk would break at the NaN row and
+        report a date NEWER than the true run start -- erring fresh, the one
+        direction derive_naaim_reading promises it never errs.
+        """
+        for token in ("nan", "NaN", "inf", "-inf"):
+            with self.subTest(token=token):
+                lines = THREE_WEEKS.splitlines()
+                cols = lines[-2].split(',')
+                cols[4] = f"      {token}  "
+                lines[-2] = ",".join(cols)
+                self.assertIsNone(edd.parse_naaim_series("\n".join(lines)))
+
     def test_an_empty_body_yields_nothing(self):
         self.assertIsNone(edd.parse_naaim_series(""))
 
@@ -246,6 +294,56 @@ class FetchNaaimExposureTests(unittest.TestCase):
             opener.sent_agent,
             edd.CONFIG["market_breadth"]["user_agent"],
         )
+
+    def test_a_derivation_failure_returns_none(self):
+        """The third failure branch, exercised through the wrapper. All three
+        return None, so only the log distinguishes them -- which is the point of
+        keeping them apart."""
+        flat = _csv([("08/19/2026", 95.52), ("08/26/2026", 95.52)])
+        reading, _ = self._fetch(body=flat)
+        self.assertIsNone(reading)
+
+    def test_a_broken_url_template_returns_none_rather_than_raising(self):
+        """The URL is built inside the try. This function is called unguarded --
+        neither update_breadth_history nor export_all wraps it -- so an escaping
+        KeyError from a renamed config key or a stray brace in the template
+        would abort the whole daily export, losing every later tab, over one
+        tile."""
+        broken = dict(edd.CONFIG["market_breadth"])
+        broken.pop("naaim_url")
+        with patch.dict(edd.CONFIG, {"market_breadth": broken}):
+            self.assertIsNone(edd.fetch_naaim_exposure())
+
+        stray = dict(edd.CONFIG["market_breadth"])
+        stray["naaim_url"] = "https://example.invalid/?q={unknown}&s={start}"
+        with patch.dict(edd.CONFIG, {"market_breadth": stray}):
+            self.assertIsNone(edd.fetch_naaim_exposure())
+
+    def test_the_request_carries_a_timeout(self):
+        """Mirrors fetch_aaii_sentiment. An external call with no timeout hangs
+        the daily workflow on a slow vendor rather than degrading to one dead
+        tile."""
+        seen = {}
+
+        class _Resp:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *a):
+                return False
+
+            def read(self_inner):
+                return THREE_WEEKS.encode("utf-8")
+
+        def _open(req, timeout=None):
+            seen["timeout"] = timeout
+            return _Resp()
+
+        with patch.object(edd.urllib.request, "urlopen", _open):
+            edd.fetch_naaim_exposure()
+
+        self.assertIsNotNone(seen["timeout"])
+        self.assertGreater(seen["timeout"], 0)
 
     def test_the_request_targets_the_configured_endpoint(self):
         """Pins that the URL comes from config rather than a literal, and that

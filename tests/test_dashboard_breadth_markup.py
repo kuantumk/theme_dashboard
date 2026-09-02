@@ -96,18 +96,43 @@ class BreadthMarkupTests(unittest.TestCase):
     def test_the_breadth_grid_fills_both_rows_exactly(self) -> None:
         """Twelve columns per row is the invariant. Three sentiment tiles at
         3 + 6 + 3, then four breadth tiles at 3 each -- either row coming up
-        short leaves the ragged half-row the old six-tile count guarded."""
-        tiles = len(TILE_RE.findall(self.html))
-        self.assertEqual(tiles, EXPECTED_BREADTH_TILES)
+        short leaves the ragged half-row the old six-tile count guarded.
 
-        wide = len(re.findall(r'class="breadth-item bi-wide"', self.html))
-        narrow = len(re.findall(r'class="breadth-item bi-narrow"', self.html))
-        self.assertEqual(wide, EXPECTED_WIDE_TILES)
-        self.assertEqual(narrow, EXPECTED_BREADTH_TILES - EXPECTED_WIDE_TILES)
+        The spans are summed from the MARKUP in document order, not asserted
+        against each other. An earlier version compared module constants to
+        literals (`3 * (3 - 1) + 6 == 12`), which could not fail from any
+        production change -- moving the wide tile into the second row left both
+        rows wrong and every assertion green.
+        """
+        spans = self._tile_spans()
+        self.assertEqual(len(spans), EXPECTED_BREADTH_TILES)
+        self.assertEqual(spans.count(6), EXPECTED_WIDE_TILES)
 
-        # Row 1: 3 + 6 + 3. Row 2: 3 x 4. Both twelve.
-        self.assertEqual(3 * (EXPECTED_SENTIMENT_TILES - 1) + 6, 12)
-        self.assertEqual(3 * (EXPECTED_BREADTH_TILES - EXPECTED_SENTIMENT_TILES), 12)
+        row1, row2 = spans[:EXPECTED_SENTIMENT_TILES], spans[EXPECTED_SENTIMENT_TILES:]
+        self.assertEqual(sum(row1), 12, f"sentiment row is {sum(row1)}/12: {row1}")
+        self.assertEqual(sum(row2), 12, f"breadth row is {sum(row2)}/12: {row2}")
+
+    def test_the_wide_tile_is_aaii(self) -> None:
+        """Span 6 belongs to AAII specifically. It is the one tile rendering
+        three figures instead of one, so it is the tile with no width to give;
+        the counts above stay green if the span moves to any other tile."""
+        block = self._tile_block_for("AAII Sentiment")
+        self.assertIn("bi-wide", block)
+
+    def _tile_spans(self) -> list:
+        """Column span of each breadth tile, in document order."""
+        return [
+            6 if "bi-wide" in cls else 3
+            for cls in TILE_RE.findall(self.html)
+        ]
+
+    def _tile_block_for(self, label: str) -> str:
+        """The markup of the tile carrying `label`, back to its opening div."""
+        at = self.html.find(f">{label}<")
+        self.assertNotEqual(at, -1, f"no tile labelled {label!r} in the markup")
+        start = self.html.rfind('class="breadth-item', 0, at)
+        self.assertNotEqual(start, -1, f"{label!r} is not inside a breadth tile")
+        return self.html[start:at]
 
     def test_the_tile_regex_matches_the_markup_it_counts(self) -> None:
         """Guards the guard. The previous exact-match pattern silently matched
@@ -129,25 +154,6 @@ class BreadthMarkupTests(unittest.TestCase):
                     "the NAAIM render block assigns a directional colour",
                 )
 
-    def test_the_naaim_branch_precedes_the_aaii_branch(self) -> None:
-        """_aaii_render_block slices from `data.aaii` to the ncfd loop, so a
-        NAAIM branch placed between them would fall inside a guard named for
-        AAII -- passing today, and failing under an AAII heading the first time
-        anyone tints NAAIM."""
-        self.assertLess(
-            self.js.find("data.naaim"),
-            self.js.find("data.aaii"),
-            "docs/app.js renders NAAIM after AAII; move it above so the AAII "
-            "block guard keeps covering only AAII",
-        )
-
-    def _naaim_render_block(self) -> str:
-        start = self.js.find("data.naaim")
-        self.assertNotEqual(start, -1, "docs/app.js never reads data.naaim")
-        end = self.js.find("data.aaii", start)
-        self.assertNotEqual(end, -1, "could not find the end of the NAAIM block")
-        return self.js[start:end]
-
     def test_the_aaii_figures_are_not_tinted_by_sentiment(self) -> None:
         """The card's other tiles tint by contrarian meaning -- a low NCFD is
         green. Applying that to AAII paints high bearish sentiment green, which
@@ -164,16 +170,40 @@ class BreadthMarkupTests(unittest.TestCase):
                     ".aaii-parts comment in docs/style.css for why it must not",
                 )
 
+    def _naaim_render_block(self) -> str:
+        return self._render_block("naaim")
+
     def _aaii_render_block(self) -> str:
-        """The AAII branch of loadBreadthData, up to the next tile's block."""
-        start = self.js.find("data.aaii")
-        self.assertNotEqual(start, -1, "docs/app.js never reads data.aaii")
-        # The breadth loop over the barchart tiles follows the AAII branch.
-        end = self.js.find("['ncfd'", start)
-        self.assertNotEqual(
-            end, -1, "could not find the end of the AAII render block"
-        )
-        return self.js[start:end]
+        return self._render_block("aaii")
+
+    def _render_block(self, key: str) -> str:
+        """The `if (data.<key>) { ... }` branch of loadBreadthData.
+
+        Bounded by its OWN braces, not by the next tile's start token. The
+        earlier version sliced from one branch's marker to the next branch's
+        marker, which coupled two independent guards in two ways: it forced a
+        source order between the tiles for no functional reason, and it meant
+        any comment that merely spelled the neighbouring token silently moved
+        the boundary. Both bit during development -- a comment inside the NAAIM
+        branch mentioning the AAII token swallowed the whole branch into the
+        guard named for AAII.
+        """
+        marker = f"if (data.{key})"
+        start = self.js.find(marker)
+        self.assertNotEqual(start, -1, f"docs/app.js has no `{marker}` branch")
+
+        open_at = self.js.find("{", start)
+        self.assertNotEqual(open_at, -1, f"`{marker}` has no opening brace")
+
+        depth = 0
+        for i in range(open_at, len(self.js)):
+            if self.js[i] == "{":
+                depth += 1
+            elif self.js[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    return self.js[start:i + 1]
+        self.fail(f"unbalanced braces after `{marker}`")
 
 
 if __name__ == "__main__":

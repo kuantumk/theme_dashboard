@@ -251,21 +251,30 @@ class UpdateBreadthHistoryAaiiTests(unittest.TestCase):
     def test_every_fetch_the_function_calls_is_patched_here(self):
         """Guards the helper itself. `update_breadth_history` gained a NAAIM
         fetch once; the next source added will slip through the same gap and
-        quietly reach the network on every suite run."""
+        quietly reach the network on every suite run.
+
+        The candidate names are DISCOVERED from the function's source, never
+        listed here. An earlier version filtered a hardcoded tuple, which made
+        the guard structurally incapable of catching the one case it exists for:
+        a newly added fetch is by definition not in a list written before it
+        existed, so it never entered the candidate set and the test passed green
+        while the new call hit the live network on every run.
+        """
         import inspect
+        import re
 
         source = inspect.getsource(edd.update_breadth_history)
-        called = {
-            name for name in (
-                "fetch_barchart_breadth", "fetch_cnn_fear_greed",
-                "fetch_aaii_sentiment", "fetch_naaim_exposure",
-            ) if f"{name}(" in source
-        }
-        patched = set(inspect.getsource(self._run_with).split())
-        for name in called:
+        called = set(re.findall(r"\b(fetch_\w+)\s*\(", source))
+        self.assertTrue(
+            called, "no fetch_* calls discovered -- the scan itself is broken"
+        )
+
+        patched = inspect.getsource(self._run_with)
+        for name in sorted(called):
             with self.subTest(fetch=name):
-                self.assertTrue(
-                    any(name in token for token in patched),
+                self.assertIn(
+                    f'"{name}"',
+                    patched,
                     f"update_breadth_history calls {name} but _run_with does "
                     "not patch it -- these tests would hit the network",
                 )

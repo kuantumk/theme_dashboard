@@ -885,7 +885,7 @@ tr.filtered-out:hover td {
    so as a base rule it would still win inside the min-width block below and
    stretch that tile across all twelve columns. Above the threshold the two
    rows already fill exactly and nothing needs stretching. */
-@container breadth (max-width: 529.98px) {
+@container breadth not (min-width: 530px) {
   .breadth-grid > .breadth-item:last-child {
     grid-column: 1 / -1;
   }

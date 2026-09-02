@@ -637,12 +637,20 @@ def fetch_aaii_sentiment():
     return reading
 
 
-# NAAIM runs roughly -200 (leveraged net short) to 200 (leveraged long). The
-# CSV names no instrument -- its header is only Date/Open/High/Low/Close/Volume
-# -- so if the symbol stops resolving and the endpoint serves some other
-# well-formed daily series, every other check here still passes. This range is
-# the only leg that refuses it, the same job the range and sum checks do in
-# parse_aaii_sentiment above.
+# Wrong-series defence, in two legs. If the symbol stops resolving and the
+# endpoint serves some other well-formed daily series, every structural check
+# here still passes -- these are what refuse it, the same job the range and sum
+# checks do in parse_aaii_sentiment above.
+#
+# The identity leg is the load-bearing one. The response opens with a title line
+# naming the symbol ("!NAAIM, Daily") above the column header, so the instrument
+# IS in the body and checking it beats inferring identity from value shape.
+#
+# The range leg is a weak backstop and must not be relied on alone: -200..200
+# spans the ordinary price of most listed equities and every 0-100 breadth
+# percentage on this same dashboard, so it rejects almost nothing a quote
+# service would plausibly serve.
+NAAIM_SYMBOL = 'NAAIM'
 NAAIM_RANGE = (-200.0, 200.0)
 
 # Roughly eight surveys. Wide enough that the current run's start is always
@@ -667,8 +675,8 @@ def parse_naaim_series(text):
 
     lines = [ln for ln in text.splitlines() if ln.strip()]
 
-    # The header is the only structural landmark -- a title line carrying the
-    # symbol precedes it, and the column count alone would not tell them apart.
+    # A title line carrying the symbol precedes the column header, and the
+    # column count alone would not tell them apart.
     header_at = None
     for i, line in enumerate(lines):
         cols = [c.strip().lower() for c in line.split(',')]
@@ -677,6 +685,12 @@ def parse_naaim_series(text):
             close_at = cols.index('close')
             break
     if header_at is None:
+        return None
+
+    # Identity leg: the symbol is right there above the header, so use it rather
+    # than inferring the instrument from the shape of its values.
+    preamble = ' '.join(lines[:header_at]).upper()
+    if NAAIM_SYMBOL not in preamble:
         return None
 
     rows = []
@@ -689,9 +703,31 @@ def parse_naaim_series(text):
             stamp = datetime.strptime(cols[0], '%m/%d/%Y').date()
         except ValueError:
             return None
+        # float() accepts "nan", "inf" and "-inf" without raising, so the
+        # ValueError guard above does not catch them. A NaN close is worse than
+        # a rejected one: NaN != anything is True, so the run-walk in
+        # derive_naaim_reading would break at the NaN row and report a date
+        # NEWER than the true run start -- erring fresh, which is the one
+        # direction that function promises it never errs.
+        # See docs/solutions/logic-errors/nan-defeats-numeric-guard-chains.md.
+        if not math.isfinite(close):
+            return None
         rows.append((stamp.isoformat(), close))
 
-    return rows or None
+    if not rows:
+        return None
+
+    # Ordering leg. Every other malformed shape here fails closed; this one
+    # would fail OPEN -- on a newest-first response `rows[-1]` is the oldest bar,
+    # so the tile would publish a two-month-old reading that passes the header,
+    # identity, range and change-free checks cleanly. The dates are already
+    # parsed, so refusing costs one comparison. Refuse rather than sort: a
+    # reordering means the endpoint's contract moved, and quietly sorting would
+    # paper over that while the next shape change goes unnoticed.
+    if any(rows[i][0] > rows[i + 1][0] for i in range(len(rows) - 1)):
+        return None
+
+    return rows
 
 
 def derive_naaim_reading(rows):
@@ -746,12 +782,17 @@ def fetch_naaim_exposure():
     the previous NAAIM breakage read as an ordinary quiet week for weeks.
     """
     cfg = CONFIG["market_breadth"]
-    start = (date.today() - timedelta(days=NAAIM_WINDOW_DAYS)).isoformat()
-    url = cfg["naaim_url"].format(
-        start=start, cachebust=int(datetime.now().timestamp() * 1000)
-    )
 
+    # The URL build is inside the try, not above it. A missing `naaim_url` key
+    # or a stray brace in the template raises from `.format()`, and this
+    # function is called unguarded -- neither update_breadth_history nor
+    # export_all wraps it -- so that exception would abort the whole daily
+    # export, losing the ETF, radar, VARS and volume tabs over one tile.
     try:
+        start = (date.today() - timedelta(days=NAAIM_WINDOW_DAYS)).isoformat()
+        url = cfg["naaim_url"].format(
+            start=start, cachebust=int(datetime.now().timestamp() * 1000)
+        )
         req = urllib.request.Request(
             url, headers={'User-Agent': cfg["user_agent"]}
         )

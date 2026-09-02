@@ -628,6 +628,151 @@ def fetch_aaii_sentiment():
     return reading
 
 
+# NAAIM runs roughly -200 (leveraged net short) to 200 (leveraged long). The
+# CSV names no instrument -- its header is only Date/Open/High/Low/Close/Volume
+# -- so if the symbol stops resolving and the endpoint serves some other
+# well-formed daily series, every other check here still passes. This range is
+# the only leg that refuses it, the same job the range and sum checks do in
+# parse_aaii_sentiment above.
+NAAIM_RANGE = (-200.0, 200.0)
+
+# Roughly eight surveys. Wide enough that the current run's start is always
+# inside the window, narrow enough that a series which stopped moving upstream
+# shows up as a change-free window rather than a plausible old reading.
+NAAIM_WINDOW_DAYS = 60
+
+
+def parse_naaim_series(text):
+    """Parse the StockCharts daily CSV into ``[(ISO date, close), ...]``.
+
+    Rows come back oldest-first, the order the endpoint sends. Returns ``None``
+    for any malformed response rather than a partial series: a half-read series
+    still yields a survey date, just a confidently wrong one.
+
+    Never raises. This runs outside ``fetch_naaim_exposure``'s request try, and
+    neither ``update_breadth_history`` nor ``export_all`` guards the chain, so
+    an escaping exception would abort the whole daily export over one tile.
+    """
+    if not text:
+        return None
+
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+
+    # The header is the only structural landmark -- a title line carrying the
+    # symbol precedes it, and the column count alone would not tell them apart.
+    header_at = None
+    for i, line in enumerate(lines):
+        cols = [c.strip().lower() for c in line.split(',')]
+        if 'date' in cols and 'close' in cols:
+            header_at = i
+            close_at = cols.index('close')
+            break
+    if header_at is None:
+        return None
+
+    rows = []
+    for line in lines[header_at + 1:]:
+        cols = [c.strip() for c in line.split(',')]
+        if len(cols) <= close_at:
+            return None
+        try:
+            close = float(cols[close_at])
+            stamp = datetime.strptime(cols[0], '%m/%d/%Y').date()
+        except ValueError:
+            return None
+        rows.append((stamp.isoformat(), close))
+
+    return rows or None
+
+
+def derive_naaim_reading(rows):
+    """Recover ``{'value', 'as_of'}`` from the daily series, or ``None``.
+
+    The survey date is derived, never read off the feed. StockCharts copies one
+    weekly reading onto every trading day and stamps each copy with that day's
+    own date, so the newest bar's timestamp says "today" all week -- trusting it
+    would rebuild the frozen-number failure that retired this tile in 2026-08.
+    Walking back from the newest row while the close is unchanged finds the step
+    the reading actually belongs to.
+
+    Two documented behaviours, both deliberate:
+
+    * A week that exactly repeats the previous week's reading is
+      indistinguishable from a week that did not publish, so the walk spans both
+      and the date reads one week old. That errs stale, never fresh, which is
+      the safe direction for a staleness signal. Measured rate: 6 exact repeats
+      in 1,053 weeks (0.57%).
+    * A window with no step anywhere yields ``None``. The series has stopped
+      moving upstream; dating the reading to the window's first day would invent
+      a survey that never happened.
+    """
+    if not rows or len(rows) < 2:
+        return None
+
+    value = rows[-1][1]
+    if not NAAIM_RANGE[0] <= value <= NAAIM_RANGE[1]:
+        return None
+
+    as_of = None
+    for stamp, close in reversed(rows):
+        if close != value:
+            break
+        as_of = stamp
+    else:
+        # Fell off the oldest row without finding a change: no step in window.
+        return None
+
+    return {'value': value, 'as_of': as_of}
+
+
+def fetch_naaim_exposure():
+    """Fetch the latest NAAIM Exposure Index reading, or ``None``.
+
+    One request to the daily-history endpoint rather than the quote endpoint.
+    The quote endpoint returns the value in cleaner JSON but its ``time`` field
+    is the forward-filled bar date, so it cannot answer "which survey is this?"
+    at all; the history endpoint answers both in one call.
+
+    Three failure modes, logged apart on purpose -- collapsing them is what let
+    the previous NAAIM breakage read as an ordinary quiet week for weeks.
+    """
+    cfg = CONFIG["market_breadth"]
+    start = (date.today() - timedelta(days=NAAIM_WINDOW_DAYS)).isoformat()
+    url = cfg["naaim_url"].format(
+        start=start, cachebust=int(datetime.now().timestamp() * 1000)
+    )
+
+    try:
+        req = urllib.request.Request(
+            url, headers={'User-Agent': cfg["user_agent"]}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode('utf-8', 'replace')
+    except Exception as e:
+        # A wrong User-Agent returns 404 here, not 403, so a blocked request
+        # looks exactly like a delisted symbol. Name it so the next reader
+        # checks the header before hunting for a renamed ticker.
+        print(f"  Warning: Could not fetch NAAIM exposure: {e} "
+              f"(a 404 here may be the User-Agent, not the symbol)")
+        return None
+
+    rows = parse_naaim_series(body)
+    if rows is None:
+        print("  Warning: NAAIM endpoint fetched but no series parsed -- the "
+              "response shape likely changed (see parse_naaim_series)")
+        return None
+
+    reading = derive_naaim_reading(rows)
+    if reading is None:
+        print("  Warning: NAAIM series parsed but no reading derived -- the "
+              "value has not moved in the whole window, or is outside the "
+              "plausible exposure range")
+        return None
+
+    print(f"    NAAIM = {reading['value']}% (survey {reading['as_of']})")
+    return reading
+
+
 def fetch_sheet_csv(url):
     """Fetch CSV data from Google Sheets."""
     try:

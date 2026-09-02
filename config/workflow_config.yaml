@@ -31,6 +31,18 @@ market_breadth:
   # outcome. Its own key because the shared value works for barchart and there
   # is no reason to risk a working scraper.
   aaii_user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+  # NAAIM Exposure Index via the JSON service behind StockCharts' own charts.
+  # The /sc3/ui page is an empty JS shell -- the number is not in its HTML --
+  # but this endpoint serves the series anonymously, no login or cookies.
+  #
+  # out=csv is deliberate: out=json does NOT return JSON, it silently serves
+  # the same fixed-width text table as out=text. memberrt is ignored by the
+  # server and stays empty. randomNumber is the cache-buster the site's own
+  # bundle sends.
+  #
+  # Reuses user_agent above (no Chrome/ token) -- verified working. Note the
+  # gate returns 404, not 403, so a wrong agent looks like a delisted symbol.
+  naaim_url: "https://stockcharts.com/quotebrain/pastdata?ticker=%21NAAIM&start={start}&barwidth=D&out=csv&memberrt=&randomNumber={cachebust}"
 
 themes:
   metadata_file: "data/ticker_themes.json"

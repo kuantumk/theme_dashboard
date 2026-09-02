@@ -13,6 +13,7 @@ The repo has no JavaScript test tooling, so a Python parser test is the only
 automated guard available for these files.
 """
 
+import html as html_module
 import re
 import unittest
 from pathlib import Path
@@ -27,18 +28,32 @@ AAII_IDS = ("aaii-bull", "aaii-neut", "aaii-bear", "aaii-week")
 # Element IDs the NAAIM branch writes into.
 NAAIM_IDS = ("naaim-value", "naaim-as-of")
 
-# Above the container-query threshold the grid is twelve columns carrying two
-# rows: three sentiment tiles (3 + 6 + 3) then four breadth percentages
-# (3 x 4). Both rows total twelve, which is the invariant -- not "an even
-# count", which is what the six-tile version of this constant encoded.
+# The grid is two columns carrying four rows:
+#
+#     Fear & Greed | NAAIM
+#     AAII (spans both)
+#     NCFD         | MMTW
+#     MMFI         | MMTH
+#
+# Every row totalling two columns is the invariant -- not "an even tile count",
+# which is what the six-tile version of this constant encoded. Seven tiles fill
+# four rows exactly *because* one of them spans, so the count and the span are
+# one fact, not two.
 EXPECTED_BREADTH_TILES = 7
-EXPECTED_SENTIMENT_TILES = 3
+EXPECTED_COLUMNS = 2
 EXPECTED_WIDE_TILES = 1
 
-# Tiles carry span classes now (`class="breadth-item bi-narrow"`), so the
-# exact-match pattern this file used matches zero elements. That failure is
-# silent in the wrong direction -- a count of 0 looks like a missing grid
-# rather than a stale regex.
+# Document order, which IS row order for this grid.
+EXPECTED_TILE_ORDER = (
+    "CNN Fear & Greed", "NAAIM Exposure", "AAII Sentiment",
+    "NCFD", "MMTW", "MMFI", "MMTH",
+)
+
+# One tile carries a span class (`class="breadth-item bi-wide"`), so an
+# exact match on `class="breadth-item"` misses it. An earlier exact-match
+# pattern matched zero elements outright, and that failure is silent in the
+# wrong direction -- a count of 0 reads as a missing grid rather than a stale
+# regex, which is what test_the_tile_regex_matches_the_markup_it_counts pins.
 TILE_RE = re.compile(r'class="breadth-item[^"]*"')
 
 
@@ -93,36 +108,51 @@ class BreadthMarkupTests(unittest.TestCase):
                     "never writes it",
                 )
 
-    def test_the_breadth_grid_fills_both_rows_exactly(self) -> None:
-        """Twelve columns per row is the invariant. Three sentiment tiles at
-        3 + 6 + 3, then four breadth tiles at 3 each -- either row coming up
-        short leaves the ragged half-row the old six-tile count guarded.
+    def test_every_grid_row_is_full(self) -> None:
+        """Each row must total two columns. Seven tiles only fill four rows
+        because AAII spans both, so a dropped span or an added tile leaves the
+        ragged half-row the old six-tile count guarded.
 
-        The spans are summed from the MARKUP in document order, not asserted
-        against each other. An earlier version compared module constants to
-        literals (`3 * (3 - 1) + 6 == 12`), which could not fail from any
-        production change -- moving the wide tile into the second row left both
-        rows wrong and every assertion green.
+        The spans are walked from the MARKUP in document order. An earlier
+        version compared module constants to literals (`3 * (3 - 1) + 6 == 12`),
+        which could not fail from any production change at all.
         """
         spans = self._tile_spans()
         self.assertEqual(len(spans), EXPECTED_BREADTH_TILES)
-        self.assertEqual(spans.count(6), EXPECTED_WIDE_TILES)
+        self.assertEqual(spans.count(EXPECTED_COLUMNS), EXPECTED_WIDE_TILES)
 
-        row1, row2 = spans[:EXPECTED_SENTIMENT_TILES], spans[EXPECTED_SENTIMENT_TILES:]
-        self.assertEqual(sum(row1), 12, f"sentiment row is {sum(row1)}/12: {row1}")
-        self.assertEqual(sum(row2), 12, f"breadth row is {sum(row2)}/12: {row2}")
+        rows, row = [], 0
+        for span in spans:
+            row += span
+            self.assertLessEqual(
+                row, EXPECTED_COLUMNS, f"a tile overflows its row: {spans}"
+            )
+            if row == EXPECTED_COLUMNS:
+                rows.append(row)
+                row = 0
+        self.assertEqual(
+            row, 0, f"the last row is {row}/{EXPECTED_COLUMNS} short: {spans}"
+        )
+        self.assertEqual(len(rows), 4)
 
     def test_the_wide_tile_is_aaii(self) -> None:
-        """Span 6 belongs to AAII specifically. It is the one tile rendering
-        three figures instead of one, so it is the tile with no width to give;
-        the counts above stay green if the span moves to any other tile."""
-        block = self._tile_block_for("AAII Sentiment")
-        self.assertIn("bi-wide", block)
+        """The full-width span belongs to AAII specifically. It is the one tile
+        rendering three figures instead of one, so it is the tile the extra room
+        is for; the row arithmetic above stays green if the span moves to any
+        other tile."""
+        self.assertIn("bi-wide", self._tile_block_for("AAII Sentiment"))
+
+    def test_the_tiles_are_in_the_intended_row_order(self) -> None:
+        """DOM order is row order for this grid, so the layout the card renders
+        is a fact about the markup's sequence and nothing else pins it."""
+        labels = re.findall(r'class="breadth-label">([^<]+)<', self.html)
+        self.assertEqual(tuple(html_module.unescape(x) for x in labels),
+                         EXPECTED_TILE_ORDER)
 
     def _tile_spans(self) -> list:
         """Column span of each breadth tile, in document order."""
         return [
-            6 if "bi-wide" in cls else 3
+            EXPECTED_COLUMNS if "bi-wide" in cls else 1
             for cls in TILE_RE.findall(self.html)
         ]
 

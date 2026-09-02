@@ -59,20 +59,32 @@
       <div class="left-panel" id="macro-left">
 
         <!-- Market Breadth & Sentiment (expanded) -->
-        <!-- breadth-card is the query container for the tile grid (see the
-             @container block in style.css). The grid re-shapes on the card's
-             own width, not the viewport's, because this panel is drag-resizable
-             — at a wide viewport with a narrow panel a media query would still
-             report "wide" and hand seven tiles a box that fits two. -->
         <div class="card breadth-card">
           <div class="card-lbl">Market Breadth & Sentiment</div>
-          <!-- Row order is the render order: three sentiment tiles, then the
-               four breadth percentages. -->
+          <!-- Two columns, four rows. DOM order IS row order:
+                 Fear & Greed | NAAIM
+                 AAII (full width)
+                 NCFD         | MMTW
+                 MMFI         | MMTH
+               AAII spans both columns, so the seven tiles fill four rows
+               exactly with no ragged half-row, and every other tile keeps the
+               half-width it has always had. -->
           <div class="breadth-grid" id="breadth-container">
-            <div class="breadth-item bi-narrow">
+            <div class="breadth-item">
               <div class="breadth-label">CNN Fear & Greed</div>
               <div class="breadth-value" id="fg-value">—</div>
               <div class="breadth-sub" id="fg-rating"></div>
+            </div>
+            <!-- NAAIM: active-manager equity exposure, surveyed weekly on
+                 Wednesdays. The survey-date line is the staleness defence, not
+                 decoration — the reading stands unchanged for six days by
+                 design, so without a date a dead fetch and an ordinary
+                 mid-week view look identical. That is precisely how the
+                 previous NAAIM tile sat frozen at 79.70% for weeks. -->
+            <div class="breadth-item">
+              <div class="breadth-label">NAAIM Exposure</div>
+              <div class="breadth-value" id="naaim-value">—</div>
+              <div class="breadth-sub" id="naaim-as-of"></div>
             </div>
             <!-- The one tile carrying three figures rather than one, so it uses
                  .aaii-parts instead of .breadth-value (see style.css). The
@@ -97,30 +109,19 @@
               </div>
               <div class="breadth-sub" id="aaii-week"></div>
             </div>
-            <!-- NAAIM: active-manager equity exposure, surveyed weekly on
-                 Wednesdays. The survey-date line is the staleness defence, not
-                 decoration — the reading stands unchanged for six days by
-                 design, so without a date a dead fetch and an ordinary
-                 mid-week view look identical. That is precisely how the
-                 previous NAAIM tile sat frozen at 79.70% for weeks. -->
-            <div class="breadth-item bi-narrow">
-              <div class="breadth-label">NAAIM Exposure</div>
-              <div class="breadth-value" id="naaim-value">—</div>
-              <div class="breadth-sub" id="naaim-as-of"></div>
-            </div>
-            <div class="breadth-item bi-narrow">
+            <div class="breadth-item">
               <div class="breadth-label">NCFD</div>
               <div class="breadth-value" id="ncfd-value">—</div>
             </div>
-            <div class="breadth-item bi-narrow">
+            <div class="breadth-item">
               <div class="breadth-label">MMTW</div>
               <div class="breadth-value" id="mmtw-value">—</div>
             </div>
-            <div class="breadth-item bi-narrow">
+            <div class="breadth-item">
               <div class="breadth-label">MMFI</div>
               <div class="breadth-value" id="mmfi-value">—</div>
             </div>
-            <div class="breadth-item bi-narrow">
+            <div class="breadth-item">
               <div class="breadth-label">MMTH</div>
               <div class="breadth-value" id="mmth-value">—</div>
             </div>

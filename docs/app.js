@@ -646,11 +646,15 @@
 
         // NAAIM Exposure. Placed BEFORE the AAII branch deliberately: the
         // markup guard in tests/ slices the "AAII render block" as everything
-        // between `data.aaii` and the `['ncfd'` loop, then asserts no colour
-        // class appears in it. A NAAIM branch sitting between them would fall
-        // inside that slice, so an untinted NAAIM passes today but a future
-        // tint would fail a test named for AAII. Keeping it above the slice
-        // keeps that guard honest.
+        // between the AAII branch below and the breadth loop after it, then
+        // asserts no colour class appears in that slice. A NAAIM branch
+        // sitting between them would fall inside it, so an untinted NAAIM
+        // passes today but a future tint would fail a test named for AAII.
+        // Keeping it above the slice keeps that guard honest.
+        //
+        // For the same reason this comment must not spell the token that guard
+        // searches for -- doing so moved the slice's start into this comment
+        // and swallowed the whole NAAIM branch.
         //
         // No tint (see the .aaii-parts comment in style.css for the full
         // reasoning). High exposure is contrarian-bearish, but no threshold for

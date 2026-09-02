@@ -424,11 +424,17 @@ def update_breadth_history():
     if aaii is not None:
         history['aaii'] = aaii
 
-    # NAAIM retired 2026-08: the current reading moved behind a membership wall,
-    # so the scraper served a frozen number the tile had no way to flag. The pop
-    # is what clears the dead key, because this function only ever overwrites
-    # keys it fetches -- an untouched key would survive every future run.
-    history.pop('naaim', None)
+    # NAAIM Exposure Index (weekly, surveyed Wednesdays). Restored 2026-09 from
+    # StockCharts after naaim.org walled its current reading.
+    #
+    # Overwrite-on-success only, deliberately: a failed fetch leaves the previous
+    # reading in place carrying its own survey date, which then visibly ages.
+    # That is the AAII tile's behaviour too. The 2026-08 failure this tile is
+    # infamous for was not the surviving value -- it was that the value carried
+    # no date, so a dead scraper and an unchanged market looked identical.
+    naaim = fetch_naaim_exposure()
+    if naaim is not None:
+        history['naaim'] = naaim
 
     history['timestamp'] = current.get('timestamp', datetime.now().isoformat())
 
@@ -439,7 +445,10 @@ def update_breadth_history():
     mmfi_val = history.get('mmfi', {}).get('current', 'N/A')
     mmtw_val = history.get('mmtw', {}).get('current', 'N/A')
     mmth_val = history.get('mmth', {}).get('current', 'N/A')
-    print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}")
+    naaim_val = history.get('naaim', {}).get('value', 'N/A')
+    naaim_as_of = history.get('naaim', {}).get('as_of', '?')
+    print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}, "
+          f"NAAIM={naaim_val} (survey {naaim_as_of})")
     return history
 
 
@@ -625,6 +634,192 @@ def fetch_aaii_sentiment():
 
     print(f"    AAII = {reading['bullish']}% bull / {reading['neutral']}% neut "
           f"/ {reading['bearish']}% bear (week ending {reading['week_ending']})")
+    return reading
+
+
+# Wrong-series defence, in two legs. If the symbol stops resolving and the
+# endpoint serves some other well-formed daily series, every structural check
+# here still passes -- these are what refuse it, the same job the range and sum
+# checks do in parse_aaii_sentiment above.
+#
+# The identity leg is the load-bearing one. The response opens with a title line
+# naming the symbol ("!NAAIM, Daily") above the column header, so the instrument
+# IS in the body and checking it beats inferring identity from value shape.
+#
+# The range leg is a weak backstop and must not be relied on alone: -200..200
+# spans the ordinary price of most listed equities and every 0-100 breadth
+# percentage on this same dashboard, so it rejects almost nothing a quote
+# service would plausibly serve.
+NAAIM_SYMBOL = 'NAAIM'
+NAAIM_RANGE = (-200.0, 200.0)
+
+# Roughly eight surveys. Wide enough that the current run's start is always
+# inside the window, narrow enough that a series which stopped moving upstream
+# shows up as a change-free window rather than a plausible old reading.
+NAAIM_WINDOW_DAYS = 60
+
+
+def parse_naaim_series(text):
+    """Parse the StockCharts daily CSV into ``[(ISO date, close), ...]``.
+
+    Rows come back oldest-first, the order the endpoint sends. Returns ``None``
+    for any malformed response rather than a partial series: a half-read series
+    still yields a survey date, just a confidently wrong one.
+
+    Never raises. This runs outside ``fetch_naaim_exposure``'s request try, and
+    neither ``update_breadth_history`` nor ``export_all`` guards the chain, so
+    an escaping exception would abort the whole daily export over one tile.
+    """
+    if not text:
+        return None
+
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+
+    # A title line carrying the symbol precedes the column header, and the
+    # column count alone would not tell them apart.
+    header_at = None
+    for i, line in enumerate(lines):
+        cols = [c.strip().lower() for c in line.split(',')]
+        if 'date' in cols and 'close' in cols:
+            header_at = i
+            close_at = cols.index('close')
+            break
+    if header_at is None:
+        return None
+
+    # Identity leg: the symbol is right there above the header, so use it rather
+    # than inferring the instrument from the shape of its values.
+    preamble = ' '.join(lines[:header_at]).upper()
+    if NAAIM_SYMBOL not in preamble:
+        return None
+
+    rows = []
+    for line in lines[header_at + 1:]:
+        cols = [c.strip() for c in line.split(',')]
+        if len(cols) <= close_at:
+            return None
+        try:
+            close = float(cols[close_at])
+            stamp = datetime.strptime(cols[0], '%m/%d/%Y').date()
+        except ValueError:
+            return None
+        # float() accepts "nan", "inf" and "-inf" without raising, so the
+        # ValueError guard above does not catch them. A NaN close is worse than
+        # a rejected one: NaN != anything is True, so the run-walk in
+        # derive_naaim_reading would break at the NaN row and report a date
+        # NEWER than the true run start -- erring fresh, which is the one
+        # direction that function promises it never errs.
+        # See docs/solutions/logic-errors/nan-defeats-numeric-guard-chains.md.
+        if not math.isfinite(close):
+            return None
+        rows.append((stamp.isoformat(), close))
+
+    if not rows:
+        return None
+
+    # Ordering leg. Every other malformed shape here fails closed; this one
+    # would fail OPEN -- on a newest-first response `rows[-1]` is the oldest bar,
+    # so the tile would publish a two-month-old reading that passes the header,
+    # identity, range and change-free checks cleanly. The dates are already
+    # parsed, so refusing costs one comparison. Refuse rather than sort: a
+    # reordering means the endpoint's contract moved, and quietly sorting would
+    # paper over that while the next shape change goes unnoticed.
+    if any(rows[i][0] > rows[i + 1][0] for i in range(len(rows) - 1)):
+        return None
+
+    return rows
+
+
+def derive_naaim_reading(rows):
+    """Recover ``{'value', 'as_of'}`` from the daily series, or ``None``.
+
+    The survey date is derived, never read off the feed. StockCharts copies one
+    weekly reading onto every trading day and stamps each copy with that day's
+    own date, so the newest bar's timestamp says "today" all week -- trusting it
+    would rebuild the frozen-number failure that retired this tile in 2026-08.
+    Walking back from the newest row while the close is unchanged finds the step
+    the reading actually belongs to.
+
+    Two documented behaviours, both deliberate:
+
+    * A week that exactly repeats the previous week's reading is
+      indistinguishable from a week that did not publish, so the walk spans both
+      and the date reads one week old. That errs stale, never fresh, which is
+      the safe direction for a staleness signal. Measured rate: 6 exact repeats
+      in 1,053 weeks (0.57%).
+    * A window with no step anywhere yields ``None``. The series has stopped
+      moving upstream; dating the reading to the window's first day would invent
+      a survey that never happened.
+    """
+    if not rows or len(rows) < 2:
+        return None
+
+    value = rows[-1][1]
+    if not NAAIM_RANGE[0] <= value <= NAAIM_RANGE[1]:
+        return None
+
+    as_of = None
+    for stamp, close in reversed(rows):
+        if close != value:
+            break
+        as_of = stamp
+    else:
+        # Fell off the oldest row without finding a change: no step in window.
+        return None
+
+    return {'value': value, 'as_of': as_of}
+
+
+def fetch_naaim_exposure():
+    """Fetch the latest NAAIM Exposure Index reading, or ``None``.
+
+    One request to the daily-history endpoint rather than the quote endpoint.
+    The quote endpoint returns the value in cleaner JSON but its ``time`` field
+    is the forward-filled bar date, so it cannot answer "which survey is this?"
+    at all; the history endpoint answers both in one call.
+
+    Three failure modes, logged apart on purpose -- collapsing them is what let
+    the previous NAAIM breakage read as an ordinary quiet week for weeks.
+    """
+    cfg = CONFIG["market_breadth"]
+
+    # The URL build is inside the try, not above it. A missing `naaim_url` key
+    # or a stray brace in the template raises from `.format()`, and this
+    # function is called unguarded -- neither update_breadth_history nor
+    # export_all wraps it -- so that exception would abort the whole daily
+    # export, losing the ETF, radar, VARS and volume tabs over one tile.
+    try:
+        start = (date.today() - timedelta(days=NAAIM_WINDOW_DAYS)).isoformat()
+        url = cfg["naaim_url"].format(
+            start=start, cachebust=int(datetime.now().timestamp() * 1000)
+        )
+        req = urllib.request.Request(
+            url, headers={'User-Agent': cfg["user_agent"]}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode('utf-8', 'replace')
+    except Exception as e:
+        # A wrong User-Agent returns 404 here, not 403, so a blocked request
+        # looks exactly like a delisted symbol. Name it so the next reader
+        # checks the header before hunting for a renamed ticker.
+        print(f"  Warning: Could not fetch NAAIM exposure: {e} "
+              f"(a 404 here may be the User-Agent, not the symbol)")
+        return None
+
+    rows = parse_naaim_series(body)
+    if rows is None:
+        print("  Warning: NAAIM endpoint fetched but no series parsed -- the "
+              "response shape likely changed (see parse_naaim_series)")
+        return None
+
+    reading = derive_naaim_reading(rows)
+    if reading is None:
+        print("  Warning: NAAIM series parsed but no reading derived -- the "
+              "value has not moved in the whole window, or is outside the "
+              "plausible exposure range")
+        return None
+
+    print(f"    NAAIM = {reading['value']}% (survey {reading['as_of']})")
     return reading
 
 

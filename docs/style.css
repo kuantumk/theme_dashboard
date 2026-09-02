@@ -856,11 +856,31 @@ tr.filtered-out:hover td {
 .accel-dn { color: var(--red); }
 
 /* ── BREADTH GRID ──────────────────────────────────────── */
+
+/* Two columns, four rows, seven tiles:
+     Fear & Greed | NAAIM
+     AAII (spans both)
+     NCFD         | MMTW
+     MMFI         | MMTH
+
+   AAII spanning the full width is what makes an odd tile count fill four rows
+   exactly, so there is no ragged half-row and no width threshold to cross. It
+   also hands the extra room to the one tile that renders three figures instead
+   of one (see .aaii-parts below) while every other tile keeps the half-width it
+   has always had — which is why nothing here needs a reduced type scale.
+
+   An earlier revision put all three sentiment tiles in one row over a
+   twelve-column grid, which forced every other number down to 17px to fit and
+   needed a container query to survive a narrow panel. This shape needs neither. */
 .breadth-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 12px;
+}
+
+.bi-wide {
+  grid-column: 1 / -1;
 }
 
 .breadth-item {
@@ -878,6 +898,15 @@ tr.filtered-out:hover td {
   margin-bottom: 6px;
 }
 
+/* ⛔ If this ever needs a different scale for some tiles, retune it HERE or via
+   a parent selector — never a modifier class on the value element itself.
+   `loadBreadthData` rewrites this element's className wholesale in two places
+   (`'breadth-value ' + colorClass` for the four breadth tiles, and the Fear &
+   Greed branch), so an extra class survives first paint and is wiped the
+   instant the payload arrives. The placeholder em-dash state still looks
+   correct, so a by-eye check would pass and only live data would expose it.
+   `.aaii-num` gets away with its own class solely because the AAII branch
+   writes textContent and never touches className. */
 .breadth-value {
   font-family: var(--display);
   font-size: 28px;
@@ -886,9 +915,15 @@ tr.filtered-out:hover td {
 }
 
 /* AAII tile. The only tile in the grid carrying three figures, so it needs its
-   own type scale rather than a .breadth-value override: at the list panel's
-   400px default a half-width tile has ~140px of text room, and three numbers at
-   28px do not fit.
+   own type scale rather than a .breadth-value override.
+
+   The 17px was originally forced: at half width the tile had ~140px of text
+   room and three numbers at 28px did not fit. That constraint is gone — the
+   tile now spans both columns (.bi-wide) and has ~517px of room, where 28px
+   would fit comfortably. The smaller scale is kept deliberately: these are
+   three sub-readings of one survey, not three headline figures, and holding
+   them below the single-number tiles keeps that reading. Bump it if you
+   disagree — nothing measures against 17px any more.
 
    The figures are deliberately uncoloured. Every other tile here tints by
    contrarian meaning -- a low NCFD reads green because washed-out breadth is a
@@ -1379,6 +1414,8 @@ tbody tr.nav-active {
     grid-template-columns: 1fr;
   }
 
+  /* Stacked layout. `.bi-wide` needs no reset here — `grid-column: 1 / -1` is
+     already the full width of a one-column grid. */
   .breadth-grid {
     grid-template-columns: 1fr;
   }

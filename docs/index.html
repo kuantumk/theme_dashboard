@@ -7,7 +7,7 @@
   <title>Market Monitor</title>
   <meta name="description"
     content="Real-time market dashboard with macro overview, stock themes, industry ETFs, and leveraged ETF tracking.">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260901">
 </head>
 
 <body>
@@ -59,20 +59,39 @@
       <div class="left-panel" id="macro-left">
 
         <!-- Market Breadth & Sentiment (expanded) -->
-        <div class="card">
+        <div class="card breadth-card">
           <div class="card-lbl">Market Breadth & Sentiment</div>
+          <!-- Two columns, four rows. DOM order IS row order:
+                 Fear & Greed | NAAIM
+                 AAII (full width)
+                 NCFD         | MMTW
+                 MMFI         | MMTH
+               AAII spans both columns, so the seven tiles fill four rows
+               exactly with no ragged half-row, and every other tile keeps the
+               half-width it has always had. -->
           <div class="breadth-grid" id="breadth-container">
             <div class="breadth-item">
               <div class="breadth-label">CNN Fear & Greed</div>
               <div class="breadth-value" id="fg-value">—</div>
               <div class="breadth-sub" id="fg-rating"></div>
             </div>
+            <!-- NAAIM: active-manager equity exposure, surveyed weekly on
+                 Wednesdays. The survey-date line is the staleness defence, not
+                 decoration — the reading stands unchanged for six days by
+                 design, so without a date a dead fetch and an ordinary
+                 mid-week view look identical. That is precisely how the
+                 previous NAAIM tile sat frozen at 79.70% for weeks. -->
+            <div class="breadth-item">
+              <div class="breadth-label">NAAIM Exposure</div>
+              <div class="breadth-value" id="naaim-value">—</div>
+              <div class="breadth-sub" id="naaim-as-of"></div>
+            </div>
             <!-- The one tile carrying three figures rather than one, so it uses
                  .aaii-parts instead of .breadth-value (see style.css). The
                  week-ending line is the staleness signal: AAII publishes on
                  Thursdays, so the same figures stand all week and a dead fetch
                  is otherwise indistinguishable from a normal Monday. -->
-            <div class="breadth-item">
+            <div class="breadth-item bi-wide">
               <div class="breadth-label">AAII Sentiment</div>
               <div class="aaii-parts">
                 <div class="aaii-part">
@@ -927,7 +946,7 @@
   </div> <!-- Enclosing app-wrap -->
 
   <script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
-  <script src="app.js?v=20260510b"></script>
+  <script src="app.js?v=20260901"></script>
 </body>
 
 </html>

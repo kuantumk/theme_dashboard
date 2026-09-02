@@ -154,10 +154,23 @@ class ParseAaiiSentimentTests(unittest.TestCase):
 
 
 class UpdateBreadthHistoryAaiiTests(unittest.TestCase):
-    """The caller side: the dead NAAIM key clears, and a dead AAII source does
-    not take the export down with it."""
+    """The caller side: a dead sentiment source does not take the export down
+    with it, and the two empty states stay distinguishable.
 
-    def _run_with(self, aaii_return, existing_payload, tmpdir):
+    `update_breadth_history` loads the published payload, assigns only the keys
+    it successfully fetched, and writes the whole object back. That merge is
+    load-bearing for NAAIM: a failed fetch leaves the previous reading in place
+    *with its own survey date*, which then visibly ages. That is the intended
+    behaviour, not the 2026-08 bug -- the bug was a frozen number carrying no
+    date at all, so nothing on screen could contradict it.
+
+    Every fetch this function calls must be patched here. An unpatched one
+    reaches the network on every suite run and still passes its assertions,
+    which is exactly the kind of silence these tests exist to prevent.
+    """
+
+    def _run_with(self, aaii_return, existing_payload, tmpdir,
+                  naaim_return=None):
         from pathlib import Path
 
         out = Path(tmpdir)
@@ -169,30 +182,102 @@ class UpdateBreadthHistoryAaiiTests(unittest.TestCase):
              patch.object(edd, "BREADTH_FILE", out / "absent_latest.json"), \
              patch.object(edd, "fetch_barchart_breadth", return_value=None), \
              patch.object(edd, "fetch_cnn_fear_greed", return_value=None), \
+             patch.object(edd, "fetch_naaim_exposure", return_value=naaim_return), \
              patch.object(edd, "fetch_aaii_sentiment", return_value=aaii_return):
             edd.update_breadth_history()
 
         return json.loads(history_file.read_text(encoding="utf-8"))
 
-    def test_the_dead_naaim_key_is_removed(self):
+    AAII_READING = {
+        "bullish": 32.9,
+        "neutral": 22.6,
+        "bearish": 44.4,
+        "week_ending": "2026-08-26",
+    }
+
+    def test_a_fresh_naaim_reading_publishes(self):
         import tempfile
 
-        existing = {
-            "naaim": {"value": 79.7},
-            "ncfd": {"current": 49.25, "history": [49.25]},
-        }
-        reading = {
-            "bullish": 32.9,
-            "neutral": 22.6,
-            "bearish": 44.4,
-            "week_ending": "2026-08-26",
-        }
+        naaim = {"value": 102.66, "as_of": "2026-08-26"}
         with tempfile.TemporaryDirectory() as tmp:
-            written = self._run_with(reading, existing, tmp)
+            written = self._run_with(
+                self.AAII_READING, {"ncfd": {"current": 49.25, "history": [49.25]}},
+                tmp, naaim_return=naaim,
+            )
+
+        self.assertEqual(written["naaim"], naaim)
+        self.assertEqual(written["aaii"], self.AAII_READING)
+        self.assertEqual(written["ncfd"]["current"], 49.25)
+
+    def test_a_dead_naaim_fetch_keeps_the_previous_reading_and_its_date(self):
+        """The staleness signal is the surviving `as_of`, which ages in place.
+        Wiping the key instead would drop the last known reading and make NAAIM
+        behave unlike the AAII tile beside it."""
+        import tempfile
+
+        stale = {"value": 94.49, "as_of": "2026-08-19"}
+        with tempfile.TemporaryDirectory() as tmp:
+            written = self._run_with(
+                self.AAII_READING, {"naaim": stale}, tmp, naaim_return=None,
+            )
+
+        self.assertEqual(written["naaim"], stale)
+
+    def test_a_dead_naaim_fetch_with_no_prior_reading_leaves_the_key_absent(self):
+        """The other empty state: first run, or the window after a docs/data
+        reset. The tile keeps its markup em dashes and claims nothing."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            written = self._run_with(
+                self.AAII_READING, {"ncfd": {"current": 49.25, "history": [49.25]}},
+                tmp, naaim_return=None,
+            )
 
         self.assertNotIn("naaim", written)
-        self.assertEqual(written["aaii"], reading)
-        self.assertEqual(written["ncfd"]["current"], 49.25)
+
+    def test_a_fresh_naaim_reading_replaces_a_stale_one(self):
+        import tempfile
+
+        fresh = {"value": 102.66, "as_of": "2026-08-26"}
+        with tempfile.TemporaryDirectory() as tmp:
+            written = self._run_with(
+                self.AAII_READING, {"naaim": {"value": 94.49, "as_of": "2026-08-19"}},
+                tmp, naaim_return=fresh,
+            )
+
+        self.assertEqual(written["naaim"], fresh)
+
+    def test_every_fetch_the_function_calls_is_patched_here(self):
+        """Guards the helper itself. `update_breadth_history` gained a NAAIM
+        fetch once; the next source added will slip through the same gap and
+        quietly reach the network on every suite run.
+
+        The candidate names are DISCOVERED from the function's source, never
+        listed here. An earlier version filtered a hardcoded tuple, which made
+        the guard structurally incapable of catching the one case it exists for:
+        a newly added fetch is by definition not in a list written before it
+        existed, so it never entered the candidate set and the test passed green
+        while the new call hit the live network on every run.
+        """
+        import inspect
+        import re
+
+        source = inspect.getsource(edd.update_breadth_history)
+        called = set(re.findall(r"\b(fetch_\w+)\s*\(", source))
+        self.assertTrue(
+            called, "no fetch_* calls discovered -- the scan itself is broken"
+        )
+
+        patched = inspect.getsource(self._run_with)
+        for name in sorted(called):
+            with self.subTest(fetch=name):
+                self.assertIn(
+                    f'"{name}"',
+                    patched,
+                    f"update_breadth_history calls {name} but _run_with does "
+                    "not patch it -- these tests would hit the network",
+                )
 
     def test_a_dead_aaii_source_does_not_fail_the_export(self):
         """This is the path a v3 rename takes. Breadth collection is

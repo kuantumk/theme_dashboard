@@ -856,11 +856,61 @@ tr.filtered-out:hover td {
 .accel-dn { color: var(--red); }
 
 /* ── BREADTH GRID ──────────────────────────────────────── */
+
+/* The card is the query container, not the viewport. This panel is
+   drag-resizable down to 256px (initResizablePanels), so on a wide monitor a
+   media query reports "wide" while the panel is narrow — and would hand seven
+   tiles a box that fits two. Scoped to this one card rather than `.card`
+   because container-type applies containment, and nothing else here needs it. */
+.breadth-card {
+  container-type: inline-size;
+  container-name: breadth;
+}
+
+/* Two columns is the BASE, not the fallback — the seven-tile shape is layered
+   on by the @container block below. Written this way so no span ever needs
+   resetting on the way down; spans exist only where they apply. */
 .breadth-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 12px;
+}
+
+/* Seven tiles over two columns is an odd count, so the last one would sit
+   alone beside an empty cell. Stretching it closes the block flush.
+
+   Scoped to a max-width container query rather than written as a plain base
+   rule: `.breadth-grid > .breadth-item:last-child` out-specifies `.bi-narrow`,
+   so as a base rule it would still win inside the min-width block below and
+   stretch that tile across all twelve columns. Above the threshold the two
+   rows already fill exactly and nothing needs stretching. */
+@container breadth (max-width: 529.98px) {
+  .breadth-grid > .breadth-item:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Seven tiles in two rows: three sentiment (3 + 6 + 3), then four breadth
+   (3 × 4). Twelve is the lowest common multiple of the two row shapes, so one
+   container keeps one gap rhythm.
+
+   AAII spans 6 — half the grid, exactly the width it had under the old
+   two-column layout. It is the one tile rendering three figures instead of
+   one, so it is the tile with no room to give (see .aaii-parts below).
+
+   530px is measured, not chosen: at that card width a span-3 tile has 89px of
+   text room, and the widest string any narrow tile must hold on one line is
+   "CNN Fear & Greed" at 87px. Shortening that label was considered and buys
+   nothing — "EXTREME GREED" (82px) becomes the constraint immediately behind
+   it. Re-measure before changing a label, a font size, or the gap. */
+@container breadth (min-width: 530px) {
+  .breadth-grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .bi-narrow { grid-column: span 3; }
+  .bi-wide   { grid-column: span 6; }
 }
 
 .breadth-item {
@@ -878,11 +928,25 @@ tr.filtered-out:hover td {
   margin-bottom: 6px;
 }
 
+/* 17px, matching .aaii-num, so the whole card reads at one scale.
+
+   ⛔ The scale is retuned HERE and is never a modifier class on the value
+   element. `loadBreadthData` rewrites this element's className wholesale in two
+   places — `'breadth-value ' + colorClass` for the four breadth tiles and
+   `'breadth-value ' + (…)` for Fear & Greed — so an extra class survives first
+   paint and is wiped the instant the payload arrives. The numbers would snap
+   back to 28px inside a span-3 tile, and because the placeholder em-dash state
+   still looks correct, a by-eye check passes. `.aaii-num` gets away with its
+   own class only because the AAII branch writes textContent and never touches
+   className.
+
+   28px was sustainable when every tile was half-width; at span-3 "102.66%"
+   renders 102px against 89px of room. At 17px it is 59px. */
 .breadth-value {
   font-family: var(--display);
-  font-size: 28px;
+  font-size: 17px;
   font-weight: 200;
-  letter-spacing: -1.2px;
+  letter-spacing: -0.6px;
 }
 
 /* AAII tile. The only tile in the grid carrying three figures, so it needs its
@@ -1379,8 +1443,18 @@ tbody tr.nav-active {
     grid-template-columns: 1fr;
   }
 
+  /* Stacked layout. This must also reset the spans: below 1100px the panel
+     goes full-width, so the card can still be wider than the @container
+     threshold and would otherwise keep handing out span-3 tiles inside a
+     single column. Source order does the overriding — this block sits after
+     the @container block above. */
   .breadth-grid {
     grid-template-columns: 1fr;
+  }
+
+  .bi-narrow,
+  .bi-wide {
+    grid-column: auto;
   }
 }
 

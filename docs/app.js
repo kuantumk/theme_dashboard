@@ -621,6 +621,9 @@
   // midnight, so every viewer west of Greenwich would see the previous day —
   // and this label is the tile's staleness signal, so an off-by-one there reads
   // as a survey that has not updated.
+  //
+  // Shared by the AAII and NAAIM tiles; both carry a weekly survey date and
+  // both need the same UTC-parsing avoidance for the same reason.
   function formatAaiiWeek(iso) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
     if (!m) return iso;
@@ -638,6 +641,40 @@
           el.className = 'breadth-value ' + (data.fear_greed.score >= 50 ? 'up' : 'dn');
           if (data.fear_greed.rating) {
             document.getElementById('fg-rating').textContent = data.fear_greed.rating.toUpperCase();
+          }
+        }
+
+        // NAAIM Exposure. Placed BEFORE the AAII branch deliberately: the
+        // markup guard in tests/ slices the "AAII render block" as everything
+        // between `data.aaii` and the `['ncfd'` loop, then asserts no colour
+        // class appears in it. A NAAIM branch sitting between them would fall
+        // inside that slice, so an untinted NAAIM passes today but a future
+        // tint would fail a test named for AAII. Keeping it above the slice
+        // keeps that guard honest.
+        //
+        // No tint (see the .aaii-parts comment in style.css for the full
+        // reasoning). High exposure is contrarian-bearish, but no threshold for
+        // NAAIM has been calibrated in this repo, and every other tinted tile
+        // here tints off a level that has been. The label carries the meaning;
+        // the number stays neutral.
+        if (data.naaim) {
+          const nv = document.getElementById('naaim-value');
+          if (nv && data.naaim.value != null) {
+            // Two decimals, unlike the other tiles' one: NAAIM steps weekly, so
+            // the second decimal is a real digit distinguishing one survey from
+            // the next rather than daily noise. Negative readings (net-short
+            // member positioning) print their sign as-is.
+            nv.textContent = data.naaim.value.toFixed(2) + '%';
+          }
+          const na = document.getElementById('naaim-as-of');
+          // Name the gap rather than leaving the line blank. The reading stands
+          // unchanged for six days by design, so the date is the only thing
+          // separating a dead fetch from an ordinary mid-week view — its
+          // absence has to read as absence.
+          if (na) {
+            na.textContent = data.naaim.as_of
+              ? 'Survey ' + formatAaiiWeek(data.naaim.as_of)
+              : 'date unknown';
           }
         }
 

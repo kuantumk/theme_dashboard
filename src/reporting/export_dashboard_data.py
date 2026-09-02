@@ -424,11 +424,17 @@ def update_breadth_history():
     if aaii is not None:
         history['aaii'] = aaii
 
-    # NAAIM retired 2026-08: the current reading moved behind a membership wall,
-    # so the scraper served a frozen number the tile had no way to flag. The pop
-    # is what clears the dead key, because this function only ever overwrites
-    # keys it fetches -- an untouched key would survive every future run.
-    history.pop('naaim', None)
+    # NAAIM Exposure Index (weekly, surveyed Wednesdays). Restored 2026-09 from
+    # StockCharts after naaim.org walled its current reading.
+    #
+    # Overwrite-on-success only, deliberately: a failed fetch leaves the previous
+    # reading in place carrying its own survey date, which then visibly ages.
+    # That is the AAII tile's behaviour too. The 2026-08 failure this tile is
+    # infamous for was not the surviving value -- it was that the value carried
+    # no date, so a dead scraper and an unchanged market looked identical.
+    naaim = fetch_naaim_exposure()
+    if naaim is not None:
+        history['naaim'] = naaim
 
     history['timestamp'] = current.get('timestamp', datetime.now().isoformat())
 
@@ -439,7 +445,10 @@ def update_breadth_history():
     mmfi_val = history.get('mmfi', {}).get('current', 'N/A')
     mmtw_val = history.get('mmtw', {}).get('current', 'N/A')
     mmth_val = history.get('mmth', {}).get('current', 'N/A')
-    print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}")
+    naaim_val = history.get('naaim', {}).get('value', 'N/A')
+    naaim_as_of = history.get('naaim', {}).get('as_of', '?')
+    print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}, "
+          f"NAAIM={naaim_val} (survey {naaim_as_of})")
     return history
 
 

@@ -59,14 +59,21 @@ SI_FILTERS = {
 # which would abort the step.
 SI_ORDER = "Short Interest Share"
 
-# Screener columns -> payload keys. Anything absent becomes None rather than
-# failing the whole fetch: a view gaining or losing a column must not blank
-# the tab.
+# Screener columns -> (payload key, scale). Anything absent becomes None
+# rather than failing the whole fetch: a view gaining or losing a column must
+# not blank the tab.
+#
+# ⛔ The screener returns Inst Trans as a FRACTION while the quote page — and
+# therefore fundamentals.db and every other consumer in this repo — returns a
+# percent. Verified 2026-09-10 against both sources: WOLF reads 0.4804 here and
+# 48.04 there; BTDR 0.373 against 37.3. Short Float needs no scaling, it is
+# already a percent on both. Left unscaled, a +48% institutional move renders
+# as "+0.5" and looks like a rounding artefact rather than a wrong unit.
 _COLUMNS = {
-    "float_shares": "Float",
-    "market_cap": "Market Cap",
-    "inst_trans": "Inst Trans",
-    "price": "Price",
+    "float_shares": ("Float", 1.0),
+    "market_cap": ("Market Cap", 1.0),
+    "inst_trans": ("Inst Trans", 100.0),
+    "price": ("Price", 1.0),
 }
 
 
@@ -114,8 +121,9 @@ def build_rows(table: pd.DataFrame) -> List[Dict]:
         if si_value is None:
             continue
         entry = {"ticker": str(row["Ticker"]).strip().upper(), "si": si_value}
-        for key, column in _COLUMNS.items():
-            entry[key] = _optional(row, column)
+        for key, (column, scale) in _COLUMNS.items():
+            value = _optional(row, column)
+            entry[key] = None if value is None else value * scale
         rows.append(entry)
 
     rows.sort(key=lambda r: -r["si"])

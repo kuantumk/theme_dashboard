@@ -76,7 +76,7 @@ class BuildRowsTests(unittest.TestCase):
         self.assertAlmostEqual(row["si"], 40.0)
         self.assertAlmostEqual(row["float_shares"], 1.0e6)
         self.assertAlmostEqual(row["market_cap"], 1.0e9)
-        self.assertAlmostEqual(row["inst_trans"], 0.0123)
+        self.assertAlmostEqual(row["inst_trans"], 1.23)
         self.assertAlmostEqual(row["price"], 10.0)
 
     def test_uppercases_tickers(self):
@@ -88,6 +88,21 @@ class BuildRowsTests(unittest.TestCase):
         frame = _frame().drop(columns=["Inst Trans"])
 
         self.assertIsNone(si.build_rows(frame)[0]["inst_trans"])
+
+    def test_scales_inst_trans_from_a_fraction_to_a_percent(self):
+        """The screener returns a fraction; the quote page, fundamentals.db
+        and every other consumer here use percent.
+
+        Verified 2026-09-10 against both sources: WOLF reads 0.4804 on the
+        screener and 48.04 on its quote page; BTDR 0.373 against 37.3.
+        """
+        row = si.build_rows(_frame(**{"Inst Trans": [0.4804, 0.373]}))[0]
+
+        self.assertAlmostEqual(row["inst_trans"], 48.04)
+
+    def test_short_interest_is_not_scaled(self):
+        """Short Float is already a percent on both sources."""
+        self.assertAlmostEqual(si.build_rows(_frame())[0]["si"], 40.0)
 
     def test_empty_frame_yields_no_rows(self):
         self.assertEqual(si.build_rows(pd.DataFrame()), [])

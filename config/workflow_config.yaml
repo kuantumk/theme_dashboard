@@ -96,6 +96,18 @@ vars_tab:
   top_k_vars: 5                 # L1 score = mean of top-K pooled member VARS
   hot_rs_threshold: 70.0        # L1 hot flag: avg member RS >= this and n >= 3
 
+# SI dashboard tab — heavily shorted stocks that have already sold off,
+# clustered under taxonomy L1 sections. One Finviz Ownership screener call
+# supplies short interest (src/data_collection/fetch_short_interest.py); the
+# selloff legs come from our own price history.
+si_tab:
+  min_short_interest: 12.0      # percent of float; the Finviz leg gates at 10
+  max_drawdown_60d: -0.25       # close vs the 60-day high
+  max_drop_15d: -0.25           # worst <=15-session drop inside the last 45
+  min_tickers_per_l1: 3         # L1 sections with fewer members are dropped
+  top_k_si: 3                   # member SI values averaged into an L1 score
+  hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
+
 # L1 Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/l1_score.py docstring
 # for the full R1-R6 formula). Scores ALL tagged tickers above the liquidity

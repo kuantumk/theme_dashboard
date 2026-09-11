@@ -2572,6 +2572,18 @@
     }
 
     let html = '';
+
+    // The roster's age, shown only when it is not this session's. Step 7b is
+    // non-critical and short_interest.json is committed, so a failed Finviz
+    // fetch leaves the PREVIOUS roster joined to today's prices. Undated reads
+    // as stale. Without this the tab is indistinguishable from a fresh one --
+    // the frozen-NAAIM-tile failure in a new costume.
+    if (data.si_stale) {
+      html += `<div class="si-stale-note">Short interest dated `
+        + `${escHtml(data.si_date || 'unknown')}, not this session `
+        + `(${escHtml(data.report_date || 'unknown')}). Prices below are current.</div>`;
+    }
+
     data.themes.forEach((grp, idx) => {
       const meta = [
         `top-3 SI ${(grp.score ?? 0).toFixed(2)}%`,

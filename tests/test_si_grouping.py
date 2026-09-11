@@ -17,9 +17,12 @@ considered and rejected — CLAUDE.md records that exact choice failing on the
 tape-pressure board, where 0 of 67 single-name groups ever reached the screen.
 """
 
+import contextlib
+import io
 import json
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 import pandas as pd
@@ -292,6 +295,77 @@ class SiHotBadgeTests(unittest.TestCase):
             [t["name"] for t in without["themes"]],
             [t["name"] for t in with_radar["themes"]],
         )
+
+
+class SiStalenessTests(unittest.TestCase):
+    """A stale short-interest roster must never pass as this session's.
+
+    Step 7b is deliberately non-critical and `data/short_interest.json` is
+    committed, so the file always exists. If the Finviz fetch fails, the
+    workflow continues and the previous roster survives — joined to TODAY's
+    prices and stamped with today's master date, it would look fresh.
+
+    That is the frozen-NAAIM-tile shape. The repo's settled answer is to keep
+    the reading, carry its own date, and make the age visible rather than
+    blanking the tab: a one-session-old short-interest roster is still useful,
+    an undated one is not.
+    """
+
+    def _snap(self, si_date, master_date="2026-09-10"):
+        si_rows = [{"ticker": t, "si": 40.0} for t in ("AA", "BB", "CC")]
+        master = [dict(_bar(t), date=master_date) for t in ("AA", "BB", "CC")]
+        themes = {t: ["AI / Data Center"] for t in ("AA", "BB", "CC")}
+        return ex._build_si_snapshot(
+            si_rows, _master(master), {}, themes, {}, CFG, si_date=si_date
+        )
+
+    def test_a_same_session_roster_is_not_stale(self):
+        snap = self._snap("2026-09-10")
+
+        self.assertEqual(snap["si_date"], "2026-09-10")
+        self.assertFalse(snap["si_stale"])
+
+    def test_an_older_roster_is_flagged_stale_but_still_publishes(self):
+        snap = self._snap("2026-09-09")
+
+        self.assertEqual(snap["si_date"], "2026-09-09")
+        self.assertTrue(snap["si_stale"])
+        self.assertEqual(snap["report_date"], "2026-09-10")
+        self.assertEqual(snap["n_tickers"], 3)
+
+    def test_an_undated_roster_reads_as_stale(self):
+        """Unknown age is not proof of freshness."""
+        snap = self._snap("")
+
+        self.assertTrue(snap["si_stale"])
+        self.assertIsNone(snap["si_date"])
+
+    def test_export_warns_when_the_roster_is_stale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, out = Path(tmp) / "scratch", Path(tmp) / "docs"
+            (root / "master").mkdir(parents=True)
+            out.mkdir()
+            si_path = Path(tmp) / "short_interest.json"
+            si_path.write_text(json.dumps({
+                "date": "2026-09-09", "filters": {},
+                "rows": [{"ticker": t, "si": 40.0} for t in ("AA", "BB", "CC")],
+            }), encoding="utf-8")
+            master = _master([dict(_bar(t), date="2026-09-10")
+                              for t in ("AA", "BB", "CC")])
+            import src.stock_utils as su
+            su.save_df_to_parquet(master, root / "master" / "master_2026-09-10.parquet")
+
+            themes = {t: ["AI / Data Center"] for t in ("AA", "BB", "CC")}
+            buffer = io.StringIO()
+            with unittest.mock.patch(
+                "src.themes.theme_registry.load_ticker_themes", return_value=themes
+            ):
+                with contextlib.redirect_stdout(buffer):
+                    snap = ex.export_si({}, root=root, out_dir=out, si_file=si_path)
+
+        self.assertTrue(snap["si_stale"])
+        self.assertIn("stale", buffer.getvalue().lower())
+        self.assertIn("2026-09-09", buffer.getvalue())
 
 
 class RadarRankLoadingTests(unittest.TestCase):

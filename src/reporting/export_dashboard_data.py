@@ -1667,7 +1667,8 @@ def _top_k_mean(values, k):
     return sum(top) / len(top) if top else 0.0
 
 
-def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks, cfg):
+def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks,
+                       cfg, si_date=None):
     """Build one SI snapshot: L1 sections, each holding its leaf tables.
 
     L1 is the ranked unit and the leaf is not. Measured 2026-09-10, the leaf
@@ -1781,8 +1782,18 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
     # Breadth breaks a score tie; it never scales the score.
     themes.sort(key=lambda t: (-t['score'], -t['n'], t['name']))
 
+    # ⛔ The roster's own date travels with the snapshot, and an unknown date
+    # reads as stale. Step 7b is non-critical and short_interest.json is
+    # committed, so a failed Finviz fetch leaves the PREVIOUS roster on disk.
+    # Joined to today's prices and stamped with today's master date it would
+    # look fresh — the frozen-NAAIM-tile shape. Keep the reading, carry its
+    # age, let the tab say so: a one-session-old roster is still useful, an
+    # undated one is not.
+    roster_date = str(si_date) if si_date else None
     return {
         'report_date': report_date,
+        'si_date': roster_date,
+        'si_stale': roster_date != report_date,
         'n_tickers': len(per_ticker),
         'n_themes': len(themes),
         'themes': themes,
@@ -1826,10 +1837,22 @@ def export_si(day_flags, root=None, out_dir=None, si_file=None):
     snapshot = _build_si_snapshot(
         si_rows, master_df, day_flags, load_ticker_themes(),
         _load_radar_ranks(out_dir / 'radar.json'), _si_config(),
+        si_date=payload.get('date'),
     )
     if snapshot is None:
         print("   No SI tickers survived the gate, skipping SI export")
         return None
+
+    if snapshot['si_stale']:
+        # Loud, because the tab is otherwise indistinguishable from a fresh one.
+        # A stale roster means step 7b failed: Finviz blocked us, the Ownership
+        # view changed shape, or the run happened before the close.
+        print(
+            f"   Warning: short interest is STALE — roster dated "
+            f"{snapshot['si_date'] or 'unknown'} against session "
+            f"{snapshot['report_date']}. Step 7b likely failed. Publishing it "
+            f"anyway with the age marked; check the Finviz fetch."
+        )
 
     out = out_dir / "si.json"
     with open(out, 'w', encoding='utf-8') as fh:

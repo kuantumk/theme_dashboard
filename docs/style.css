@@ -345,6 +345,19 @@ body {
 #momentum-left { width: 440px; }
 #si-left { width: 505px; }
 
+/* SI tab: the roster-age warning. Amber, not red -- a one-session-old short
+   interest roster is still worth reading, which is why the tab publishes it
+   rather than going dark. Shown only when data.si_stale is true. */
+.si-stale-note {
+  margin: 0 0 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  color: var(--amber);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .right-panel {
   flex: 1;
   display: flex;

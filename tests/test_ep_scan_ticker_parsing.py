@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from src.reporting import ep_scan_common
 from src.reporting.ep_scan_common import (
     _ticker_from_row,
+    make_ticker_repair_view,
     repair_ticker_column,
     send_discord_notification,
 )
@@ -161,6 +162,33 @@ class AllDroppedAlarmTest(unittest.TestCase):
         self.assertIn("OKLO", content)
         self.assertIn("AH CHG", content)
         self.assertNotIn("dropped", content)
+
+
+class TickerRepairViewFactoryTests(unittest.TestCase):
+    """The repair must not be welded to the Overview view.
+
+    The SI collector reads the Ownership view (v=131), which carries Short
+    Float directly. It sees the identical avatar corruption — measured
+    2026-09-10, 231 of 231 rows arrived with the first character doubled.
+    """
+
+    def test_builds_a_subclass_of_any_screener_view(self):
+        from finvizfinance.screener.ownership import Ownership
+
+        cls = make_ticker_repair_view(Ownership)
+
+        self.assertTrue(issubclass(cls, Ownership))
+        self.assertEqual(cls.__name__, "_TickerRepairOwnership")
+
+    def test_fresh_instance_starts_with_a_zero_repair_count(self):
+        from finvizfinance.screener.ownership import Ownership
+
+        self.assertEqual(make_ticker_repair_view(Ownership)().tickers_repaired, 0)
+
+    def test_overview_alias_is_built_from_the_same_factory(self):
+        from finvizfinance.screener.overview import Overview
+
+        self.assertTrue(issubclass(ep_scan_common._TickerRepairOverview, Overview))
 
 
 if __name__ == "__main__":

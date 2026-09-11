@@ -52,6 +52,7 @@
       <button class="tab-btn" data-tab="etf" id="tab-etf">Lev ETF</button>
       <button class="tab-btn" data-tab="ep" id="tab-ep">EP</button>
       <button class="tab-btn" data-tab="parabolic" id="tab-parabolic">Parabolic</button>
+      <button class="tab-btn" data-tab="si" id="tab-si">SI</button>
     </div>
 
     <!-- ══ TAB 1: MACRO OVERVIEW ═════════════════════════ -->
@@ -936,6 +937,33 @@
       <div class="chart-area" id="parabolic-chart-area">
         <div class="chart-placeholder">
           <div class="placeholder-icon">PX</div>
+          <div>Click any ticker to open chart</div>
+          <div class="placeholder-sub">Daily timeframe · MA: 20 EMA · 50 SMA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: SI ═══════════════════════════════════════ -->
+  <!-- Deliberately NO .tt-filters block. Finviz already gates price > $10,
+       average volume > 1M and monthly volatility > 4% upstream, so a V/A
+       cutoff pair would dim against a screen that has already run — the same
+       reasoning that keeps them off the EP tab. tests/test_dashboard_filter_
+       markup.py pins the bar count at 5 so this cannot drift. -->
+  <div class="tab-content" id="content-si">
+    <div class="left-panel" id="si-left">
+      <div class="time-travel-bar">
+        <div class="time-travel-dates" id="si-tt-dates"></div>
+      </div>
+      <div id="si-container">
+        <div class="loading">Loading SI data...</div>
+      </div>
+    </div>
+    <div class="resize-handle" data-panel="si"></div>
+    <div class="right-panel" id="si-right">
+      <div class="chart-area" id="si-chart-area">
+        <div class="chart-placeholder">
+          <div class="placeholder-icon">SI</div>
           <div>Click any ticker to open chart</div>
           <div class="placeholder-sub">Daily timeframe · MA: 20 EMA · 50 SMA</div>
         </div>

@@ -327,6 +327,12 @@ body {
    treat them as a floor and keep the slack. Re-measure when a column is added:
    set the table to width:max-content and read its bounding box.
 
+   SI is the one entry whose bar carries no V/A cutoffs, so its width is the
+   8-column table alone: measured min-content 465px + 28px padding + 6px
+   scrollbar, rounded up. Below ~500px that table does not compress — it
+   overflows and the Inst% column is clipped off the right edge with no
+   scrollbar to reveal it. It still clears the 385px bar floor.
+
    Tabs absent here (Themes, Parabolic, the four Viz tabs) use the shared
    default above — Parabolic's 5-column table measures 286px and Themes renders
    chips, not a table. tests/test_dashboard_panel_layout.py pins these values
@@ -337,6 +343,7 @@ body {
 #ep-left { width: 500px; }
 #vars-left { width: 490px; }
 #momentum-left { width: 440px; }
+#si-left { width: 505px; }
 
 .right-panel {
   flex: 1;

@@ -32,6 +32,10 @@ from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR,
 import src.stock_utils as su
 from src.data_collection.scrape_market_breadth import get_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
+from src.data_collection.fetch_short_interest import (
+    fetch_short_interest,
+    write_short_interest,
+)
 from src.themes.tag_new_tickers import sync_screened_ticker_themes
 from src.themes.analyze_theme_strength import analyze_theme_strength
 from src.themes.l1_score import compute_radar
@@ -227,6 +231,25 @@ def run_daily_workflow():
         except Exception as e:
             logger.warning(f"Fundamental data fetch failed: {e}")
             logger.warning("Continuing workflow without fundamentals...")
+
+        # Step 7b: Fetch short interest for the SI tab.
+        #
+        # Sits here because it is the workflow's other Finviz call, and it must
+        # run after the close: the screen carries a Current Volume leg, so
+        # before the open it returns an empty table.
+        #
+        # Non-critical. Nothing downstream reads this file except the SI
+        # export, which skips cleanly when it is absent.
+        logger.info(f"{'='*80}")
+        logger.info(f"STEP: Fetch short interest (SI tab)")
+        logger.info(f"{'='*80}")
+        try:
+            si_payload = fetch_short_interest()
+            write_short_interest(si_payload, date_str)
+            logger.info(f"OK Short interest: {len(si_payload['rows'])} tickers\n")
+        except Exception as e:
+            logger.warning(f"Short interest fetch failed: {e}")
+            logger.warning("Continuing workflow without SI data...")
 
         # Step 8: Sync Google Sheet ground truth + surface untagged tickers
         # (LLM classification happens in the weekday audit routine, not here.)

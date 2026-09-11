@@ -73,6 +73,61 @@ def compute_inside_day(open_, high, low, close):
     return (range_engulf | body_engulf).astype(bool)
 
 
+DROP_WINDOW = 15    # sessions in the drawdown window
+DROP_LOOKBACK = 45  # sessions searched for the worst such window
+
+
+def compute_drop_15d(close, window=DROP_WINDOW, lookback=DROP_LOOKBACK):
+    """Worst drawdown over any stretch of ``window`` sessions or fewer, found
+    anywhere inside the trailing ``lookback`` sessions.
+
+    ⛔ The per-bar form — today's close against its own trailing high — is not
+    a substitute, and swapping to it shrinks the SI tab silently. Measured over
+    183 heavily shorted names on 2026-09-10, it correlates **0.37** with a true
+    window search, against **0.914** for this rolling minimum. It reads AEHR at
+    **-22.5%** where the real figure is **-47.6%**, so AEHR fails the -25% gate
+    that was calibrated on AEHR.
+
+    The reason is the question being asked. A name that fell 50% three weeks
+    ago and has gone flat since is still a broken chart, and today's bar cannot
+    see that. `tests/test_drop_15d.py` pins the lower-bound property.
+
+    ``min_periods`` stays at 1 on the outer roll so a recent listing scores
+    rather than reading NaN, matching how `vars` treats short histories.
+    """
+    per_bar = close / close.rolling(window + 1, min_periods=2).max() - 1
+    return per_bar.rolling(lookback, min_periods=1).min()
+
+
+def compute_down_streak(close):
+    """Consecutive down closes ending at each bar.
+
+    A flat close breaks the streak — an unchanged close is not a down day.
+
+    Display only. Never gate on it: a name that fell 40% in three gap-downs
+    carries a streak of 1 and is exactly what the SI tab is looking for.
+    """
+    down = close.diff() < 0
+    # Each unbroken run of down days shares one (~down).cumsum() group id, so
+    # a cumulative sum inside the group counts that run and resets after it.
+    return down.groupby((~down).cumsum()).cumsum().astype(int)
+
+
+def compute_max_down_streak(close, lookback=DROP_LOOKBACK):
+    """Longest run of consecutive down closes ending inside the trailing
+    ``lookback`` sessions.
+
+    The running streak is the wrong figure to show. Measured 2026-09-10, AEHR,
+    AMKR and COHU all read 1 — the run ending today — while AEHR's actual
+    slide was 11 sessions. A column that reads 1 for every row answers no
+    question. This reports the slide that happened, which is what the tab
+    claims to find.
+
+    Display only, like the streak it is built from. Never gate on it.
+    """
+    return compute_down_streak(close).rolling(lookback, min_periods=1).max().astype(int)
+
+
 VOL_SPIKE_WINDOW = '365D'  # trailing 1-year (calendar) lookback for volume-spike detection
 
 
@@ -216,6 +271,11 @@ def calculate_technical_indicators():
             daily['vol_dry_10_50'] = daily['volume'].rolling(window=10, min_periods=5).mean() / daily['vol_sma50']
             daily['dist_sma50_pct'] = daily['close'] / daily['sma50'] - 1
             daily['close_vs_252h'] = daily['close'] / daily['max252']
+
+            # SI-tab selloff legs. See compute_drop_15d for why the rolling
+            # minimum is not interchangeable with today's bar.
+            daily['drop_15d'] = compute_drop_15d(daily['close'])
+            daily['max_down_streak'] = compute_max_down_streak(daily['close'])
             daily['nr7'] = daily['range_pct'] <= daily['range_pct'].rolling(window=7, min_periods=7).min()
             daily['nr20'] = daily['range_pct'] <= daily['range_pct'].rolling(window=20, min_periods=20).min()
 

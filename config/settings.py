@@ -51,6 +51,7 @@ FUNDAMENTALS_DB = DATA_DIR / "fundamentals.db"
 TICKER_THEMES_FILE = PROJECT_ROOT / CONFIG["themes"]["metadata_file"]
 TICKER_COMPANY_METADATA_FILE = PROJECT_ROOT / CONFIG["themes"]["company_metadata_file"]
 THEME_REVIEW_STATE_FILE = PROJECT_ROOT / CONFIG["themes"]["review_state_file"]
+SHORT_INTEREST_FILE = DATA_DIR / "short_interest.json"
 BREADTH_FILE = DATA_DIR / "market_breadth_latest.json"
 BREADTH_HISTORY_FILE = DOCS_DATA_DIR / "market_breadth.json"
 

@@ -17,7 +17,7 @@ from datetime import datetime, date, timedelta, timezone
 from config.settings import (
     CONFIG, REPORTS_DIR, BREADTH_FILE, BREADTH_HISTORY_FILE,
     DOCS_DATA_DIR, FUNDAMENTALS_DB, GOOGLE_SHEET_ID, PRICE_DATA_TA_FILE,
-    PROJECT_ROOT, SCREENING_OUTPUT_DIR
+    PROJECT_ROOT, SCREENING_OUTPUT_DIR, SHORT_INTEREST_FILE
 )
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
@@ -1581,6 +1581,292 @@ def export_vars(day_flags):
     return current
 
 
+# ── SI tab (heavily shorted names that have already sold off) ───────────────
+
+SI_HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
+
+
+def _si_config():
+    return CONFIG.get('si_tab', {})
+
+
+def _finite(value):
+    """Return ``value`` as a float, or None when it is missing or not finite.
+
+    `float()` accepts 'nan' and 'inf' without raising and `NaN != NaN`, so an
+    explicit finite check is the only thing that stops a NaN flowing into a
+    comparison and quietly answering False.
+    """
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    return out if math.isfinite(out) else None
+
+
+def si_gate(short_interest, drawdown_60, drop_15d, cfg):
+    """Does this ticker belong on the SI tab?
+
+        short interest > floor AND (60-day drawdown <= limit OR 15-day drop <= limit)
+
+    ⛔ Fails CLOSED on a missing leg, which is the opposite of `filter_metrics`.
+    The difference is what each one asserts. The V/A cutoffs hide a row from a
+    view, so a missing metric must not hide it. This gate asserts that a
+    selloff happened, and a ticker with no price history has proved nothing.
+    Failing open here would publish untested names as confirmed breakdowns.
+
+    Either selloff leg alone is enough. A name that slid 30% over three months
+    and one that dropped 30% in a fortnight are both broken charts, and
+    requiring both would surface neither.
+    """
+    si_value = _finite(short_interest)
+    if si_value is None or si_value <= float(cfg.get('min_short_interest', 12.0)):
+        return False
+
+    dd_limit = float(cfg.get('max_drawdown_60d', -0.25))
+    drop_limit = float(cfg.get('max_drop_15d', -0.25))
+
+    dd = _finite(drawdown_60)
+    drop = _finite(drop_15d)
+    return (dd is not None and dd <= dd_limit) or (drop is not None and drop <= drop_limit)
+
+
+def _load_radar_ranks(radar_file=None):
+    """Return ``{L1 name: rank}`` from the radar export, or ``{}``.
+
+    The radar is the right source for "is this sector hot". It scores every
+    tagged ticker with no screener gate, so it reports that semiconductors are
+    strong while a broken name inside them is not. That name's own RS cannot
+    say so — it is low by construction, which is why it is on this tab.
+
+    A missing or malformed file yields no ranks. Every badge then disappears
+    and nothing reorders, because the badge is decoration and the ranking is
+    short interest.
+    """
+    path = Path(radar_file) if radar_file is not None else (OUTPUT_DIR / 'radar.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as fh:
+            payload = json.load(fh)
+    except (OSError, json.JSONDecodeError, ValueError):
+        return {}
+
+    # `l1s` since the 2026-07 consolidation; `ecosystems` in older files.
+    entries = payload.get('l1s') or payload.get('ecosystems') or []
+    ranks = {}
+    for entry in entries:
+        name = entry.get('name')
+        rank = entry.get('rank')
+        if name and rank is not None:
+            ranks[name] = rank
+    return ranks
+
+
+def _top_k_mean(values, k):
+    """Mean of the k largest values. Fewer than k averages what is there."""
+    top = sorted(values, reverse=True)[:max(int(k), 1)]
+    return sum(top) / len(top) if top else 0.0
+
+
+def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks,
+                       cfg, si_date=None):
+    """Build one SI snapshot: L1 sections, each holding its leaf tables.
+
+    L1 is the ranked unit and the leaf is not. Measured 2026-09-10, the leaf
+    level gave 67 leaves of which only 24 held 2 or more members, so
+    single-name leaves filled the top of the tab and the "several shorted
+    names lift the theme" requirement never fired. The same data at L1 level
+    with a 3-member minimum gives 9 sections covering all 105 tickers.
+
+    An L1 scores as the mean of its top `top_k_si` member short-interest
+    values, and breadth breaks ties. Summing members instead was considered
+    and rejected: CLAUDE.md records that choice failing on the tape-pressure
+    board, where breadth swamped intensity and 0 of 67 single-name groups ever
+    reached the screen.
+
+    Returns None when nothing survives, so the caller can skip the session.
+    """
+    if master_df is None or master_df.empty or not si_rows:
+        return None
+
+    bars = master_df.set_index(
+        master_df['ticker'].astype(str).str.upper()
+    ).to_dict('index')
+
+    report_date = ''
+    if 'date' in master_df.columns and len(master_df):
+        report_date = str(master_df['date'].iloc[0])
+
+    # 1. Gate, and build the per-ticker payload once.
+    per_ticker = {}
+    for row in si_rows:
+        ticker = str(row.get('ticker', '')).strip().upper()
+        bar = bars.get(ticker)
+        if not ticker or bar is None:
+            continue
+
+        close = _finite(bar.get('close'))
+        max60 = _finite(bar.get('max60'))
+        drawdown_60 = (close / max60 - 1) if (close is not None and max60) else None
+        drop_15d = _finite(bar.get('drop_15d'))
+        si_value = _finite(row.get('si'))
+
+        if not si_gate(si_value, drawdown_60, drop_15d, cfg):
+            continue
+
+        streak = _finite(bar.get('max_down_streak'))
+        per_ticker[ticker] = {
+            'ticker': ticker,
+            'si': round(si_value, 2),
+            'dd60': round(drawdown_60 * 100, 1) if drawdown_60 is not None else None,
+            'drop15': round(drop_15d * 100, 1) if drop_15d is not None else None,
+            'streak': int(streak) if streak is not None else None,
+            'price': round(close, 2) if close is not None else None,
+            'float': _fmt_float_m(row.get('float_shares')),
+            'inst': _fmt_inst(row.get('inst_trans')),
+            'ticker_color': day_flags.get(ticker),
+        }
+
+    if not per_ticker:
+        return None
+
+    # 2. Group surviving tickers into leaves, then cluster leaves under their L1.
+    leaves_by_l1 = {}
+    members_by_l1 = {}
+    for ticker in per_ticker:
+        for path in ticker_themes.get(ticker) or []:
+            if path in SI_HIDDEN_THEMES:
+                continue
+            l1 = resolve_l1(path)
+            if not l1 or l1 in SI_HIDDEN_THEMES:
+                continue
+            leaves_by_l1.setdefault(l1, {}).setdefault(path, []).append(ticker)
+            # A set, so a name tagged into two leaves of one L1 counts once
+            # toward that L1's breadth.
+            members_by_l1.setdefault(l1, set()).add(ticker)
+
+    min_members = int(cfg.get('min_tickers_per_l1', 3))
+    top_k = int(cfg.get('top_k_si', 3))
+    hot_rank = int(cfg.get('hot_radar_rank', 10))
+
+    themes = []
+    for l1, leaves in leaves_by_l1.items():
+        members = members_by_l1[l1]
+        if len(members) < min_members:
+            continue
+
+        leaf_list = []
+        for path, tickers in leaves.items():
+            rows = sorted((per_ticker[t] for t in tickers), key=lambda r: -r['si'])
+            leaf_list.append({
+                'name': path,
+                'score': round(_top_k_mean([r['si'] for r in rows], top_k), 2),
+                'n': len(rows),
+                'tickers': rows,
+            })
+        leaf_list.sort(key=lambda lf: (-lf['score'], -lf['n'], lf['name']))
+
+        rank = radar_ranks.get(l1)
+        themes.append({
+            'name': l1,
+            'score': round(_top_k_mean([per_ticker[t]['si'] for t in members], top_k), 2),
+            'n': len(members),
+            'n_leaves': len(leaf_list),
+            'radar_rank': rank,
+            'hot': rank is not None and rank <= hot_rank,
+            'leaves': leaf_list,
+        })
+
+    if not themes:
+        return None
+
+    # Breadth breaks a score tie; it never scales the score.
+    themes.sort(key=lambda t: (-t['score'], -t['n'], t['name']))
+
+    # ⛔ The roster's own date travels with the snapshot, and an unknown date
+    # reads as stale. Step 7b is non-critical and short_interest.json is
+    # committed, so a failed Finviz fetch leaves the PREVIOUS roster on disk.
+    # Joined to today's prices and stamped with today's master date it would
+    # look fresh — the frozen-NAAIM-tile shape. Keep the reading, carry its
+    # age, let the tab say so: a one-session-old roster is still useful, an
+    # undated one is not.
+    roster_date = str(si_date) if si_date else None
+    return {
+        'report_date': report_date,
+        'si_date': roster_date,
+        'si_stale': roster_date != report_date,
+        'n_tickers': len(per_ticker),
+        'n_themes': len(themes),
+        'themes': themes,
+    }
+
+
+def export_si(day_flags, root=None, out_dir=None, si_file=None):
+    """Export the SI tab — current snapshot plus a forward-growing history.
+
+    ⛔ History only grows forward, unlike every parquet-backed tab. Finviz
+    publishes current short interest, not a per-session series. Rebuilding
+    history from the master parquet would pin today's short interest onto a
+    three-month-old price bar and publish it as that session's reading — a
+    fabricated number, not a stale one. So this appends one entry per run,
+    like the ETF and EP tabs, pruned to the same retention window.
+    """
+    from src.themes.theme_registry import load_ticker_themes
+
+    root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
+    out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
+    si_path = Path(si_file) if si_file is not None else SHORT_INTEREST_FILE
+
+    try:
+        with open(si_path, 'r', encoding='utf-8') as fh:
+            payload = json.load(fh)
+    except (OSError, json.JSONDecodeError, ValueError):
+        print("   No short_interest.json found, skipping SI export")
+        return None
+
+    si_rows = payload.get('rows') or []
+    if not si_rows:
+        print("   short_interest.json holds no rows, skipping SI export")
+        return None
+
+    master_files = sorted((root / 'master').glob('master_*.parquet'), reverse=True)
+    if not master_files:
+        print("   No master parquet found, skipping SI export")
+        return None
+
+    master_df = su.load_df_from_parquet(master_files[0])
+    snapshot = _build_si_snapshot(
+        si_rows, master_df, day_flags, load_ticker_themes(),
+        _load_radar_ranks(out_dir / 'radar.json'), _si_config(),
+        si_date=payload.get('date'),
+    )
+    if snapshot is None:
+        print("   No SI tickers survived the gate, skipping SI export")
+        return None
+
+    if snapshot['si_stale']:
+        # Loud, because the tab is otherwise indistinguishable from a fresh one.
+        # A stale roster means step 7b failed: Finviz blocked us, the Ownership
+        # view changed shape, or the run happened before the close.
+        print(
+            f"   Warning: short interest is STALE — roster dated "
+            f"{snapshot['si_date'] or 'unknown'} against session "
+            f"{snapshot['report_date']}. Step 7b likely failed. Publishing it "
+            f"anyway with the age marked; check the Finviz fetch."
+        )
+
+    out = out_dir / "si.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(snapshot, fh, indent=2)
+    print(
+        f"   -> {out} ({snapshot['n_themes']} L1s, "
+        f"{snapshot['n_tickers']} tickers, date {snapshot['report_date']})"
+    )
+
+    _update_history_file(out_dir / "si_history.json", snapshot['report_date'], snapshot)
+
+    return snapshot
+
+
 def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf=None):
     """Build one L1 Radar session snapshot from a master parquet.
 
@@ -2184,6 +2470,12 @@ def export_all():
     if CONFIG.get('radar', {}).get('enabled', True):
         print("\n1f. Exporting L1 radar data")
         radar_data = export_radar(day_flags)
+
+    # 1g. Export SI tab. Must run AFTER the radar export: the HOT badge reads
+    # radar.json, and reading it earlier would badge every session against the
+    # previous run's ranks.
+    print("\n1g. Exporting SI data")
+    export_si(day_flags)
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")

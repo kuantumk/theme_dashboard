@@ -17,6 +17,8 @@
   const VOLUME_HISTORY_URL = 'data/volume_history.json';
   const VARS_DATA_URL = 'data/vars.json';
   const VARS_HISTORY_URL = 'data/vars_history.json';
+  const SI_DATA_URL = 'data/si.json';
+  const SI_HISTORY_URL = 'data/si_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
@@ -136,6 +138,7 @@
     loadIndustryETFData();
     loadETFData();
     loadParabolicData();
+    loadSIData();
     loadMacroEvents();
     loadEPAfternoonData();
     loadEPMorningData();
@@ -273,6 +276,7 @@
       else if (tabContent.id === 'content-etf') tabId = 'etf';
       else if (tabContent.id === 'content-ep') tabId = 'ep';
       else if (tabContent.id === 'content-parabolic') tabId = 'parabolic';
+      else if (tabContent.id === 'content-si') tabId = 'si';
       else return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
@@ -1043,6 +1047,10 @@
   let momentumHistory = [];  // Array of momentum snapshots, newest first
   let varsHistory = [];      // Array of vars snapshots, newest first
   let parabolicHistory = []; // Array of parabolic snapshots, newest first
+  let siHistory = [];        // Array of SI snapshots, newest first. Grows
+                             // forward only — Finviz publishes current short
+                             // interest, not a per-session series, so there is
+                             // nothing to backfill.
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let activeSessionDate = null;
@@ -1225,6 +1233,29 @@
       });
   }
 
+  function loadSIData() {
+    Promise.all([
+      fetch(withCacheBust(SI_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(withCacheBust(SI_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        siHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderSI(current);
+      })
+      .catch(err => {
+        console.warn('SI data not available:', err);
+        const c = document.getElementById('si-container');
+        if (c) c.innerHTML = '<div class="no-data">SI data not available.<br>Run the daily workflow to generate data.</div>';
+      });
+  }
+
   function loadParabolicData() {
     Promise.all([
       fetch(withCacheBust(PARABOLIC_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
@@ -1295,6 +1326,8 @@
       ? `No parabolic results for ${date}.`
       : 'No parabolic results for this date.';
     sortAndRenderParabolic();
+    // SI (heavily shorted, already sold off)
+    renderSI(siHistory.find(h => h.report_date === date), date);
     // EP Scanner
     applyEPAfternoonSnapshot(
       epAfternoonHistory.find(h => h.report_date === date),
@@ -1338,6 +1371,7 @@
     renderTimeTravelBar('ep-tt-dates',
       tabSessionDates(epMorningHistory, epAfternoonHistory), onTimeTravelSelect);
     renderTimeTravelBar('parabolic-tt-dates', tabSessionDates(parabolicHistory), onTimeTravelSelect);
+    renderTimeTravelBar('si-tt-dates', tabSessionDates(siHistory), onTimeTravelSelect);
   }
 
   /**
@@ -2513,6 +2547,121 @@
 
     container.innerHTML = html;
     applyTickerFilters();
+  }
+
+  /**
+   * Render the SI tab: L1 sections, each holding its leaf tables.
+   *
+   * Shaped like renderVARS on purpose, with two deliberate differences.
+   * Rows carry no filterAttrs and nothing calls applyTickerFilters — this tab
+   * has no V/A cutoffs, because Finviz already gates price, volume and
+   * volatility upstream. And the section meta reports short interest, which
+   * is what ranks the sections; the HOT badge is decoration from the radar
+   * and never reorders anything.
+   */
+  function renderSI(data, date) {
+    const container = document.getElementById('si-container');
+    if (!container) return;
+
+    if (!data || !data.themes || data.themes.length === 0) {
+      const msg = (date && !data)
+        ? `No SI data for ${date}.`
+        : 'No heavily shorted names in a drawdown for this date.';
+      container.innerHTML = `<div class="no-data">${msg}</div>`;
+      return;
+    }
+
+    let html = '';
+
+    // The roster's age, shown only when it is not this session's. Step 7b is
+    // non-critical and short_interest.json is committed, so a failed Finviz
+    // fetch leaves the PREVIOUS roster joined to today's prices. Undated reads
+    // as stale. Without this the tab is indistinguishable from a fresh one --
+    // the frozen-NAAIM-tile failure in a new costume.
+    if (data.si_stale) {
+      html += `<div class="si-stale-note">Short interest dated `
+        + `${escHtml(data.si_date || 'unknown')}, not this session `
+        + `(${escHtml(data.report_date || 'unknown')}). Prices below are current.</div>`;
+    }
+
+    data.themes.forEach((grp, idx) => {
+      const meta = [
+        `top-3 SI ${(grp.score ?? 0).toFixed(2)}%`,
+        `${grp.n} ticker${grp.n === 1 ? '' : 's'}`,
+        (typeof grp.radar_rank === 'number') ? `radar #${grp.radar_rank}` : '',
+      ].filter(Boolean).join(' · ');
+      html += `
+        <div class="theme-block">
+          <div class="theme-header${grp.hot ? ' l1-hot' : ''}">
+            <span class="theme-rank">#${idx + 1}</span>
+            <span class="theme-name">${escHtml(grp.name)}${grp.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
+            <span class="theme-score">${meta}</span>
+          </div>
+          <div class="theme-body">
+      `;
+
+      (grp.leaves || []).forEach(leaf => {
+        const tickers = leaf.tickers || [];
+        const sub = leaf.name.startsWith(grp.name + ' / ')
+          ? leaf.name.slice(grp.name.length + 3)
+          : leaf.name;
+        html += `
+            <div class="leaf-subheader">
+              <span class="leaf-name">${escHtml(sub)}</span>
+              <span class="leaf-meta">top-3 SI ${(leaf.score ?? 0).toFixed(2)}% · ${tickers.length} ticker${tickers.length === 1 ? '' : 's'}</span>
+            </div>
+            <table>
+              <thead><tr>
+                <th class="l">Ticker</th>
+                <th>SI%</th>
+                <th>DD60%</th>
+                <th>Drop15%</th>
+                <th>Streak</th>
+                <th>Price</th>
+                <th>Float(M)</th>
+                <th>Inst%</th>
+              </tr></thead>
+              <tbody>
+        `;
+
+        tickers.forEach(t => {
+          // Matches the VARS tab's Short% banding so one number reads the
+          // same on both tabs.
+          const siClass = t.si >= 20 ? 'up' : t.si >= 10 ? 'short-blue' : 'short-white';
+          const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
+          const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+          const fmtPct = (v) => (typeof v === 'number') ? v.toFixed(1) : '—';
+          html += `
+                <tr>
+                  <td class="l">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
+                      ${escHtml(t.ticker)}
+                    </span>
+                  </td>
+                  <td class="${siClass}"><strong>${(t.si ?? 0).toFixed(2)}</strong></td>
+                  <td class="dn">${fmtPct(t.dd60)}</td>
+                  <td class="dn">${fmtPct(t.drop15)}</td>
+                  <td>${t.streak ?? '—'}</td>
+                  <td>${(typeof t.price === 'number') ? t.price.toFixed(2) : '—'}</td>
+                  <td>${t.float ?? '—'}</td>
+                  <td class="${instClass}">${t.inst ?? '—'}</td>
+                </tr>
+          `;
+        });
+
+        html += `
+              </tbody>
+            </table>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
   }
 
   // ── PARABOLIC DATA ────────────────────────────────────

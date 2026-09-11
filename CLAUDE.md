@@ -32,6 +32,9 @@ uv run python src/themes/analyze_theme_strength.py
 uv run python src/reporting/generate_daily_report.py
 uv run python src/reporting/export_dashboard_data.py
 
+# Refresh the SI tab source (Finviz short interest; run after the close)
+uv run python -m src.data_collection.fetch_short_interest
+
 # Run EP scans standalone (requires ALPACA_API_KEY/SECRET in .env)
 uv run python src/reporting/ep_scan_afternoon.py
 uv run python src/reporting/ep_scan_morning.py
@@ -63,7 +66,7 @@ cd tests && uv run python backtest_theme_scoring.py
 4. **Master Table** cross-sectional percentile ranks + RS_STS% → `screening_output/master/*.parquet`
 5. **Screeners** pattern filters (listed in `config/workflow_config.yaml`) run in parallel → per-screener `*.parquet`
 6. **Consolidate** union all screener tickers (derived from the per-screener parquet) → committed `data/screened_union.json` (`{date, tickers}`, the tag-audit routine's worklist). No `.txt` is written.
-7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache)
+7. **Fundamentals** float/EPS/short% from Finviz → `data/fundamentals.db` (SQLite, 7-day cache); then **step 7b** runs one Finviz Ownership screen for the SI tab → committed `data/short_interest.json` (non-critical; see SI Tab below)
 8. **Theme Sync** Google Sheet ground truth + profile-cache warming + untagged surfacing → `data/ticker_themes.json` (no LLM here — classification happens in the weekday tag-audit routine, see Theme Taxonomy below)
 9. **Theme Scoring** dual-metric (strength + confirmation) with actionability overlay
 10. **Report** markdown daily report → `reports/` (includes "Untagged tickers awaiting audit")
@@ -132,6 +135,9 @@ Equity quotes therefore come from the service TradingView's own web and desktop 
 | `docs/data/nasi.json` | JSON | Nasdaq McClellan Summation Index + RSI(14), current + 378-session (~18 month) retained history. The chart plots only the newest 252 (~1 year); the rest is headroom (see NASI below). Seeded in git so the panel renders before the first workflow run; rewritten every run thereafter |
 | `docs/data/ep_scan_afternoon.json` | JSON | Afternoon EP scan results |
 | `docs/data/ep_scan_morning.json` | JSON | Morning EP scan results |
+| `data/short_interest.json` | JSON | `{date, filters, rows}` — the day's Finviz Ownership screen, before the selloff gate (committed) |
+| `docs/data/si.json` | JSON | SI tab snapshot: L1 sections holding leaf tables |
+| `docs/data/si_history.json` | JSON | SI tab session history. **Forward-accumulating** — one entry per run, never rebuilt (see SI Tab below) |
 
 ### Module Layout
 
@@ -352,6 +358,35 @@ Two consequences fail silently and are pinned by `tests/test_dashboard_panel_lay
 
 - **`initResizablePanels` subtracts the pointer delta** (`startWidth - dx`). The handler sizes the list pane; with it left of the handle `+ dx` was right, but from the right, dragging right must *shrink* it. A `+` makes the divider run away from the pointer — it reads as a broken handle rather than a sign error, and no screenshot shows it.
 - **The `max-width: 1100px` block resets `order` on all three children.** Stacked vertically, a left/right decision would become chart-above-list and bury the list you scroll to pick a ticker from. Mobile keeps list-above-chart, and the handle stays hidden.
+
+### SI Tab — Heavily Shorted Names in a Drawdown
+
+`src/data_collection/fetch_short_interest.py` (collection) + `export_si` / `_build_si_snapshot` / `si_gate` in `src/reporting/export_dashboard_data.py` (build) + `renderSI` in `docs/app.js`. Config lives in the `si_tab:` block. Shows stocks with high short interest that have **already sold off**, clustered under taxonomy L1 sections like the VARS tab. The trade: a crowded short in a broken chart inside a strong sector is a squeeze candidate.
+
+Gate: `short interest > 12%` AND (`close/max60 - 1 <= -25%` OR `drop_15d <= -25%`). Measured 2026-09-10: 231 Finviz rows → 184 over 12% → **105 survive** → 12 L1 sections.
+
+**One Finviz call answers the whole question.** The **Ownership** view (`v=131`, `finvizfinance.screener.ownership.Ownership`) returns `Short Float`, `Float`, `Market Cap` and `Inst Trans` *in the screener table*. Reading those from per-ticker quote pages the way `fetch_fundamental_data` does would cost 231 requests at the rate limit and add nothing. The five filters mirror the source URL exactly (`sh_avgvol_o1000`, `sh_curvol_o750`, `sh_price_o10`, `sh_short_o10`, `ta_volatility_mo4`).
+
+- **The avatar ticker corruption hits this view too** — measured **231 of 231 rows**. `ep_scan_common.make_ticker_repair_view(base_view_cls)` is the shared factory; `_TickerRepairOverview` is now built from it, so EP and SI cannot drift. Do not un-double the first character.
+- **Sort with `'Short Interest Share'`, not `'Float Short'`.** The latter is the *column* name; `finvizfinance` raises `ValueError` on it and aborts the step.
+- **⛔ The screener returns `Inst Trans` as a FRACTION where the quote page returns a percent.** Verified against both on 2026-09-10: WOLF reads `0.4804` here and `48.04` there; BTDR `0.373` against `37.3`. `_COLUMNS` scales it by 100 so `short_interest.json` carries one unit convention. `Short Float` needs no scaling — already a percent on both. Left unscaled a +48% institutional move renders as `+0.5` and reads as a rounding artefact rather than a wrong unit.
+- **`Current Volume` makes the screen time-of-day dependent.** Before the open no ticker has 750K of current volume, so the call returns an empty table. Step 7b runs inside the daily workflow (1:30 PM Pacific, after the close) for that reason. Do not lift it into a pre-market job.
+
+**⛔ `drop_15d` is a 45-session ROLLING MINIMUM, and the obvious per-bar form is not equivalent.** `compute_drop_15d` in `create_technical_indicators.py` is `(close / close.rolling(16).max() - 1).rolling(45).min()`. Today's close against its own trailing 15-session high correlates just **0.37** with a true window search across 183 shorted names, against **0.914** for the rolling minimum — and it reads AEHR at **−22.5%** where the real figure is **−47.6%**, so AEHR fails the −25% gate that was calibrated on AEHR. A name that fell 50% three weeks ago and then went flat is still a broken chart, and today's bar cannot see that. `tests/test_drop_15d.py` pins the lower-bound property so the definition can never silently narrow.
+
+**`max_down_streak` is the longest run ending inside the lookback, not the run ending today.** Same trap, same shape: measured 2026-09-10 the running streak read **1** for AEHR, AMKR and COHU alike, while AEHR's actual slide ran **11** sessions. A column reading 1 on every row answers no question. Display only — never gate on it, or a name that fell 40% in three gap-downs (streak 1) is rejected.
+
+**⛔ `si_gate` fails CLOSED on a missing leg — the opposite of `filter_metrics`.** The difference is what each one asserts. The V/A cutoffs hide a row from a view, so a missing metric must not hide it. This gate asserts a selloff *happened*, and a ticker with no price history has proved nothing. Failing open would publish untested names as confirmed breakdowns.
+
+**L1 is the ranked unit; the leaf is not.** L1 score = mean of the top-`si_tab.top_k_si` (3) member SI values, sorted score desc then **breadth desc as a tiebreak only**. `si_tab.min_tickers_per_l1` (3) applies at L1 with no per-leaf minimum. Measured at leaf level the same data gave **67 leaves of which only 24 held 2+ members**, so single-name leaves filled the top and "several shorted names lift the theme" never fired; a float-score tiebreak does nothing because exact ties do not occur. **Summing members instead was considered and rejected** — see the tape-pressure section above, where sum-of-margins made breadth swamp intensity and 0 of 67 single-name groups ever reached the screen. A ticker tagged into two leaves of one L1 counts **once** toward that L1's breadth.
+
+**The HOT badge reads `docs/data/radar.json`, not the ticker's own RS.** An L1 ranked at or better than `si_tab.hot_radar_rank` (10) is hot. The radar scores every tagged ticker with no screener gate, so it reports that semiconductors are strong while AEHR is broken — the broken name's RS is low by construction, which is *why* it is on this tab. The badge never reorders anything, and a missing radar file drops every badge while leaving the ranking untouched. `export_si` therefore runs **after** `export_radar` in `export_all`, or every session would badge against the previous run's ranks.
+
+**⛔ The roster carries its own date, because a stale one is otherwise invisible.** Step 7b is non-critical *and* `data/short_interest.json` is committed, so a failed Finviz fetch leaves the **previous** roster on disk. `export_si` joins it to today's master parquet and stamps the snapshot with today's session date — so without a check, a dead fetch publishes yesterday's shorted names beside today's prices and looks perfectly fresh. That is the frozen-NAAIM-tile failure in a new costume. `_build_si_snapshot` therefore takes `si_date`, carries `si_date`/`si_stale` in the payload, and `renderSI` shows an amber banner when the roster is not this session's. An **unknown date reads as stale** — unknown age is not proof of freshness. The export keeps publishing rather than blanking the tab, matching the NAAIM rule: a one-session-old roster is still worth reading, an undated one is not.
+
+**⛔ History grows forward only.** Finviz publishes *current* short interest, not a per-session series. Rebuilding history from the master parquet would pin today's short interest onto a three-month-old price bar and publish it as that session's reading — a fabricated number, not a stale one. So `export_si` appends one entry per run via `_update_history_file`, like the ETF and EP tabs, pruned to the same `THEMES_HISTORY_DAYS` window. The time-travel dropdown holds one date on the first run and grows from there. That is correct, not a defect to fix.
+
+**The tab carries no V/A cutoffs, and `#si-left` is 505px.** Finviz already gates price > $10, avg volume > 1M and monthly volatility > 4% upstream — the same reasoning that keeps cutoffs off the EP tab, so `tests/test_dashboard_filter_markup.py`'s `EXPECTED_BAR_COUNT` stays **5**. The payload therefore carries no `dollar_vol`/`adr_pct`, and `renderSI` calls neither `filterAttrs` nor `applyTickerFilters`. The width is the 8-column table alone: measured min-content **465px** + 28px padding + 6px scrollbar. Below ~500px that table does **not** compress — it overflows and `Inst%` is clipped off the right edge with no scrollbar to reveal it.
 
 ### V / A Filter Cutoffs
 

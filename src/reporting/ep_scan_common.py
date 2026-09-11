@@ -108,11 +108,15 @@ def repair_ticker_column(table: pd.DataFrame, data_rows: List) -> int:
     return repaired
 
 
-if FINVIZ_AVAILABLE:
+def make_ticker_repair_view(base_view_cls):
+    """Build a screener view that re-reads tickers from the markup each page.
 
-    class _TickerRepairOverview(Overview):
-        """Overview that re-reads tickers from the markup after each page."""
+    The avatar corruption is a property of the screener's ticker cell, so it
+    hits every view. The EP scans read Overview; the SI collector reads
+    Ownership, which carries Short Float directly. Both need this.
+    """
 
+    class _TickerRepairView(base_view_cls):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.tickers_repaired = 0
@@ -125,6 +129,15 @@ if FINVIZ_AVAILABLE:
                 data_rows = data_rows[0:limit]
             self.tickers_repaired += repair_ticker_column(table, data_rows)
             return table
+
+    _TickerRepairView.__name__ = f"_TickerRepair{base_view_cls.__name__}"
+    _TickerRepairView.__qualname__ = _TickerRepairView.__name__
+    return _TickerRepairView
+
+
+if FINVIZ_AVAILABLE:
+
+    _TickerRepairOverview = make_ticker_repair_view(Overview)
 
 
 def scan_finviz_tickers(earnings_filter: str) -> List[str]:

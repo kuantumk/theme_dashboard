@@ -44,6 +44,7 @@ PER_TAB_WIDTHS = {
     "#ep-left": 500,
     "#vars-left": 490,
     "#momentum-left": 440,
+    "#si-left": 505,
 }
 
 RESPONSIVE_BREAKPOINT = "max-width: 1100px"

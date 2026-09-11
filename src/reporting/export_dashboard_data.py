@@ -1839,9 +1839,7 @@ def export_si(day_flags, root=None, out_dir=None, si_file=None):
         f"{snapshot['n_tickers']} tickers, date {snapshot['report_date']})"
     )
 
-    history_out = out_dir / "si_history.json"
-    _update_history_file(history_out, snapshot['report_date'], snapshot)
-    print(f"   -> {history_out}")
+    _update_history_file(out_dir / "si_history.json", snapshot['report_date'], snapshot)
 
     return snapshot
 
@@ -2449,6 +2447,12 @@ def export_all():
     if CONFIG.get('radar', {}).get('enabled', True):
         print("\n1f. Exporting L1 radar data")
         radar_data = export_radar(day_flags)
+
+    # 1g. Export SI tab. Must run AFTER the radar export: the HOT badge reads
+    # radar.json, and reading it earlier would badge every session against the
+    # previous run's ranks.
+    print("\n1g. Exporting SI data")
+    export_si(day_flags)
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")

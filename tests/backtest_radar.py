@@ -51,15 +51,22 @@ MASTER_DIR = SCREENING_OUTPUT_DIR / "master"
 
 HORIZONS = (5, 10, 20)
 BETAS = (0.0, 0.15, 0.3, 0.5)
-WEIGHT_GRID = {                       # rs / vars_pct / fast
-    'current':    (0.4, 0.4, 0.2),
-    'equal':      (1 / 3, 1 / 3, 1 / 3),
-    'rs_only':    (1.0, 0.0, 0.0),    # corners measure each leg's solo IC
-    'vars_only':  (0.0, 1.0, 0.0),
-    'fast_only':  (0.0, 0.0, 1.0),
-    'no_fast':    (0.5, 0.5, 0.0),
-    'fast_heavy': (0.2, 0.4, 0.4),
-    'rs_heavy':   (0.6, 0.2, 0.2),
+WEIGHT_GRID = {                            # rs / vars_pct / fast / coil
+    'current':    (0.5, 0.5, 0.0, 0.05),   # what ships today
+    'equal':      (1 / 3, 1 / 3, 1 / 3, 0.0),
+    'rs_only':    (1.0, 0.0, 0.0, 0.0),    # corners measure each leg's solo IC
+    'vars_only':  (0.0, 1.0, 0.0, 0.0),
+    'fast_only':  (0.0, 0.0, 1.0, 0.0),
+    'coil_only':  (0.0, 0.0, 0.0, 1.0),
+    'no_fast':    (0.5, 0.5, 0.0, 0.0),    # the 2026-07 winner, coil off
+    'fast_heavy': (0.2, 0.4, 0.4, 0.0),
+    'rs_heavy':   (0.6, 0.2, 0.2, 0.0),
+    # Coil ladder. A 2026 sweep put the argmax at 0.05 with a noise-level gain
+    # (+0.0001 at H=5, +0.0005 at H=10) and real cost above it: -0.002 at 0.10,
+    # -0.009 at 0.30. Re-run this ladder before moving the shipped weight.
+    'coil_10':    (0.5, 0.5, 0.0, 0.10),
+    'coil_20':    (0.5, 0.5, 0.0, 0.20),
+    'coil_30':    (0.5, 0.5, 0.0, 0.30),
 }
 MIN_L1S_FOR_IC = 8      # sessions with fewer scored+returned L1s are skipped
 MIN_COVERAGE = 0.7      # basket needs >= 70% of members with both endpoints
@@ -153,15 +160,27 @@ def _normalize_tags(tags):
 def apply_weights(universe_df, weights):
     """Recompute the composite from the (weight-independent) legs — mirrors
     l1_score.build_radar_universe's formula so weight sweeps skip the
-    universe rebuild."""
-    w_rs, w_vars, w_fast = (float(w) for w in weights)
-    total = w_rs + w_vars + w_fast
+    universe rebuild.
+
+    This is a second copy of that formula and the two must move together: a
+    leg added in production but not here sweeps to an identical result at every
+    weight, which reads as "the leg does nothing" rather than as a broken
+    harness. A 3-tuple is accepted so pre-coil grids still run, with the coil
+    weight defaulting to 0.
+    """
+    ws = [float(w) for w in weights]
+    if len(ws) == 3:
+        ws.append(0.0)
+    w_rs, w_vars, w_fast, w_coil = ws
+    total = w_rs + w_vars + w_fast + w_coil
     if total <= 0:
-        w_rs = w_vars = w_fast = 1.0
-        total = 3.0
+        w_rs = w_vars = w_fast = w_coil = 1.0
+        total = 4.0
     df = universe_df.copy()
+    coil_leg = df['coil_leg'] if 'coil_leg' in df.columns else 0.0
     df['composite'] = (
-        w_rs * df['rs_leg'] + w_vars * df['vars_leg'] + w_fast * df['fast_leg']
+        w_rs * df['rs_leg'] + w_vars * df['vars_leg']
+        + w_fast * df['fast_leg'] + w_coil * coil_leg
     ) / total
     return df
 
@@ -535,7 +554,8 @@ def mode_episodes_scan(dates, horizons, basket_mode, skip_day, pit_tags):
             theme_map = build_theme_to_tickers(tags)
             w = base_cfg['composite_weights']
             leaves = compute_leaf_scores(
-                apply_weights(universe, (w['rs'], w['vars_pct'], w['fast'])),
+                apply_weights(universe, (w['rs'], w['vars_pct'], w['fast'],
+                                        w.get('coil', 0.0))),
                 theme_map, base_cfg)
             baskets = l1_baskets(leaves, mode='all')
             fwd = forward_excess_return(close_mx, dpos, date_str,

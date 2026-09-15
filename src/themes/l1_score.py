@@ -16,7 +16,15 @@ R1  Universe   = tagged tickers present in the master table, close >=
                  keeps liquid leaders; NaN vol_sma50 = young IPO, passes).
                  No screener gate and no fundamentals (unscreened members
                  have none).
-R2  Composite  = weighted mean of three 0-100 legs (missing leg -> neutral
+R2b Coil leg   = cross-sectional percentile of inverted tightness among stocks
+                 whose `tight_base` holds (tighter ranks higher); 0 for a stock
+                 that is not coiled, neutral only when tightness is absent. It
+                 is a DESCRIPTIVE marker: theme-level breadth of the flag scores
+                 a rank IC of +0.011 (a coin flip) while a period-high test with
+                 no tightness scores +0.169, so the weight is a user dial and
+                 not an earned default. Per-leaf and per-L1 `n_coiled` counts
+                 ride the payload regardless of the weight.
+R2  Composite  = weighted mean of four 0-100 legs (missing leg -> neutral
                  missing_default): rs (rs_sts_pct), vars_pct (percentile of
                  raw VARS across ALL tagged tickers in the master table,
                  computed before the price/liquidity floors — wide anchoring
@@ -71,7 +79,10 @@ DEFAULTS = {
     'min_avg_volume_dollar_exempt': 40_000_000,
     # backtest 2026-07: fast leg is rho~0.81 redundant with rs and adds no
     # IC — zero-weighted (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
-    'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0},
+    # coil 0.05 is the argmax of a 2026 sweep at H=5 and H=10 and is noise-level
+    # (+0.0001 / +0.0005 against weight 0); 0.10 and above cost real IC. It is a
+    # user dial, not an earned weight — see the `coil` comment in the config.
+    'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0, 'coil': 0.05},
     'fast_leg_column': 'rela_perf_1mo_rank',
     'missing_default': 50.0,
 }
@@ -93,6 +104,36 @@ def _leg_from_column(df: pd.DataFrame, column: str, missing_default: float) -> p
     else:
         leg = pd.Series(np.nan, index=df.index)
     return leg.fillna(missing_default)
+
+
+def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
+    """0-100 leg from the coiled-base flag and its tightness ratio (R2b).
+
+    Graded rather than binary: a flag alone puts a cliff in the middle of a
+    continuous quantity, so the leg is the cross-sectional percentile of
+    *inverted* tightness (tighter ranks higher) among the stocks whose
+    `tight_base` holds. A stock failing the flag scores 0 — it is not neutral
+    about being uncoiled, it simply is not coiled — while a stock with no
+    computable tightness scores `missing_default`, matching every other leg's
+    treatment of absent data.
+
+    ⛔ Tightness is inverted (lower is tighter), so a zero-filled absence reads
+    as the *strongest* possible value. `_build_radar_snapshot` deliberately
+    loads the master parquet without `.fillna(0)` for this reason; the explicit
+    NaN check here is the second line of defence, not the only one.
+    """
+    if 'tightness' not in df.columns or 'tight_base' not in df.columns:
+        return pd.Series(missing_default, index=df.index, dtype=float)
+
+    tight = pd.to_numeric(df['tightness'], errors='coerce')
+    flagged = df['tight_base'].fillna(False).astype(bool)
+
+    leg = pd.Series(0.0, index=df.index, dtype=float)
+    ranked = (-tight[flagged]).rank(pct=True, method='average') * 100
+    leg.loc[ranked.index] = ranked
+    # Unmeasurable is not the same as uncoiled.
+    leg[tight.isna() & ~flagged] = missing_default
+    return leg.astype(float)
 
 
 def build_radar_universe(
@@ -141,17 +182,20 @@ def build_radar_universe(
     df = df.copy()
     df['rs_leg'] = _leg_from_column(df, 'rs_sts_pct', missing)
     df['fast_leg'] = _leg_from_column(df, str(cfg['fast_leg_column']), missing)
+    df['coil_leg'] = _coil_leg(df, missing)
 
     weights = cfg['composite_weights'] or DEFAULTS['composite_weights']
     w_rs = float(weights.get('rs', 0))
     w_vars = float(weights.get('vars_pct', 0))
     w_fast = float(weights.get('fast', 0))
-    total = w_rs + w_vars + w_fast
+    w_coil = float(weights.get('coil', 0))
+    total = w_rs + w_vars + w_fast + w_coil
     if total <= 0:
-        w_rs = w_vars = w_fast = 1.0
-        total = 3.0
+        w_rs = w_vars = w_fast = w_coil = 1.0
+        total = 4.0
     df['composite'] = (
-        w_rs * df['rs_leg'] + w_vars * df['vars_leg'] + w_fast * df['fast_leg']
+        w_rs * df['rs_leg'] + w_vars * df['vars_leg']
+        + w_fast * df['fast_leg'] + w_coil * df['coil_leg']
     ) / total
 
     return df.reset_index(drop=True)
@@ -191,6 +235,7 @@ def compute_leaf_scores(
             # $40M dollar-volume waiver, which the view lens has no part in.
             dvol_val = row.get('avg_dollar_vol')
             adr_val = row.get('adr_pct')
+            tight_val = row.get('tightness')
             members.append({
                 'ticker': str(t).upper(),
                 'composite': float(row['composite']),
@@ -199,6 +244,8 @@ def compute_leaf_scores(
                 'price': float(row['close']) if pd.notna(row.get('close')) else None,
                 'avg_dollar_vol': float(dvol_val) if pd.notna(dvol_val) else None,
                 'adr_pct': float(adr_val) if pd.notna(adr_val) else None,
+                'tightness': float(tight_val) if pd.notna(tight_val) else None,
+                'coiled': bool(row.get('tight_base', False)),
             })
         if len(members) < min_breadth:
             continue
@@ -213,6 +260,7 @@ def compute_leaf_scores(
             'l3': l3,
             'composite_avg': float(np.mean([m['composite'] for m in top])),
             'breadth': len(members),
+            'n_coiled': sum(1 for m in members if m['coiled']),
             'members': members,
         })
     return leaf_scores
@@ -243,6 +291,10 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
         for leaf in leaves:
             leaf['boosted'] = leaf['raw'] + boost
         members = {m['ticker'] for lf in leaves for m in lf['members']}
+        # Distinct tickers: a stock tagged into two leaves of one L1 counts once,
+        # matching how n_members is derived. Summing the leaf counts instead
+        # would inflate exactly the densely-tagged L1s.
+        coiled = {m['ticker'] for lf in leaves for m in lf['members'] if m['coiled']}
         l1s.append({
             'name': l1,
             'raw': l1_raw,
@@ -250,6 +302,7 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
             'delta': boost,
             'n_leaves': len(leaves),
             'n_members': len(members),
+            'n_coiled': len(coiled),
             'leaves': leaves,
         })
 
@@ -311,6 +364,7 @@ def compute_radar(
             'min_avg_volume': float(cfg['min_avg_volume']),
             'min_avg_volume_dollar_exempt': float(cfg['min_avg_volume_dollar_exempt']),
             'composite_weights': dict(cfg['composite_weights']),
+            'coil_weight': float((cfg['composite_weights'] or {}).get('coil', 0)),
         },
         'universe_size': int(len(universe)),
         'n_leaves_scored': rolled['n_leaves_scored'],

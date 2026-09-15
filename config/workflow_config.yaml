@@ -164,6 +164,12 @@ radar:
     fast: 0.0                   #   rela_perf_1mo_rank — zero-weighted, backtest 2026-07: rs~fast
                                 #   Spearman +0.81 and no incremental IC anywhere in the grid
                                 #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
+    coil: 0.05                  #   coiled-base percentile. Swept over 165-170 sessions of 2026:
+                                #   0.05 is the argmax at both H=5 and H=10 but the gain is
+                                #   noise (+0.0001 / +0.0005 vs weight 0), and 0.10+ costs real
+                                #   IC (-0.002 at 0.10, -0.009 at 0.30, -0.018 at 0.50). Set it
+                                #   to 0 to rank on strength alone; the coil marker and the
+                                #   n_coiled counts render either way.
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
   tickers_per_leaf: 10          # chips per leaf in radar_history.json (radar.json

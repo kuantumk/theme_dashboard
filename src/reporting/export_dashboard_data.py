@@ -1907,6 +1907,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'price': round(m['price'], 2) if m['price'] is not None else None,
                 'dollar_vol': _int_or_none(m.get('avg_dollar_vol')),
                 'adr_pct': _round_or_none(m.get('adr_pct'), 4),
+                # NaN is not valid JSON and would break the page rather than
+                # degrade it, so an unmeasurable figure serializes as null.
+                'tightness': _round_or_none(m.get('tightness'), 3),
+                'coiled': bool(m.get('coiled', False)),
                 'is_screened': bool(m.get('is_screened', False)),
             } for m in (leaf['members'] if tickers_per_leaf is None
                         else leaf['members'][:tickers_per_leaf])]
@@ -1920,6 +1924,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'raw': round(leaf['raw'], 3),
                 'boosted': round(leaf['boosted'], 3),
                 'n': leaf['breadth'],
+                # Count over ALL scored members, not just the chips that
+                # survived tickers_per_leaf — a capped history entry must not
+                # report a smaller coil count than the same session's radar.json.
+                'n_coiled': leaf.get('n_coiled', 0),
                 'tickers': ticker_dicts,
             })
         l1s.append({
@@ -1931,6 +1939,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
             'n_leaves': l1_entry['n_leaves'],
             'n_members': l1_entry['n_members'],
             'n_screened': l1_entry['n_screened'],
+            'n_coiled': l1_entry.get('n_coiled', 0),
             'leaves': leaves,
         })
 

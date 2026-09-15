@@ -2162,10 +2162,48 @@
     return { report_date: data.report_date, themes };
   }
 
+  // Coil sort state. Off by default and reset on reload, like tickerFilters —
+  // the repo uses no browser storage. It re-orders only: no score changes, no
+  // ticker is hidden, and the payload is re-read rather than re-scored.
+  let radarCoilSort = false;
+  let lastThemeSnapshot = null;
+  let lastThemeDate = null;
+
+  // Coil signal for ordering. SHARE, not raw count: L1 member counts run from
+  // 2 to 214 on live data, so a raw count ranks by roster size and buries
+  // exactly the small, densely-coiled theme this control exists to surface.
+  // The repo has learned this twice — the tape-pressure board where group score
+  // summed member margins and no single-name group ever reached the screen, and
+  // the SI tab where summing was rejected for a top-K mean with breadth as a
+  // tiebreak only. A minimum count keeps one coiled name in a two-stock theme
+  // from topping the board on a 50% share.
+  const COIL_SORT_MIN = 2;
+
+  function coilKey(entry) {
+    const n = entry.n_coiled || 0;
+    const total = entry.n_members || entry.n || 0;
+    if (n < COIL_SORT_MIN || !total) return [-1, -1];
+    return [n / total, n];
+  }
+
+  function byCoil(a, b) {
+    const ka = coilKey(a);
+    const kb = coilKey(b);
+    // Share, then raw count, then leave the payload's existing order alone.
+    return (kb[0] - ka[0]) || (kb[1] - ka[1]);
+  }
+
+  function toggleCoilSort() {
+    radarCoilSort = !radarCoilSort;
+    renderThemes(lastThemeSnapshot, lastThemeDate);
+  }
+
   function renderThemes(data, date) {
     const container = document.getElementById('themes-container');
     if (!container) return;
 
+    lastThemeSnapshot = data;
+    lastThemeDate = date;
     const l1s = radarL1s(data);
     if (!l1s || l1s.length === 0) {
       const msg = (date && !data) ? `No theme data for ${date}.` : 'No theme data for this date.';
@@ -2174,8 +2212,27 @@
     }
 
     const fmt = (v, d = 3) => (typeof v === 'number') ? v.toFixed(d) : '—';
+    // A payload with no coil data at all (a code-only deploy resets docs/data,
+    // so the fields are absent until the next workflow run) hides the control
+    // rather than offering a sort that would do nothing.
+    const hasCoilData = l1s.some(g => typeof g.n_coiled === 'number');
+    const totalCoiled = l1s.reduce((s, g) => s + (g.n_coiled || 0), 0);
+
     let html = '';
-    l1s.forEach(grp => {
+    if (hasCoilData) {
+      html += `
+        <div class="radar-controls">
+          <button type="button" id="coil-sort-btn" class="coil-sort-btn${radarCoilSort ? ' on' : ''}"
+                  title="Re-order themes by the share of members in a tight base. Changes order only — no score changes, nothing hidden.">
+            ${radarCoilSort ? '◉' : '○'} Coiled first
+          </button>
+          <span class="radar-n">${totalCoiled} coiled</span>
+        </div>
+      `;
+    }
+
+    const ordered = radarCoilSort ? l1s.slice().sort(byCoil) : l1s;
+    ordered.forEach(grp => {
       const delta = (typeof grp.delta === 'number')
         ? (grp.delta >= 0 ? `+${grp.delta.toFixed(3)}` : grp.delta.toFixed(3))
         : '—';
@@ -2185,6 +2242,7 @@
             <span class="theme-rank">#${grp.rank}</span>
             <span class="theme-name">${escHtml(grp.name)}</span>
             <span class="theme-score">boosted ${fmt(grp.boosted)} · raw ${fmt(grp.raw)} · Δ ${delta} · ${grp.n_leaves} theme${grp.n_leaves === 1 ? '' : 's'} · ${grp.n_members} stocks (${grp.n_screened} screened)</span>
+            ${grp.n_coiled ? `<span class="coil-badge" title="${grp.n_coiled} of ${grp.n_members} members in a tight base">COIL ${grp.n_coiled}</span>` : ''}
           </div>
           <div class="theme-body radar-body">
       `;
@@ -2192,12 +2250,19 @@
       // carries rank/name/N/scores, and the chips below get the panel's full
       // width so every ticker is reachable in a narrow left panel (a 5-column
       // table pushed Raw/Boosted off-screen and clipped the ticker list).
-      (grp.leaves || []).forEach(leaf => {
+      const leaves = radarCoilSort
+        ? (grp.leaves || []).slice().sort(byCoil)
+        : (grp.leaves || []);
+      leaves.forEach(leaf => {
         const label = leaf.l2 ? (leaf.l3 ? `${leaf.l2} / ${leaf.l3}` : leaf.l2) : leaf.name;
         const chips = (leaf.tickers || []).map(t => {
           const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
           if (t.ticker_color === 'green') cls.push('day-pattern-green');
-          const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}`;
+          if (t.coiled) cls.push('coiled');
+          const coilTip = t.coiled
+            ? ` · coiled (${typeof t.tightness === 'number' ? t.tightness.toFixed(2) : '—'} of ADR)`
+            : '';
+          const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}${coilTip}`;
           return `<span class="${cls.join(' ')}"${filterAttrs(t)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');
         html += `
@@ -2206,6 +2271,7 @@
                 <span class="radar-rank">#${leaf.global_rank}</span>
                 <span class="radar-leaf-name">${escHtml(label)}</span>
                 <span class="radar-n">N=${leaf.n}</span>
+                ${leaf.n_coiled ? `<span class="coil-badge" title="${leaf.n_coiled} of ${leaf.n} members in a tight base">◉ ${leaf.n_coiled}</span>` : ''}
                 <span class="radar-scores" title="raw → boosted">${fmt(leaf.raw)}<span class="radar-arrow">→</span><span class="radar-boosted">${fmt(leaf.boosted)}</span></span>
               </div>
               <div class="radar-stocks-wrap">
@@ -2222,6 +2288,11 @@
     });
 
     container.innerHTML = html;
+    const coilBtn = container.querySelector('#coil-sort-btn');
+    if (coilBtn) coilBtn.addEventListener('click', toggleCoilSort);
+    // Order matters: the cutoffs re-dim the fresh DOM, then the clamp measures
+    // the chip rows it produced. Re-ordering changes which chips sit in which
+    // row, so the "+N more" count has to be recomputed, not carried over.
     applyTickerFilters();
     observeRadarClamps(container);
     syncRadarClamps(container);

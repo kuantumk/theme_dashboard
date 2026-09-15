@@ -4758,6 +4758,65 @@
       ],
       "reason": "Narrative correction: TSM is a foundry (chip manufacturing), not equipment; migrated legacy label 'AI - Semiconductor Processing' was mis-mapped to Semiconductor Equipment, which is exclusively tool makers (ASML/LRCX/AMAT-class) elsewhere in this basket. TSM's dominant narrative is AI chip fab demand (Nvidia/Apple/AMD leading-edge nodes)",
       "at": "2026-09-12T00:40:19"
+    },
+    {
+      "ticker": "SN",
+      "old_paths": [
+        "Oil & Gas / E&P"
+      ],
+      "new_paths": [
+        "Consumer / Home Goods & Furnishings"
+      ],
+      "reason": "Narrative-shift audit: SN is now SharkNinja, Inc. (2023 IPO) \u2014 home/kitchen appliances maker; stale 'Oil & Gas / E&P' tag is a leftover from the delisted Sanchez Energy Corp that formerly used this ticker (ticker reuse, not a business pivot)",
+      "at": "2026-09-15T00:36:02"
+    },
+    {
+      "ticker": "BNS",
+      "old_paths": [],
+      "new_paths": [
+        "Fintech & Crypto / Consumer Finance",
+        "Fintech & Crypto / Wealth & Asset Management",
+        "Fintech & Crypto / Investment Banking"
+      ],
+      "reason": "New ticker classification: Bank of Nova Scotia (Scotiabank) \u2014 diversified Canadian bank with Canadian Banking, International (LatAm/Caribbean) retail banking, Global Wealth Management, and Global Banking and Markets segments; same 3-way pattern as peer CM (CIBC)",
+      "at": "2026-09-15T00:36:06"
+    },
+    {
+      "ticker": "NCPL",
+      "old_paths": [
+        "Singleton"
+      ],
+      "new_paths": [
+        "Fintech & Crypto / Private Equity Proxy"
+      ],
+      "reason": "Singleton rescue: Netcapital Inc. is a fintech online capital-formation platform providing retail investors private-equity investment access (Reg CF portal + Netcapital Advisors); fits the Private Equity Proxy peer group (cf. DXYZ)",
+      "at": "2026-09-15T00:36:49"
+    },
+    {
+      "ticker": "NET",
+      "old_paths": [
+        "Cybersecurity / Generalist"
+      ],
+      "new_paths": [
+        "Cybersecurity / Generalist",
+        "AI / Data Center / Cloud & Hyperscalers"
+      ],
+      "reason": "Basket densification: Cybersecurity roster \u2014 Cloudflare's edge-compute/developer platform (Workers, R2, Workers AI) is now a distinct, fast-growing revenue line competing with hyperscalers, not just a security feature; same dual-role pattern already applied to AKAM and FSLY",
+      "at": "2026-09-15T00:39:39"
+    },
+    {
+      "ticker": "ESTC",
+      "old_paths": [
+        "AI / Software & Analytics",
+        "Software & Internet / Data & Analytics"
+      ],
+      "new_paths": [
+        "AI / Software & Analytics",
+        "Software & Internet / Data & Analytics",
+        "Cybersecurity / Data Security"
+      ],
+      "reason": "Basket densification: Cybersecurity roster \u2014 Elastic Security is one of Elastic's three named solution areas (alongside Observability and Enterprise Search), a genuine SIEM/XDR product line; same cross-list pattern already applied to DDOG's Cloud SIEM",
+      "at": "2026-09-15T00:39:39"
     }
   ]
 }

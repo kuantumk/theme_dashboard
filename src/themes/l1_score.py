@@ -236,6 +236,12 @@ def compute_leaf_scores(
             dvol_val = row.get('avg_dollar_vol')
             adr_val = row.get('adr_pct')
             tight_val = row.get('tightness')
+            # pd.notna, not `.get(..., False)`: Series.get returns its default
+            # only when the KEY is absent, so a present-but-NaN tight_base would
+            # come back as NaN — and bool(nan) is True. That would publish an
+            # unmeasurable row as coiled, the exact inversion the rest of this
+            # feature defends against. Fails closed, like _coil_leg above.
+            coiled_val = row.get('tight_base')
             members.append({
                 'ticker': str(t).upper(),
                 'composite': float(row['composite']),
@@ -245,7 +251,7 @@ def compute_leaf_scores(
                 'avg_dollar_vol': float(dvol_val) if pd.notna(dvol_val) else None,
                 'adr_pct': float(adr_val) if pd.notna(adr_val) else None,
                 'tightness': float(tight_val) if pd.notna(tight_val) else None,
-                'coiled': bool(row.get('tight_base', False)),
+                'coiled': bool(coiled_val) if pd.notna(coiled_val) else False,
             })
         if len(members) < min_breadth:
             continue

@@ -2259,9 +2259,7 @@
           const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
           if (t.ticker_color === 'green') cls.push('day-pattern-green');
           if (t.coiled) cls.push('coiled');
-          const coilTip = t.coiled
-            ? ` · coiled (${typeof t.tightness === 'number' ? t.tightness.toFixed(2) : '—'} of ADR)`
-            : '';
+          const coilTip = t.coiled ? ` · coiled (${fmt(t.tightness, 2)} of ADR)` : '';
           const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}${coilTip}`;
           return `<span class="${cls.join(' ')}"${filterAttrs(t)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');

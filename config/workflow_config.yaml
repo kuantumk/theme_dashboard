@@ -111,7 +111,7 @@ si_tab:
 # Tightness — the coiled-range detector behind the Themes tab's coil marker.
 # tightness = trailing-window mean of |daily close-to-close change| / that bar's
 # ADR%; tight_base additionally requires the stock to sit on its 10/20-day EMAs
-# and near its 60-day high.
+# and to hold at least high_frac of its high_lookback-session high.
 #
 # The location gate is a DISQUALIFIER, not a selector: it throws out charts that
 # have already fallen apart so the tightness test chooses among what remains. At

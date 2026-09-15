@@ -501,7 +501,7 @@ def mode_anchor_diff(dates, pit_tags):
         old['vars_leg'] = (vars_num.rank(pct=True, method='average') * 100) \
             .fillna(float(base_cfg['missing_default']))
         w = base_cfg['composite_weights']
-        weights = (w['rs'], w['vars_pct'], w['fast'])
+        weights = (w['rs'], w['vars_pct'], w['fast'], w.get('coil', 0.0))
         new_snap = l1_snapshots_multi_beta(
             compute_leaf_scores(apply_weights(universe, weights), theme_map, base_cfg),
             base_cfg, [float(base_cfg['beta'])])

@@ -242,6 +242,22 @@ class CoilLegTests(unittest.TestCase):
         self.assertEqual(l1['n_coiled'], 2)      # AAA + BBB, AAA not double-counted
         self.assertEqual(l1['n_members'], 3)
 
+    def test_a_nan_tight_base_is_not_coiled(self):
+        # Series.get returns its default only when the KEY is absent, so a
+        # present-but-NaN tight_base comes back as NaN — and bool(nan) is True.
+        # Without an explicit pd.notna guard an unmeasurable row publishes as
+        # coiled, which is the inversion this whole feature defends against.
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 70.0, 'tightness': 0.1, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 70.0, 'tightness': 0.2, 'tight_base': np.nan},
+        ]
+        uni = build_radar_universe(make_master(rows), {'AAA', 'BBB'}, CFG)
+        leaves = compute_leaf_scores(uni, {'Cybersecurity / Network': ['AAA', 'BBB']}, CFG)
+        by_ticker = {m['ticker']: m for m in leaves[0]['members']}
+        self.assertTrue(by_ticker['AAA']['coiled'])
+        self.assertFalse(by_ticker['BBB']['coiled'])
+        self.assertEqual(leaves[0]['n_coiled'], 1)
+
     def test_members_carry_tightness_and_coiled(self):
         rows = [
             {'ticker': 'AAA', 'rs_sts_pct': 70.0, 'tightness': 0.15, 'tight_base': True},

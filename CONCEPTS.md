@@ -74,6 +74,15 @@ Average daily range as a percentage of price — how much room a stock typically
 ### Composite
 A per-stock blend of strength measures into one number, used so that ranking depends on several independent signals rather than any single one. Stocks missing an input receive a neutral value for it rather than being dropped.
 
+### Tightness
+How small a stock's recent daily moves are compared with its own average daily range. A stock drifting at a fifth of its usual range has gone quiet; the measure is scale-free, so a volatile small cap and a sleepy large cap are directly comparable. Lower is tighter.
+
+### Tight base
+A quiet stretch that is also a live setup rather than a dead chart: tight, still riding its short-term moving averages, and not far enough below its recent high to count as broken. The location tests are there to disqualify wreckage, not to pick leaders — quietness alone is a mildly negative signal, and only the combination is worth marking.
+
+### Coil
+The marked state of a stock in a tight base, and the count of such stocks within a theme. It describes what a chart looks like now, not a prediction about where it goes; it is displayed so a trader can watch for the breakout themselves.
+
 ---
 
 ## Radar

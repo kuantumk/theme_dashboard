@@ -113,24 +113,32 @@ si_tab:
 # ADR%; tight_base additionally requires the stock to sit on its 10/20-day EMAs
 # and near its 60-day high.
 #
-# ⛔ This is a DESCRIPTIVE marker, not a predictive signal. Measured over 165
-# sessions of 2026 on ~2,220 tagged tickers, theme-level rank IC at a 10-session
-# horizon: bare tightness breadth -0.077, the full three-conjunct flag +0.074,
-# and a control keeping ONLY "within 15% of the 60-day high" +0.167 — more than
-# double the flag, and above the +0.109 scored by 3-month strength. The location
-# half carries the edge; the tightness half subtracts from it. Nothing here is
-# weighted into any score, and a future weight needs its own measurement.
+# The location gate is a DISQUALIFIER, not a selector: it throws out charts that
+# have already fallen apart so the tightness test chooses among what remains. At
+# 0.70 it passes 82% of rows on its own, while removing 26% of otherwise-tight
+# names — and that removal is the whole value. Measured over 165 sessions of
+# 2026 on ~2,220 tagged tickers, forward 10-session excess return runs 0.66pp
+# BELOW the universe baseline for bare tightness and 0.40pp ABOVE it once the
+# gate applies, on 7.9% of rows.
 #
-# high_frac is 0.85 because max60 is a rolling max of HIGHS. An earlier
-# calibration used closes, which are strictly lower, and its 0.90 threshold
-# rejected every name in the case the work was built around. Do not restore 0.90
-# without re-measuring against the high-based column.
+# ⛔ DESCRIPTIVE marker, never a ranking input. Theme-level breadth of the flag
+# scores a rank IC of +0.011 (positive on half of sessions — a coin flip).
+# Tightening the gate raises that (0.85 of the 60-day high reads +0.074), but a
+# period-high test with NO tightness scores +0.169, so on theme ranking the
+# location half carries everything and tightness subtracts. Nothing here is
+# weighted into any score; a future weight needs its own measurement.
 #
-# window/fraction were calibrated on Jan-Sep 2026 and are not universal.
+# high_lookback must exist in min_max_lookback (create_technical_indicators);
+# the code raises rather than silently substituting another window. The high is
+# a rolling max of HIGHS — an earlier calibration used closes, which are
+# strictly lower, and its threshold rejected every name in the motivating case.
+#
+# Calibrated on Jan-Sep 2026; not universal.
 tightness:
-  window: 4          # sessions averaged into the ratio
-  fraction: 0.30     # tightness at or below this is "tight"
-  high_frac: 0.85    # close at or above this share of max60 is "near the high"
+  window: 4           # sessions averaged into the ratio
+  fraction: 0.30      # tightness at or below this is "tight"
+  high_lookback: 50   # period high the gate reads (needs a max50 column)
+  high_frac: 0.70     # close must hold at least this share of that high
 
 # L1 Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/l1_score.py docstring

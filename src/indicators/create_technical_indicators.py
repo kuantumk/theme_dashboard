@@ -73,9 +73,10 @@ def compute_inside_day(open_, high, low, close):
     return (range_engulf | body_engulf).astype(bool)
 
 
-TIGHTNESS_WINDOW = 4       # sessions averaged into the tightness ratio
-TIGHTNESS_FRACTION = 0.30  # tightness at or below this is "tight"
-TIGHTNESS_HIGH_FRAC = 0.85 # close at or above this share of max60 is "near the high"
+TIGHTNESS_WINDOW = 4        # sessions averaged into the tightness ratio
+TIGHTNESS_FRACTION = 0.30   # tightness at or below this is "tight"
+TIGHTNESS_HIGH_LOOKBACK = 50  # sessions in the period high the location gate reads
+TIGHTNESS_HIGH_FRAC = 0.70  # close must hold at least this share of that high
 
 
 def compute_tightness(close, adr_pct, window=TIGHTNESS_WINDOW):
@@ -102,28 +103,33 @@ def compute_tightness(close, adr_pct, window=TIGHTNESS_WINDOW):
     return ratio.rolling(window, min_periods=window).mean().astype(float)
 
 
-def compute_tight_base(tightness, close, max60, close_to_ma,
+def compute_tight_base(tightness, close, period_high, close_to_ma,
                        fraction=TIGHTNESS_FRACTION,
                        high_frac=TIGHTNESS_HIGH_FRAC):
-    """Tightness qualified by location: quiet, on its averages, near its high.
+    """Tightness qualified by location: quiet, on its averages, not broken.
 
-    ⛔ Do not read this flag as a predictive signal — measurement says the
-    location half carries the edge and the tightness half subtracts from it.
-    Over 165 sessions of 2026 across ~2,220 tagged tickers, theme-level rank IC
-    at a 10-session horizon: bare tightness breadth **-0.077**, this full
-    three-conjunct flag **+0.074**, and the control that drops the tightness and
-    EMA tests and keeps only "within 15% of the 60-day high" **+0.167** — more
-    than double, and above the 3-month-strength reference of +0.109. At ticker
-    level the located flag sits 0.15pp *below* the universe baseline.
+    The location gate is a **disqualifier, not a selector**. Its job is to throw
+    out charts that have already fallen apart so the tightness test does the
+    choosing among what remains. At the shipped 0.70 of the 50-day high it
+    passes 82% of all rows on its own — by construction it selects nothing —
+    while removing 26% of otherwise-tight names, and that removal is what makes
+    the flag worth rendering. Measured over 165 sessions of 2026 across ~2,220
+    tagged tickers, forward 10-session excess return runs **0.66pp below** the
+    universe baseline for bare tightness and **0.40pp above** it once this gate
+    is applied, on 7.9% of rows.
 
-    So the flag earns its place as a **descriptive marker of a coiled chart**,
-    not as a ranking input. It is deliberately not weighted into any score.
+    ⛔ It is a descriptive marker, never a ranking input. Theme-level breadth of
+    this flag scores a rank IC of **+0.011**, positive on half of sessions — a
+    coin flip. Tightening the gate raises it (0.85 of the 60-day high reads
+    +0.074), but a period-high test with no tightness at all scores **+0.169**,
+    so for theme ranking the location half carries everything and tightness
+    subtracts. Nothing here is weighted into any score, and a future weight
+    needs its own measurement.
 
-    An earlier calibration reported +0.060 for the located form and +0.54pp at
-    ticker level. That measurement derived the 60-day high from **closes**;
-    `max60` here is a rolling max of **highs**, which is strictly larger, so the
-    threshold did not transfer. Both figures are superseded — do not restore
-    them, and do not re-derive a threshold from a close-based high.
+    ``period_high`` is a rolling max of **highs** (the pipeline passes
+    ``max50``), not of closes. An earlier calibration used closes, which are
+    strictly lower, and its 0.90 threshold rejected every name in the case this
+    was built for. Do not re-derive a threshold from a close-based high.
 
     Both comparisons are inclusive, matching `compute_inside_day`: a bar that
     exactly ties the threshold is the setup, not a near-miss.
@@ -133,10 +139,10 @@ def compute_tight_base(tightness, close, max60, close_to_ma,
     proved nothing, and an NA would read as truthy downstream.
     """
     tight = pd.to_numeric(tightness, errors='coerce') <= fraction
-    near_high = pd.to_numeric(close, errors='coerce') >= (
-        high_frac * pd.to_numeric(max60, errors='coerce'))
+    holding = pd.to_numeric(close, errors='coerce') >= (
+        high_frac * pd.to_numeric(period_high, errors='coerce'))
     on_ma = close_to_ma.fillna(False).astype(bool)
-    return (tight & near_high & on_ma).fillna(False).astype(bool)
+    return (tight & holding & on_ma).fillna(False).astype(bool)
 
 
 DROP_WINDOW = 15    # sessions in the drawdown window
@@ -223,7 +229,8 @@ def calculate_technical_indicators():
     daily_price = su.load_object_from_pickle(PRICE_DATA_FILE)
     daily_tickers = daily_price.keys()
 
-    min_max_lookback = [30, 60, 90, 120, 150, 252]
+    # 50 is here for the tight-base location gate (config: tightness.high_lookback).
+    min_max_lookback = [30, 50, 60, 90, 120, 150, 252]
     dts = [21, 63, 126, 252]
     months = [1, 3, 6, 12]
 
@@ -240,9 +247,17 @@ def calculate_technical_indicators():
     _tight_cfg = {
         'window': TIGHTNESS_WINDOW,
         'fraction': TIGHTNESS_FRACTION,
+        'high_lookback': TIGHTNESS_HIGH_LOOKBACK,
         'high_frac': TIGHTNESS_HIGH_FRAC,
     }
     _tight_cfg.update(CONFIG.get('tightness', {}) or {})
+    _high_col = f"max{int(_tight_cfg['high_lookback'])}"
+    if int(_tight_cfg['high_lookback']) not in min_max_lookback:
+        # Raise rather than fall back: a silently substituted lookback changes
+        # what the flag means with nothing on screen to show it moved.
+        raise ValueError(
+            f"tightness.high_lookback={_tight_cfg['high_lookback']} has no "
+            f"{_high_col} column; add it to min_max_lookback.")
 
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
@@ -338,7 +353,7 @@ def calculate_technical_indicators():
             daily['tightness'] = compute_tightness(
                 daily['close'], daily['adr_pct'], window=_tight_cfg['window'])
             daily['tight_base'] = compute_tight_base(
-                daily['tightness'], daily['close'], daily['max60'],
+                daily['tightness'], daily['close'], daily[_high_col],
                 daily['close_to_ma'],
                 fraction=_tight_cfg['fraction'], high_frac=_tight_cfg['high_frac'])
 

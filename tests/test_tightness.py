@@ -7,18 +7,21 @@ per-bar ratios, not by dividing a windowed mean change by a single ADR%:
 the two forms are not equivalent, and the calibration behind the 0.30 default
 used the per-bar form.
 
-`tight_base` is tightness qualified by location — still on the 10/20-day EMAs
-and still near the 60-day high.
+`tight_base` is tightness qualified by location: still on the 10/20-day EMAs
+and not more than 30% off the 50-day high. The location gate is a DISQUALIFIER
+— it removes charts that already broke down so tightness can choose among what
+is left. At 0.70 it passes 82% of rows on its own and removes 26% of otherwise
+tight names, which moves forward 10-session excess from 0.66pp BELOW the
+universe baseline (bare tightness) to 0.40pp above it.
 
-⛔ It is a descriptive marker, not a predictive signal, and these tests pin the
-definition rather than any claim about returns. Theme-level rank IC over 165
-sessions of 2026 at a 10-session horizon: bare tightness breadth -0.077, the
-full flag +0.074, and a near-the-60-day-high-only control +0.167. The location
-half carries the edge and the tightness half subtracts from it.
+⛔ It is a descriptive marker, not a ranking input, and these tests pin the
+definition rather than any claim about returns. Theme-level breadth of the flag
+scores a rank IC of +0.011 — a coin flip. A period-high test with no tightness
+at all scores +0.169, so on theme ranking the location half carries everything.
 
-`high_frac` is 0.85 because `max60` is a rolling max of HIGHS. The calibration
-that produced 0.90 used closes, which are strictly lower; against the real
-column that threshold rejected every name in the motivating case.
+`period_high` is a rolling max of HIGHS (the pipeline passes `max50`), not of
+closes. A calibration against close-based highs produced 0.90, which rejected
+every name in the motivating case once run against the real column.
 """
 
 import unittest
@@ -29,6 +32,7 @@ import pandas as pd
 from src.indicators.create_technical_indicators import (
     TIGHTNESS_FRACTION,
     TIGHTNESS_HIGH_FRAC,
+    TIGHTNESS_HIGH_LOOKBACK,
     TIGHTNESS_WINDOW,
     compute_tight_base,
     compute_tightness,
@@ -121,11 +125,11 @@ class ComputeTightBaseTests(unittest.TestCase):
 
     N = 6
 
-    def _frame(self, tightness, close, max60, close_to_ma):
+    def _frame(self, tightness, close, period_high, close_to_ma):
         return dict(
             tightness=pd.Series([tightness] * self.N),
             close=pd.Series([close] * self.N),
-            max60=pd.Series([max60] * self.N),
+            period_high=pd.Series([period_high] * self.N),
             close_to_ma=pd.Series([close_to_ma] * self.N),
         )
 
@@ -134,30 +138,39 @@ class ComputeTightBaseTests(unittest.TestCase):
 
     def test_all_three_conjuncts_true(self):
         self.assertTrue(self._verdict(
-            **self._frame(tightness=0.20, close=95.0, max60=100.0, close_to_ma=True)))
+            **self._frame(tightness=0.20, close=95.0, period_high=100.0, close_to_ma=True)))
 
     def test_loose_tightness_fails(self):
         self.assertFalse(self._verdict(
-            **self._frame(tightness=0.60, close=95.0, max60=100.0, close_to_ma=True)))
+            **self._frame(tightness=0.60, close=95.0, period_high=100.0, close_to_ma=True)))
 
     def test_away_from_the_moving_averages_fails(self):
         self.assertFalse(self._verdict(
-            **self._frame(tightness=0.20, close=95.0, max60=100.0, close_to_ma=False)))
+            **self._frame(tightness=0.20, close=95.0, period_high=100.0, close_to_ma=False)))
 
-    def test_far_below_the_60_day_high_fails(self):
-        # Quiet but broken: 70% of the 60-day high.
+    def test_a_broken_chart_fails_however_quiet_it_is(self):
+        # 55% of the 50-day high: a stock that has already fallen apart and
+        # then gone still. This is the case the gate exists to reject — bare
+        # tightness would flag it, and bare tightness measures the wrong way.
         self.assertFalse(self._verdict(
-            **self._frame(tightness=0.20, close=70.0, max60=100.0, close_to_ma=True)))
+            **self._frame(tightness=0.05, close=55.0, period_high=100.0, close_to_ma=True)))
+
+    def test_a_shallow_pullback_still_qualifies(self):
+        # 75% of the high: down but not broken, which the 0.70 gate admits by
+        # design. A gate tight enough to reject this would be a selector, and
+        # the selecting is the tightness test's job.
+        self.assertTrue(self._verdict(
+            **self._frame(tightness=0.20, close=75.0, period_high=100.0, close_to_ma=True)))
 
     def test_nan_tightness_is_false_not_na(self):
         v = compute_tight_base(
-            **self._frame(tightness=np.nan, close=95.0, max60=100.0, close_to_ma=True))
+            **self._frame(tightness=np.nan, close=95.0, period_high=100.0, close_to_ma=True))
         self.assertFalse(bool(v.iloc[-1]))
         self.assertEqual(v.dtype, bool)
 
-    def test_nan_max60_is_false(self):
+    def test_nan_period_high_is_false(self):
         self.assertFalse(self._verdict(
-            **self._frame(tightness=0.20, close=95.0, max60=np.nan, close_to_ma=True)))
+            **self._frame(tightness=0.20, close=95.0, period_high=np.nan, close_to_ma=True)))
 
     def test_boundaries_are_inclusive(self):
         # Exactly at the fraction and exactly at the high threshold both
@@ -165,23 +178,30 @@ class ComputeTightBaseTests(unittest.TestCase):
         self.assertTrue(self._verdict(**self._frame(
             tightness=TIGHTNESS_FRACTION,
             close=TIGHTNESS_HIGH_FRAC * 100.0,
-            max60=100.0,
+            period_high=100.0,
             close_to_ma=True,
         )))
 
     def test_returns_boolean_dtype_aligned_to_the_input(self):
         v = compute_tight_base(
-            **self._frame(tightness=0.2, close=95.0, max60=100.0, close_to_ma=True))
+            **self._frame(tightness=0.2, close=95.0, period_high=100.0, close_to_ma=True))
         self.assertEqual(v.dtype, bool)
         self.assertEqual(len(v), self.N)
 
+    def test_the_gate_admits_far_more_than_it_rejects(self):
+        # Pins the disqualifier-not-selector intent. If someone re-tunes
+        # high_frac upward into selector territory, this is what catches it:
+        # a stock 25% off its high is a pullback, not a broken chart.
+        self.assertLessEqual(TIGHTNESS_HIGH_FRAC, 0.75)
+
     def test_defaults_match_the_calibration(self):
         # A silent change to any of these re-tunes the flag's firing rate.
-        # high_frac in particular is 0.85 against a HIGH-based max60; 0.90 came
-        # from a close-based calibration and rejects the motivating cohort.
+        # The lookback must also exist as a max<N> column in the pipeline's
+        # min_max_lookback list, or calculate_technical_indicators raises.
         self.assertEqual(TIGHTNESS_WINDOW, 4)
         self.assertEqual(TIGHTNESS_FRACTION, 0.30)
-        self.assertEqual(TIGHTNESS_HIGH_FRAC, 0.85)
+        self.assertEqual(TIGHTNESS_HIGH_LOOKBACK, 50)
+        self.assertEqual(TIGHTNESS_HIGH_FRAC, 0.70)
 
 
 if __name__ == '__main__':

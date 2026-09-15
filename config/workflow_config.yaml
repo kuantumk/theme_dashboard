@@ -108,6 +108,30 @@ si_tab:
   top_k_si: 3                   # member SI values averaged into an L1 score
   hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
 
+# Tightness — the coiled-range detector behind the Themes tab's coil marker.
+# tightness = trailing-window mean of |daily close-to-close change| / that bar's
+# ADR%; tight_base additionally requires the stock to sit on its 10/20-day EMAs
+# and near its 60-day high.
+#
+# ⛔ This is a DESCRIPTIVE marker, not a predictive signal. Measured over 165
+# sessions of 2026 on ~2,220 tagged tickers, theme-level rank IC at a 10-session
+# horizon: bare tightness breadth -0.077, the full three-conjunct flag +0.074,
+# and a control keeping ONLY "within 15% of the 60-day high" +0.167 — more than
+# double the flag, and above the +0.109 scored by 3-month strength. The location
+# half carries the edge; the tightness half subtracts from it. Nothing here is
+# weighted into any score, and a future weight needs its own measurement.
+#
+# high_frac is 0.85 because max60 is a rolling max of HIGHS. An earlier
+# calibration used closes, which are strictly lower, and its 0.90 threshold
+# rejected every name in the case the work was built around. Do not restore 0.90
+# without re-measuring against the high-based column.
+#
+# window/fraction were calibrated on Jan-Sep 2026 and are not universal.
+tightness:
+  window: 4          # sessions averaged into the ratio
+  fraction: 0.30     # tightness at or below this is "tight"
+  high_frac: 0.85    # close at or above this share of max60 is "near the high"
+
 # L1 Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/l1_score.py docstring
 # for the full R1-R6 formula). Scores ALL tagged tickers above the liquidity

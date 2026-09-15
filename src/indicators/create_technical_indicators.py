@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import src.stock_utils as su
-from config.settings import PRICE_DATA_FILE, PRICE_DATA_TA_FILE
+from config.settings import CONFIG, PRICE_DATA_FILE, PRICE_DATA_TA_FILE
 
 
 def compute_spy_cum_norm_100(spy_df):
@@ -71,6 +71,72 @@ def compute_inside_day(open_, high, low, close):
     )
 
     return (range_engulf | body_engulf).astype(bool)
+
+
+TIGHTNESS_WINDOW = 4       # sessions averaged into the tightness ratio
+TIGHTNESS_FRACTION = 0.30  # tightness at or below this is "tight"
+TIGHTNESS_HIGH_FRAC = 0.85 # close at or above this share of max60 is "near the high"
+
+
+def compute_tightness(close, adr_pct, window=TIGHTNESS_WINDOW):
+    """Trailing-window mean of each bar's |close-to-close change| over that
+    bar's ADR%. Lower is tighter; a stock drifting at a fifth of its usual
+    range for four sessions reads ~0.2.
+
+    ⛔ The mean is taken over **per-bar ratios**. Dividing a windowed mean
+    change by a single ADR% is the obvious-looking simplification and it is a
+    different number: `adr_pct` is itself a 20-session rolling mean and moves
+    inside the window. The 0.30 default and the ~4% firing rate behind it were
+    calibrated on this form, so swapping the arithmetic silently re-tunes the
+    flag. `tests/test_tightness.py` pins the two apart.
+
+    A bar with a missing or non-positive ADR% contributes no ratio, and
+    ``min_periods=window`` then voids every window containing it — a partial
+    base must not report as a complete one. A zero ADR% would otherwise divide
+    to infinity and read as the loosest possible bar, which is backwards: a
+    stock with no range at all is unmeasurable here, not wild.
+    """
+    adr = pd.to_numeric(adr_pct, errors='coerce')
+    ratio = close.pct_change().abs() / adr.where(adr > 0)
+    ratio = ratio.replace([np.inf, -np.inf], np.nan)
+    return ratio.rolling(window, min_periods=window).mean().astype(float)
+
+
+def compute_tight_base(tightness, close, max60, close_to_ma,
+                       fraction=TIGHTNESS_FRACTION,
+                       high_frac=TIGHTNESS_HIGH_FRAC):
+    """Tightness qualified by location: quiet, on its averages, near its high.
+
+    ⛔ Do not read this flag as a predictive signal — measurement says the
+    location half carries the edge and the tightness half subtracts from it.
+    Over 165 sessions of 2026 across ~2,220 tagged tickers, theme-level rank IC
+    at a 10-session horizon: bare tightness breadth **-0.077**, this full
+    three-conjunct flag **+0.074**, and the control that drops the tightness and
+    EMA tests and keeps only "within 15% of the 60-day high" **+0.167** — more
+    than double, and above the 3-month-strength reference of +0.109. At ticker
+    level the located flag sits 0.15pp *below* the universe baseline.
+
+    So the flag earns its place as a **descriptive marker of a coiled chart**,
+    not as a ranking input. It is deliberately not weighted into any score.
+
+    An earlier calibration reported +0.060 for the located form and +0.54pp at
+    ticker level. That measurement derived the 60-day high from **closes**;
+    `max60` here is a rolling max of **highs**, which is strictly larger, so the
+    threshold did not transfer. Both figures are superseded — do not restore
+    them, and do not re-derive a threshold from a close-based high.
+
+    Both comparisons are inclusive, matching `compute_inside_day`: a bar that
+    exactly ties the threshold is the setup, not a near-miss.
+
+    Any NaN input yields False rather than pandas NA. The flag asserts that a
+    base happened, so it fails closed — a stock with no measurable history has
+    proved nothing, and an NA would read as truthy downstream.
+    """
+    tight = pd.to_numeric(tightness, errors='coerce') <= fraction
+    near_high = pd.to_numeric(close, errors='coerce') >= (
+        high_frac * pd.to_numeric(max60, errors='coerce'))
+    on_ma = close_to_ma.fillna(False).astype(bool)
+    return (tight & near_high & on_ma).fillna(False).astype(bool)
 
 
 DROP_WINDOW = 15    # sessions in the drawdown window
@@ -169,6 +235,15 @@ def calculate_technical_indicators():
     # SPY ATR14 + cumulative normalized change for VARS calculation (computed once)
     spy_cum_norm_100 = compute_spy_cum_norm_100(daily_price['SPY'])
 
+    # Tightness tunables, read once. The helpers keep module-level defaults so
+    # tests pin behaviour without reaching into config.
+    _tight_cfg = {
+        'window': TIGHTNESS_WINDOW,
+        'fraction': TIGHTNESS_FRACTION,
+        'high_frac': TIGHTNESS_HIGH_FRAC,
+    }
+    _tight_cfg.update(CONFIG.get('tightness', {}) or {})
+
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
 
@@ -254,6 +329,18 @@ def calculate_technical_indicators():
                 ((daily['close'] - daily['ema10']).abs() < 0.5 * daily['atr14']) |
                 ((daily['close'] - daily['ema20']).abs() < 0.5 * daily['atr14'])
             )
+
+            # Tightness + the located tight-base flag. Both ride the master
+            # table, so a back-dated session reports the flag as it stood then
+            # — unlike the day-pattern colouring, which reads only the last bar.
+            # See compute_tight_base for why the location conjuncts are not
+            # optional (bare tightness measures the wrong way round).
+            daily['tightness'] = compute_tightness(
+                daily['close'], daily['adr_pct'], window=_tight_cfg['window'])
+            daily['tight_base'] = compute_tight_base(
+                daily['tightness'], daily['close'], daily['max60'],
+                daily['close_to_ma'],
+                fraction=_tight_cfg['fraction'], high_frac=_tight_cfg['high_frac'])
 
             # Coiled-theme reusable setup features.
             # Retained so the standalone `coiled_theme` screener (kept but no longer

@@ -173,3 +173,111 @@ under point-in-time 4/08 tags — early only retroactively; tag lookahead), so
 - Everything at H=20 (≈ 6 independent windows), and any conclusion's
   generalization beyond the Jan–Jul 2026 regime. Re-run the harness after
   another quarter of history.
+
+---
+
+# Addendum: the coil leg (2026-09-15)
+
+**Status**: exploratory screen, **NOT pre-registered**. Read §9.1 before quoting
+any number here.
+**Data**: ~2,220 tagged tickers priced from yfinance (Sep 2025 → Sep 2026),
+165–170 scored sessions from 2026-01-02. Theme baskets are equal-weight over all
+L1 members with ≥ 6 priced members above $3; returns are excess vs SPY.
+**Harness**: ad hoc scripts, *not* `backtest_radar.py`. The harness gained the
+coil leg (`apply_weights` widened to four weights, `WEIGHT_GRID` plus a
+`coil_10`/`coil_20`/`coil_30` ladder) but has not been run on real master
+parquets for this question.
+
+## 9.1 Why this is not pre-registered, and what that costs
+
+§1 of this document records its protocol as written before any sweep, and that
+ordering is what makes its conclusions credible. **This addendum cannot make the
+same claim.** The parameters were chosen and the sweeps run during
+implementation, in response to an acceptance case that failed: the original
+threshold had been calibrated against a period high derived from *closes*, while
+the repo's `max50`/`max60` columns are rolling maxima of *highs*, which are
+strictly larger. Against the real column that threshold rejected every name in
+the motivating case, which forced a recalibration mid-flight.
+
+So treat every figure below as a **directional screen that shaped a display
+decision**, never as confirmation. Specifically, it does not establish:
+
+- Any interval. No bootstrap CI was computed. At H=10, 165 overlapping windows
+  give ≈ 16 independent observations, and §4's comparable measurement carried a
+  90% CI half-width of ≈ 0.072 — wider than most point estimates here.
+- Anything out-of-sample. The window, fraction and threshold were selected on
+  the same span that scored them, after comparing three windows, several
+  ticker-level definitions and three theme-level constructs. No
+  multiple-comparisons correction was applied.
+- Anything about the radar's own scoring path. Baskets are equal-weight over all
+  members, not the mean-of-top-M composite, and strength is a 3-month
+  relative-performance proxy rather than the shipped composite.
+- Anything about the population the gates apply to. These are ~2,220
+  yfinance-priced tagged tickers; the radar universe after its floors was 1,874.
+
+A pre-registered run against `backtest_radar.py` on real master parquets is the
+outstanding work. Write its protocol first.
+
+## 9.2 Theme-level breadth IC (H=10) — the result that decided the design
+
+| construct | mean IC | median | IC>0 |
+|---|---|---|---|
+| bare tightness breadth | **−0.077** | −0.048 | 43% |
+| shipped flag (tight + on MA + ≥ 0.70 × max50) | **+0.011** | +0.003 | 50% |
+| stricter variant (tight + on MA + ≥ 0.85 × max60) | +0.074 | +0.096 | 65% |
+| **control: period-high test, no tightness** | **+0.169** | +0.216 | 72% |
+| 3-month strength (reference) | +0.109 | +0.134 | 63% |
+
+**The control is the finding.** A near-period-high test carrying no tightness at
+all beats every tightness-bearing construct and beats the strength reference.
+The location half carries the edge; the tightness half subtracts from it. This
+control had not been run at theme level when the feature was designed, and
+running it is what stopped a ranking claim from shipping.
+
+That near-high result is itself a lead worth a real pre-registered run — it may
+simply be collinear with the existing `rs` and `vars` legs, which is exactly how
+the `fast` leg died in §3.
+
+## 9.3 Ticker-level forward 10-session excess (baseline −0.28%)
+
+| definition | share of rows | mean excess | vs baseline |
+|---|---|---|---|
+| bare tight (≤ 0.30) | 16.8% | −0.94% | −0.66pp |
+| tight + on EMA10/20 | 10.4% | −0.82% | −0.55pp |
+| **shipped flag** (+ ≥ 0.70 × max50) | **7.9%** | +0.11% | **+0.40pp** |
+| stricter (+ ≥ 0.85 × max60) | 5.0% | +0.21% | +0.49pp |
+| control: ≥ 0.85 × max60 alone | 53.5% | +0.24% | +0.53pp |
+
+The gate earns its place here even though it does not at theme level: it removes
+26% of otherwise-tight rows and moves the cohort from 0.66pp below baseline to
+0.40pp above it. That is the disqualifier doing its job — at 0.70 it passes 82%
+of all rows on its own, so it selects nothing.
+
+## 9.4 Coil weight sweep — shipped definition
+
+Strength z-score plus λ × coil-breadth z-score, L1 level:
+
+| λ | H=5 | H=10 |
+|---|---|---|
+| 0.00 | +0.0941 | +0.1089 |
+| **0.05** | **+0.0942** | **+0.1094** |
+| 0.10 | +0.0932 | +0.1087 |
+| 0.20 | +0.0910 | +0.1069 |
+| 0.30 | +0.0827 | +0.1003 |
+| 0.50 | +0.0743 | +0.0914 |
+
+0.05 is the argmax at both horizons and the gain is noise (+0.0001 / +0.0005).
+Everything above it costs real IC. **Shipped at 0.05 as a user dial**, with the
+marker and the counts rendering at any weight including zero.
+
+## 9.5 What would change the verdict
+
+- A pre-registered run of the `coil_*` ladder through `backtest_radar.py` on
+  real master parquets, with bootstrap intervals and the near-high control arm
+  scored over the same sessions.
+- A collinearity check of the near-high control against `rs_leg` and `vars_leg`.
+  If it is redundant, §9.2's headline is a restatement of momentum.
+- A conditional-entry study. Every figure here measures *holding* a coiled
+  stock; the entry this marker serves is a breakout the following session, which
+  nothing here models. That gap is why the flag ships as a marker and why its
+  weak unconditional numbers are not treated as disqualifying.

@@ -86,6 +86,34 @@ class CoilChipStyleTests(unittest.TestCase):
             CSS.index('.radar-chip.coiled.filtered-out'),
             CSS.index('.radar-chip.coiled.chip-quiet'))
 
+    def test_the_coil_tint_cannot_clobber_the_day_pattern_marker(self):
+        """The coil mark is a BACKGROUND so it composes with the green flag.
+
+        `(tight_day OR inside_day) AND close_to_ma` colours a chip's TEXT green
+        and predates this feature. The two are independent signals — a
+        single-bar entry pattern and a multi-day base — and a stock can carry
+        both, so neither may hide the other. Verified live: CDNA renders
+        `color: rgb(0,230,118)` on `background: rgba(176,133,245,0.3)`.
+
+        If the coil rule ever sets `color`, the green marker silently vanishes
+        on exactly the chips that matter most.
+        """
+        body = _rule_body('.radar-chip.coiled')
+        self.assertNotIn('color:', body.replace('background-color', ''))
+        # And both classes must still be pushed independently in the renderer.
+        self.assertIn("if (t.ticker_color === 'green') cls.push('day-pattern-green');", APP)
+        self.assertIn("if (t.coiled) cls.push('coiled');", APP)
+
+    def test_the_day_pattern_inputs_are_still_computed(self):
+        """`tight_base` stopped consuming `close_to_ma`, but the day-pattern
+        colouring still needs all three columns. Dropping any of them from the
+        indicator pipeline would blank the green marker across every tab."""
+        src = (Path(__file__).resolve().parents[1]
+               / 'src' / 'indicators' / 'create_technical_indicators.py'
+               ).read_text(encoding='utf-8')
+        for col in ("daily['inside_day']", "daily['tight_day']", "daily['close_to_ma']"):
+            self.assertIn(col, src, f'{col} is gone; the green day-pattern marker dies with it')
+
     def test_coil_colour_is_not_a_colour_another_state_owns(self):
         m = re.search(r'--coil:\s*([^;]+);', CSS)
         self.assertIsNotNone(m)

@@ -16,14 +16,12 @@ R1  Universe   = tagged tickers present in the master table, close >=
                  keeps liquid leaders; NaN vol_sma50 = young IPO, passes).
                  No screener gate and no fundamentals (unscreened members
                  have none).
-R2b Coil leg   = cross-sectional percentile of inverted tightness among stocks
-                 whose `tight_base` holds (tighter ranks higher); 0 for a stock
-                 that is not coiled, neutral only when tightness is absent. It
-                 is a DESCRIPTIVE marker: theme-level breadth of the flag scores
-                 a rank IC of +0.011 (a coin flip) while a period-high test with
-                 no tightness scores +0.169, so the weight is a user dial and
-                 not an earned default. Per-leaf and per-L1 `n_coiled` counts
-                 ride the payload regardless of the weight.
+R2b Coil leg   = BINARY. 100 when `tight_base` holds, 0 when it does not, and
+                 missing_default only when tightness could not be computed.
+                 The flag is already a threshold decision, so one knob carries
+                 one meaning: composite_weights.coil alone says how many
+                 composite points a coil is worth. Per-leaf and per-L1
+                 `n_coiled` counts ride the payload at any weight.
 R2  Composite  = weighted mean of four 0-100 legs (missing leg -> neutral
                  missing_default): rs (rs_sts_pct), vars_pct (percentile of
                  raw VARS across ALL tagged tickers in the master table,
@@ -47,6 +45,11 @@ R5  L1 score   = leaves grouped by taxonomy L1. l1_raw = mean of the top-K
                  itself scores boosted = l1_raw + boost. Single-leaf L1s get
                  no self-confirmation. A negative l1_raw yields a negative
                  boost — confirmation is symmetric.
+                 A second, ASYMMETRIC term adds coil_gamma * the share of
+                 members in a tight base, per leaf on its own share and per L1
+                 on its own. Share, not count, or it ranks by roster size.
+                 It never subtracts: a theme with no coiled members is not
+                 worse for it, merely not basing.
 R6  Ranks      = global_rank of leaves by boosted score across ALL scored
                  leaves; L1s ranked by boosted score. No display cap at
                  scoring level.
@@ -79,10 +82,8 @@ DEFAULTS = {
     'min_avg_volume_dollar_exempt': 40_000_000,
     # backtest 2026-07: fast leg is rho~0.81 redundant with rs and adds no
     # IC — zero-weighted (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
-    # coil 0.05 is the argmax of a 2026 sweep at H=5 and H=10 and is noise-level
-    # (+0.0001 / +0.0005 against weight 0); 0.10 and above cost real IC. It is a
-    # user dial, not an earned weight — see the `coil` comment in the config.
-    'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0, 'coil': 0.05},
+    'composite_weights': {'rs': 0.4, 'vars_pct': 0.4, 'fast': 0.0, 'coil': 0.2},
+    'coil_gamma': 0.5,   # theme-level coil-share boost; see rollup_l1s
     'fast_leg_column': 'rela_perf_1mo_rank',
     'missing_default': 50.0,
 }
@@ -107,15 +108,19 @@ def _leg_from_column(df: pd.DataFrame, column: str, missing_default: float) -> p
 
 
 def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
-    """0-100 leg from the coiled-base flag and its tightness ratio (R2b).
+    """0-100 leg from the coiled-base flag (R2b). **Binary: 100 or 0.**
 
-    Graded rather than binary: a flag alone puts a cliff in the middle of a
-    continuous quantity, so the leg is the cross-sectional percentile of
-    *inverted* tightness (tighter ranks higher) among the stocks whose
-    `tight_base` holds. A stock failing the flag scores 0 — it is not neutral
-    about being uncoiled, it simply is not coiled — while a stock with no
-    computable tightness scores `missing_default`, matching every other leg's
-    treatment of absent data.
+    A coiled stock scores 100, an uncoiled one 0, and a stock whose tightness
+    could not be computed scores `missing_default` — unmeasurable is not the
+    same as uncoiled, and every other leg treats absent data that way.
+
+    Binary is a deliberate choice over a graded percentile of tightness. The
+    flag is already a threshold decision, so grading it inside the leg would
+    re-introduce a continuum the user reads as a yes/no on the chart, and make
+    the weight mean two things at once (how coiled, and how much coiling
+    matters). One knob, one meaning: `radar.composite_weights.coil` alone says
+    how many composite points a coil is worth. The cost is a cliff at the
+    threshold, which is the price of legibility here.
 
     ⛔ Tightness is inverted (lower is tighter), so a zero-filled absence reads
     as the *strongest* possible value. `_build_radar_snapshot` deliberately
@@ -129,8 +134,7 @@ def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
     flagged = df['tight_base'].fillna(False).astype(bool)
 
     leg = pd.Series(0.0, index=df.index, dtype=float)
-    ranked = (-tight[flagged]).rank(pct=True, method='average') * 100
-    leg.loc[ranked.index] = ranked
+    leg[flagged] = 100.0
     # Unmeasurable is not the same as uncoiled.
     leg[tight.isna() & ~flagged] = missing_default
     return leg.astype(float)
@@ -276,6 +280,7 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
     """Z-score leaves, group by L1, apply the confirmation boost, rank (R4-R6)."""
     cfg = radar_config(cfg)
     beta = float(cfg['beta'])
+    gamma = float(cfg.get('coil_gamma', 0.0))
     top_k = int(cfg['top_k_leaves'])
     min_leaves = int(cfg['min_leaves_for_boost'])
 
@@ -294,18 +299,32 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
         leaves.sort(key=lambda lf: (-lf['raw'], lf['theme']))
         l1_raw = float(np.mean([lf['raw'] for lf in leaves[:top_k]]))
         boost = beta * l1_raw if len(leaves) >= min_leaves else 0.0
+        # Coil boost: gamma * the SHARE of members in a tight base, applied to
+        # each leaf on its own share and to the L1 on its own. Share, not count
+        # — the repo has learned three times (tape pressure, the SI tab, the
+        # coil sort) that a count ranks by roster size and buries exactly the
+        # small densely-coiled theme this is meant to surface.
+        #
+        # Unlike beta, this is asymmetric: it only ever adds. Beta encodes
+        # sibling confirmation, where broad weakness genuinely argues a theme
+        # down, so it is signed. Coiling carries no such claim — a theme with
+        # no coiled members is not thereby worse, it is simply not basing.
         for leaf in leaves:
-            leaf['boosted'] = leaf['raw'] + boost
+            leaf_share = (leaf.get('n_coiled', 0) / leaf['breadth']) if leaf['breadth'] else 0.0
+            leaf['coil_delta'] = gamma * leaf_share
+            leaf['boosted'] = leaf['raw'] + boost + leaf['coil_delta']
         members = {m['ticker'] for lf in leaves for m in lf['members']}
         # Distinct tickers: a stock tagged into two leaves of one L1 counts once,
         # matching how n_members is derived. Summing the leaf counts instead
         # would inflate exactly the densely-tagged L1s.
         coiled = {m['ticker'] for lf in leaves for m in lf['members'] if m['coiled']}
+        l1_coil_delta = gamma * (len(coiled) / len(members)) if members else 0.0
         l1s.append({
             'name': l1,
             'raw': l1_raw,
-            'boosted': l1_raw + boost,
+            'boosted': l1_raw + boost + l1_coil_delta,
             'delta': boost,
+            'coil_delta': l1_coil_delta,
             'n_leaves': len(leaves),
             'n_members': len(members),
             'n_coiled': len(coiled),

@@ -109,9 +109,6 @@ si_tab:
   hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
 
 # Tightness — the coiled-range detector behind the Themes tab's coil marker.
-# tightness = trailing-window mean of |daily close-to-close change| / that bar's
-# ADR%; tight_base additionally requires the stock to sit on its 10/20-day EMAs
-# and to hold at least high_frac of its high_lookback-session high.
 #
 # tightness = (max - min of the last `window` CLOSES) / mean close / ADR%, so
 # 0.30 means the closes sat in a band under a third of one average daily range.
@@ -132,9 +129,13 @@ si_tab:
 # is the value — forward 10-session excess runs 0.66pp BELOW the universe
 # baseline for bare tightness and above it once the gate applies.
 #
-# ⛔ DESCRIPTIVE marker, never a ranking input. A period-high test carrying NO
-# tightness scores a theme-level IC of +0.169 against ~+0.01 for the flag, so
-# the location half carries the edge. Nothing here is weighted into any score.
+# ⛔ Know what this flag is NOT. A period-high test carrying no tightness at all
+# scores a theme-level IC of +0.169 against ~+0.03 for this flag, so on pure
+# ranking the location half carries the edge and tightness adds little. The flag
+# IS weighted into the composite (radar.composite_weights.coil) because it marks
+# the setup a breakout entry needs, which no unconditional forward-return
+# measurement here models — not because it out-predicts strength. Do not quote
+# the weight as evidence that it does.
 #
 # high_lookback must exist in min_max_lookback (create_technical_indicators);
 # the code raises rather than silently substituting another window. The high is
@@ -168,17 +169,26 @@ radar:
                                 #   ejects high-priced names, and STRL/CRS/ARGX-class
                                 #   liquid leaders must stay (assessment 2026-07-24)
   composite_weights:            # per-ticker composite legs (each 0-100)
-    rs: 0.5                     #   rs_sts_pct (27d RS-line freshness)
-    vars_pct: 0.5               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
+    rs: 0.4                     #   rs_sts_pct (27d RS-line freshness)
+    vars_pct: 0.4               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
     fast: 0.0                   #   rela_perf_1mo_rank — zero-weighted, backtest 2026-07: rs~fast
                                 #   Spearman +0.81 and no incremental IC anywhere in the grid
                                 #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
-    coil: 0.05                  #   coiled-base percentile. Swept over 165-170 sessions of 2026:
-                                #   0.05 is the argmax at both H=5 and H=10 but the gain is
-                                #   noise (+0.0001 / +0.0005 vs weight 0), and 0.10+ costs real
-                                #   IC (-0.002 at 0.10, -0.009 at 0.30, -0.018 at 0.50). Set it
-                                #   to 0 to rank on strength alone; the coil marker and the
-                                #   n_coiled counts render either way.
+    coil: 0.2                   #   BINARY tight_base flag (100 or 0, never graded). At 0.2 of a
+                                #   normalized 1.0 a coiled stock gains exactly 20 composite
+                                #   points over an identical uncoiled one -- a deliberate,
+                                #   visible lever, not a tiebreak. Set to 0 to rank on strength
+                                #   alone; the marker, the counts and the pinned strip all
+                                #   render at any weight.
+  coil_gamma: 0.5               # theme-level boost: adds gamma * the SHARE of members in a
+                                #   tight base, per leaf on its own share and per L1 on its
+                                #   own. SHARE, not count, or it reranks by roster size (the
+                                #   lesson the tape-pressure board, the SI tab and the coil
+                                #   sort each recorded). Asymmetric unlike beta -- it only
+                                #   adds, because a theme with no coiled members is not worse
+                                #   for it, merely not basing. Leaf z-scores are ~N(0,1), so
+                                #   gamma 1.0 moves a fully-coiled theme by about one standard
+                                #   deviation of leaf score.
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
   tickers_per_leaf: 10          # chips per leaf in radar_history.json (radar.json

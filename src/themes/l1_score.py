@@ -16,7 +16,13 @@ R1  Universe   = tagged tickers present in the master table, close >=
                  keeps liquid leaders; NaN vol_sma50 = young IPO, passes).
                  No screener gate and no fundamentals (unscreened members
                  have none).
-R2  Composite  = weighted mean of three 0-100 legs (missing leg -> neutral
+R2b Coil leg   = BINARY. 100 when `tight_base` holds, 0 when it does not, and
+                 missing_default only when tightness could not be computed.
+                 The flag is already a threshold decision, so one knob carries
+                 one meaning: composite_weights.coil alone says how many
+                 composite points a coil is worth. Per-leaf and per-L1
+                 `n_coiled` counts ride the payload at any weight.
+R2  Composite  = weighted mean of four 0-100 legs (missing leg -> neutral
                  missing_default): rs (rs_sts_pct), vars_pct (percentile of
                  raw VARS across ALL tagged tickers in the master table,
                  computed before the price/liquidity floors — wide anchoring
@@ -39,6 +45,11 @@ R5  L1 score   = leaves grouped by taxonomy L1. l1_raw = mean of the top-K
                  itself scores boosted = l1_raw + boost. Single-leaf L1s get
                  no self-confirmation. A negative l1_raw yields a negative
                  boost — confirmation is symmetric.
+                 A second, ASYMMETRIC term adds coil_gamma * the share of
+                 members in a tight base, per leaf on its own share and per L1
+                 on its own. Share, not count, or it ranks by roster size.
+                 It never subtracts: a theme with no coiled members is not
+                 worse for it, merely not basing.
 R6  Ranks      = global_rank of leaves by boosted score across ALL scored
                  leaves; L1s ranked by boosted score. No display cap at
                  scoring level.
@@ -71,7 +82,8 @@ DEFAULTS = {
     'min_avg_volume_dollar_exempt': 40_000_000,
     # backtest 2026-07: fast leg is rho~0.81 redundant with rs and adds no
     # IC — zero-weighted (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
-    'composite_weights': {'rs': 0.5, 'vars_pct': 0.5, 'fast': 0.0},
+    'composite_weights': {'rs': 0.4, 'vars_pct': 0.4, 'fast': 0.0, 'coil': 0.2},
+    'coil_gamma': 0.5,   # theme-level coil-share boost; see rollup_l1s
     'fast_leg_column': 'rela_perf_1mo_rank',
     'missing_default': 50.0,
 }
@@ -93,6 +105,52 @@ def _leg_from_column(df: pd.DataFrame, column: str, missing_default: float) -> p
     else:
         leg = pd.Series(np.nan, index=df.index)
     return leg.fillna(missing_default)
+
+
+def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
+    """0-100 leg from the coiled-base flag (R2b). **Binary: 100 or 0.**
+
+    A coiled stock scores 100 and everything else scores 0, **including a stock
+    whose tightness could not be computed**.
+
+    ⛔ This leg does NOT use `missing_default`, and it is the only leg that
+    does not. The other legs are percentiles or 0-100 ranks, where 50 really is
+    the middle. This one is binary and the flag fires on ~9% of the universe,
+    so the leg's population mean is about 9 and `missing_default` of 50 sits
+    near its 95th percentile. At weight 0.2 that handed an unmeasurable stock
+    **10 composite points** over an identical measured-uncoiled one — half a
+    coil, for having no data — and the population that collects it is recent
+    listings, whose `adr_pct` is NaN and which the radar universe deliberately
+    admits. The display half of this feature fails closed (`compute_tight_base`
+    and `compute_leaf_scores` both do); the ranking half must not fail open.
+
+    Scoring 0 is the same reading every other consumer of the flag already
+    takes: not coiled. It is not a claim that the stock is uncoiled, only that
+    nothing here has established that it is coiled.
+
+    Binary is a deliberate choice over a graded percentile of tightness. The
+    flag is already a threshold decision, so grading it inside the leg would
+    re-introduce a continuum the user reads as a yes/no on the chart, and make
+    the weight mean two things at once (how coiled, and how much coiling
+    matters). One knob, one meaning: `radar.composite_weights.coil` alone says
+    how many composite points a coil is worth. The cost is a cliff at the
+    threshold, which is the price of legibility here.
+
+    ⛔ Tightness is inverted (lower is tighter), so a zero-filled absence reads
+    as the *strongest* possible value. `_build_radar_snapshot` deliberately
+    loads the master parquet without `.fillna(0)` for this reason; the explicit
+    NaN check here is the second line of defence, not the only one.
+    """
+    # Whole column absent (a back-dated parquet predating the indicator) — the
+    # leg must contribute nothing rather than a neutral-looking 50, for the
+    # same reason a single missing row scores 0.
+    if 'tightness' not in df.columns or 'tight_base' not in df.columns:
+        return pd.Series(0.0, index=df.index, dtype=float)
+
+    flagged = df['tight_base'].fillna(False).astype(bool)
+    leg = pd.Series(0.0, index=df.index, dtype=float)
+    leg[flagged] = 100.0
+    return leg.astype(float)
 
 
 def build_radar_universe(
@@ -141,17 +199,20 @@ def build_radar_universe(
     df = df.copy()
     df['rs_leg'] = _leg_from_column(df, 'rs_sts_pct', missing)
     df['fast_leg'] = _leg_from_column(df, str(cfg['fast_leg_column']), missing)
+    df['coil_leg'] = _coil_leg(df, missing)
 
     weights = cfg['composite_weights'] or DEFAULTS['composite_weights']
     w_rs = float(weights.get('rs', 0))
     w_vars = float(weights.get('vars_pct', 0))
     w_fast = float(weights.get('fast', 0))
-    total = w_rs + w_vars + w_fast
+    w_coil = float(weights.get('coil', 0))
+    total = w_rs + w_vars + w_fast + w_coil
     if total <= 0:
-        w_rs = w_vars = w_fast = 1.0
-        total = 3.0
+        w_rs = w_vars = w_fast = w_coil = 1.0
+        total = 4.0
     df['composite'] = (
-        w_rs * df['rs_leg'] + w_vars * df['vars_leg'] + w_fast * df['fast_leg']
+        w_rs * df['rs_leg'] + w_vars * df['vars_leg']
+        + w_fast * df['fast_leg'] + w_coil * df['coil_leg']
     ) / total
 
     return df.reset_index(drop=True)
@@ -191,6 +252,13 @@ def compute_leaf_scores(
             # $40M dollar-volume waiver, which the view lens has no part in.
             dvol_val = row.get('avg_dollar_vol')
             adr_val = row.get('adr_pct')
+            tight_val = row.get('tightness')
+            # pd.notna, not `.get(..., False)`: Series.get returns its default
+            # only when the KEY is absent, so a present-but-NaN tight_base would
+            # come back as NaN — and bool(nan) is True. That would publish an
+            # unmeasurable row as coiled, the exact inversion the rest of this
+            # feature defends against. Fails closed, like _coil_leg above.
+            coiled_val = row.get('tight_base')
             members.append({
                 'ticker': str(t).upper(),
                 'composite': float(row['composite']),
@@ -199,6 +267,8 @@ def compute_leaf_scores(
                 'price': float(row['close']) if pd.notna(row.get('close')) else None,
                 'avg_dollar_vol': float(dvol_val) if pd.notna(dvol_val) else None,
                 'adr_pct': float(adr_val) if pd.notna(adr_val) else None,
+                'tightness': float(tight_val) if pd.notna(tight_val) else None,
+                'coiled': bool(coiled_val) if pd.notna(coiled_val) else False,
             })
         if len(members) < min_breadth:
             continue
@@ -213,6 +283,7 @@ def compute_leaf_scores(
             'l3': l3,
             'composite_avg': float(np.mean([m['composite'] for m in top])),
             'breadth': len(members),
+            'n_coiled': sum(1 for m in members if m['coiled']),
             'members': members,
         })
     return leaf_scores
@@ -222,6 +293,7 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
     """Z-score leaves, group by L1, apply the confirmation boost, rank (R4-R6)."""
     cfg = radar_config(cfg)
     beta = float(cfg['beta'])
+    gamma = float(cfg.get('coil_gamma', 0.0))
     top_k = int(cfg['top_k_leaves'])
     min_leaves = int(cfg['min_leaves_for_boost'])
 
@@ -240,16 +312,35 @@ def rollup_l1s(leaf_scores: List[dict], cfg: Optional[dict] = None) -> dict:
         leaves.sort(key=lambda lf: (-lf['raw'], lf['theme']))
         l1_raw = float(np.mean([lf['raw'] for lf in leaves[:top_k]]))
         boost = beta * l1_raw if len(leaves) >= min_leaves else 0.0
+        # Coil boost: gamma * the SHARE of members in a tight base, applied to
+        # each leaf on its own share and to the L1 on its own. Share, not count
+        # — the repo has learned three times (tape pressure, the SI tab, the
+        # coil sort) that a count ranks by roster size and buries exactly the
+        # small densely-coiled theme this is meant to surface.
+        #
+        # Unlike beta, this is asymmetric: it only ever adds. Beta encodes
+        # sibling confirmation, where broad weakness genuinely argues a theme
+        # down, so it is signed. Coiling carries no such claim — a theme with
+        # no coiled members is not thereby worse, it is simply not basing.
         for leaf in leaves:
-            leaf['boosted'] = leaf['raw'] + boost
+            leaf_share = (leaf.get('n_coiled', 0) / leaf['breadth']) if leaf['breadth'] else 0.0
+            leaf['coil_delta'] = gamma * leaf_share
+            leaf['boosted'] = leaf['raw'] + boost + leaf['coil_delta']
         members = {m['ticker'] for lf in leaves for m in lf['members']}
+        # Distinct tickers: a stock tagged into two leaves of one L1 counts once,
+        # matching how n_members is derived. Summing the leaf counts instead
+        # would inflate exactly the densely-tagged L1s.
+        coiled = {m['ticker'] for lf in leaves for m in lf['members'] if m['coiled']}
+        l1_coil_delta = gamma * (len(coiled) / len(members)) if members else 0.0
         l1s.append({
             'name': l1,
             'raw': l1_raw,
-            'boosted': l1_raw + boost,
+            'boosted': l1_raw + boost + l1_coil_delta,
             'delta': boost,
+            'coil_delta': l1_coil_delta,
             'n_leaves': len(leaves),
             'n_members': len(members),
+            'n_coiled': len(coiled),
             'leaves': leaves,
         })
 
@@ -311,6 +402,7 @@ def compute_radar(
             'min_avg_volume': float(cfg['min_avg_volume']),
             'min_avg_volume_dollar_exempt': float(cfg['min_avg_volume_dollar_exempt']),
             'composite_weights': dict(cfg['composite_weights']),
+            'coil_weight': float((cfg['composite_weights'] or {}).get('coil', 0)),
         },
         'universe_size': int(len(universe)),
         'n_leaves_scored': rolled['n_leaves_scored'],

@@ -39,7 +39,14 @@ def make_master(rows):
     return pd.DataFrame([{**defaults, **r} for r in rows])
 
 
-def make_leaf(theme, l1, composite_avg, n_members=3):
+def make_leaf(theme, l1, composite_avg, n_members=3, n_coiled=0):
+    """Leaf fixture mirroring what compute_leaf_scores emits.
+
+    Members carry `coiled` because rollup_l1s counts distinct coiled tickers
+    per L1. The fixture keeps the same shape as the real producer rather than
+    letting the production code default a missing key — a silent default there
+    would turn a wiring bug into a permanently-zero count.
+    """
     return {
         'theme': theme,
         'l1': l1,
@@ -47,9 +54,10 @@ def make_leaf(theme, l1, composite_avg, n_members=3):
         'l3': None,
         'composite_avg': composite_avg,
         'breadth': n_members,
+        'n_coiled': n_coiled,
         'members': [
             {'ticker': f'{theme[:2].upper()}{i}', 'composite': composite_avg,
-             'rs': 50.0, 'vars': 0.0, 'price': 10.0}
+             'rs': 50.0, 'vars': 0.0, 'price': 10.0, 'coiled': i < n_coiled}
             for i in range(n_members)
         ],
     }
@@ -152,6 +160,224 @@ class ComputeLeafScoresTests(unittest.TestCase):
         self.assertAlmostEqual(leaf['composite_avg'], float(expected))
         composites = [m['composite'] for m in leaf['members']]
         self.assertEqual(composites, sorted(composites, reverse=True))
+
+
+class CoilLegTests(unittest.TestCase):
+    """The coil leg and the n_coiled counts.
+
+    The leg exists so the weight is a dial the user can turn; it is not an
+    earned default. Theme-level breadth of `tight_base` scores a rank IC of
+    +0.011 against +0.169 for a period-high test carrying no tightness, so
+    these tests pin mechanics and the zero-weight invariant, never a claim
+    that the leg predicts anything.
+    """
+
+    def _master(self, rows):
+        return make_master(rows)
+
+    def test_zero_weight_leaves_composites_untouched(self):
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 80.0, 'vars': 2.0,
+             'tightness': 0.10, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 80.0, 'vars': 2.0,
+             'tightness': 0.90, 'tight_base': False},
+        ]
+        cfg_off = {**CFG, 'composite_weights': {'rs': 0.5, 'vars_pct': 0.5,
+                                                'fast': 0.0, 'coil': 0.0}}
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB'}, cfg_off)
+        a = uni.set_index('ticker')['composite']
+        # Same rs and vars, opposite coil: at weight 0 they must not differ.
+        self.assertAlmostEqual(a['AAA'], a['BBB'])
+
+    def test_non_zero_weight_lifts_the_coiled_stock(self):
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 80.0, 'vars': 2.0,
+             'tightness': 0.10, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 80.0, 'vars': 2.0,
+             'tightness': 0.90, 'tight_base': False},
+        ]
+        cfg_on = {**CFG, 'composite_weights': {'rs': 0.5, 'vars_pct': 0.5,
+                                               'fast': 0.0, 'coil': 0.2}}
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB'}, cfg_on)
+        a = uni.set_index('ticker')['composite']
+        self.assertGreater(a['AAA'], a['BBB'])
+
+    def test_the_coil_leg_is_binary(self):
+        # A coiled stock scores 100 flat, not a percentile of how coiled it is.
+        # The flag is already a threshold decision; grading it would make the
+        # weight mean two things at once.
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 50.0, 'tightness': 0.01, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 50.0, 'tightness': 0.29, 'tight_base': True},
+        ]
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB'}, CFG)
+        leg = uni.set_index('ticker')['coil_leg']
+        self.assertEqual(leg['AAA'], 100.0)
+        self.assertEqual(leg['BBB'], 100.0)
+
+    def test_a_coil_is_worth_its_weight_in_composite_points(self):
+        # With coil weighted 0.2 of a normalized 1.0, a coiled stock gains
+        # exactly 20 points over an otherwise identical uncoiled one.
+        cfg = {**CFG, 'composite_weights': {'rs': 0.4, 'vars_pct': 0.4,
+                                            'fast': 0.0, 'coil': 0.2}}
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 60.0, 'vars': 1.0,
+             'tightness': 0.1, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 60.0, 'vars': 1.0,
+             'tightness': 0.9, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB'}, cfg)
+        c = uni.set_index('ticker')['composite']
+        self.assertAlmostEqual(c['AAA'] - c['BBB'], 20.0, places=6)
+
+    def test_an_unmeasurable_stock_gains_nothing_from_the_coil_leg(self):
+        """The ranking half must fail closed, like the display half.
+
+        This leg is the one leg that does NOT use `missing_default`. The others
+        are percentiles where 50 is genuinely the middle; this one is binary and
+        fires on ~9% of the universe, so its population mean is about 9 and 50
+        sits near its 95th percentile. At weight 0.2 a neutral default handed an
+        unmeasurable stock 10 composite points over an identical measured
+        uncoiled one — and recent listings, whose `adr_pct` is NaN, are exactly
+        the population that would collect it.
+        """
+        cfg = {**CFG, 'composite_weights': {'rs': 0.4, 'vars_pct': 0.4,
+                                            'fast': 0.0, 'coil': 0.2}}
+        rows = [
+            {'ticker': 'MEASURED', 'rs_sts_pct': 50.0, 'vars': 0.0,
+             'tightness': 0.9, 'tight_base': False},
+            {'ticker': 'NODATA', 'rs_sts_pct': 50.0, 'vars': 0.0,
+             'tightness': np.nan, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'MEASURED', 'NODATA'}, cfg)
+        c = uni.set_index('ticker')['composite']
+        self.assertEqual(c['NODATA'], c['MEASURED'])
+
+    def test_only_a_coiled_stock_scores_on_the_leg(self):
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 50.0, 'tightness': 0.10, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 50.0, 'tightness': 0.90, 'tight_base': False},
+            {'ticker': 'CCC', 'rs_sts_pct': 50.0, 'tightness': np.nan, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB', 'CCC'}, CFG)
+        leg = uni.set_index('ticker')['coil_leg']
+        self.assertEqual(leg['AAA'], 100.0)
+        self.assertEqual(leg['BBB'], 0.0)
+        # Scoring 0 is not a claim that CCC is uncoiled -- only that nothing
+        # here established that it IS coiled. See _coil_leg's docstring.
+        self.assertEqual(leg['CCC'], 0.0)
+
+    def test_absent_columns_contribute_nothing_and_do_not_raise(self):
+        # A back-dated parquet predating the indicator. The leg must add no
+        # points rather than hand every row a neutral-looking 50.
+        rows = [{'ticker': 'AAA', 'rs_sts_pct': 50.0}]
+        uni = build_radar_universe(self._master(rows), {'AAA'}, CFG)
+        self.assertEqual(uni['coil_leg'].iloc[0], 0.0)
+
+    def test_leaf_and_l1_counts_are_distinct_tickers(self):
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 70.0, 'tightness': 0.1, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 70.0, 'tightness': 0.2, 'tight_base': True},
+            {'ticker': 'CCC', 'rs_sts_pct': 70.0, 'tightness': 0.8, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB', 'CCC'}, CFG)
+        # AAA sits in both leaves of the same L1; it must count once at L1.
+        theme_map = {
+            'Cybersecurity / Network': ['AAA', 'BBB', 'CCC'],
+            'Cybersecurity / Identity': ['AAA', 'CCC'],
+        }
+        leaves = compute_leaf_scores(uni, theme_map, CFG)
+        by_theme = {lf['theme']: lf for lf in leaves}
+        self.assertEqual(by_theme['Cybersecurity / Network']['n_coiled'], 2)
+        self.assertEqual(by_theme['Cybersecurity / Identity']['n_coiled'], 1)
+        rolled = rollup_l1s(leaves, CFG)
+        l1 = next(e for e in rolled['l1s'] if e['name'] == 'Cybersecurity')
+        self.assertEqual(l1['n_coiled'], 2)      # AAA + BBB, AAA not double-counted
+        self.assertEqual(l1['n_members'], 3)
+
+    def test_a_nan_tight_base_is_not_coiled(self):
+        # Series.get returns its default only when the KEY is absent, so a
+        # present-but-NaN tight_base comes back as NaN — and bool(nan) is True.
+        # Without an explicit pd.notna guard an unmeasurable row publishes as
+        # coiled, which is the inversion this whole feature defends against.
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 70.0, 'tightness': 0.1, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 70.0, 'tightness': 0.2, 'tight_base': np.nan},
+        ]
+        uni = build_radar_universe(make_master(rows), {'AAA', 'BBB'}, CFG)
+        leaves = compute_leaf_scores(uni, {'Cybersecurity / Network': ['AAA', 'BBB']}, CFG)
+        by_ticker = {m['ticker']: m for m in leaves[0]['members']}
+        self.assertTrue(by_ticker['AAA']['coiled'])
+        self.assertFalse(by_ticker['BBB']['coiled'])
+        self.assertEqual(leaves[0]['n_coiled'], 1)
+
+    def test_members_carry_tightness_and_coiled(self):
+        rows = [
+            {'ticker': 'AAA', 'rs_sts_pct': 70.0, 'tightness': 0.15, 'tight_base': True},
+            {'ticker': 'BBB', 'rs_sts_pct': 70.0, 'tightness': np.nan, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'AAA', 'BBB'}, CFG)
+        leaves = compute_leaf_scores(uni, {'Cybersecurity / Network': ['AAA', 'BBB']}, CFG)
+        by_ticker = {m['ticker']: m for m in leaves[0]['members']}
+        self.assertAlmostEqual(by_ticker['AAA']['tightness'], 0.15)
+        self.assertTrue(by_ticker['AAA']['coiled'])
+        # A missing figure serializes as None, never NaN — NaN is not valid
+        # JSON and would break the page rather than degrade it.
+        self.assertIsNone(by_ticker['BBB']['tightness'])
+        self.assertFalse(by_ticker['BBB']['coiled'])
+
+
+class CoilGammaTests(unittest.TestCase):
+    """The theme-level coil boost: gamma * the SHARE of coiled members."""
+
+    def _cfg(self, gamma):
+        return {**CFG, 'coil_gamma': gamma}
+
+    def test_gamma_zero_changes_nothing(self):
+        leaves = [make_leaf(f'AI / L{i}', 'AI', 50.0 + i, n_members=4, n_coiled=2)
+                  for i in range(3)]
+        off = rollup_l1s([dict(l) for l in leaves], self._cfg(0.0))
+        self.assertAlmostEqual(off['l1s'][0]['coil_delta'], 0.0)
+
+    def test_boost_scales_with_share_not_count(self):
+        # Two L1s, same coiled COUNT, different rosters. The smaller one must
+        # get the larger boost, or this reranks by roster size -- the mistake
+        # the tape-pressure board, the SI tab and the coil sort each recorded.
+        small = [make_leaf('AI / S1', 'AI', 50.0, n_members=4, n_coiled=2),
+                 make_leaf('AI / S2', 'AI', 50.0, n_members=4, n_coiled=0)]
+        big = [make_leaf('Biotech / B1', 'Biotech', 50.0, n_members=20, n_coiled=2),
+               make_leaf('Biotech / B2', 'Biotech', 50.0, n_members=20, n_coiled=0)]
+        out = rollup_l1s(small + big, self._cfg(1.0))
+        by = {e['name']: e for e in out['l1s']}
+        self.assertEqual(by['AI']['n_coiled'], by['Biotech']['n_coiled'])
+        self.assertGreater(by['AI']['coil_delta'], by['Biotech']['coil_delta'])
+
+    def test_boost_never_subtracts(self):
+        # Asymmetric by design, unlike beta: a theme with no coiled members is
+        # not worse for it, merely not basing.
+        leaves = [make_leaf(f'AI / L{i}', 'AI', 50.0, n_members=4, n_coiled=0)
+                  for i in range(3)]
+        out = rollup_l1s(leaves, self._cfg(2.0))
+        self.assertAlmostEqual(out['l1s'][0]['coil_delta'], 0.0)
+        for lf in out['l1s'][0]['leaves']:
+            self.assertGreaterEqual(lf['coil_delta'], 0.0)
+
+    def test_leaf_boost_uses_the_leaf_own_share(self):
+        # A fully coiled leaf inside a sparsely coiled L1 still surfaces.
+        leaves = [make_leaf('AI / Hot', 'AI', 50.0, n_members=3, n_coiled=3),
+                  make_leaf('AI / Cold', 'AI', 50.0, n_members=12, n_coiled=0)]
+        out = rollup_l1s(leaves, self._cfg(1.0))
+        by = {lf['theme']: lf for lf in out['l1s'][0]['leaves']}
+        self.assertAlmostEqual(by['AI / Hot']['coil_delta'], 1.0)
+        self.assertAlmostEqual(by['AI / Cold']['coil_delta'], 0.0)
+
+    def test_a_coiled_l1_outranks_an_equal_uncoiled_one(self):
+        coiled = [make_leaf(f'AI / C{i}', 'AI', 50.0, n_members=4, n_coiled=3)
+                  for i in range(2)]
+        plain = [make_leaf(f'Biotech / P{i}', 'Biotech', 50.0, n_members=4, n_coiled=0)
+                 for i in range(2)]
+        out = rollup_l1s(coiled + plain, self._cfg(1.0))
+        self.assertEqual(out['l1s'][0]['name'], 'AI')
 
 
 class RollupTests(unittest.TestCase):

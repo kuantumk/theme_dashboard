@@ -1895,6 +1895,14 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     if body is None:
         return None
 
+    # A back-dated parquet predating the indicator has no tightness columns, so
+    # every n_coiled would be a truthful 0 — and the dashboard cannot tell that
+    # from "the market has no coiled themes today", which is a claim about the
+    # market made from an absence of data. Publish null instead so the strip
+    # hides rather than asserting. Same failure shape as the frozen NAAIM tile
+    # and the undated SI roster.
+    has_coil = 'tight_base' in master_df.columns and 'tightness' in master_df.columns
+
     l1s = []
     for l1_entry in body['l1s']:
         leaves = []
@@ -1907,6 +1915,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'price': round(m['price'], 2) if m['price'] is not None else None,
                 'dollar_vol': _int_or_none(m.get('avg_dollar_vol')),
                 'adr_pct': _round_or_none(m.get('adr_pct'), 4),
+                # NaN is not valid JSON and would break the page rather than
+                # degrade it, so an unmeasurable figure serializes as null.
+                'tightness': _round_or_none(m.get('tightness'), 3),
+                'coiled': bool(m.get('coiled', False)),
                 'is_screened': bool(m.get('is_screened', False)),
             } for m in (leaf['members'] if tickers_per_leaf is None
                         else leaf['members'][:tickers_per_leaf])]
@@ -1920,6 +1932,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'raw': round(leaf['raw'], 3),
                 'boosted': round(leaf['boosted'], 3),
                 'n': leaf['breadth'],
+                # Count over ALL scored members, not just the chips that
+                # survived tickers_per_leaf — a capped history entry must not
+                # report a smaller coil count than the same session's radar.json.
+                'n_coiled': leaf.get('n_coiled') if has_coil else None,
                 'tickers': ticker_dicts,
             })
         l1s.append({
@@ -1931,6 +1947,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
             'n_leaves': l1_entry['n_leaves'],
             'n_members': l1_entry['n_members'],
             'n_screened': l1_entry['n_screened'],
+            'n_coiled': l1_entry.get('n_coiled') if has_coil else None,
             'leaves': leaves,
         })
 

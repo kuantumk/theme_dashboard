@@ -26,6 +26,12 @@
      distinct from --amber, which the V/A cutoff dropdowns own in the same panel. */
   --yellow: #ffd700;
   --ydim: rgba(255, 215, 0, 0.10);
+  /* Coil marker. Violet because every other hue on a radar chip is spoken for:
+     green is the day-pattern flag, blue is screened/hover, yellow is selection,
+     amber belongs to the V/A cutoffs and the HOT badge. The alpha is high
+     because the chip's own opacity multiplies it — see .radar-chip.coiled. */
+  --coil: #b085f5;
+  --coil-dim: rgba(176, 133, 245, 0.30);
   /* L1 section band — an indigo-tinted lift of --bg4 in the --accent hue, so a
      new L1 reads as a break in a long scroll without introducing a new color. */
   --l1-bg: #161a2c;
@@ -1702,6 +1708,139 @@ tbody tr.nav-active {
   flex-shrink: 0;
 }
 
+/* Coil count on a leaf or L1 header. Deliberately NOT folded into .radar-n or
+   .theme-score: those are 10-11px --text3/--text2, the dimmest treatments on
+   the row and the ones a scanning eye is trained to skip. This is the one
+   signal the tab exists to surface, so it gets the .hot-badge treatment in the
+   coil colour instead. */
+.coil-badge {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--coil);
+  border: 1px solid var(--coil);
+  padding: 0 4px;
+  margin-left: 6px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Coil sort control. Lives in the tab body, not the time-travel bar: the
+   list panel's default width is measured from the widest bar, so adding a
+   control there would re-wrap it and force a re-measure (see CLAUDE.md). This
+   sort also applies to one tab only, which makes the shared bar the wrong
+   home for it regardless. */
+/* Pinned coil strip. This is the feature's answer to the original miss: a
+   coiled theme at rank 27 is unreachable by a marker inside its own block,
+   because the reader never scrolls that far. The strip names the leading
+   coiled themes above the board, at any rank, with no click required. Ranked
+   by share rather than raw count — rosters run 2 to 214 members, so a raw
+   count just lists the biggest L1s (same lesson as byCoil, the tape-pressure
+   board, and the SI tab). */
+.coil-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 9px;
+  margin-bottom: 8px;
+  border: 1px solid var(--coil);
+  border-radius: 3px;
+  background: var(--coil-dim);
+}
+
+.coil-strip-empty {
+  border-color: var(--border);
+  background: none;
+}
+
+.coil-strip-label {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--coil);
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+
+.coil-strip-empty .coil-strip-label {
+  color: var(--text3);
+}
+
+.coil-pins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.coil-pin {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.coil-pin:hover {
+  border-color: var(--coil);
+}
+
+.coil-pin-n {
+  color: var(--text3);
+  margin-left: 3px;
+}
+
+.coil-pin-pct {
+  color: var(--coil);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Landing flash after a pin jump, so the eye finds the block it asked for.
+   Outline, not border or padding: the block is a flex/box container whose
+   size must not shift, and an outline is drawn outside the box model. */
+.theme-block.coil-jump {
+  outline: 1px solid var(--coil);
+  outline-offset: 2px;
+}
+
+.radar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 8px;
+}
+
+.coil-sort-btn {
+  font-family: var(--display);
+  font-size: 10px;
+  color: var(--text3);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 9px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.coil-sort-btn:hover {
+  color: var(--text2);
+  border-color: var(--text3);
+}
+
+/* On-state carries the coil colour, not amber: amber is the V/A cutoffs', and
+   this control re-orders rather than filtering. The distinction matters because
+   nothing is hidden when this is on. */
+.coil-sort-btn.on {
+  color: var(--coil);
+  border-color: var(--coil);
+}
+
 .radar-scores {
   font-family: var(--mono);
   font-size: 11px;
@@ -1772,6 +1911,31 @@ tbody tr.nav-active {
   opacity: 1;
 }
 
+/* Coiled: the last 3 closes sat in a band under 0.30 ADR, and the close holds
+   at least 0.70 of the 50-day high. (No moving-average test — that conjunct was
+   measured out; see compute_tight_base.) A BACKGROUND, never a colour or a border — colour is taken by the green
+   day-pattern flag, yellow by selection, blue by screened and hover, and a
+   border or any layout-affecting property would change chip width, which
+   syncRadarClamps measures to derive the "+N more" count. */
+.radar-chip.coiled {
+  background: var(--coil-dim);
+}
+
+/* The unscreened dim (0.55) would swallow the tint on MOST coiled chips: a
+   coiling stock has low RS by construction, which is exactly what keeps it out
+   of the screeners. Restore most of the opacity so the marker survives the
+   state it will usually be in. */
+.radar-chip.coiled.chip-quiet {
+  opacity: 0.85;
+}
+
+/* An armed V/A cutoff still wins — it is an explicit request to push the row
+   back, and it outranks our wish to advertise the coil. Three classes to match
+   the specificity of the rule above; source order alone would not do it. */
+.radar-chip.coiled.filtered-out {
+  opacity: 0.4;
+}
+
 /* Dim applied by an armed V/A filter toggle: reads like an unscreened chip but
    with the square outline dropped, so it stays distinct from both chip-screened
    (blue outline) and chip-quiet (grey outline kept). Must sit AFTER those two
@@ -1800,6 +1964,21 @@ tbody tr.nav-active {
 .radar-chip.active-ticker {
   border-color: var(--yellow);
   color: var(--yellow);
+  opacity: 1;
+}
+
+/* The coil rules above are THREE classes (0,3,0) where this one is two (0,2,0),
+   and specificity beats source order — so without this pair a selected coiled
+   chip kept the coil opacity instead of the selection's, rendering at 0.85
+   unscreened and at 0.4 under an armed cutoff, where the same chip without
+   `coiled` renders at 1. The comment above says selection "must sit AFTER every
+   rule above", which was true while every rule was two classes; adding a
+   three-class rule broke that assumption silently. Match the specificity rather
+   than reorder, or the coil opacity restore stops working instead. */
+.radar-chip.coiled.active-ticker,
+.radar-chip.coiled.filtered-out.active-ticker {
+  color: var(--yellow);
+  border-color: var(--yellow);
   opacity: 1;
 }
 

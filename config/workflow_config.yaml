@@ -108,6 +108,48 @@ si_tab:
   top_k_si: 3                   # member SI values averaged into an L1 score
   hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
 
+# Tightness — the coiled-range detector behind the Themes tab's coil marker.
+#
+# tightness = (max - min of the last `window` CLOSES) / mean close / ADR%, so
+# 0.30 means the closes sat in a band under a third of one average daily range.
+# A containment measure, not a per-bar one: a stock swinging a full ADR each way
+# and closing flat has a narrow band and large daily moves, and the band is what
+# a trader sees on the chart. Correlates +0.78 with the per-bar form it
+# replaced, so this is a legibility choice, not a performance claim.
+#
+# ⛔ Two conditions only, and there is deliberately NO moving-average test.
+# EMA distance is not tightness — it is a second location test doing a job the
+# closing range already does, since a stock drifting off its averages has a wide
+# band by construction. It also ejected names on rounding (PANW by $1.33 on a
+# $330 stock), and swept 0.5-1.5 ATR it moved ticker excess 0.08pp and theme IC
+# 0.026, both inside noise. Do not add it back.
+#
+# The high gate is a DISQUALIFIER, not a selector: at 0.70 it passes 82% of rows
+# on its own, so it chooses nothing and only throws out wreckage. That removal
+# is the value — forward 10-session excess runs 0.66pp BELOW the universe
+# baseline for bare tightness and above it once the gate applies.
+#
+# ⛔ Know what this flag is NOT. A period-high test carrying no tightness at all
+# scores a theme-level IC of +0.169 against ~+0.03 for this flag, so on pure
+# ranking the location half carries the edge and tightness adds little. The flag
+# IS weighted into the composite (radar.composite_weights.coil) because it marks
+# the setup a breakout entry needs, which no unconditional forward-return
+# measurement here models — not because it out-predicts strength. Do not quote
+# the weight as evidence that it does.
+#
+# high_lookback must exist in min_max_lookback (create_technical_indicators);
+# the code raises rather than silently substituting another window. The high is
+# a rolling max of HIGHS — an earlier calibration used closes, which are
+# strictly lower, and its threshold rejected every name in the motivating case.
+#
+# fraction 0.30 sits near the 22nd percentile of the 2026 liquid tagged
+# universe and flags ~9% of it with the high gate. Not universal.
+tightness:
+  window: 3           # sessions in the closing range
+  fraction: 0.30      # range at or below this many ADRs is "tight"
+  high_lookback: 50   # period high the gate reads (needs a max50 column)
+  high_frac: 0.70     # close must hold at least this share of that high
+
 # L1 Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/l1_score.py docstring
 # for the full R1-R6 formula). Scores ALL tagged tickers above the liquidity
@@ -127,11 +169,26 @@ radar:
                                 #   ejects high-priced names, and STRL/CRS/ARGX-class
                                 #   liquid leaders must stay (assessment 2026-07-24)
   composite_weights:            # per-ticker composite legs (each 0-100)
-    rs: 0.5                     #   rs_sts_pct (27d RS-line freshness)
-    vars_pct: 0.5               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
+    rs: 0.4                     #   rs_sts_pct (27d RS-line freshness)
+    vars_pct: 0.4               #   percentile of raw VARS across all tagged tickers (pre-floor pool)
     fast: 0.0                   #   rela_perf_1mo_rank — zero-weighted, backtest 2026-07: rs~fast
                                 #   Spearman +0.81 and no incremental IC anywhere in the grid
                                 #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
+    coil: 0.2                   #   BINARY tight_base flag (100 or 0, never graded). At 0.2 of a
+                                #   normalized 1.0 a coiled stock gains exactly 20 composite
+                                #   points over an identical uncoiled one -- a deliberate,
+                                #   visible lever, not a tiebreak. Set to 0 to rank on strength
+                                #   alone; the marker, the counts and the pinned strip all
+                                #   render at any weight.
+  coil_gamma: 0.5               # theme-level boost: adds gamma * the SHARE of members in a
+                                #   tight base, per leaf on its own share and per L1 on its
+                                #   own. SHARE, not count, or it reranks by roster size (the
+                                #   lesson the tape-pressure board, the SI tab and the coil
+                                #   sort each recorded). Asymmetric unlike beta -- it only
+                                #   adds, because a theme with no coiled members is not worse
+                                #   for it, merely not basing. Leaf z-scores are ~N(0,1), so
+                                #   gamma 1.0 moves a fully-coiled theme by about one standard
+                                #   deviation of leaf score.
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
   tickers_per_leaf: 10          # chips per leaf in radar_history.json (radar.json

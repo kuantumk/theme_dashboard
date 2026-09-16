@@ -33,13 +33,22 @@ def make_close_matrix():
     }, index=idx)
 
 
-def make_leaf(theme, l1, composite_avg, tickers):
+def make_leaf(theme, l1, composite_avg, tickers, coiled=()):
+    """Leaf fixture mirroring compute_leaf_scores' output shape.
+
+    `coiled` is required on every member because rollup_l1s counts distinct
+    coiled tickers per L1. The production path always sets it; this fixture
+    keeps the same contract so the harness exercises the real shape.
+    """
+    coiled = set(coiled)
     return {
         'theme': theme, 'l1': l1,
         'l2': theme.split(' / ')[1] if ' / ' in theme else None, 'l3': None,
         'composite_avg': composite_avg, 'breadth': len(tickers),
+        'n_coiled': len(coiled & set(tickers)),
         'members': [{'ticker': t, 'composite': composite_avg, 'rs': 50.0,
-                     'vars': 0.0, 'price': 10.0} for t in tickers],
+                     'vars': 0.0, 'price': 10.0, 'coiled': t in coiled}
+                    for t in tickers],
     }
 
 

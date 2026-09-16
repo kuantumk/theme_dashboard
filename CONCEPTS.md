@@ -75,10 +75,10 @@ Average daily range as a percentage of price — how much room a stock typically
 A per-stock blend of strength measures into one number, used so that ranking depends on several independent signals rather than any single one. Stocks missing an input receive a neutral value for it rather than being dropped.
 
 ### Tightness
-How small a stock's recent daily moves are compared with its own average daily range. A stock drifting at a fifth of its usual range has gone quiet; the measure is scale-free, so a volatile small cap and a sleepy large cap are directly comparable. Lower is tighter.
+How narrow a band a stock's recent closes sat in, compared with its own average daily range. A band a third of one daily range wide is tight; the measure is scale-free, so a volatile small cap and a sleepy large cap are directly comparable. Lower is tighter. It measures containment rather than day-to-day movement, which is what separates a genuine base from a quiet drift — small steps taken consistently in one direction still carry price a long way, and only the band notices.
 
 ### Tight base
-A quiet stretch that is also a live setup rather than a dead chart: tight, still riding its short-term moving averages, and not far enough below its recent high to count as broken. The location tests are there to disqualify wreckage, not to pick leaders — quietness alone is a mildly negative signal, and only the combination is worth marking.
+A tight stretch on a chart that has not broken down: the closes sat in a narrow band, and the stock is not far enough below its recent high to count as wreckage. That second test disqualifies rather than selects — it admits most of the market and only removes the broken — because quietness alone is a mildly negative signal and only the combination is worth marking.
 
 ### Coil
 The marked state of a stock in a tight base, and the count of such stocks within a theme. It describes what a chart looks like now, not a prediction about where it goes; it is displayed so a trader can watch for the breakout themselves.

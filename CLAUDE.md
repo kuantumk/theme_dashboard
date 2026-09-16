@@ -288,17 +288,20 @@ Two-track, implemented in `src/themes/analyze_theme_strength.py` (the earlier st
 
 `compute_tightness` / `compute_tight_base` in `create_technical_indicators.py` (definition) + the `coil_leg` and `n_coiled` fields in `l1_score.py` (scoring and payload) + `renderThemes` in `docs/app.js` (display). Tunables live in the `tightness:` config block; the composite weight lives in `radar.composite_weights.coil`.
 
-`tightness` is the trailing 4-session mean of each bar's `|close-to-close change| ÷ that bar's ADR%`. Lower is tighter. `tight_base` adds two location conjuncts: close within 0.5 ATR of the EMA10 or EMA20, and close at or above 0.70 of the 50-day high.
+`tightness` is the width of the band the last **3 closes** sat in, in ADR units: `(max − min) / mean / adr_pct`. Lower is tighter. `tight_base` adds exactly **one** more condition — close at or above 0.70 of the 50-day high.
 
-**⛔ The mean is over PER-BAR ratios.** Dividing a windowed mean change by a single ADR% is the obvious simplification and it is a different number — `adr_pct` is itself a 20-session rolling mean and moves inside the window. The 0.30 default was calibrated on the per-bar form, so swapping the arithmetic silently re-tunes the flag. `tests/test_tightness.py` pins the two apart.
+**⛔ It is a containment measure, and there is deliberately NO moving-average test.** Both facts are one decision. An earlier version averaged each bar's `|close-to-close change| ÷ ADR%` and then needed a `close_to_ma` conjunct (within 0.5 ATR of the EMA10/20) to reject stocks drifting quietly away from their averages — because a per-bar mean averages *step sizes* and is blind to whether the steps accumulate. A closing range is not blind to that: it compounds them. Measured on a 2%-per-day drift, the per-bar form reads 1.00 (tight) where the band reads 1.96 (trending). So the range does the EMA test's job natively, and the EMA test came out.
+
+That removal was also a correctness win, not just a simplification. The EMA conjunct ejected names on rounding — PANW missed by **$1.33 on a $330 stock** on 2026-09-11 — and swept across 0.5 to 1.5 ATR it moved ticker-level excess by 0.08pp and theme IC by 0.026, both inside noise, so it was never earning its complexity. Do not add it back.
+
+The switch improved both axes: ticker-level forward 10-session excess +0.35pp → **+0.37pp**, theme-level IC −0.003 → **+0.030**, on 8.9% of the universe. The two measures correlate +0.78, so treat that as a legibility win that happened not to cost anything — the band is what a trader reads off a chart.
 
 **⛔ This is a descriptive marker, not a ranking signal, and the evidence is lopsided.** Theme-level breadth rank IC over 165 sessions of 2026 across ~2,220 tagged tickers, 10-session horizon:
 
 | construct | IC | sessions IC>0 |
 |---|---|---|
-| bare tightness breadth | −0.077 | 43% |
-| the shipped flag (0.70 × 50-day high) | +0.011 | 50% |
-| a stricter variant (0.85 × 60-day high) | +0.074 | 65% |
+| bare tightness, no high gate | −0.077 | 43% |
+| **the shipped flag** (3-close range + 0.70 × 50-day high) | **+0.030** | — |
 | **period-high test with NO tightness** | **+0.169** | **72%** |
 | 3-month strength (reference) | +0.109 | 63% |
 
@@ -314,7 +317,7 @@ The location half carries essentially all of the edge and the tightness half sub
 
 **⛔ The location gate reads a rolling max of HIGHS, not closes.** `high_lookback` selects a `max<N>` column, so the window must be in `min_max_lookback` — the pipeline raises rather than silently substituting another. An earlier calibration derived the period high from closes, which are strictly lower; its 0.90 threshold, applied to the real column, rejected every name in the case the feature was built around. Do not re-derive a threshold from a close-based high.
 
-**The gate is a disqualifier, not a selector.** At 0.70 it passes 82% of rows on its own and removes 26% of otherwise-tight names — that removal moves ticker-level forward 10-session excess from 0.66pp *below* the universe baseline (bare tightness) to 0.40pp above it, on ~8% of the universe. A gate tight enough to select would be doing the tightness test's job; `tests/test_tightness.py` pins `high_frac ≤ 0.75` against exactly that drift.
+**The gate is a disqualifier, not a selector.** At 0.70 it passes 82% of rows on its own, so it chooses nothing and only throws out wreckage. That removal is the value: ticker-level forward 10-session excess runs 0.66pp *below* the universe baseline for bare tightness and +0.37pp above it once the gate applies, on ~9% of the universe. A gate tight enough to select would be doing the tightness test's job; `tests/test_tightness.py` pins `high_frac ≤ 0.75` against exactly that drift.
 
 **⛔ `tightness` must never reach a consumer that fills NaN with zero.** The measure is inverted, so a zero-filled absence reads as *perfectly coiled* — the strongest possible value — where the documented V/A case merely reads as illiquid and dims a row. `_build_radar_snapshot` loads the master parquet **without** `.fillna(0)` and its docstring says so deliberately. The Momentum, VARS and Volume snapshot builders **do** fill, which is why the marker has not been carried to those tabs: that work must map zero back to missing first, the way `filter_metrics` already does.
 

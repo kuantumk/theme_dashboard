@@ -73,58 +73,68 @@ def compute_inside_day(open_, high, low, close):
     return (range_engulf | body_engulf).astype(bool)
 
 
-TIGHTNESS_WINDOW = 4        # sessions averaged into the tightness ratio
+TIGHTNESS_WINDOW = 3        # sessions in the closing range
 TIGHTNESS_FRACTION = 0.30   # tightness at or below this is "tight"
-TIGHTNESS_HIGH_LOOKBACK = 50  # sessions in the period high the location gate reads
+TIGHTNESS_HIGH_LOOKBACK = 50  # sessions in the period high the broken-chart gate reads
 TIGHTNESS_HIGH_FRAC = 0.70  # close must hold at least this share of that high
 
 
 def compute_tightness(close, adr_pct, window=TIGHTNESS_WINDOW):
-    """Trailing-window mean of each bar's |close-to-close change| over that
-    bar's ADR%. Lower is tighter; a stock drifting at a fifth of its usual
-    range for four sessions reads ~0.2.
+    """How wide a band the last ``window`` closes sat in, measured in ADR units.
 
-    ⛔ The mean is taken over **per-bar ratios**. Dividing a windowed mean
-    change by a single ADR% is the obvious-looking simplification and it is a
-    different number: `adr_pct` is itself a 20-session rolling mean and moves
-    inside the window. The 0.30 default and the ~4% firing rate behind it were
-    calibrated on this form, so swapping the arithmetic silently re-tunes the
-    flag. `tests/test_tightness.py` pins the two apart.
+        (max(close) - min(close)) / mean(close) / adr_pct
 
-    A bar with a missing or non-positive ADR% contributes no ratio, and
-    ``min_periods=window`` then voids every window containing it — a partial
-    base must not report as a complete one. A zero ADR% would otherwise divide
-    to infinity and read as the loosest possible bar, which is backwards: a
-    stock with no range at all is unmeasurable here, not wild.
+    Lower is tighter. A stock whose three closes span half its average daily
+    range reads 0.5; one that barely moves reads near 0.
+
+    **This is a containment measure, not a per-bar one, and the distinction is
+    the point.** An earlier version averaged each bar's |close-to-close change|
+    over the window. That answers "were the daily moves small", which is not
+    the same question: a stock oscillating a full ADR up and down and closing
+    where it started has small containment and large per-bar movement. A trader
+    reading a chart sees the band, so the band is what this measures. The two
+    correlate at +0.78, so this is a legibility choice more than a performance
+    one — do not reintroduce the per-bar form on the grounds that it scores
+    about the same.
+
+    A bar with a missing or non-positive ADR% yields NaN rather than dividing
+    to infinity, and ``min_periods=window`` voids a partial window — an
+    incomplete base must not report as a complete one.
     """
     adr = pd.to_numeric(adr_pct, errors='coerce')
-    ratio = close.pct_change().abs() / adr.where(adr > 0)
-    ratio = ratio.replace([np.inf, -np.inf], np.nan)
-    return ratio.rolling(window, min_periods=window).mean().astype(float)
+    hi = close.rolling(window, min_periods=window).max()
+    lo = close.rolling(window, min_periods=window).min()
+    mid = close.rolling(window, min_periods=window).mean()
+    rng = (hi - lo) / mid.where(mid > 0) / adr.where(adr > 0)
+    return rng.replace([np.inf, -np.inf], np.nan).astype(float)
 
 
-def compute_tight_base(tightness, close, period_high, close_to_ma,
+def compute_tight_base(tightness, close, period_high,
                        fraction=TIGHTNESS_FRACTION,
                        high_frac=TIGHTNESS_HIGH_FRAC):
-    """Tightness qualified by location: quiet, on its averages, not broken.
+    """A tight closing range on a chart that has not broken down.
 
-    The location gate is a **disqualifier, not a selector**. Its job is to throw
-    out charts that have already fallen apart so the tightness test does the
-    choosing among what remains. At the shipped 0.70 of the 50-day high it
-    passes 82% of all rows on its own — by construction it selects nothing —
-    while removing 26% of otherwise-tight names, and that removal is what makes
-    the flag worth rendering. Measured over 165 sessions of 2026 across ~2,220
-    tagged tickers, forward 10-session excess return runs **0.66pp below** the
-    universe baseline for bare tightness and **0.40pp above** it once this gate
-    is applied, on 7.9% of rows.
+    Two conditions, and deliberately only two:
 
-    ⛔ It is a descriptive marker, never a ranking input. Theme-level breadth of
-    this flag scores a rank IC of **+0.011**, positive on half of sessions — a
-    coin flip. Tightening the gate raises it (0.85 of the 60-day high reads
-    +0.074), but a period-high test with no tightness at all scores **+0.169**,
-    so for theme ranking the location half carries everything and tightness
-    subtracts. Nothing here is weighted into any score, and a future weight
-    needs its own measurement.
+    1. ``tightness <= fraction`` — the closing range is narrow. This is the
+       measure; nothing else here is.
+    2. ``close >= high_frac * period_high`` — the stock is not more than
+       ``1 - high_frac`` off its period high. A **disqualifier, not a
+       selector**: at 0.70 it passes 82% of rows on its own, so it chooses
+       nothing and only throws out wreckage. That removal is what makes the
+       flag worth rendering — measured over 165 sessions of 2026, forward
+       10-session excess runs 0.66pp *below* the universe baseline for bare
+       tightness and above it once this gate applies.
+
+    ⛔ **There is no moving-average test, and adding one back is a mistake
+    already made.** An earlier version required the close to sit within
+    0.5 ATR of the EMA10 or EMA20. EMA distance is not tightness — it is a
+    second location test doing a job the closing range already does, since a
+    stock drifting away from its averages has a wide closing range by
+    construction. It also ejected names on rounding: PANW missed by $1.33 on a
+    $330 stock. Swept across 0.5 to 1.5 ATR the threshold moved ticker-level
+    excess by 0.08pp and theme IC by 0.026, both inside noise, so it was never
+    earning its complexity either.
 
     ``period_high`` is a rolling max of **highs** (the pipeline passes
     ``max50``), not of closes. An earlier calibration used closes, which are
@@ -141,8 +151,7 @@ def compute_tight_base(tightness, close, period_high, close_to_ma,
     tight = pd.to_numeric(tightness, errors='coerce') <= fraction
     holding = pd.to_numeric(close, errors='coerce') >= (
         high_frac * pd.to_numeric(period_high, errors='coerce'))
-    on_ma = close_to_ma.fillna(False).astype(bool)
-    return (tight & holding & on_ma).fillna(False).astype(bool)
+    return (tight & holding).fillna(False).astype(bool)
 
 
 DROP_WINDOW = 15    # sessions in the drawdown window
@@ -354,7 +363,6 @@ def calculate_technical_indicators():
                 daily['close'], daily['adr_pct'], window=_tight_cfg['window'])
             daily['tight_base'] = compute_tight_base(
                 daily['tightness'], daily['close'], daily[_high_col],
-                daily['close_to_ma'],
                 fraction=_tight_cfg['fraction'], high_frac=_tight_cfg['high_frac'])
 
             # Coiled-theme reusable setup features.

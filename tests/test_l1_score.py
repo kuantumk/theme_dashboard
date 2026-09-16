@@ -230,7 +230,30 @@ class CoilLegTests(unittest.TestCase):
         c = uni.set_index('ticker')['composite']
         self.assertAlmostEqual(c['AAA'] - c['BBB'], 20.0, places=6)
 
-    def test_uncoiled_scores_zero_but_unmeasurable_scores_neutral(self):
+    def test_an_unmeasurable_stock_gains_nothing_from_the_coil_leg(self):
+        """The ranking half must fail closed, like the display half.
+
+        This leg is the one leg that does NOT use `missing_default`. The others
+        are percentiles where 50 is genuinely the middle; this one is binary and
+        fires on ~9% of the universe, so its population mean is about 9 and 50
+        sits near its 95th percentile. At weight 0.2 a neutral default handed an
+        unmeasurable stock 10 composite points over an identical measured
+        uncoiled one — and recent listings, whose `adr_pct` is NaN, are exactly
+        the population that would collect it.
+        """
+        cfg = {**CFG, 'composite_weights': {'rs': 0.4, 'vars_pct': 0.4,
+                                            'fast': 0.0, 'coil': 0.2}}
+        rows = [
+            {'ticker': 'MEASURED', 'rs_sts_pct': 50.0, 'vars': 0.0,
+             'tightness': 0.9, 'tight_base': False},
+            {'ticker': 'NODATA', 'rs_sts_pct': 50.0, 'vars': 0.0,
+             'tightness': np.nan, 'tight_base': False},
+        ]
+        uni = build_radar_universe(self._master(rows), {'MEASURED', 'NODATA'}, cfg)
+        c = uni.set_index('ticker')['composite']
+        self.assertEqual(c['NODATA'], c['MEASURED'])
+
+    def test_only_a_coiled_stock_scores_on_the_leg(self):
         rows = [
             {'ticker': 'AAA', 'rs_sts_pct': 50.0, 'tightness': 0.10, 'tight_base': True},
             {'ticker': 'BBB', 'rs_sts_pct': 50.0, 'tightness': 0.90, 'tight_base': False},
@@ -238,16 +261,18 @@ class CoilLegTests(unittest.TestCase):
         ]
         uni = build_radar_universe(self._master(rows), {'AAA', 'BBB', 'CCC'}, CFG)
         leg = uni.set_index('ticker')['coil_leg']
-        self.assertGreater(leg['AAA'], 0.0)
+        self.assertEqual(leg['AAA'], 100.0)
         self.assertEqual(leg['BBB'], 0.0)
-        # Unmeasurable is not the same as uncoiled — and must never read as
-        # tightest, which a zero-filled inverted metric would.
-        self.assertEqual(leg['CCC'], CFG['missing_default'])
+        # Scoring 0 is not a claim that CCC is uncoiled -- only that nothing
+        # here established that it IS coiled. See _coil_leg's docstring.
+        self.assertEqual(leg['CCC'], 0.0)
 
-    def test_absent_columns_score_neutral_and_do_not_raise(self):
+    def test_absent_columns_contribute_nothing_and_do_not_raise(self):
+        # A back-dated parquet predating the indicator. The leg must add no
+        # points rather than hand every row a neutral-looking 50.
         rows = [{'ticker': 'AAA', 'rs_sts_pct': 50.0}]
         uni = build_radar_universe(self._master(rows), {'AAA'}, CFG)
-        self.assertEqual(uni['coil_leg'].iloc[0], CFG['missing_default'])
+        self.assertEqual(uni['coil_leg'].iloc[0], 0.0)
 
     def test_leaf_and_l1_counts_are_distinct_tickers(self):
         rows = [

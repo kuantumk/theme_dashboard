@@ -178,8 +178,26 @@ under point-in-time 4/08 tags — early only retroactively; tag lookahead), so
 
 # Addendum: the coil leg (2026-09-15)
 
-**Status**: exploratory screen, **NOT pre-registered**. Read §9.1 before quoting
-any number here.
+**Status**: exploratory screen, **NOT pre-registered**, and **§9.2-§9.4 are
+SUPERSEDED**. Read §9.0 and §9.1 before quoting any number here.
+
+## 9.0 What §9.2-§9.4 measured, and what actually shipped
+
+⛔ **Every row below labelled "shipped" describes a definition and a weight that
+were both retired after this section was written.** The feature moved twice
+afterwards. Do not quote §9.2-§9.4 as a description of current behaviour; they
+are retained because the *comparisons* inside them are still informative about
+the constructs they name.
+
+| §9.2-§9.4 measured | What ships now |
+|---|---|
+| per-bar mean of \|close-to-close change\| / ADR%, 4 sessions | **range of the last 3 CLOSES** / mean / ADR% |
+| three conjuncts, incl. close within 0.5 ATR of EMA10/20 | **two conjuncts** — no moving-average test at all |
+| graded coil leg (percentile of inverted tightness) | **binary** leg, 100 or 0 |
+| `coil: 0.05`, composite 0.5 rs / 0.5 vars | **`coil: 0.2`**, composite **0.4 / 0.4 / 0.2**, plus **`coil_gamma: 0.5`** |
+| "shipped flag" theme IC **+0.011**, ticker **+0.40pp** | **+0.030** and **+0.37pp** (§9.6) |
+
+§9.6 carries the measurements for what actually ships.
 **Data**: ~2,220 tagged tickers priced from yfinance (Sep 2025 → Sep 2026),
 165–170 scored sessions from 2026-01-02. Theme baskets are equal-weight over all
 L1 members with ≥ 6 priced members above $3; returns are excess vs SPY.
@@ -223,7 +241,7 @@ outstanding work. Write its protocol first.
 | construct | mean IC | median | IC>0 |
 |---|---|---|---|
 | bare tightness breadth | **−0.077** | −0.048 | 43% |
-| shipped flag (tight + on MA + ≥ 0.70 × max50) | **+0.011** | +0.003 | 50% |
+| RETIRED per-bar flag (tight + on MA + ≥ 0.70 × max50) | **+0.011** | +0.003 | 50% |
 | stricter variant (tight + on MA + ≥ 0.85 × max60) | +0.074 | +0.096 | 65% |
 | **control: period-high test, no tightness** | **+0.169** | +0.216 | 72% |
 | 3-month strength (reference) | +0.109 | +0.134 | 63% |
@@ -244,7 +262,7 @@ the `fast` leg died in §3.
 |---|---|---|---|
 | bare tight (≤ 0.30) | 16.8% | −0.94% | −0.66pp |
 | tight + on EMA10/20 | 10.4% | −0.82% | −0.55pp |
-| **shipped flag** (+ ≥ 0.70 × max50) | **7.9%** | +0.11% | **+0.40pp** |
+| RETIRED per-bar flag (+ ≥ 0.70 × max50) | **7.9%** | +0.11% | **+0.40pp** |
 | stricter (+ ≥ 0.85 × max60) | 5.0% | +0.21% | +0.49pp |
 | control: ≥ 0.85 × max60 alone | 53.5% | +0.24% | +0.53pp |
 
@@ -253,7 +271,7 @@ The gate earns its place here even though it does not at theme level: it removes
 0.40pp above it. That is the disqualifier doing its job — at 0.70 it passes 82%
 of all rows on its own, so it selects nothing.
 
-## 9.4 Coil weight sweep — shipped definition
+## 9.4 Coil weight sweep — RETIRED per-bar definition, RETIRED 0.05 weight
 
 Strength z-score plus λ × coil-breadth z-score, L1 level:
 
@@ -266,9 +284,12 @@ Strength z-score plus λ × coil-breadth z-score, L1 level:
 | 0.30 | +0.0827 | +0.1003 |
 | 0.50 | +0.0743 | +0.0914 |
 
-0.05 is the argmax at both horizons and the gain is noise (+0.0001 / +0.0005).
-Everything above it costs real IC. **Shipped at 0.05 as a user dial**, with the
-marker and the counts rendering at any weight including zero.
+0.05 was the argmax at both horizons and the gain was noise (+0.0001 / +0.0005).
+⛔ **This table is superseded and its conclusion no longer holds.** It measured
+the retired per-bar definition, whose theme IC was negative; the shipped closing
+range measures positive, and the weight moved to 0.2 on the §9.6 sweep. Do not
+cite "everything above 0.05 costs real IC" as an argument about the current
+flag — it was never measured on it.
 
 ## 9.5 What would change the verdict
 
@@ -281,3 +302,67 @@ marker and the counts rendering at any weight including zero.
   stock; the entry this marker serves is a breakout the following session, which
   nothing here models. That gap is why the flag ships as a marker and why its
   weak unconditional numbers are not treated as disqualifying.
+
+## 9.6 What ships — closing-range flag, binary leg, 0.4/0.4/0.2, γ=0.5
+
+**Status**: exploratory, **NOT pre-registered**, **in-sample**, and it does not
+clear the §1 win rule. Details below; read them before citing any figure.
+
+**Definition.** `tightness` = `(max − min of the last 3 CLOSES) / mean / adr_pct`.
+`tight_base` = that ≤ 0.30 **and** close ≥ 0.70 × the 50-day high (a rolling max
+of highs). Two conjuncts; no moving-average test.
+
+**Flag, at ticker and theme level** (165 sessions of 2026, ~2,220 tickers, H=10):
+
+| construct | ticker fwd excess vs baseline | theme IC |
+|---|---|---|
+| bare tightness, no high gate | −0.66pp | −0.077 |
+| **shipped flag** | **+0.37pp** on 8.9% | **+0.030** |
+| retired per-bar flag + EMA conjunct | +0.35pp on 7.9% | −0.003 |
+| **period-high test, NO tightness** | +0.49pp on 45.6% | **+0.169** |
+
+The last row is the one that matters and it has not changed: a location test
+carrying no tightness still beats every tightness-bearing construct. The flag
+ships as a marker for a conditional breakout entry, not because it out-predicts.
+
+**Composite and γ** (28 sampled sessions, real point-in-time legs, L1 rank IC at
+H=10): 0.5/0.5 no coil **+0.0750** (68% of sessions IC>0); 0.4/0.4/0.2 γ=0
+**+0.0785** (61%); γ=0.25 +0.0806; **γ=0.5 +0.0807** (61%, the argmax); γ=1.0
++0.0792; γ=2.0 +0.0778.
+
+Mean improves, **median and hit rate both fall**. The leg helps a minority of
+sessions a lot and hurts more sessions a little.
+
+## 9.7 Why this does not clear the §1 win rule, and what is still missing
+
+⛔ §8 adopted 0.5/0.5 under the §1 protocol: *primary IC improves, AND
+day-over-day rank autocorrelation degrades by less than 10% relative, AND the IC
+sign holds at H=5 and H=20.* **This change supplies leg one only.**
+
+- **No autocorrelation figure** was computed for the coil configs.
+- **No H=5 or H=20 sign check** was run.
+- **28 overlapping H=10 windows is ~3 independent observations.** §4's
+  comparable measurement carried a 90% CI half-width of ≈0.072 — an order of
+  magnitude wider than the +0.0057 this change moves the mean.
+- **Everything is in-sample.** Window, fraction, high threshold, lookback,
+  weight and γ were all chosen on the 2026 span that scored them, across **30+
+  configurations** once the definition change, the EMA sweep, the `high_frac`
+  walk and both ladders are counted. No multiple-comparisons correction.
+- **⛔ The static-bias axis was never run.** `docs/solutions/conventions/self-referential-signal-validation.md`
+  requires two axes — direction *and* correlation with a per-ticker attribute
+  carrying no direction — and the plan specified the attribute (each stock's own
+  ADR% percentile) in R12. It was not implemented. `tightness` divides by ADR%,
+  so a low reading may track low volatility rather than a base. **Nobody has
+  checked.** This is the largest open gap in the evidence.
+- **`coil_gamma` is not sweepable by this harness.** `rollup_l1s` reads it from
+  cfg and there is no `GAMMAS` grid, so every `WEIGHT_GRID` row runs at the
+  config value. The γ figures above came from an ad hoc script.
+
+**So the weights ship as a user-directed display choice, not as a measured
+winner.** Recorded here rather than in §8 because §8 is the pre-registered
+adoption log and this change did not go through it.
+
+**Outstanding, in priority order:** the static-bias axis; a `GAMMAS` grid; an
+autocorrelation and H=5/H=20 check against the §1 rule; a held-out window; and
+re-baselining `tools/radar_episodes.yaml`, whose three episodes were verified
+under 0.4/0.4/0.2-fast and 0.5/0.5, never under this third weighting.

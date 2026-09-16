@@ -52,7 +52,7 @@ MASTER_DIR = SCREENING_OUTPUT_DIR / "master"
 HORIZONS = (5, 10, 20)
 BETAS = (0.0, 0.15, 0.3, 0.5)
 WEIGHT_GRID = {                            # rs / vars_pct / fast / coil
-    'current':    (0.5, 0.5, 0.0, 0.05),   # what ships today
+    'current':    (0.4, 0.4, 0.0, 0.2),    # what ships today
     'equal':      (1 / 3, 1 / 3, 1 / 3, 0.0),
     'rs_only':    (1.0, 0.0, 0.0, 0.0),    # corners measure each leg's solo IC
     'vars_only':  (0.0, 1.0, 0.0, 0.0),
@@ -61,12 +61,17 @@ WEIGHT_GRID = {                            # rs / vars_pct / fast / coil
     'no_fast':    (0.5, 0.5, 0.0, 0.0),    # the 2026-07 winner, coil off
     'fast_heavy': (0.2, 0.4, 0.4, 0.0),
     'rs_heavy':   (0.6, 0.2, 0.2, 0.0),
-    # Coil ladder. A 2026 sweep put the argmax at 0.05 with a noise-level gain
-    # (+0.0001 at H=5, +0.0005 at H=10) and real cost above it: -0.002 at 0.10,
-    # -0.009 at 0.30. Re-run this ladder before moving the shipped weight.
-    'coil_10':    (0.5, 0.5, 0.0, 0.10),
-    'coil_20':    (0.5, 0.5, 0.0, 0.20),
-    'coil_30':    (0.5, 0.5, 0.0, 0.30),
+    # Coil ladder, rebased on the shipped 0.4/0.4 so a row here reproduces the
+    # shipped composite rather than a normalized variant of the old one.
+    # ⛔ This ladder CANNOT reproduce the shipped scoring path on its own:
+    # `coil_gamma` (the theme-level share boost) is read from cfg inside
+    # rollup_l1s and has no grid here, so every row runs at the config value.
+    # Sweeping gamma needs a GAMMAS grid that does not yet exist -- see
+    # RADAR_BACKTEST_FINDINGS.md 9.6.
+    'coil_00':    (0.4, 0.4, 0.0, 0.0),
+    'coil_10':    (0.4, 0.4, 0.0, 0.10),
+    'coil_20':    (0.4, 0.4, 0.0, 0.20),
+    'coil_30':    (0.4, 0.4, 0.0, 0.30),
 }
 MIN_L1S_FOR_IC = 8      # sessions with fewer scored+returned L1s are skipped
 MIN_COVERAGE = 0.7      # basket needs >= 70% of members with both endpoints

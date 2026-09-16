@@ -114,6 +114,48 @@ class CoilChipStyleTests(unittest.TestCase):
         for col in ("daily['inside_day']", "daily['tight_day']", "daily['close_to_ma']"):
             self.assertIn(col, src, f'{col} is gone; the green day-pattern marker dies with it')
 
+    def test_selection_survives_on_a_coiled_chip(self):
+        """Specificity, not source order, decides this pair.
+
+        `.radar-chip.active-ticker` is two classes (0,2,0). The coil opacity
+        rules are three (0,3,0), so they win regardless of order — without an
+        equally-specific override a selected coiled chip rendered at 0.85
+        unscreened and 0.4 under an armed cutoff, where the same chip without
+        `coiled` renders at 1. The existing comment says selection "must sit
+        AFTER every rule above", which held only while every rule was two
+        classes; the coil rules broke that assumption silently.
+        """
+        body = _rule_body('.radar-chip.coiled.active-ticker,\n.radar-chip.coiled.filtered-out.active-ticker')
+        if body is None:  # selector may be written on one line
+            m = re.search(r'\.radar-chip\.coiled\.active-ticker[^{]*\{([^}]*)\}', CSS)
+            self.assertIsNotNone(
+                m, 'no equal-specificity override — a selected coiled chip '
+                   'loses its selection to the coil opacity rules')
+            body = m.group(1)
+        self.assertIn('opacity: 1', body)
+        self.assertIn('--yellow', body)
+        # And it must come after the rules it overrides.
+        self.assertGreater(CSS.index('.radar-chip.coiled.active-ticker'),
+                           CSS.index('.radar-chip.coiled.filtered-out {'))
+
+    def test_an_absent_coil_count_hides_the_strip_rather_than_claiming_none(self):
+        """`hasCoilData` must be able to be false.
+
+        The exporter wrote `n_coiled` with a `0` default, so the guard could
+        never fire: a back-dated parquet with no tightness columns produced an
+        all-zero payload and the strip rendered "no theme has 2+ members in a
+        tight base today" — a claim about the market from an absence of data,
+        the same shape as the frozen NAAIM tile and the undated SI roster.
+        """
+        exp = (Path(__file__).resolve().parents[1]
+               / 'src' / 'reporting' / 'export_dashboard_data.py'
+               ).read_text(encoding='utf-8')
+        self.assertNotIn("'n_coiled': l1_entry.get('n_coiled', 0)", exp)
+        self.assertNotIn("'n_coiled': leaf.get('n_coiled', 0)", exp)
+        self.assertIn('has_coil', exp)
+        # The JS guard reads the field's TYPE, so null must reach it.
+        self.assertIn("typeof g.n_coiled === 'number'", APP)
+
     def test_coil_colour_is_not_a_colour_another_state_owns(self):
         m = re.search(r'--coil:\s*([^;]+);', CSS)
         self.assertIsNotNone(m)

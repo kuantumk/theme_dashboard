@@ -2237,7 +2237,7 @@
       const pins = pinned.map(g => {
         const share = Math.round((g.n_coiled / (g.n_members || 1)) * 100);
         return `<button type="button" class="coil-pin" data-l1="${escAttr(g.name)}"
-                 title="${g.n_coiled} of ${g.n_members} members in a tight base — rank #${g.rank} by strength. Click to jump.">
+                 title="${g.n_coiled} of ${g.n_members} members in a tight base — currently ranked #${g.rank}. Click to jump.">
                   ${escHtml(g.name)} <span class="coil-pin-n">${g.n_coiled}/${g.n_members}</span>
                   <span class="coil-pin-pct">${share}%</span>
                 </button>`;

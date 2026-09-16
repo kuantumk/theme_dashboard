@@ -1911,8 +1911,9 @@ tbody tr.nav-active {
   opacity: 1;
 }
 
-/* Coiled: tight range, on its 10/20-day EMAs, not more than 30% off its 50-day
-   high. A BACKGROUND, never a colour or a border — colour is taken by the green
+/* Coiled: the last 3 closes sat in a band under 0.30 ADR, and the close holds
+   at least 0.70 of the 50-day high. (No moving-average test — that conjunct was
+   measured out; see compute_tight_base.) A BACKGROUND, never a colour or a border — colour is taken by the green
    day-pattern flag, yellow by selection, blue by screened and hover, and a
    border or any layout-affecting property would change chip width, which
    syncRadarClamps measures to derive the "+N more" count. */
@@ -1963,6 +1964,21 @@ tbody tr.nav-active {
 .radar-chip.active-ticker {
   border-color: var(--yellow);
   color: var(--yellow);
+  opacity: 1;
+}
+
+/* The coil rules above are THREE classes (0,3,0) where this one is two (0,2,0),
+   and specificity beats source order — so without this pair a selected coiled
+   chip kept the coil opacity instead of the selection's, rendering at 0.85
+   unscreened and at 0.4 under an armed cutoff, where the same chip without
+   `coiled` renders at 1. The comment above says selection "must sit AFTER every
+   rule above", which was true while every rule was two classes; adding a
+   three-class rule broke that assumption silently. Match the specificity rather
+   than reorder, or the coil opacity restore stops working instead. */
+.radar-chip.coiled.active-ticker,
+.radar-chip.coiled.filtered-out.active-ticker {
+  color: var(--yellow);
+  border-color: var(--yellow);
   opacity: 1;
 }
 

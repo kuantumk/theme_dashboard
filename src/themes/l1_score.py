@@ -110,9 +110,23 @@ def _leg_from_column(df: pd.DataFrame, column: str, missing_default: float) -> p
 def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
     """0-100 leg from the coiled-base flag (R2b). **Binary: 100 or 0.**
 
-    A coiled stock scores 100, an uncoiled one 0, and a stock whose tightness
-    could not be computed scores `missing_default` — unmeasurable is not the
-    same as uncoiled, and every other leg treats absent data that way.
+    A coiled stock scores 100 and everything else scores 0, **including a stock
+    whose tightness could not be computed**.
+
+    ⛔ This leg does NOT use `missing_default`, and it is the only leg that
+    does not. The other legs are percentiles or 0-100 ranks, where 50 really is
+    the middle. This one is binary and the flag fires on ~9% of the universe,
+    so the leg's population mean is about 9 and `missing_default` of 50 sits
+    near its 95th percentile. At weight 0.2 that handed an unmeasurable stock
+    **10 composite points** over an identical measured-uncoiled one — half a
+    coil, for having no data — and the population that collects it is recent
+    listings, whose `adr_pct` is NaN and which the radar universe deliberately
+    admits. The display half of this feature fails closed (`compute_tight_base`
+    and `compute_leaf_scores` both do); the ranking half must not fail open.
+
+    Scoring 0 is the same reading every other consumer of the flag already
+    takes: not coiled. It is not a claim that the stock is uncoiled, only that
+    nothing here has established that it is coiled.
 
     Binary is a deliberate choice over a graded percentile of tightness. The
     flag is already a threshold decision, so grading it inside the leg would
@@ -127,16 +141,15 @@ def _coil_leg(df: pd.DataFrame, missing_default: float) -> pd.Series:
     loads the master parquet without `.fillna(0)` for this reason; the explicit
     NaN check here is the second line of defence, not the only one.
     """
+    # Whole column absent (a back-dated parquet predating the indicator) — the
+    # leg must contribute nothing rather than a neutral-looking 50, for the
+    # same reason a single missing row scores 0.
     if 'tightness' not in df.columns or 'tight_base' not in df.columns:
-        return pd.Series(missing_default, index=df.index, dtype=float)
+        return pd.Series(0.0, index=df.index, dtype=float)
 
-    tight = pd.to_numeric(df['tightness'], errors='coerce')
     flagged = df['tight_base'].fillna(False).astype(bool)
-
     leg = pd.Series(0.0, index=df.index, dtype=float)
     leg[flagged] = 100.0
-    # Unmeasurable is not the same as uncoiled.
-    leg[tight.isna() & ~flagged] = missing_default
     return leg.astype(float)
 
 

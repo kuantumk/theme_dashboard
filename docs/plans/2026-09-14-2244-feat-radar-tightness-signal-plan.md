@@ -9,20 +9,25 @@ execution: code
 
 # Tight-Base (Coil) Signal for the L1 Radar - Plan
 
-> **Superseded in part by what shipped. Read this note before following any number below.**
+> # ⛔ SUPERSEDED — read this before any line below it
 >
-> Implementation invalidated three of this plan's calibrated figures, and the code is authoritative where they disagree:
+> **This plan describes a design that was replaced twice during implementation. Every parameter and both mechanisms changed. The code is authoritative; treat the body below as the record of how the work started, not of what exists.**
 >
-> | This plan says | What shipped | Why |
-> |---|---|---|
-> | location gate `0.85 × 60-day high` | **`0.70 × 50-day high`** | The plan's threshold was calibrated against a period high derived from **closes**; `max50`/`max60` are rolling maxima of **highs**, which are strictly larger. Against the real column, 0.90 then 0.85 rejected every name in the motivating case. The 0.70/50-day form is the user's own direction: the gate is a disqualifier for broken charts, not a selector. |
-> | flag fires on `1.5-10%` of the universe | **~8%** measured, band retained | Consistent. |
-> | located coil theme-level IC `+0.060` | **+0.011** for the shipped gate | Re-measured against the real high-based column. |
-> | "no theme-level control was run" | **Control run: +0.169** | A period-high test with no tightness beats every tightness-bearing construct and the strength reference. This is the most important number in the work and it is why nothing here ships a ranking claim. |
+> | This plan says | What shipped |
+> |---|---|
+> | tightness = 4-session mean of per-bar \|close-to-close change\| ÷ ADR% (R1, R3, Appendix A) | **range of the last 3 CLOSES** ÷ mean ÷ ADR% |
+> | three conjuncts incl. close within 0.5 ATR of EMA10/20 (R2, both mermaid diagrams) | **two conjuncts** — no moving-average test at all |
+> | location gate `0.85 × 60-day high` | **`0.70 × 50-day high`** (a rolling max of HIGHS, not closes) |
+> | coil leg is a graded percentile (KTD4) | **binary**, 100 or 0 |
+> | composite 0.5 rs / 0.5 vars, coil weight **0.0** | **0.4 / 0.4 / 0.2**, plus a theme-level **`coil_gamma: 0.5`** the plan never contemplated |
+> | flag fires on 1.5-10% | **~8.9%** |
+> | located-coil theme IC +0.060 | **+0.030** |
 >
-> The composite weight ships at **0.05**, not 0.0 — the argmax of a sweep whose gain is noise, chosen as a user dial at the user's request. `CLAUDE.md`'s "Coil Marker" section and the addendum in `tests/RADAR_BACKTEST_FINDINGS.md` carry the shipped figures; prefer them over this document.
+> **The plan's central finding still stands and is the reason the feature is shaped as it is:** a period-high test carrying *no tightness at all* scores a theme-level IC of **+0.169** against ~+0.03 for the flag. The location half carries the edge. That control was never run when this plan was written — running it is what stopped a ranking claim from shipping.
 >
-> Three review items in the Product Contract were never settled and did **not** ship: a pinned coil summary above the theme blocks, and a fourth success criterion testing the attention outcome. The coil sort ships ranking by **share** with a minimum count, which was review proposal 1.
+> Both items this note previously listed as "did not ship" **did ship** in commit `0cf55c5`: the pinned coil strip above the theme blocks, and the manual acceptance check (now in the Verification Contract below). The coil sort ships ranking by **share** with a minimum count.
+>
+> Current documentation lives in `CLAUDE.md` → "Coil Marker" and `tests/RADAR_BACKTEST_FINDINGS.md` §9.0 and §9.6-§9.7. Prefer both over this file.
 
 ## Goal Capsule
 

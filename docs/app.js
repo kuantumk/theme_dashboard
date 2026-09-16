@@ -2178,6 +2178,9 @@
   // tiebreak only. A minimum count keeps one coiled name in a two-stock theme
   // from topping the board on a 50% share.
   const COIL_SORT_MIN = 2;
+  // Pins shown above the board. Small on purpose: the strip has to be readable
+  // in one glance to beat a scroll, and a long list is another thing to scan.
+  const COIL_PINNED_MAX = 5;
 
   function coilKey(entry) {
     const n = entry.n_coiled || 0;
@@ -2220,13 +2223,38 @@
 
     let html = '';
     if (hasCoilData) {
+      // The pinned strip is the whole point of the marker. A tint on a chip
+      // inside the rank-27 block is only reachable by someone already
+      // scrolling there, and the miss this feature exists to prevent happened
+      // at rank 11 — below where the user stops reading. So the leading coiled
+      // themes are named ABOVE the board, at any rank, with no click needed.
+      // Ranked by share, not raw count, for the byCoil reason: rosters run
+      // 2 to 214 members, so a raw count just lists the biggest L1s.
+      const pinned = l1s
+        .filter(g => (g.n_coiled || 0) >= COIL_SORT_MIN)
+        .sort(byCoil)
+        .slice(0, COIL_PINNED_MAX);
+      const pins = pinned.map(g => {
+        const share = Math.round((g.n_coiled / (g.n_members || 1)) * 100);
+        return `<button type="button" class="coil-pin" data-l1="${escAttr(g.name)}"
+                 title="${g.n_coiled} of ${g.n_members} members in a tight base — rank #${g.rank} by strength. Click to jump.">
+                  ${escHtml(g.name)} <span class="coil-pin-n">${g.n_coiled}/${g.n_members}</span>
+                  <span class="coil-pin-pct">${share}%</span>
+                </button>`;
+      }).join('');
       html += `
+        <div class="coil-strip${pinned.length ? '' : ' coil-strip-empty'}">
+          <span class="coil-strip-label">COILED</span>
+          ${pinned.length
+            ? `<div class="coil-pins">${pins}</div>`
+            : `<span class="radar-n">no theme has ${COIL_SORT_MIN}+ members in a tight base today</span>`}
+        </div>
         <div class="radar-controls">
           <button type="button" id="coil-sort-btn" class="coil-sort-btn${radarCoilSort ? ' on' : ''}"
                   title="Re-order themes by the share of members in a tight base. Changes order only — no score changes, nothing hidden.">
             ${radarCoilSort ? '◉' : '○'} Coiled first
           </button>
-          <span class="radar-n">${totalCoiled} coiled</span>
+          <span class="radar-n">${totalCoiled} coiled across ${l1s.length} themes</span>
         </div>
       `;
     }
@@ -2237,7 +2265,7 @@
         ? (grp.delta >= 0 ? `+${grp.delta.toFixed(3)}` : grp.delta.toFixed(3))
         : '—';
       html += `
-        <div class="theme-block">
+        <div class="theme-block" data-l1="${escAttr(grp.name)}">
           <div class="theme-header">
             <span class="theme-rank">#${grp.rank}</span>
             <span class="theme-name">${escHtml(grp.name)}</span>
@@ -2288,6 +2316,22 @@
     container.innerHTML = html;
     const coilBtn = container.querySelector('#coil-sort-btn');
     if (coilBtn) coilBtn.addEventListener('click', toggleCoilSort);
+    container.querySelectorAll('.coil-pin').forEach(pin => {
+      pin.addEventListener('click', () => {
+        const block = container.querySelector(
+          `.theme-block[data-l1="${CSS.escape(pin.dataset.l1)}"]`);
+        if (!block) return;
+        // Instant, not smooth. The jump is routinely thousands of pixels —
+        // measured 8,441px to reach a mid-board theme — and a smooth scroll
+        // over that distance animates through ~30 blocks, is interruptible,
+        // and did not reliably finish. `block: 'start'` puts the target at the
+        // top of the list pane, which is the scroller; the strip sits outside
+        // it and stays put.
+        block.scrollIntoView({ behavior: 'auto', block: 'start' });
+        block.classList.add('coil-jump');
+        setTimeout(() => block.classList.remove('coil-jump'), 1200);
+      });
+    });
     // Order matters: the cutoffs re-dim the fresh DOM, then the clamp measures
     // the chip rows it produced. Re-ordering changes which chips sit in which
     // row, so the "+N more" count has to be recomputed, not carried over.

@@ -342,6 +342,16 @@ Two repo rules apply to the export smoke run. Code-fix PRs do not include regene
 
 The ordering invariant in R7 is the gate that matters most: with the coil weight at zero, the newest session's L1 ranks and boosted scores must be unchanged. Check it by diffing a radar snapshot built before and after the change over the same master table.
 
+### Manual acceptance check — the attention outcome
+
+Every automated gate above tests whether the **detector** fires. None tests whether the user would **notice**, which is the failure the work exists to prevent. That question is about perception and cannot be honestly automated, so it is a human check, run once per meaningful change to the Themes tab:
+
+1. Load the Themes tab on a session where a coiled theme ranks outside the top 10 by strength. 2026-09-11 is the reference case: Cybersecurity ranked 11 with 5 coiled members.
+2. Without scrolling, and without clicking any control, answer: **can you tell that a coiled theme exists below the fold, and name it?**
+3. It passes only if the answer is yes from the pinned strip alone. The chip tint and the leaf badges do not count here — they live inside a block the reader never reaches, which is precisely why the strip exists.
+
+A build can pass every unit test and fail this. When it fails, the fix is in what renders above the board, not in the detector.
+
 ## Definition of Done
 
 - Every requirement R1-R12 is implemented or explicitly deferred in Scope Boundaries.

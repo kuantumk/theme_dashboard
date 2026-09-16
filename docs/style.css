@@ -1731,6 +1731,84 @@ tbody tr.nav-active {
    control there would re-wrap it and force a re-measure (see CLAUDE.md). This
    sort also applies to one tab only, which makes the shared bar the wrong
    home for it regardless. */
+/* Pinned coil strip. This is the feature's answer to the original miss: a
+   coiled theme at rank 27 is unreachable by a marker inside its own block,
+   because the reader never scrolls that far. The strip names the leading
+   coiled themes above the board, at any rank, with no click required. Ranked
+   by share rather than raw count — rosters run 2 to 214 members, so a raw
+   count just lists the biggest L1s (same lesson as byCoil, the tape-pressure
+   board, and the SI tab). */
+.coil-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 9px;
+  margin-bottom: 8px;
+  border: 1px solid var(--coil);
+  border-radius: 3px;
+  background: var(--coil-dim);
+}
+
+.coil-strip-empty {
+  border-color: var(--border);
+  background: none;
+}
+
+.coil-strip-label {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--coil);
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+
+.coil-strip-empty .coil-strip-label {
+  color: var(--text3);
+}
+
+.coil-pins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.coil-pin {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.coil-pin:hover {
+  border-color: var(--coil);
+}
+
+.coil-pin-n {
+  color: var(--text3);
+  margin-left: 3px;
+}
+
+.coil-pin-pct {
+  color: var(--coil);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Landing flash after a pin jump, so the eye finds the block it asked for.
+   Outline, not border or padding: the block is a flex/box container whose
+   size must not shift, and an outline is drawn outside the box model. */
+.theme-block.coil-jump {
+  outline: 1px solid var(--coil);
+  outline-offset: 2px;
+}
+
 .radar-controls {
   display: flex;
   align-items: center;

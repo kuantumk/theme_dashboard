@@ -108,6 +108,59 @@ class CoilBadgeTests(unittest.TestCase):
         self.assertIn('grp.n_coiled ?', APP)
 
 
+class CoilStripTests(unittest.TestCase):
+    """The pinned strip is the feature's answer to the original miss.
+
+    A marker inside a rank-27 block is unreachable by a reader who stops at
+    rank 10, so the strip names the leading coiled themes ABOVE the board at
+    any rank. These pin the two properties that would silently undo that:
+    ranking the pins by raw count (which just lists the biggest rosters), and
+    letting the jump flash resize the block it lands on.
+    """
+
+    def test_strip_renders_above_the_theme_blocks(self):
+        strip = APP.index('coil-strip')
+        blocks = APP.index('class="theme-block" data-l1=')
+        self.assertLess(strip, blocks)
+        self.assertIsNotNone(_rule_body('.coil-strip'))
+
+    def test_pins_rank_by_share_not_raw_count(self):
+        # Reuses byCoil, which divides by the member count. A separate
+        # raw-count sort here would reintroduce the size bias the sort avoids.
+        seg = APP[APP.index('const pinned = l1s'):][:400]
+        self.assertIn('.sort(byCoil)', seg)
+        self.assertIn('COIL_SORT_MIN', seg)
+        self.assertIn('COIL_PINNED_MAX', seg)
+
+    def test_pin_count_is_small_enough_to_glance_at(self):
+        m = re.search(r'const COIL_PINNED_MAX = (\d+)', APP)
+        self.assertIsNotNone(m)
+        self.assertLessEqual(int(m.group(1)), 8)
+
+    def test_empty_state_names_its_own_cause(self):
+        # A blank strip must say no theme qualified, not look broken.
+        self.assertIn('coil-strip-empty', APP)
+        self.assertIn('no theme has', APP)
+        self.assertIsNotNone(_rule_body('.coil-strip-empty'))
+
+    def test_jump_flash_cannot_resize_the_block(self):
+        # outline is drawn outside the box model; border/padding would shift
+        # the block and, inside it, re-wrap the chip rows syncRadarClamps
+        # measured for the "+N more" count.
+        body = _rule_body('.theme-block.coil-jump')
+        self.assertIsNotNone(body)
+        self.assertIn('outline', body)
+        for prop in ('border:', 'border-width', 'padding', 'margin', 'width'):
+            self.assertNotIn(prop, body)
+
+    def test_pin_targets_a_block_that_carries_the_matching_attribute(self):
+        # The pin reads data-l1 and queries .theme-block[data-l1=...]; if the
+        # block ever stops emitting it, every pin silently does nothing.
+        self.assertIn('data-l1="${escAttr(grp.name)}"', APP)
+        self.assertIn('.theme-block[data-l1=', APP)
+        self.assertIn('CSS.escape(pin.dataset.l1)', APP)
+
+
 class CoilSortTests(unittest.TestCase):
     def test_sort_uses_share_with_a_minimum_count(self):
         self.assertIn('COIL_SORT_MIN', APP)
@@ -134,9 +187,16 @@ class CoilSortTests(unittest.TestCase):
     def test_filters_and_clamps_rerun_after_a_reorder(self):
         # Re-ordering changes which chips land in which row, so the "+N more"
         # count must be recomputed rather than carried across the re-render.
-        tail = APP[APP.index('const coilBtn = container.querySelector'):][:600]
-        self.assertIn('applyTickerFilters()', tail)
-        self.assertIn('syncRadarClamps(container)', tail)
+        # Assert ORDER, not proximity: a character window breaks the moment
+        # anything is inserted between the handler and these calls, which
+        # pins the spelling rather than the behaviour.
+        wire = APP.index('const coilBtn = container.querySelector')
+        filters = APP.index('applyTickerFilters()', wire)
+        clamps = APP.index('syncRadarClamps(container)', wire)
+        render_end = APP.index('// ── RADAR CHIP CLAMPING', wire)
+        self.assertLess(filters, render_end)
+        self.assertLess(clamps, render_end)
+        self.assertLess(filters, clamps)
 
 
 if __name__ == '__main__':

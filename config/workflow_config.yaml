@@ -315,6 +315,38 @@ bidask:
     - EURT
     - AEUR
 
+  # Theme scoring. A group scores the mean of its top three members' Relative
+  # Volume at Time, each capped first, plus an additive breadth term. The score
+  # this replaced was the SUM of its members' margins, which made breadth swamp
+  # intensity -- 0 of 67 single-name groups ever reached the screen. Splitting
+  # the two halves is what bounds each one separately.
+  #
+  # The cap is what lets a mean survive the tail: DLXY read 2090.8 in the
+  # measured session and would otherwise hand its theme a score three orders of
+  # magnitude above every rival. 5.0 sits above the measured p99 of 4.329 and
+  # binds 15 rows of 1,776, so ordering is preserved for better than 99% of the
+  # board while the tail stops deciding it. Capped BEFORE the mean, never after.
+  group_rvol_cap: 5.0
+
+  # Breadth adds `coefficient x the share of the group's members that cleared
+  # the gate`, and only ever adds. Share, not count: rosters run from 2 to 214
+  # members, so a count ranks by roster size -- the same reason the coil strip
+  # and the SI tab rank on share. The denominator is the group's members in the
+  # poll's liquidity-filtered universe BEFORE the volume gate; after it, every
+  # surviving row qualifies and the share is 1.0 for everyone.
+  #
+  # 0.5 is CHOSEN, not measured. Scores span the session floor (0.7) to the 5.0
+  # cap, so a fully-qualifying theme gains at most +0.5 and a single member at
+  # the cap still tops a broad theme running 3.5x -- the board stays
+  # intensity-led with breadth as a strong tiebreak. Raise it to let breadth
+  # decide; a value near the score span restores the failure above.
+  group_breadth_coef: 0.5
+
+  # Below this many qualifying members the breadth term is zero. Share alone
+  # hands a one-member group the maximum, which is the opposite of what the
+  # term is for. 2 mirrors the coil strip's own floor.
+  group_breadth_min_members: 2
+
   # Display
   min_hits_to_show: 3           # hide tickers below this total hit count
   max_rows_per_column: 60       # per-column render cap

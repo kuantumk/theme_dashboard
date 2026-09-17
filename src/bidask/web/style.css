@@ -127,41 +127,24 @@ body {
 }
 
 .control select:hover { border-color: var(--accent); }
-.control input[type="checkbox"] { accent-color: var(--accent); }
+/* No checkbox rule: the two hide-* controls read per-ticker counters the
+   stateless board never produces, and both are gone rather than left comparing
+   `undefined` and passing every row. */
 .control .val { color: var(--white); min-width: 22px; font-variant-numeric: tabular-nums; }
 .control .val.wide { min-width: 46px; }
 
-/* ── market pressure bar ──────────────────────────────── */
-
-.pressure { padding: 9px 14px 12px; border-bottom: 1px solid var(--border); }
-
-.pressure-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  margin-bottom: 5px;
-}
-
-.pressure-labels .buy { color: var(--green); }
-.pressure-labels .sell { color: var(--red); }
-
-.pressure-track {
-  height: 7px;
-  background: var(--red);
-  display: flex;
-  overflow: hidden;
-}
-
-.pressure-fill { background: var(--green); height: 100%; transition: width 0.4s ease; }
-
 /* ── columns ──────────────────────────────────────────── */
+
+/* The buying/selling pressure bar stood here. It read per-ticker trade-side
+   counts the stateless board no longer produces, so it would have frozen at a
+   50/50 split forever — absence rendering as a claim of balanced flow. */
 
 .columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1px;
   background: var(--border);
-  min-height: calc(100vh - 190px);
+  min-height: calc(100vh - 150px);
 }
 
 .column { background: var(--bg); padding: 10px 12px 40px; }
@@ -244,9 +227,21 @@ body {
 .column.weak .chip { border-color: rgba(255, 51, 85, 0.28); background: var(--rdim); }
 
 .chip .sym { color: var(--white); font-weight: 500; }
-.chip .hits { font-size: 10px; color: var(--text2); font-variant-numeric: tabular-nums; }
-.column.strong .chip .hits b { color: var(--green); font-weight: 500; }
-.column.weak .chip .hits b { color: var(--red); font-weight: 500; }
+
+/* Relative Volume at Time — the figure the whole board ranks on, so it reads
+   as a number rather than as an annotation. */
+.chip .rvol { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* R5's marker: the reference that placed this ticker on this side, and the move
+   against it. A TEXT LABEL, never a tint — a tint cannot say which comparison
+   made a ticker weak, and the chip already takes its colour from its column.
+   A ticker above today's open and below yesterday's close carries one of these
+   in each column, which is the only thing distinguishing the two appearances. */
+.chip .mark { display: inline-flex; align-items: baseline; gap: 3px; }
+.chip .ref { font-size: 9px; color: var(--text3); letter-spacing: 0.03em; }
+.chip .move { font-size: 10px; font-variant-numeric: tabular-nums; }
+.column.strong .chip .move { color: var(--green); }
+.column.weak .chip .move { color: var(--red); }
 
 .chip .badge {
   font-size: 9px;
@@ -257,11 +252,6 @@ body {
 }
 
 .chip .badge.low { border-color: var(--red); color: var(--red); }
-
-/* Count-based and volume-based signals disagree: one print is likely driving
-   the reading. Rendered as a warning marker, not a silent difference. */
-.chip.divergent { border-style: dashed; }
-.chip .warn { color: var(--amber); font-size: 10px; }
 
 .empty { color: var(--text3); font-size: 11px; padding: 18px 0; }
 

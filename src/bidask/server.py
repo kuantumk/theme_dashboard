@@ -14,6 +14,7 @@ import argparse
 import functools
 import http.server
 import json
+import math
 import os
 import socketserver
 import subprocess
@@ -117,6 +118,32 @@ def _crypto_session_date(now: datetime) -> str:
 def _session_date(market: str, now: datetime) -> str:
     return (_crypto_session_date(now) if market == "crypto"
             else _equity_session_date(now))
+
+
+def _drop_non_finite(record: dict) -> None:
+    """Replace NaN and infinity in a member payload with None, in place.
+
+    ⛔ Load-bearing, and its absence takes out the WHOLE board rather than one
+    field. `write_state` serializes with `allow_nan=False`, so a single
+    non-finite cell raises and no state file is written at all — both tabs then
+    freeze at the last good poll while the console scrolls one line per cycle.
+    It reads as a dead feed, which is the one thing this app is built not to
+    misreport.
+
+    It is not a rare edge either: the extended-hours columns are genuinely
+    absent for any name that did not trade in that window, measured at 322 of
+    1,821 rows in the `premarket_*` trio and 4 in `postmarket_*` on one live
+    poll. Every equity poll carries some.
+
+    The retired `session.py` scrubbed these on the way into its display meta.
+    That module was deleted once the columns stopped flowing through it, but
+    the raw screener record now reaches the payload directly instead — the
+    guard's caller moved rather than going away, which is exactly the shape a
+    caller sweep misses.
+    """
+    for key, value in record.items():
+        if isinstance(value, float) and not math.isfinite(value):
+            record[key] = None
 
 
 def _session_state(rows) -> str:
@@ -388,6 +415,7 @@ class TapeEngine:
                                              ("weak", sides.weak))
                     if references
                 }
+                _drop_non_finite(record)
             self.qualified[market] = records
 
         self.consecutive_failures = 0 if any_ok else self.consecutive_failures + 1

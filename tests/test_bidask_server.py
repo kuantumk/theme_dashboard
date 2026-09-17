@@ -17,6 +17,7 @@ import socketserver
 from config.settings import PROJECT_ROOT
 from src.bidask.server import (
     STATE_FILENAME,
+    _drop_non_finite,
     _equity_session_date,
     _is_tracked_location,
     make_handler,
@@ -729,3 +730,38 @@ class TestCryptoSessionDate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestNonFinitePayloadCells(unittest.TestCase):
+    """A NaN in one member's row must not cost the whole board.
+
+    `write_state` serializes with `allow_nan=False`, so a single non-finite
+    cell raises and NO state file is written — both tabs freeze at the last
+    good poll and the page reports a dead feed while the vendor is streaming.
+    The extended-hours columns are legitimately absent for any name that did
+    not trade in that window (measured 322 of 1,821 rows in the `premarket_*`
+    trio on one live poll), so every equity poll carries some.
+    """
+
+    def test_nan_and_infinity_become_none(self):
+        record = {"symbol": "AAA", "premarket_change": float("nan"),
+                  "postmarket_close": float("inf"), "close": 10.0}
+        _drop_non_finite(record)
+        self.assertIsNone(record["premarket_change"])
+        self.assertIsNone(record["postmarket_close"])
+        self.assertEqual(record["close"], 10.0, "finite values are untouched")
+        self.assertEqual(record["symbol"], "AAA", "non-floats are untouched")
+
+    def test_a_scrubbed_record_survives_the_real_serializer(self):
+        # The end the guard exists for, asserted against the same call
+        # `write_state` makes rather than a paraphrase of it.
+        record = {"symbol": "AAA", "premarket_volume": float("nan")}
+        _drop_non_finite(record)
+        self.assertEqual(json.dumps(record, allow_nan=False),
+                         '{"symbol": "AAA", "premarket_volume": null}')
+
+    def test_an_unscrubbed_record_would_have_failed(self):
+        # Pins that the guard is load-bearing rather than decorative: without
+        # it this is the exception that empties the board.
+        with self.assertRaises(ValueError):
+            json.dumps({"premarket_change": float("nan")}, allow_nan=False)

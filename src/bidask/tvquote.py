@@ -112,6 +112,27 @@ def encode(method: str, params: list) -> str:
     return f"~m~{len(payload)}~m~{payload}"
 
 
+def auth_token() -> str:
+    """Mint a short-lived socket JWT from the `sessionid` cookie.
+
+    Module-level rather than a method because the chart socket in
+    `src/bidask/tvbars.py` authenticates the same way against the same host. A
+    second copy of this would drift from the error messages below, which are
+    the only ones in this module carried to the UI verbatim.
+    """
+    jar = cookie_jar()
+    if not jar:
+        raise QuoteAuthError("no TRADINGVIEW_SESSIONID in .env")
+    response = requests.get(TOKEN_URL, headers=HEADERS, cookies=jar, timeout=20)
+    if response.status_code in (401, 403):
+        raise QuoteAuthError("TradingView session cookie rejected — log in again and re-copy it")
+    response.raise_for_status()
+    token = response.text.strip().strip('"')
+    if not token:
+        raise QuoteAuthError("TradingView returned an empty quote token")
+    return token
+
+
 @dataclass
 class Quote:
     """One symbol's latest pushed values."""
@@ -226,17 +247,7 @@ class QuoteStream:
             self._connected = False
 
     def _auth_token(self) -> str:
-        jar = cookie_jar()
-        if not jar:
-            raise QuoteAuthError("no TRADINGVIEW_SESSIONID in .env")
-        response = requests.get(TOKEN_URL, headers=HEADERS, cookies=jar, timeout=20)
-        if response.status_code in (401, 403):
-            raise QuoteAuthError("TradingView session cookie rejected — log in again and re-copy it")
-        response.raise_for_status()
-        token = response.text.strip().strip('"')
-        if not token:
-            raise QuoteAuthError("TradingView returned an empty quote token")
-        return token
+        return auth_token()
 
     def _session(self) -> None:
         """One connection's lifetime. Returns to trigger a reconnect."""

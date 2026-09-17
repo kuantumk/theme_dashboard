@@ -2,79 +2,106 @@
 
 The question this answers is TradingView's "Relative Volume at Time" in
 **Cumulative** mode: how does the volume this ticker has traded since the
-session opened compare with the volume *it* had usually traded by this same
+session anchor compare with the volume *it* had usually traded by this same
 point in the day?
 
-    rvol_at_time(t) = volume today from 09:30 to t
-                      / mean over the last N sessions of that same 09:30-to-t sum
+    rvol_at_time(t) = volume today from 04:00 to t
+                      / mean over the last N sessions of that same 04:00-to-t sum
 
-Both legs are cumulative from the session anchor and both are cut at the same
-time of day, so the comparison is like for like at every moment of the session.
+Both legs are cumulative from the anchor and both are cut at the same time of
+day, so the comparison is like for like at every moment.
 
-Why not the screener's own figure
----------------------------------
-`relative_volume_10d_calc` divides session-to-date volume by the 10-day average
-**full-day** volume, with no time-of-day adjustment — verified, not assumed:
-across 59 liquid tickers the implied divisor matched the true 10-day average
-daily volume to a median error of 0.02%. A fixed floor on it is a different
-filter every hour (16x normal participation demanded at 09:35, 1.8x at 15:00).
+Why the anchor is 04:00 and not 09:30
+-------------------------------------
+The board runs pre-market and after hours, so the measure has to mean something
+in all three windows. `ta.relativeVolume(10, "1D", cumulative)` on an
+extended-hours chart anchors its 1D period at **04:00**, and that is the figure
+the user reads off the app and wrote the floors against. The regular session is
+not a special case — it is the same running total, seen later in the day.
 
-An earlier fix divided that figure by a market-wide median volume curve. That
-is closer, but it is still not like for like: it assumes every ticker shares
-the market's intraday shape, and a ticker drawing unusual interest is exactly
-the case where its shape departs from the market's. Dividing by the ticker's
-own history removes the assumption entirely.
+Confirmed against the app for GNRC on 2026-09-17: the plot climbs through
+pre-market to roughly 100 and then **falls** to 33.50 at 09:30, because the
+numerator keeps accruing while the denominator jumps as the regular-session
+open enters the 10-day average. That discontinuity is the signature of a
+time-of-day denominator. Our own computation gave 31.19 at 10:21 ET against the
+33.50 read off the chart minutes earlier on a declining curve.
 
-`relative_volume_intraday|5` exists in the screener metainfo and may be this
-figure, but its semantics are undocumented and it did not behave like a
-cumulative measure when probed after the close (AVGO read 2.26 against a
-full-day 1.75). This repo has already lost a season to a TradingView field
-whose behaviour was assumed rather than verified, so it stays unused until
-someone validates it against this module during a live session.
+Why no screener column answers this
+-----------------------------------
+`relative_volume_10d_calc` is `volume / average_volume_10d_calc` in every
+session state — measured to a 3.10% median error against the published inputs.
+Mid-session the numerator is a partial day, so a fixed floor on it is a
+different filter every hour. Before the open it is still *yesterday's*
+completed day: across 300 symbols over a 201-second gap, pre-market volume rose
+for 262 while that field and every `relative_volume_intraday|N` variant changed
+for **0 of 300**. `premarket_volume / average_volume_10d_calc` is not a
+substitute either — it divides by a normal full day rather than by this
+ticker's usual pre-market, and for GNRC it read 0.267 where the app read ~100,
+a factor of 374 that differs per ticker and so cannot be recalibrated away.
+
+Why the bars come from the chart socket
+---------------------------------------
+yfinance serves the extended-hours bars with **zero volume on every one**, so a
+baseline built from it is a zero denominator rather than a quiet ticker. See
+`src/bidask/tvbars.py`, which is the only route to real extended-hours volume
+here.
 
 Cost
 ----
 The historical leg depends only on completed sessions, so it is computed once
-per session and cached — not per poll. A poll then costs one division. Building
-the whole liquidity-filtered universe (~1,900 tickers) takes about 1.7 minutes
-in batches, which finishes before the opening bell when the dashboard is
-launched pre-market, and a same-day restart reads the cache instead.
+per session and cached — not per poll. A poll then costs one division.
 """
 
 from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
 from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from src.bidask.tvbars import fetch_bars
+
 ET = ZoneInfo("America/New_York")
 
-SESSION_OPEN_MIN = 9 * 60 + 30   # 09:30 ET
-SESSION_CLOSE_MIN = 16 * 60      # 16:00 ET
-SESSION_MINUTES = SESSION_CLOSE_MIN - SESSION_OPEN_MIN  # 390
+# The extended trading day. 04:00 is the anchor TradingView's own 1D period
+# uses on an extended-hours chart; 20:00 closes the post-market window.
+SESSION_OPEN_MIN = 4 * 60        # 04:00 ET
+SESSION_CLOSE_MIN = 20 * 60      # 20:00 ET
+SESSION_MINUTES = SESSION_CLOSE_MIN - SESSION_OPEN_MIN  # 960
+
+# The regular session inside it. Used only to judge whether a historical
+# session is complete enough to average in — never as an anchor.
+REGULAR_OPEN_MIN = 9 * 60 + 30   # 09:30 ET
+REGULAR_CLOSE_MIN = 16 * 60      # 16:00 ET
 
 BAR_MINUTES = 5
-BARS_PER_SESSION = SESSION_MINUTES // BAR_MINUTES  # 78
+BARS_PER_SESSION = SESSION_MINUTES // BAR_MINUTES  # 192
 
 # Sessions of history behind the average. Matches the 10 the screener's own
 # relative-volume field uses, so the two figures stay comparable in scale.
 DEFAULT_SESSIONS = 10
 
-# A session needs most of its bars present to be averaged in. A half day or a
-# partly-downloaded session would otherwise drag the baseline down and inflate
-# every pace computed against it.
-MIN_BARS_FOR_SESSION = 60
+# A session needs most of its **regular-session** bars present to be averaged
+# in. Counting bars over the whole 04:00-20:00 grid instead would drop every
+# quiet name's entire history: most extended windows hold no trade, so the feed
+# returns no bar for them, and a full session of a normal stock carries well
+# under 192 bars. A ticker whose history is all dropped has no baseline, scores
+# 0 and is excluded — which would read as a dead universe rather than as a bad
+# completeness rule. A half day still fails this, which is the point.
+MIN_REGULAR_BARS_FOR_SESSION = 60
 
-CACHE_VERSION = 2
+# Bumped for the 04:00 anchor. A curve written under the 09:30 anchor has 78
+# slots meaning different clock times, so reading one would misdate every
+# lookup rather than fail — hence a version check rather than a length check.
+CACHE_VERSION = 3
 
 
 def minutes_since_open(now: Optional[datetime] = None) -> float:
-    """Minutes elapsed in the regular session; 0 before the open, 390 after."""
+    """Minutes elapsed in the extended session; 0 before 04:00, 960 after 20:00."""
     moment = now or datetime.now(tz=ET)
     moment = moment.astimezone(ET) if moment.tzinfo else moment.replace(tzinfo=ET)
     elapsed = (moment.hour * 60 + moment.minute + moment.second / 60.0) - SESSION_OPEN_MIN
@@ -84,10 +111,10 @@ def minutes_since_open(now: Optional[datetime] = None) -> float:
 def baseline_at(profile, elapsed_minutes: float) -> float:
     """Expected cumulative volume by `elapsed_minutes`, from a ticker's profile.
 
-    `profile` is cumulative volume at each 5-minute boundary. Today's figure
-    arrives continuously from the screener, so comparing it against a step
-    function would swing the ratio across every bar edge. Interpolating within
-    the bar keeps both legs on the same footing.
+    `profile` is cumulative volume at each 5-minute boundary from 04:00. Today's
+    figure arrives continuously from the screener, so comparing it against a
+    step function would swing the ratio across every bar edge. Interpolating
+    within the bar keeps both legs on the same footing.
     """
     if profile is None or len(profile) == 0:
         return 0.0
@@ -103,11 +130,17 @@ def baseline_at(profile, elapsed_minutes: float) -> float:
 
 
 def rvol_at_time(volume_so_far, profile, elapsed_minutes: float) -> float:
-    """Today's session volume over what this ticker usually had by now.
+    """Today's volume since 04:00 over what this ticker usually had by now.
 
     Returns 0.0 — never 1.0 — when the reading or the baseline is unusable. An
-    unknown must not pass a floor as though it had qualified; this is the same
-    fail-closed rule the classifier's quote guards follow.
+    unknown must not pass a floor as though it had qualified.
+
+    A genuinely zero baseline also scores 0 rather than infinity. A ticker that
+    has never traded before the open and suddenly does is the strongest signal
+    this measure could carry, and it is the one case the measure cannot express
+    — an accepted cost of the fail-closed rule. It is rare in a liquidity-gated
+    universe, because the denominator is a mean over ten sessions and the
+    cumulative curve at any pre-market minute is a sum over hours.
     """
     try:
         traded = float(volume_so_far)
@@ -121,26 +154,73 @@ def rvol_at_time(volume_so_far, profile, elapsed_minutes: float) -> float:
     return traded / expected
 
 
-def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS) -> dict:
-    """Average each symbol's cumulative intraday volume across recent sessions.
+def _is_extended(minute_of_day: int) -> bool:
+    return not (REGULAR_OPEN_MIN <= minute_of_day < REGULAR_CLOSE_MIN)
 
-    `bars_by_symbol` maps a symbol to a DataFrame of 5-minute regular-session
-    bars with a timezone-aware index and a `Volume` column.
+
+def extended_volume_is_dead(frame) -> bool:
+    """True when extended-hours bars exist and not one carries real volume.
+
+    This is the yfinance shape, and it is the one failure that must never
+    become a baseline: a zero denominator makes every pre-market ratio
+    infinite, where a rejected symbol merely scores 0 and is excluded.
+
+    A ticker with **no** extended-hours bars at all is not dead — a 5-minute
+    window in which nothing traded returns no bar, which is the ordinary shape
+    of a quiet pre-market. Only a bar that exists and reads zero is evidence
+    the source is broken.
     """
+    if frame is None or len(frame) == 0:
+        return False
+    seen = False
+    for stamp, volume in zip(frame.index, frame["Volume"].to_numpy(dtype=float)):
+        if not _is_extended(stamp.hour * 60 + stamp.minute):
+            continue
+        seen = True
+        if math.isfinite(volume) and volume > 0:
+            return False
+    return seen
+
+
+def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
+                   exclude_date=None) -> dict:
+    """Average each symbol's cumulative extended-session volume across sessions.
+
+    `bars_by_symbol` maps a symbol to a DataFrame of 5-minute extended-session
+    bars with a timezone-aware ET index and a `Volume` column.
+
+    `exclude_date` drops one session — today's — because the baseline is the
+    ten *completed* sessions behind it. Left in, the current session would
+    appear in its own denominator and damp exactly the reading the board exists
+    to catch.
+
+    A symbol whose extended-hours bars all read zero is omitted entirely rather
+    than given a regular-session-only curve; see `extended_volume_is_dead`.
+    """
+    skip = str(exclude_date) if exclude_date is not None else None
     profiles = {}
     for symbol, frame in bars_by_symbol.items():
+        if frame is None or len(frame) == 0:
+            continue
+        if extended_volume_is_dead(frame):
+            continue
         curves = []
-        for _, day in frame.groupby(frame.index.date):
-            if len(day) < MIN_BARS_FOR_SESSION:
+        for day, rows in frame.groupby(frame.index.date):
+            if skip is not None and str(day) == skip:
                 continue
             slots = np.zeros(BARS_PER_SESSION, dtype=float)
-            for stamp, volume in zip(day.index, day["Volume"].to_numpy(dtype=float)):
+            regular_bars = 0
+            for stamp, volume in zip(rows.index, rows["Volume"].to_numpy(dtype=float)):
+                minute_of_day = stamp.hour * 60 + stamp.minute
+                if not _is_extended(minute_of_day):
+                    regular_bars += 1
                 if not math.isfinite(volume):
                     continue
-                offset = (stamp.hour * 60 + stamp.minute) - SESSION_OPEN_MIN
-                index = int(offset // BAR_MINUTES)
+                index = (minute_of_day - SESSION_OPEN_MIN) // BAR_MINUTES
                 if 0 <= index < BARS_PER_SESSION:
                     slots[index] += volume
+            if regular_bars < MIN_REGULAR_BARS_FOR_SESSION:
+                continue
             curves.append(np.cumsum(slots))
         if not curves:
             continue
@@ -191,6 +271,7 @@ def save_profiles(profiles: dict, out_dir: Path, session_date: str) -> bool:
         "version": CACHE_VERSION,
         "session_date": session_date,
         "bar_minutes": BAR_MINUTES,
+        "anchor_minutes": SESSION_OPEN_MIN,
         # Rounded to whole shares: the figures are volume averages in the
         # millions, so the decimals are noise and they triple the file size.
         "profiles": {s: [int(round(v)) for v in curve] for s, curve in profiles.items()},
@@ -209,7 +290,10 @@ def load_profiles(out_dir: Path, session_date: str) -> dict:
     """Read today's cached baselines. Any mismatch returns empty, never stale.
 
     A baseline from another session is worse than none: it would be silently
-    wrong for every ticker rather than visibly absent for all of them.
+    wrong for every ticker rather than visibly absent for all of them. The
+    anchor is checked alongside the version for the same reason — a curve
+    written from 09:30 has every slot at the wrong clock time and would read
+    without error.
     """
     try:
         raw = json.loads(cache_path(out_dir, session_date).read_text(encoding="utf-8"))
@@ -218,6 +302,8 @@ def load_profiles(out_dir: Path, session_date: str) -> dict:
     if raw.get("version") != CACHE_VERSION or raw.get("session_date") != session_date:
         return {}
     if raw.get("bar_minutes") != BAR_MINUTES:
+        return {}
+    if raw.get("anchor_minutes") != SESSION_OPEN_MIN:
         return {}
     return {s: np.asarray(curve, dtype=float) for s, curve in (raw.get("profiles") or {}).items()}
 
@@ -231,50 +317,27 @@ def prune_cache(out_dir: Path, keep: str) -> None:
 
 # ── history download ─────────────────────────────────────────────
 
-def fetch_bars(symbols: Iterable[str], lookback_days: int = 15, batch: int = 100) -> dict:
-    """Download 5-minute regular-session bars for the given symbols.
+def bar_count_for(sessions: int) -> int:
+    """Bars to request so `sessions` complete extended days fit, with slack.
 
-    yfinance is used rather than Alpaca because it needs no credentials — the
-    tape dashboard's `.env` carries only TradingView keys — and because this
-    runs once per session rather than per poll, so throughput matters more than
-    latency. Extended-hours bars are excluded to match the screener's `volume`,
-    which is regular-session-to-date.
+    Three spare sessions cover today's partial day, a holiday inside the
+    window, and the fact that a continuously-traded name fills more of the
+    192-slot grid than a quiet one.
     """
-    import pandas as pd
-    import yfinance as yf
-
-    symbols = [s for s in dict.fromkeys(symbols) if s]
-    collected = {}
-    for start in range(0, len(symbols), batch):
-        chunk = symbols[start:start + batch]
-        try:
-            data = yf.download(chunk, period=f"{lookback_days}d", interval="5m",
-                               progress=False, prepost=False, group_by="ticker",
-                               auto_adjust=False, threads=True)
-        except Exception:  # noqa: BLE001 — one bad batch must not end the warm-up
-            continue
-        if data is None or data.empty:
-            continue
-        for symbol in chunk:
-            try:
-                frame = data[symbol] if isinstance(data.columns, pd.MultiIndex) else data
-            except KeyError:
-                continue
-            frame = frame.dropna(subset=["Volume"])
-            if frame.empty:
-                continue
-            index = frame.index
-            if index.tz is None:
-                index = index.tz_localize("UTC")
-            frame = frame.copy()
-            frame.index = index.tz_convert(ET)
-            frame = frame.between_time("09:30", "15:59")
-            if not frame.empty:
-                collected[symbol] = frame
-    return collected
+    return max(1, (int(sessions) + 3) * BARS_PER_SESSION)
 
 
-def build_for_symbols(symbols: Iterable[str], sessions: int = DEFAULT_SESSIONS) -> dict:
-    """Fetch history and reduce it to one cumulative-volume profile per symbol."""
-    lookback = max(10, sessions * 3 // 2 + 5)
-    return build_profiles(fetch_bars(symbols, lookback_days=lookback), sessions=sessions)
+def build_for_symbols(symbols: Iterable[str], sessions: int = DEFAULT_SESSIONS,
+                      *, exclude_date=None, **kwargs) -> dict:
+    """Fetch history and reduce it to one cumulative-volume profile per symbol.
+
+    Today's session is excluded by default — the baseline is the completed
+    sessions behind it. Pass `exclude_date=False` only to score a historical
+    day, where "today" is not in the data at all.
+    """
+    if exclude_date is None:
+        exclude_date = datetime.now(tz=ET).date()
+    elif exclude_date is False:
+        exclude_date = None
+    bars = fetch_bars(symbols, bars=bar_count_for(sessions), **kwargs)
+    return build_profiles(bars, sessions=sessions, exclude_date=exclude_date)

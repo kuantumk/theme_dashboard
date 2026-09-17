@@ -47,9 +47,28 @@ from src.bidask.config import cookie_jar
 # (900s = the documented 15-minute delay), `streaming` with a valid cookie pair.
 DELAYED_PREFIX = "delayed"
 
+# No `bid`/`ask` here, and that is deliberate. The america scanner publishes
+# neither — 3,771 fields in its metainfo and not one is a quote field — but
+# selecting them does not error: every row comes back null, which is
+# indistinguishable from a lost entitlement or a dead feed. The board no longer
+# reads a book at all, so the columns come out rather than sit there returning
+# nulls that a future reader could mistake for a market with no quotes. The
+# crypto list below keeps its pair: that scanner genuinely does publish one.
+#
+# The extended-hours columns are the price references outside the regular
+# session (`src/bidask/session_state.py`) and the live volume numerator for the
+# relative-volume gate. `premarket_change` measures against the previous
+# session close and `postmarket_change` against the regular session close, so
+# each window is answered by the field written for it — `close` itself holds
+# the 16:00 print all through the after-hours window and cannot distinguish
+# them. Every one of these was non-null on 100% of rows through the regular
+# session when measured.
 EQUITY_COLUMNS = [
-    "name", "close", "bid", "ask", "change", "volume",
-    "relative_volume_10d_calc", "market_cap_basic", "sector", "industry",
+    "name", "close", "open", "change", "change_from_open", "volume",
+    "premarket_change", "premarket_close", "premarket_volume",
+    "postmarket_change", "postmarket_close", "postmarket_volume",
+    "relative_volume_10d_calc", "relative_volume_intraday|5",
+    "market_cap_basic", "sector", "industry",
     "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
     "price_52_week_high", "price_52_week_low",
     "update_mode", "last_bar_update_time", "current_session",
@@ -58,6 +77,12 @@ EQUITY_COLUMNS = [
 # `current_session` reports whether the market is actually trading, which is a
 # different question from `update_mode` (whether our *feed* is real-time). A
 # real-time entitlement on a closed market is still a closed market.
+#
+# `SESSION_STATES` in `src/bidask/session_state.py` reads the same field and
+# must carry the same keys: this table decides what the banner says, that one
+# decides which reference price and volume floor apply. A spelling added here
+# and not there renders a banner for a state the board has no rules for, so
+# `tests/test_bidask_session_state.py` pins the pair.
 SESSION_LABELS = {
     # `market` is what the feed actually sends while the regular session runs —
     # verified live, 2026-08-12. `regular` was assumed and never observed; an

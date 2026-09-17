@@ -262,7 +262,19 @@ bidask:
     pre_market:  [[0, 3.0]]
     market:      [[0, 0.7], [15, 1.0], [30, 1.2]]
     post_market: [[0, 1.5]]
-    # Crypto has no session state and one flat floor at all times.
+    # Crypto has no session state and one flat floor at all times. Its day is
+    # anchored at 00:00 UTC, not 04:00 ET -- MEASURED 2026-09-17, 13 of 13
+    # rows: the crypto scanner's `volume` matches a 5-minute bar sum from UTC
+    # midnight at a median ratio of 1.00026, where a trailing-24h sum reads
+    # 1.25x it. So 1.2 here means the same thing it means on the equity tab:
+    # this coin has traded 1.2x what IT usually had by this point of ITS day.
+    #
+    # Flat rather than stepped because a 24/7 market has no opening print to
+    # tighten away from. The equity bands exist because an early denominator
+    # is small and noisy; crypto's denominator at any UTC hour is a mean over
+    # ten complete days cut at that same hour, and it is never freshly zero
+    # except in the first minutes after midnight UTC, where the gate already
+    # fails closed on a zero baseline.
     crypto:      [[0, 1.2]]
   in_play_rvol_sessions: 10     # sessions behind the historical average
 

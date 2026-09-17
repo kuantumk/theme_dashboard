@@ -213,7 +213,7 @@ class TestRvolStatusBlock(unittest.TestCase):
 
     def test_a_healthy_poll_names_no_cause(self):
         eng = self.engine(floor=1.2, scored=940, polled=2100)
-        eng.profiles = {"AAA": [1.0]}
+        eng.profiles["equity"] = {"AAA": [1.0]}
         block = eng.rvol_status("equity")
         self.assertFalse(block["unavailable"])
         self.assertEqual(block["reason"], "")
@@ -224,22 +224,22 @@ class TestRvolStatusBlock(unittest.TestCase):
         # A board of the rows that could be judged is worth more than no board;
         # the pair is what says how much of the market it covers.
         eng = self.engine(floor=1.2, scored=3, polled=2100)
-        eng.profiles = {"AAA": [1.0]}
+        eng.profiles["equity"] = {"AAA": [1.0]}
         block = eng.rvol_status("equity")
         self.assertFalse(block["unavailable"])
         self.assertEqual((block["scored"], block["polled"]), (3, 2100))
 
     def test_no_usable_reading_anywhere_publishes_an_unavailable_source(self):
         eng = self.engine(floor=1.2, scored=0, polled=2100)
-        eng.profiles = {"AAA": [1.0]}
-        eng.profile_status = "ready (0/2100)"
+        eng.profiles["equity"] = {"AAA": [1.0]}
+        eng.profile_status["equity"] = "ready (0/2100)"
         block = eng.rvol_status("equity")
         self.assertTrue(block["unavailable"])
         self.assertIn("2100", block["reason"])
 
     def test_a_warm_up_still_running_says_so_rather_than_blaming_the_market(self):
         eng = self.engine(floor=1.2, scored=0, polled=2100)
-        eng.profile_status = "pending"
+        eng.profile_status["equity"] = "pending"
         block = eng.rvol_status("equity")
         self.assertTrue(block["unavailable"])
         self.assertIn("pending", block["reason"])
@@ -380,8 +380,9 @@ class TestPollOnceEndToEnd(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
             eng.themes = {}       # industry fallback, independent of the tag file
-            eng.profiles = {s: profile for s in ("GAPR", "HEAV", "QUIT")}
-            eng.profile_status = f"ready ({len(eng.profiles)}/3)"
+            eng.profiles["equity"] = {s: profile
+                                      for s in ("GAPR", "HEAV", "QUIT")}
+            eng.profile_status["equity"] = "ready (3/3)"
 
             # The clock is pinned so the floor is 1.2 whatever hour the suite
             # runs at, and the warm-up is stubbed so no socket opens.
@@ -534,6 +535,196 @@ class TestRetiredClassifierConfigKeys(unittest.TestCase):
         from config.settings import CONFIG
         block = CONFIG.get("bidask") or {}
         self.assertEqual(sorted(set(self.KEYS) & set(block)), [])
+
+
+class TestCryptoPollReachesTheGate(unittest.TestCase):
+    """U8's own trap: the floor was configurable and the poll never applied it.
+
+    `poll_once` used to run the gate for equities only, so `crypto: [[0, 1.2]]`
+    sat in the config, passed its unit test, and filtered nothing on the
+    running board. A green test beside an unfiltered tab is worse than a
+    visible failure, so this class drives the whole poll rather than calling
+    the gate.
+
+    ELAPSED is 720 minutes — 12:00 UTC. Pinned so the crypto floor is read at a
+    fixed point of its own day whatever hour the suite runs at, and chosen past
+    the anchor because no volume is expected at 00:00 UTC and nothing can be
+    judged there.
+    """
+
+    ELAPSED = 720.0
+
+    def rows(self):
+        import numpy as np
+        import pandas as pd
+        from src.bidask.rvol_at_time import CRYPTO_BARS_PER_DAY, CRYPTO_GRID, baseline_at
+
+        profile = np.cumsum(np.full(CRYPTO_BARS_PER_DAY,
+                                    288_000.0 / CRYPTO_BARS_PER_DAY))
+        usual = baseline_at(profile, self.ELAPSED, grid=CRYPTO_GRID)
+
+        def row(symbol, ratio, change):
+            # `volume` is the UTC-day cumulative — measured, not assumed; see
+            # `universe.VOLUME_FIELDS`. `feed_symbol` is the instrument the
+            # baseline warm-up would fetch bars for.
+            return {"symbol": symbol, "feed_symbol": f"BINANCE:{symbol}USDT.P",
+                    "close": 100.0, "avg_volume": None,
+                    "volume": ratio * usual, "change_pct": change}
+
+        return profile, pd.DataFrame([
+            row("BTC", 2.4, 3.1),      # heavy and up over 24h: strong column
+            row("ETH", 1.9, -2.6),     # heavy and down over 24h: weak column
+            row("DOGE", 1.1, 14.0),    # 14% on 1.1x its usual: neither column
+            row("USDT", 9.0, 0.2),     # stablecoin: excluded upstream
+        ])
+
+    def engine_and_state(self, profiles=None):
+        from unittest import mock
+
+        from src.bidask.config import load_config
+        from src.bidask.feed import Payload
+        from src.bidask.server import TapeEngine
+
+        profile, rows = self.rows()
+        payload = Payload(rows=rows, feed="streaming", matched=len(rows),
+                          market_status="24/7")
+        with TemporaryDirectory() as tmp:
+            eng = TapeEngine(load_config(), Path(tmp), markets=("crypto",))
+            eng.profiles["crypto"] = ({s: profile for s in ("BTC", "ETH", "DOGE")}
+                                      if profiles is None else profiles)
+            eng.profile_status["crypto"] = "ready (3/3)"
+            with mock.patch("src.bidask.server.fetch", return_value=payload), \
+                 mock.patch("src.bidask.server.minutes_since_open",
+                            return_value=self.ELAPSED), \
+                 mock.patch.object(TapeEngine, "ensure_profiles", lambda *a: None):
+                eng.poll_once()
+        return eng, eng.build_state()["crypto"]
+
+    def shown(self, state):
+        return {m["symbol"] for column in ("strong", "weak")
+                for group in state["columns"][column] for m in group["members"]}
+
+    def test_a_row_below_the_floor_is_absent_from_the_rendered_board(self):
+        """R14 where it counts: through the poll, not through a gate call."""
+        _, state = self.engine_and_state()
+        self.assertNotIn("DOGE", self.shown(state))
+
+    def test_the_rows_above_the_floor_reach_their_columns(self):
+        _, state = self.engine_and_state()
+        self.assertEqual(self.shown(state), {"BTC", "ETH"})
+
+    def test_a_fourteen_percent_move_on_a_thin_tape_admits_nothing(self):
+        """R16 on the crypto tab. DOGE is the biggest mover in the response."""
+        _, state = self.engine_and_state()
+        for column in ("strong", "weak"):
+            for group in state["columns"][column]:
+                self.assertNotIn("DOGE", [m["symbol"] for m in group["members"]])
+
+    def test_each_side_names_the_24_hour_reference(self):
+        """R15. The label is what stops it reading as an equity session test."""
+        from src.bidask.crypto_state import REF_24H
+        _, state = self.engine_and_state()
+
+        def sides_of(column, symbol):
+            for group in state["columns"][column]:
+                for member in group["members"]:
+                    if member["symbol"] == symbol:
+                        return member["sides"]
+            return None
+
+        self.assertEqual(list(sides_of("strong", "BTC")["strong"]), [REF_24H])
+        self.assertEqual(list(sides_of("weak", "ETH")["weak"]), [REF_24H])
+        self.assertNotIn("weak", sides_of("strong", "BTC"))
+
+    def test_the_payload_names_the_reference_and_the_anchor(self):
+        """The page can only report a cause the payload carries."""
+        from src.bidask.crypto_state import REF_24H
+        _, state = self.engine_and_state()
+        self.assertEqual(state["rvol"]["reference"], REF_24H)
+        self.assertEqual(state["rvol"]["anchor"], "00:00 UTC")
+        self.assertEqual(state["rvol"]["session_state"], "crypto")
+        self.assertEqual(state["rvol"]["floor"], 1.2)
+
+    def test_the_coverage_pair_counts_the_rows_the_gate_saw(self):
+        _, state = self.engine_and_state()
+        # Three rows after the stablecoin exclusion, all three scorable.
+        self.assertEqual((state["rvol"]["scored"], state["rvol"]["polled"]), (3, 3))
+        self.assertFalse(state["rvol"]["unavailable"])
+
+    def test_the_stablecoin_never_reaches_the_gate_at_all(self):
+        eng, state = self.engine_and_state()
+        self.assertNotIn("USDT", self.shown(state))
+        self.assertNotIn("USDT", {r["symbol"] for r in eng.pregate["crypto"]})
+
+    def test_an_unavailable_source_says_so_rather_than_showing_a_quiet_market(self):
+        """R18. A 24/7 market has no closing bell to explain an empty board."""
+        _, state = self.engine_and_state(profiles={})
+        self.assertEqual(self.shown(state), set())
+        self.assertTrue(state["rvol"]["unavailable"])
+        self.assertIn("baselines", state["rvol"]["reason"])
+
+    def test_the_crypto_payload_serializes_with_nan_forbidden(self):
+        _, state = self.engine_and_state()
+        json.dumps(state, allow_nan=False)
+
+
+class TestCryptoBaselineSymbols(unittest.TestCase):
+    """The warm-up fetches bars for the instrument, not the display symbol.
+
+    MEASURED 2026-09-17: the crypto board's rows are mostly perpetual swaps —
+    `BTC` on screen is `BINANCE:BTCUSDT.P` — and the chart socket resolves
+    nothing from a bare `BTC`. Getting this backwards leaves every crypto row
+    without a baseline, which scores 0 and empties the board.
+    """
+
+    def _engine(self, markets=("crypto",)):
+        from src.bidask.config import load_config
+        from src.bidask.server import TapeEngine
+        with TemporaryDirectory() as tmp:
+            return TapeEngine(load_config(), Path(tmp), markets=markets)
+
+    def test_the_feed_symbol_is_what_bars_are_requested_for(self):
+        import pandas as pd
+        rows = pd.DataFrame([{"symbol": "BTC", "feed_symbol": "BINANCE:BTCUSDT.P"},
+                             {"symbol": "ETH", "feed_symbol": "BINANCE:ETHUSDT.P"}])
+        self.assertEqual(self._engine()._symbol_map(rows),
+                         {"BTC": "BINANCE:BTCUSDT.P", "ETH": "BINANCE:ETHUSDT.P"})
+
+    def test_equities_carry_no_feed_symbol_and_fall_back_to_their_own(self):
+        import pandas as pd
+        rows = pd.DataFrame([{"symbol": "AAPL"}, {"symbol": "NVDA"}])
+        self.assertEqual(self._engine(markets=("equity",))._symbol_map(rows),
+                         {"AAPL": "AAPL", "NVDA": "NVDA"})
+
+    def test_a_missing_feed_symbol_falls_back_rather_than_asking_for_nan(self):
+        import numpy as np
+        import pandas as pd
+        rows = pd.DataFrame([{"symbol": "BTC", "feed_symbol": np.nan}])
+        self.assertEqual(self._engine()._symbol_map(rows), {"BTC": "BTC"})
+
+    def test_the_two_markets_keep_separate_baseline_tables(self):
+        eng = self._engine(markets=("crypto", "equity"))
+        eng.profiles["crypto"] = {"BTC": [1.0]}
+        eng.profiles["equity"] = {"AAPL": [1.0], "NVDA": [1.0]}
+        self.assertEqual(eng.rvol_status("crypto")["tickers"], 1)
+        self.assertEqual(eng.rvol_status("equity")["tickers"], 2)
+
+
+class TestCryptoSessionDate(unittest.TestCase):
+    """Crypto's day rolls at 00:00 UTC, so its baseline cache is named for it."""
+
+    def test_the_date_is_the_utc_date_not_the_et_one(self):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from src.bidask.server import _session_date
+
+        # 21:30 ET on the 17th is 01:30 UTC on the 18th: the two markets are
+        # on different dates, and a shared cache name would serve one of them
+        # yesterday's curves.
+        evening = datetime(2026, 9, 17, 21, 30, tzinfo=ZoneInfo("America/New_York"))
+        self.assertEqual(_session_date("crypto", evening), "2026-09-18")
+        self.assertEqual(_session_date("equity", evening), "2026-09-17")
 
 
 if __name__ == "__main__":

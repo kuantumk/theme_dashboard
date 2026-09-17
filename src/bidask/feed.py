@@ -101,9 +101,28 @@ SESSION_LABELS = {
     "holiday": "holiday",
 }
 
+# `24h_close_change|5` is the crypto board's whole price test — that market has
+# no open and no previous close, so `src/bidask/crypto_state.py` reads this one
+# field and labels the side "24h ago".
+#
+# `24h_vol|5` is the genuine 24-hour rolling volume, carried for display. It is
+# NOT what the relative-volume gate divides: `volume` is the UTC-day cumulative
+# (measured, see `fetch_crypto`) and a rolling window has no anchor to build a
+# baseline against.
+#
+# `relative_volume_10d_calc` and `relative_volume_intraday|5` are deliberately
+# absent. Both resolve on this scanner and both move — checked over a 125s gap,
+# 18 of 18 rows — so the movement test that condemns them on the equity
+# pre-market passes here. They are still the wrong quantity: `volume` is a
+# partial UTC day and `average_volume_10d_calc` is a full-day average, so the
+# ratio is mechanically scaled by how much of the day has passed. Measured
+# 2026-09-17 19:03 UTC, 79% through the day, the median row read 0.90; the same
+# participation at 01:00 UTC reads about 0.05. A flat 1.2 floor on that is a
+# different filter every hour — the exact failure the equity gate was
+# redesigned to escape. The board computes its own ratio instead (KTD2).
 CRYPTO_COLUMNS = [
     "base_currency", "close", "bid", "ask", "24h_close_change|5", "volume",
-    "high", "low", "update_mode", "last_bar_update_time",
+    "24h_vol|5", "high", "low", "update_mode", "last_bar_update_time",
 ]
 
 CRYPTO_EXCHANGE = "BINANCE"
@@ -289,16 +308,38 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
         return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
     df = df.drop_duplicates(subset="base_currency", keep="first").copy()
     df["symbol"] = df["base_currency"]
+    # The instrument behind the display symbol. Ordering by 24-hour volume puts
+    # the PERPETUAL first for most majors, so `BTC` on the board is
+    # `BINANCE:BTCUSDT.P` — measured 2026-09-17, 11 of the 13 surviving rows.
+    # The chart socket resolves nothing from a bare `BTC`, so the baseline
+    # warm-up fetches bars for this column and re-keys the result to `symbol`.
+    df["feed_symbol"] = df["ticker"] if "ticker" in df.columns else df["symbol"]
     df["change_pct"] = df["24h_close_change|5"]
     # Crypto has no session-scoped average-volume field and no auction windows,
     # so the equity liquidity gate does not apply. `high`/`low` are 24h rolling
     # rather than session extremes — see A3 in the plan.
     df["avg_volume"] = None
     df["rvol"] = None
-    # Crypto `volume` is 24h rolling rather than session-to-date — there is no
-    # session to date from. Labelled as 24h in the UI so it is not read as the
-    # same quantity the equity tab shows.
+    # ⛔ MEASURED 2026-09-17 19:03 UTC, 13 of 13 rows: crypto `volume` is the
+    # cumulative figure since **00:00 UTC**, matching a 5-minute bar sum from
+    # that anchor at a median ratio of 1.00026 — the 0.026% gap being the
+    # unclosed forming bar. An earlier revision of this file called it "24h
+    # rolling"; that was wrong, and it was the reason the crypto tab had no
+    # relative-volume numerator. A trailing-24h bar sum read 1.25x `volume` at
+    # the same moment, and the true rolling figure is `24h_vol|5`, carried
+    # beside it.
+    #
+    # So this is session-to-date traded value, exactly as on the equity tab,
+    # for a session that starts at UTC midnight.
     df["dollar_vol"] = _traded_value(df)
+    # The genuine 24-hour rolling figure, carried for display beside the
+    # 24-hour price reference. Published as null rather than NaN when a row
+    # cannot answer: `write_state` serializes with `allow_nan=False`, so one
+    # NaN costs the entire document rather than one field, and the page then
+    # freezes on its last good poll with nothing to say why.
+    if "24h_vol|5" in df.columns:
+        vol_24h = pd.to_numeric(df["24h_vol|5"], errors="coerce")
+        df["vol_24h"] = vol_24h.astype(object).where(vol_24h.notna(), None)
     return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
 
 

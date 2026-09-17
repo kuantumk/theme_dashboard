@@ -139,8 +139,13 @@ def resolve_state(current_session) -> str:
     return SESSION_STATES.get(raw, CLOSED)
 
 
-def _direction(row, field: str) -> int:
+def direction_of(row, field: str) -> int:
     """+1 above the reference, -1 below it, 0 when the field cannot answer.
+
+    Public because `src/bidask/crypto_state.py` reads the same guard. Crypto
+    has no session state and keeps its own module, but the question "what does
+    this change field say about direction" is one question, and two copies of
+    these three guards would drift on the first edit.
 
     Non-finite first, for the reason the classifier's guards give: pandas
     yields NaN rather than None for a null cell, and every comparison against
@@ -178,7 +183,7 @@ def sides_for(row, state: str) -> Sides:
     strong = []
     weak = []
     for field, reference in REFERENCE_FIELDS.get(state, ()):
-        direction = _direction(row, field)
+        direction = direction_of(row, field)
         # This branch is per reference, where it is exhaustive — one field
         # cannot be above and below at once. The independence R5 needs lives in
         # the two separate lists: one reference can fill `strong` while the

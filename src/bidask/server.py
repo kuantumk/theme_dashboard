@@ -28,11 +28,15 @@ from zoneinfo import ZoneInfo
 
 from config.settings import PROJECT_ROOT
 from src.bidask.config import load_config
+from src.bidask.crypto_state import REF_24H, crypto_sides
 from src.bidask.feed import fetch
 from src.bidask.grouping import SIDES_FIELD, build_columns, load_themes
 from src.bidask.session_state import CLOSED, resolve_state, sides_for
 from src.bidask.universe import apply_rvol_gate, build_universe
 from src.bidask.rvol_at_time import (
+    CRYPTO,
+    CRYPTO_GRID,
+    EQUITY_GRID,
     build_for_symbols,
     load_profiles,
     minutes_since_open,
@@ -41,6 +45,7 @@ from src.bidask.rvol_at_time import (
 )
 
 ET = ZoneInfo("America/New_York")
+UTC = ZoneInfo("UTC")
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATE_ROUTE = "/state.json"
 CADENCE_ROUTE = "/cadence"
@@ -48,6 +53,11 @@ STATE_FILENAME = "bidask_state.json"
 DEFAULT_OUT_DIR = "scripts/local_runs"
 
 MARKETS = ("crypto", "equity")
+
+# Which clock each market's relative volume runs on. The equity board counts
+# from 04:00 ET; crypto counts from 00:00 UTC, because that is where the
+# vendor's own `volume` column counts from — measured, see `universe.py`.
+MARKET_GRIDS = {"equity": EQUITY_GRID, "crypto": CRYPTO_GRID}
 
 # Backoff schedule after consecutive feed failures, in multiples of the poll
 # interval. Retrying at cadence against an undocumented endpoint is how an
@@ -91,6 +101,22 @@ def _equity_session_date(now: datetime) -> str:
     `bidask.close_auction_minutes` now raise from `load_config`.
     """
     return now.astimezone(ET).strftime("%Y-%m-%d")
+
+
+def _crypto_session_date(now: datetime) -> str:
+    """The UTC date the caller's clock read falls in.
+
+    Crypto's day rolls at 00:00 UTC — the anchor its `volume` column counts
+    from — so its baseline cache is named for the UTC date, not the ET one.
+    Naming it for the ET date would keep yesterday's curves for the four or
+    five hours those two dates disagree, which is every evening the board runs.
+    """
+    return now.astimezone(UTC).strftime("%Y-%m-%d")
+
+
+def _session_date(market: str, now: datetime) -> str:
+    return (_crypto_session_date(now) if market == "crypto"
+            else _equity_session_date(now))
 
 
 def _session_state(rows) -> str:
@@ -159,65 +185,108 @@ class TapeEngine:
         # background because it depends only on completed sessions, then read
         # by every poll. Empty until the warm-up lands, which fails the volume
         # leg closed rather than admitting everything.
-        self.profiles: dict = {}
-        self.profile_date: Optional[str] = None
-        self.profile_status = "pending"
-        self._profile_thread: Optional[threading.Thread] = None
+        #
+        # Per market, because the two run on different clocks and roll on
+        # different dates. One shared table would have each warm-up replace the
+        # other's curves every poll, and a crypto curve read against the equity
+        # grid is wrong by four or five hours with nothing on screen to show it.
+        self.profiles: dict = {m: {} for m in markets}
+        self.profile_dates: dict = {m: None for m in markets}
+        self.profile_status = {m: "pending" for m in markets}
+        self._profile_threads: dict = {m: None for m in markets}
 
-    def ensure_profiles(self, session_date: str, rows) -> None:
-        """Start the session's baseline warm-up once, off the poll thread.
+    def ensure_profiles(self, market: str, session_date: str, rows) -> None:
+        """Start this market's baseline warm-up once, off the poll thread.
 
         The bars come from the TradingView chart socket (`src/bidask/tvbars.py`)
         — the only source here that carries real extended-hours volume, where
-        yfinance returns those same bars with zero volume on every one. The
-        download would stall the poll loop if it ran inline, so it runs in a
-        background thread and caches to disk.
+        yfinance returns those same bars with zero volume on every one. It is
+        also the crypto source: measured 2026-09-17, 60 of 60 BINANCE symbols
+        resolved there, including the `.P` perpetuals the board mostly polls.
+        The download would stall the poll loop if it ran inline, so it runs in
+        a background thread and caches to disk.
 
         It runs once per session because the baseline depends only on completed
         sessions. A same-day restart reuses the cache; a cache from another
         session is discarded rather than reused, because a stale baseline is
         silently wrong for every ticker rather than visibly absent for all.
+
+        ⛔ Bars are requested for the row's own `feed_symbol` and the result is
+        re-keyed to its `symbol`. On the crypto tab those differ — the board
+        shows `BTC` while the instrument is `BINANCE:BTCUSDT.P` — and the chart
+        socket resolves nothing from the display name.
         """
-        if self.profile_date == session_date:
+        if self.profile_dates.get(market) == session_date:
             return
-        if self._profile_thread is not None and self._profile_thread.is_alive():
+        thread = self._profile_threads.get(market)
+        if thread is not None and thread.is_alive():
             return
-        symbols = [str(s) for s in rows["symbol"].tolist()] if "symbol" in rows else []
-        if not symbols:
+        fetch_by_display = self._symbol_map(rows)
+        if not fetch_by_display:
             return
+        grid = MARKET_GRIDS.get(market, EQUITY_GRID)
 
         def warm() -> None:
-            cached = load_profiles(self.out_path.parent, session_date)
+            cached = load_profiles(self.out_path.parent, session_date,
+                                   market=market, grid=grid)
             if cached:
-                self.profiles = cached
-                self.profile_date = session_date
-                self.profile_status = f"cached ({len(cached)})"
-                print(f"  rvol baselines: reused {len(cached)} from today's cache")
+                self.profiles[market] = cached
+                self.profile_dates[market] = session_date
+                self.profile_status[market] = f"cached ({len(cached)})"
+                print(f"  rvol baselines [{market}]: reused {len(cached)} "
+                      "from today's cache")
                 return
-            print(f"  rvol baselines: building for {len(symbols)} tickers…")
+            print(f"  rvol baselines [{market}]: building for "
+                  f"{len(fetch_by_display)} tickers…")
             started = time.time()
             try:
-                built = build_for_symbols(symbols, sessions=self.cfg.in_play_rvol_sessions)
+                built = build_for_symbols(list(fetch_by_display.values()),
+                                          sessions=self.cfg.in_play_rvol_sessions,
+                                          grid=grid)
             except Exception as exc:  # noqa: BLE001 — the tape must keep running
-                self.profile_status = f"failed ({type(exc).__name__})"
+                self.profile_status[market] = f"failed ({type(exc).__name__})"
                 # There is no second admission path: relative volume is the
                 # gate. A failed build therefore empties the board, and the
                 # payload says so rather than letting it read as a quiet
                 # market.
-                print(f"  rvol baselines: build failed ({type(exc).__name__});"
-                      " the board stays empty until it succeeds")
+                print(f"  rvol baselines [{market}]: build failed "
+                      f"({type(exc).__name__}); the board stays empty until it"
+                      " succeeds")
                 return
-            self.profiles = built
-            self.profile_date = session_date
-            self.profile_status = f"ready ({len(built)}/{len(symbols)})"
-            save_profiles(built, self.out_path.parent, session_date)
-            prune_cache(self.out_path.parent, session_date)
-            print(f"  rvol baselines: {len(built)}/{len(symbols)} ready "
-                  f"in {time.time() - started:.0f}s")
+            # Back to the names the gate looks up. A symbol whose bars never
+            # arrived is simply absent, which scores 0 and excludes the row.
+            keyed = {display: built[fetch] for display, fetch
+                     in fetch_by_display.items() if fetch in built}
+            self.profiles[market] = keyed
+            self.profile_dates[market] = session_date
+            self.profile_status[market] = f"ready ({len(keyed)}/{len(fetch_by_display)})"
+            save_profiles(keyed, self.out_path.parent, session_date,
+                          market=market, grid=grid)
+            prune_cache(self.out_path.parent, session_date, market=market)
+            print(f"  rvol baselines [{market}]: {len(keyed)}/"
+                  f"{len(fetch_by_display)} ready in {time.time() - started:.0f}s")
 
-        self._profile_thread = threading.Thread(target=warm, daemon=True,
-                                                name="bidask-rvol-warmup")
-        self._profile_thread.start()
+        thread = threading.Thread(target=warm, daemon=True,
+                                  name=f"bidask-rvol-warmup-{market}")
+        self._profile_threads[market] = thread
+        thread.start()
+
+    @staticmethod
+    def _symbol_map(rows) -> dict:
+        """`{display symbol: symbol to fetch bars for}` from one poll's rows.
+
+        `feed_symbol` is the exchange-qualified instrument the vendor names;
+        equities have none and fall back to the display symbol, which
+        `tvbars.qualified_symbols` then resolves across the usual exchanges.
+        """
+        if "symbol" not in getattr(rows, "columns", ()):
+            return {}
+        display = [str(s) for s in rows["symbol"].tolist()]
+        if "feed_symbol" not in rows.columns:
+            return {name: name for name in display}
+        feed = [str(s) for s in rows["feed_symbol"].tolist()]
+        return {name: (source if source and source not in ("nan", "None") else name)
+                for name, source in zip(display, feed)}
 
     def set_poll_seconds(self, seconds) -> int:
         """Retune cadence at runtime, bounded by config. Returns the value set."""
@@ -269,14 +338,15 @@ class TapeEngine:
             if payload.rows.empty:
                 continue
 
-            # One clock read for the whole market, so the session date and the
-            # elapsed-minutes figure cannot disagree.
-            if market == "equity":
-                now_et = datetime.now(tz=ET)
-                self.ensure_profiles(_equity_session_date(now_et), payload.rows)
-                elapsed = minutes_since_open(now_et)
-            else:
-                elapsed = None
+            # One clock read per market, on that market's own grid, so the
+            # session date and the elapsed-minutes figure cannot disagree.
+            # ⛔ Both markets take this path. Crypto used to skip it, so the
+            # flat 1.2 floor was expressible in config and did nothing on the
+            # running board — a green unit test beside an unfiltered tab.
+            grid = MARKET_GRIDS.get(market, EQUITY_GRID)
+            now = datetime.now(tz=grid.tz)
+            self.ensure_profiles(market, _session_date(market, now), payload.rows)
+            elapsed = minutes_since_open(now, grid=grid)
 
             # Liquidity first, and its result is kept: it is the gate's input
             # AND `build_columns`'s breadth denominator. Taken after the gate
@@ -285,39 +355,40 @@ class TapeEngine:
             universe = build_universe(payload.rows, self.cfg, market=market)
             self.pregate[market] = universe.to_dict("records")
 
-            if market == "equity":
-                self.session_states[market] = state = _session_state(payload.rows)
-                gate = apply_rvol_gate(universe, self.cfg, state=state,
-                                       profiles=self.profiles,
-                                       elapsed_minutes=elapsed)
-                self.gates[market] = gate
-                records = gate.rows.to_dict("records")
+            # Crypto is not a session state — it has no open and no close — so
+            # it carries the `crypto` gate key and its own 24-hour price
+            # reference (`src/bidask/crypto_state.py`) rather than borrowing
+            # either from the equity table.
+            if market == "crypto":
+                state = CRYPTO
+            else:
+                state = _session_state(payload.rows)
+            self.session_states[market] = state
 
-                # Strong and weak are two independent tests, never a branch. A
-                # stock above today's open and below yesterday's close is
-                # genuinely being accumulated against one reference and
-                # distributed against the other, and both readings belong on
-                # the board. Only a side actually earned reaches the payload:
-                # membership downstream is an `in` test, so an empty tuple
-                # under a live key would place a row in a column with no
-                # reference to name it.
-                for record in records:
-                    sides = sides_for(record, state)
-                    record[SIDES_FIELD] = {
-                        name: references
-                        for name, references in (("strong", sides.strong),
-                                                 ("weak", sides.weak))
-                        if references
-                    }
-                self.qualified[market] = records
-            # ⛔ Crypto reaches neither column yet, and renders empty rather
-            # than wrong. R14's flat 1.2 floor is already expressible —
-            # `bidask.in_play_rvol_schedules.crypto` carries it and
-            # `threshold_for` reads it — but crypto `volume` is a 24-hour
-            # rolling figure rather than a sum from a session anchor, so it
-            # needs its own numerator and its own baseline before that floor
-            # means anything. Its 24-hour price reference is unwired for the
-            # same reason. Both are the crypto unit's.
+            gate = apply_rvol_gate(universe, self.cfg, state=state,
+                                   profiles=self.profiles.get(market, {}),
+                                   elapsed_minutes=elapsed)
+            self.gates[market] = gate
+            records = gate.rows.to_dict("records")
+
+            # Strong and weak are two independent tests, never a branch. A
+            # stock above today's open and below yesterday's close is
+            # genuinely being accumulated against one reference and
+            # distributed against the other, and both readings belong on
+            # the board. Only a side actually earned reaches the payload:
+            # membership downstream is an `in` test, so an empty tuple
+            # under a live key would place a row in a column with no
+            # reference to name it.
+            for record in records:
+                sides = (crypto_sides(record) if market == "crypto"
+                         else sides_for(record, state))
+                record[SIDES_FIELD] = {
+                    name: references
+                    for name, references in (("strong", sides.strong),
+                                             ("weak", sides.weak))
+                    if references
+                }
+            self.qualified[market] = records
 
         self.consecutive_failures = 0 if any_ok else self.consecutive_failures + 1
         # A write failure must not touch consecutive_failures: that counter
@@ -356,11 +427,12 @@ class TapeEngine:
                 "error": self.errors[market],
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }
-            if market == "equity":
-                # The board's only statement of why a column is empty. Relative
-                # volume is the sole admission path, so this block is what
-                # separates a broken source from a quiet market.
-                state[market]["rvol"] = self.rvol_status(market)
+            # The board's only statement of why a column is empty. Relative
+            # volume is the sole admission path on BOTH tabs, so this block is
+            # what separates a broken source from a quiet market — and the
+            # crypto tab needs it at least as much, since a 24/7 market has no
+            # closing bell to explain an empty column.
+            state[market]["rvol"] = self.rvol_status(market)
         return state
 
     def rvol_status(self, market: str) -> dict:
@@ -379,20 +451,28 @@ class TapeEngine:
         that board covers.
         """
         gate = self.gates.get(market)
+        status = self.profile_status.get(market, "pending")
         return {
             # The warm-up's own state, so a thin board during the download
             # reads as a warm-up in progress rather than as a dull morning.
-            "status": self.profile_status,
-            "tickers": len(self.profiles),
+            "status": status,
+            "tickers": len(self.profiles.get(market, {})),
             "session_state": self.session_states.get(market, CLOSED),
+            # R15: what the sides were measured against, so the crypto column
+            # is not read as an equity session measure. The equity states name
+            # their own references per row; crypto has exactly one.
+            "reference": REF_24H if market == "crypto" else "",
+            # Which clock the ratio runs on, named rather than implied. The two
+            # tabs share a number whose anchor differs by five hours.
+            "anchor": "00:00 UTC" if market == "crypto" else "04:00 ET",
             "floor": None if gate is None else gate.floor,
             "scored": 0 if gate is None else gate.scored,
             "polled": 0 if gate is None else gate.polled,
             "unavailable": bool(gate is not None and gate.source_unavailable),
-            "reason": self._rvol_reason(gate),
+            "reason": self._rvol_reason(market, gate),
         }
 
-    def _rvol_reason(self, gate) -> str:
+    def _rvol_reason(self, market: str, gate) -> str:
         """Name the cause when the source failed, else "".
 
         Empty on a healthy poll, on an empty response, and on a closed market:
@@ -402,10 +482,11 @@ class TapeEngine:
         """
         if gate is None or not gate.source_unavailable:
             return ""
-        if not self.profiles:
-            return f"relative-volume baselines unavailable ({self.profile_status})"
+        status = self.profile_status.get(market, "pending")
+        if not self.profiles.get(market):
+            return f"relative-volume baselines unavailable ({status})"
         return (f"relative volume unusable for all {gate.polled} rows polled "
-                f"(baselines: {self.profile_status})")
+                f"(baselines: {status})")
 
     def write_state(self) -> bool:
         """Write atomically so a mid-write fetch never sees a truncated file.

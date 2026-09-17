@@ -20,10 +20,16 @@ do that is gone and its config key raises: a ticker up 12% on 0.4x its usual
 participation is a stock nobody is trading, and the board exists to name the
 themes being accumulated rather than the ones that happened to move.
 
-⛔ Two anchors are in play. `elapsed_minutes` counts from the **04:00** extended
-anchor Relative Volume at Time uses. Each state's floor schedule counts from
-**its own** state's start, so a regular-session band at 15 minutes means 09:45.
+⛔ Two anchors are in play. `elapsed_minutes` counts from the anchor of the
+state's own market grid — **04:00 ET** for the three equity states, **00:00
+UTC** for crypto. Each state's floor schedule counts from **its own** state's
+start, so a regular-session band at 15 minutes means 09:45.
 `rvol_at_time.threshold_for` converts between them; nothing here should.
+
+⛔ A caller passing `elapsed_minutes` must read it off the state's own grid.
+`apply_rvol_gate` falls back to `minutes_since_open(grid=...)` for that reason,
+and a crypto figure measured on the equity clock would be four to five hours
+out with nothing on screen to show it.
 """
 
 from __future__ import annotations
@@ -39,55 +45,68 @@ import pandas as pd
 # that the two quantities never get read as interchangeable, and two spellings
 # of one contract would defeat that on the first typo.
 from src.bidask.grouping import RVOL_FIELD
-from src.bidask.rvol_at_time import minutes_since_open, rvol_at_time, threshold_for
+from src.bidask.rvol_at_time import (
+    CRYPTO,
+    grid_for,
+    minutes_since_open,
+    rvol_at_time,
+    threshold_for,
+)
 from src.bidask.session_state import MARKET, POST_MARKET, PRE_MARKET
 
 # The live numerator per session state: today's cumulative volume since 04:00,
 # assembled from the fields the feed already returns.
 #
-# ⛔ `volume` is a REGULAR-SESSION counter, not a running extended-day total,
-# and before the bell it still holds YESTERDAY's completed day. The measurement
-# behind that is one step removed and worth stating exactly: across 300 symbols
-# over a 201-second pre-market gap, `premarket_volume` rose for 262 while
-# `relative_volume_10d_calc` changed for 0 of 300. That field is `volume` over a
-# daily constant, so an unchanged ratio means an unchanged numerator — `volume`
-# did not move while the tape did. Reading it in the pre-market would therefore
-# divide a whole previous session by this morning's expected few minutes, which
-# admits the entire universe at once and reads as a market of extraordinary
-# interest. Hence one tuple per state rather than one column.
+# ⛔ `volume` means two different things depending on whether the market has
+# opened, and the whole reason this is a table rather than one column is that
+# both readings are measured rather than assumed.
 #
-# The regular session adds the morning to the session-to-date figure because the
-# baseline is a sum from 04:00 and both legs have to start in the same place.
-#
-# ⛔ MEASURED 2026-09-17 14:39 ET, 8 of 8 rows: during the regular session
-# `volume` ALREADY spans the extended day from 04:00, so it must be read alone.
-# CTNT read 1,151,094,276 against pre-market bars of 805,266,601 plus regular
-# bars of 325,117,028 — the 1.8% gap is only the unclosed last bar — and
+# ONCE A SESSION IS OPEN it is a running total from that market's own anchor, so
+# it is read ALONE. Measured 2026-09-17 14:39 ET, 8 of 8 rows: CTNT read
+# 1,151,094,276 against pre-market bars of 805,266,601 plus regular bars of
+# 325,117,028 — the 1.8% gap is only the unclosed last bar — while
 # `premarket_volume` matched the 04:00-09:29 bar sum exactly on every row.
-# Adding `premarket_volume` to it therefore counts the morning twice, which on
-# CTNT inflates the numerator by about 70%. An earlier revision summed them as
-# the "safe" assumption; it was not safe, it was wrong, and it was wrong in the
-# direction that admits too much.
+# Adding the two therefore counts the morning twice, which on CTNT inflates the
+# numerator by about 70%. An earlier revision summed them as the "safe"
+# assumption. It was not safe, it was wrong, and it was wrong in the direction
+# that admits too much.
 #
-# In PRE-MARKET the same field is not today's figure at all: it still holds the
-# previous completed session (measured median 2,213,074 against a median
-# `premarket_volume` of 6,448), so that state reads `premarket_volume` alone.
+# BEFORE THE BELL it is not today's figure at all: it still holds the previous
+# completed session (measured median 2,213,074 against a median
+# `premarket_volume` of 6,448) and it does not move — across 300 symbols over a
+# 201-second pre-market gap, `premarket_volume` rose for 262 while
+# `relative_volume_10d_calc` changed for 0 of 300, and that field is `volume`
+# over a daily constant, so an unchanged ratio means an unchanged numerator.
+# Reading it pre-market would divide a whole previous session by this morning's
+# expected few minutes, admitting the entire universe at once and reading as a
+# market of extraordinary interest. So pre-market reads `premarket_volume`.
 #
-# POST_MARKET follows the regular session by construction, since `volume` is one
-# running extended-day total. The retrospective check against historical bars is
-# consistent with that but not clean enough to call verified on its own, so
-# Verification Contract check 5 covers it live.
+# POST_MARKET follows the open session by construction, since `volume` is one
+# running total that does not reset at the close. The retrospective check
+# against historical bars is consistent with that but not clean enough to call
+# verified on its own, so Verification Contract check 5 covers it live.
+#
+# ⛔ MEASURED 2026-09-17 19:03 UTC, 13 of 13 rows: crypto `volume` is the
+# cumulative figure since **00:00 UTC**, not the 24-hour rolling one an earlier
+# revision of `feed.py` claimed. It matched a 5-minute bar sum from that anchor
+# at a median ratio of 1.00026, where a trailing-24h bar sum read 1.25x it. The
+# true 24-hour figure is the separate `24h_vol|5` column, which this gate does
+# not read: a rolling window has no anchor, so a baseline built against it
+# would compare a 24-hour total with a partial day.
+#
+# So crypto needs no special numerator at all — `volume` is already a sum from
+# its market's anchor, exactly as it is once an equity session is open. What
+# differs is the clock underneath it, and `rvol_at_time.CRYPTO_GRID` carries
+# that.
 #
 # A state absent from this table scores every row 0 and admits nothing. That
-# covers `closed` and, for now, `crypto`: crypto `volume` is a 24-hour rolling
-# figure rather than a sum from a session anchor, so it needs its own numerator
-# and its own baseline before it can be gated. The gate can already express the
-# crypto FLOOR; the numerator is the piece still missing, and failing closed
-# means the crypto board goes visibly dark rather than quietly wrong.
+# now covers `closed` alone, which is the board being shut rather than a
+# missing capability.
 VOLUME_FIELDS = {
     PRE_MARKET: ("premarket_volume",),
     MARKET: ("volume",),
     POST_MARKET: ("volume",),
+    CRYPTO: ("volume",),
 }
 
 
@@ -175,12 +194,14 @@ def score_rvol_at_time(
     """
     if df.empty:
         return pd.Series(dtype=float)
-    elapsed = minutes_since_open() if elapsed_minutes is None else elapsed_minutes
+    grid = grid_for(state)
+    elapsed = (minutes_since_open(grid=grid) if elapsed_minutes is None
+               else elapsed_minutes)
     table = profiles or {}
     volumes = volume_since_anchor(df, state)
     symbols = df["symbol"] if "symbol" in df.columns else pd.Series("", index=df.index)
     return pd.Series(
-        [rvol_at_time(volume, table.get(str(symbol)), elapsed)
+        [rvol_at_time(volume, table.get(str(symbol)), elapsed, grid)
          for symbol, volume in zip(symbols, volumes)],
         index=df.index,
         dtype=float,
@@ -205,7 +226,8 @@ def apply_rvol_gate(
     if df.empty:
         return RvolGate(rows=df, floor=None, scored=0, polled=0)
 
-    elapsed = minutes_since_open() if elapsed_minutes is None else elapsed_minutes
+    elapsed = (minutes_since_open(grid=grid_for(state)) if elapsed_minutes is None
+               else elapsed_minutes)
     readings = score_rvol_at_time(df, state=state, profiles=profiles,
                                   elapsed_minutes=elapsed)
     scored = int((readings > 0).sum())

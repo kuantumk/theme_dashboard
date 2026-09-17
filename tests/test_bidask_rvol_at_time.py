@@ -287,7 +287,10 @@ class TestCache(unittest.TestCase):
                 save_profiles({"AAA": flat_profile(1920)}, Path(tmp), date)
             prune_cache(Path(tmp), "2026-08-14")
             left = sorted(p.name for p in Path(tmp).glob("rvol_baselines_*.json"))
-        self.assertEqual(left, ["rvol_baselines_2026-08-14.json"])
+        # The market is in the filename, not only in the payload: both markets
+        # name a session date and usually name the same one, so a shared name
+        # would have each warm-up overwrite and then prune the other's cache.
+        self.assertEqual(left, ["rvol_baselines_equity_2026-08-14.json"])
 
 
 class TestRegressionBEandFCEL(unittest.TestCase):

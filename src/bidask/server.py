@@ -29,10 +29,11 @@ from zoneinfo import ZoneInfo
 from config.settings import PROJECT_ROOT
 from src.bidask.config import load_config
 from src.bidask.feed import fetch
-from src.bidask.grouping import build_columns, load_themes
+from src.bidask.grouping import SIDES_FIELD, build_columns, load_themes
 from src.bidask.session import SessionAccumulator
+from src.bidask.session_state import CLOSED, resolve_state, sides_for
 from src.bidask.tvquote import QuoteStream, merge_quotes
-from src.bidask.universe import build_universe
+from src.bidask.universe import apply_rvol_gate, build_universe
 from src.bidask.rvol_at_time import (
     SESSION_CLOSE_MIN,
     SESSION_OPEN_MIN,
@@ -108,6 +109,21 @@ def _crypto_session_context() -> tuple[str, bool]:
     return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d"), False
 
 
+def _session_state(rows) -> str:
+    """The session state this response describes, from the feed's own field.
+
+    The local clock is never consulted: a holiday, an early close and a feed
+    outage all look like an ordinary afternoon from here. Extraction mirrors
+    `feed._market_status` — one value describes the whole response, so reading
+    it per row would let two tickers in one poll be judged against different
+    references and different floors.
+    """
+    if "current_session" not in getattr(rows, "columns", ()):
+        return CLOSED
+    values = rows["current_session"].dropna().unique().tolist()
+    return resolve_state(values[0]) if values else CLOSED
+
+
 class TapeEngine:
     """Owns one accumulator per market and rewrites the state file each poll."""
 
@@ -126,6 +142,17 @@ class TapeEngine:
         # change, and it is indistinguishable from a quiet market without both.
         self.matched = {m: 0 for m in markets}
         self.universe = {m: 0 for m in markets}
+        # One poll's two frames, as row dicts. `qualified` cleared the
+        # relative-volume gate and carries the side or sides each row earned;
+        # `pregate` is the liquidity-filtered universe before it, which is
+        # `build_columns`'s breadth denominator. Both are rewritten every poll
+        # and cleared before a failed one — the board is a claim about now, and
+        # last poll's columns standing through an outage would say the market
+        # is doing something it may have stopped doing.
+        self.qualified = {m: [] for m in markets}
+        self.pregate = {m: [] for m in markets}
+        self.gates = {m: None for m in markets}
+        self.session_states = {m: CLOSED for m in markets}
         # Latched so the alarm prints on the transition rather than 360 times
         # an hour. A line per poll is noise, and noise is not a signal.
         self._all_dropped = {m: False for m in markets}
@@ -156,8 +183,16 @@ class TapeEngine:
     def ensure_profiles(self, session_date: str, rows) -> None:
         """Start the session's baseline warm-up once, off the poll thread.
 
-        The download takes ~1.7 minutes for the whole universe, which would
-        stall the poll loop and the quote socket if it ran inline.
+        The bars come from the TradingView chart socket (`src/bidask/tvbars.py`)
+        — the only source here that carries real extended-hours volume, where
+        yfinance returns those same bars with zero volume on every one. The
+        download would stall the poll loop and the quote socket if it ran
+        inline, so it runs in a background thread and caches to disk.
+
+        It runs once per session because the baseline depends only on completed
+        sessions. A same-day restart reuses the cache; a cache from another
+        session is discarded rather than reused, because a stale baseline is
+        silently wrong for every ticker rather than visibly absent for all.
         """
         if self.profile_date == session_date:
             return
@@ -181,8 +216,12 @@ class TapeEngine:
                 built = build_for_symbols(symbols, sessions=self.cfg.in_play_rvol_sessions)
             except Exception as exc:  # noqa: BLE001 — the tape must keep running
                 self.profile_status = f"failed ({type(exc).__name__})"
+                # There is no second admission path: relative volume is the
+                # gate. A failed build therefore empties the board, and the
+                # payload says so rather than letting it read as a quiet
+                # market.
                 print(f"  rvol baselines: build failed ({type(exc).__name__});"
-                      " volume leg stays closed, change leg still admits")
+                      " the board stays empty until it succeeds")
                 return
             self.profiles = built
             self.profile_date = session_date
@@ -229,8 +268,14 @@ class TapeEngine:
                     print(f"  {market}: universe recovered ({len(payload.rows)} rows)")
             # Reset before the early exit: a merge count left over from the last
             # good poll would report healthy quotes through a feed outage, which
-            # is the failure mode this whole field exists to expose.
+            # is the failure mode this whole field exists to expose. The board's
+            # own rows go with it, for the stronger version of the same reason —
+            # the columns are a claim about right now.
             self.quoted[market] = 0
+            self.qualified[market] = []
+            self.pregate[market] = []
+            self.gates[market] = None
+            self.session_states[market] = CLOSED
             if payload.error:
                 continue
             # A feed reading proves the response arrived, so the poll succeeded
@@ -254,19 +299,60 @@ class TapeEngine:
                 session_date, in_auction = _crypto_session_context()
                 elapsed = None
 
-            rows = build_universe(
-                payload.rows, self.cfg,
-                in_play=(market == "equity"), market=market,
-                profiles=self.profiles, elapsed_minutes=elapsed,
-            )
-            records = rows.to_dict("records")
-            if market == "equity" and self.quotes is not None:
-                # Track exactly the in-play set. The socket pushes on change, so
-                # symbols subscribed this poll are quoted by the next one — which
-                # costs nothing, because the classifier needs a previous
-                # observation before it can classify anything anyway.
-                self.quotes.sync(rows["ticker"].tolist() if "ticker" in rows else [])
-                records, self.quoted[market] = merge_quotes(records, self.quotes.snapshot())
+            # Liquidity first, and its result is kept: it is the gate's input
+            # AND `build_columns`'s breadth denominator. Taken after the gate
+            # instead, every group's qualifying share would be 1.0 and the
+            # breadth term would rank nothing.
+            universe = build_universe(payload.rows, self.cfg, market=market)
+            self.pregate[market] = universe.to_dict("records")
+            records = universe.to_dict("records")
+
+            if market == "equity":
+                self.session_states[market] = state = _session_state(payload.rows)
+                gate = apply_rvol_gate(universe, self.cfg, state=state,
+                                       profiles=self.profiles,
+                                       elapsed_minutes=elapsed)
+                self.gates[market] = gate
+                records = gate.rows.to_dict("records")
+                if self.quotes is not None:
+                    # Track exactly the set on the board. The socket pushes on
+                    # change, so symbols subscribed this poll are quoted by the
+                    # next one.
+                    self.quotes.sync(gate.rows["ticker"].tolist()
+                                     if "ticker" in gate.rows else [])
+                    records, self.quoted[market] = merge_quotes(
+                        records, self.quotes.snapshot())
+
+                # Strong and weak are two independent tests, never a branch. A
+                # stock above today's open and below yesterday's close is
+                # genuinely being accumulated against one reference and
+                # distributed against the other, and both readings belong on
+                # the board. Only a side actually earned reaches the payload:
+                # membership downstream is an `in` test, so an empty tuple
+                # under a live key would place a row in a column with no
+                # reference to name it.
+                for record in records:
+                    sides = sides_for(record, state)
+                    record[SIDES_FIELD] = {
+                        name: references
+                        for name, references in (("strong", sides.strong),
+                                                 ("weak", sides.weak))
+                        if references
+                    }
+                self.qualified[market] = records
+            # ⛔ Crypto reaches neither column yet, and renders empty rather
+            # than wrong. R14's flat 1.2 floor is already expressible —
+            # `bidask.in_play_rvol_schedules.crypto` carries it and
+            # `threshold_for` reads it — but crypto `volume` is a 24-hour
+            # rolling figure rather than a sum from a session anchor, so it
+            # needs its own numerator and its own baseline before that floor
+            # means anything. Its 24-hour price reference is unwired for the
+            # same reason. Both are the crypto unit's.
+
+            # Still fed, and no longer the source of either column. The
+            # accumulator, the classifier and the quote socket are the next
+            # unit's to delete; until then its counters keep the existing
+            # status bar alive rather than reading zero beside a live board.
             self.accumulators[market].apply(
                 records,
                 session_date=session_date,
@@ -290,11 +376,16 @@ class TapeEngine:
                  "generated_at": datetime.now().strftime("%H:%M:%S")}
         for market in self.markets:
             acc = self.accumulators[market]
+            # The rows that cleared this poll's gate, ranked against the
+            # pre-gate universe. Stateless: nothing here remembers an earlier
+            # poll, so the columns describe the market now rather than the
+            # session so far.
             columns = build_columns(
-                acc.active(self.cfg.min_hits_to_show),
+                self.qualified[market],
                 self.themes,
                 self.cfg,
                 grouped=(market != "crypto"),
+                universe=self.pregate[market],
             )
             ask_side = sum(s.ask_hits for s in acc.states.values())
             bid_side = sum(s.bid_hits for s in acc.states.values())
@@ -315,20 +406,65 @@ class TapeEngine:
                 "error": self.errors[market],
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }
-            if market == "equity" and self.quotes is not None:
-                # Carried so an empty column can name its own cause. Without it
-                # a dead quote socket is indistinguishable from thresholds set
-                # too high, which is exactly how the screener's missing bid/ask
-                # went unnoticed for a full session.
-                state[market]["quotes"] = {**self.quotes.status(),
-                                           "merged": self.quoted[market]}
-                # Same reasoning for the volume leg: while the baselines are
-                # still downloading, every ticker scores 0 on Relative Volume
-                # at Time and only the change leg admits. A thin board then
-                # looks like a quiet market rather than a warm-up in progress.
-                state[market]["rvol"] = {"status": self.profile_status,
-                                         "tickers": len(self.profiles)}
+            if market == "equity":
+                # ⛔ Published on every equity poll, never under the quote
+                # branch. The two answer different questions, and the socket is
+                # the next unit's to delete — nested, this block would go with
+                # it and take the board's only statement of why a column is
+                # empty along with it. A test pins it with the socket absent.
+                state[market]["rvol"] = self.rvol_status(market)
+                if self.quotes is not None:
+                    # Carried so an empty column can name its own cause. Without
+                    # it a dead quote socket is indistinguishable from
+                    # thresholds set too high, which is exactly how the
+                    # screener's missing bid/ask went unnoticed for a session.
+                    state[market]["quotes"] = {**self.quotes.status(),
+                                               "merged": self.quoted[market]}
         return state
+
+    def rvol_status(self, market: str) -> dict:
+        """What the relative-volume gate could and could not judge this poll.
+
+        Relative volume is the only admission path to either column, so when it
+        cannot be computed the board is empty — and an empty board that says
+        nothing about why is indistinguishable from a quiet market. That
+        ambiguity is the failure this whole redesign was written around, so the
+        guard lives here rather than in the page: a browser can only report a
+        cause the payload carries.
+
+        `scored` against `polled` is the pair the page renders. Partial nulls
+        keep publishing — a board of the rows that could be judged is worth
+        more than no board — and the pair is what says how much of the market
+        that board covers.
+        """
+        gate = self.gates.get(market)
+        return {
+            # The warm-up's own state, so a thin board during the download
+            # reads as a warm-up in progress rather than as a dull morning.
+            "status": self.profile_status,
+            "tickers": len(self.profiles),
+            "session_state": self.session_states.get(market, CLOSED),
+            "floor": None if gate is None else gate.floor,
+            "scored": 0 if gate is None else gate.scored,
+            "polled": 0 if gate is None else gate.polled,
+            "unavailable": bool(gate is not None and gate.source_unavailable),
+            "reason": self._rvol_reason(gate),
+        }
+
+    def _rvol_reason(self, gate) -> str:
+        """Name the cause when the source failed, else "".
+
+        Empty on a healthy poll, on an empty response, and on a closed market:
+        none of those is a broken source, and claiming one would send the next
+        reader after a vendor that is working. `RvolGate.source_unavailable`
+        makes those three distinctions; this only has to name what is left.
+        """
+        if gate is None or not gate.source_unavailable:
+            return ""
+        if not self.profiles:
+            return f"relative-volume baselines unavailable ({self.profile_status})"
+        return (f"relative volume unusable for all {gate.polled} rows polled "
+                f"(baselines: {self.profile_status})")
 
     def write_state(self) -> bool:
         """Write atomically so a mid-write fetch never sees a truncated file.

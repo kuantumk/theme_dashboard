@@ -20,8 +20,12 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
+from src.bidask.config import RVOL_SCHEDULE_STATES, load_config
 from src.bidask.rvol_at_time import (
     BARS_PER_SESSION,
+    CRYPTO,
+    SCHEDULE_ORIGIN_MIN,
+    SCHEDULE_STATES,
     SESSION_MINUTES,
     baseline_at,
     build_profiles,
@@ -32,8 +36,14 @@ from src.bidask.rvol_at_time import (
     save_profiles,
     threshold_for,
 )
+from src.bidask.session_state import CLOSED, MARKET, POST_MARKET, PRE_MARKET
 
 ET = ZoneInfo("America/New_York")
+
+# A stepped schedule with four distinct floors, so a band mix-up shows up as a
+# wrong number rather than as a coincidence. Deliberately NOT the shipped
+# market schedule — these tests exercise the lookup, not the shipped floors,
+# which `tests/test_bidask_universe.py` owns.
 SCHEDULE = ((5.0, 0.8), (15.0, 1.0), (30.0, 1.2), (60.0, 1.5))
 
 # Minutes from the 04:00 anchor to the regular open and close.
@@ -125,25 +135,90 @@ class TestRvolAtTime(unittest.TestCase):
 
 
 class TestThresholdSchedule(unittest.TestCase):
-    """Pure minute-to-floor lookup, so it is independent of the anchor."""
+    """One schedule per session state, looked up on the 04:00 clock.
+
+    The bands are written in minutes since each state's OWN start, while the
+    caller's `elapsed_minutes` counts from 04:00. `threshold_for` converts, and
+    that conversion is the load-bearing part of this class.
+    """
+
+    SCHEDULES = {MARKET: SCHEDULE,
+                 PRE_MARKET: ((0.0, 3.0),),
+                 POST_MARKET: ((0.0, 1.5),),
+                 CRYPTO: ((0.0, 1.2),)}
+
+    def market_floor(self, minutes_in):
+        return threshold_for(self.SCHEDULES, MARKET, OPEN_AT + minutes_in)
 
     def test_each_band_holds_until_the_next(self):
         for minutes, expected in ((5, 0.8), (14, 0.8), (15, 1.0), (29, 1.0),
                                   (30, 1.2), (59, 1.2), (60, 1.5), (390, 1.5)):
-            self.assertEqual(threshold_for(SCHEDULE, minutes), expected,
-                             f"wrong floor at t={minutes}")
+            self.assertEqual(self.market_floor(minutes), expected,
+                             f"wrong floor at {minutes} minutes into the session")
 
     def test_before_the_first_band_the_first_floor_still_applies(self):
         """A window with no floor would admit the whole universe."""
-        self.assertEqual(threshold_for(SCHEDULE, 0), 0.8)
-        self.assertEqual(threshold_for(SCHEDULE, 4.9), 0.8)
+        self.assertEqual(self.market_floor(0), 0.8)
+        self.assertEqual(self.market_floor(4.9), 0.8)
 
-    def test_empty_schedule_disables_the_leg(self):
-        self.assertIsNone(threshold_for((), 60))
+    def test_the_market_bands_are_read_against_09_30_not_the_anchor(self):
+        """The conversion in one case, because nothing on screen shows it.
+
+        09:35 is five minutes into the regular session and 335 into the
+        extended day. Reading the raw figure against the schedule would apply
+        the last band at the opening print and the first band all afternoon.
+        """
+        self.assertEqual(threshold_for(self.SCHEDULES, MARKET, OPEN_AT + 5), 0.8)
+        self.assertNotEqual(threshold_for(self.SCHEDULES, MARKET, OPEN_AT + 5),
+                            threshold_for(self.SCHEDULES, MARKET, OPEN_AT + 390))
+
+    def test_extended_states_read_against_their_own_origins(self):
+        # Pre-market is anchored at 04:00 and after hours at 16:00; both are
+        # flat, so the same floor must come back anywhere in the window.
+        for minutes in (0, 120, 320):
+            self.assertEqual(threshold_for(self.SCHEDULES, PRE_MARKET, minutes), 3.0)
+        for minutes in (0, 60, 240):
+            self.assertEqual(
+                threshold_for(self.SCHEDULES, POST_MARKET, CLOSE_AT + minutes), 1.5)
+
+    def test_crypto_is_flat_at_every_hour(self):
+        for minutes in (0, OPEN_AT, CLOSE_AT, 960):
+            self.assertEqual(threshold_for(self.SCHEDULES, CRYPTO, minutes), 1.2)
+
+    def test_a_state_with_no_schedule_has_no_floor(self):
+        """The gate reads None as *admit nothing*, never as *admit all*."""
+        self.assertIsNone(threshold_for(self.SCHEDULES, CLOSED, 60))
+        self.assertIsNone(threshold_for({}, MARKET, 60))
+        self.assertIsNone(threshold_for((), MARKET, 60))
+
+    def test_the_tuple_of_pairs_the_config_carries_is_accepted(self):
+        # `BidAskConfig` stores the schedules as a tuple so the frozen config
+        # stays hashable; the lookup must take that shape as readily as a dict.
+        self.assertEqual(threshold_for(tuple(self.SCHEDULES.items()), MARKET,
+                                       OPEN_AT + 30), 1.2)
 
     def test_floors_tighten_through_the_session(self):
-        floors = [threshold_for(SCHEDULE, m) for m in (0, 5, 15, 30, 60, 300)]
+        floors = [self.market_floor(m) for m in (0, 5, 15, 30, 60, 300)]
         self.assertEqual(floors, sorted(floors))
+
+
+class TestScheduleStatesMatchTheConfigGuard(unittest.TestCase):
+    """`config.py` cannot import this module — `tvquote` imports `config` for
+    its cookie jar, so the edge would be a cycle — and so carries its own copy
+    of the valid state keys. Pinned here, exactly as `feed.SESSION_LABELS` and
+    `session_state.SESSION_STATES` are pinned to each other.
+
+    A key in one table and not the other is a state the gate can be configured
+    for and never looks up, or one it looks up and no config may name.
+    """
+
+    def test_the_two_tables_carry_the_same_states(self):
+        self.assertEqual(sorted(SCHEDULE_STATES), sorted(RVOL_SCHEDULE_STATES))
+
+    def test_every_shipped_schedule_names_a_state_with_an_origin(self):
+        for state, _bands in load_config().in_play_rvol_schedules:
+            self.assertIn(state, SCHEDULE_ORIGIN_MIN,
+                          f"{state} has a schedule but no origin minute")
 
 
 class TestBuildProfiles(unittest.TestCase):

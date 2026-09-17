@@ -63,6 +63,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
+from src.bidask.session_state import MARKET, POST_MARKET, PRE_MARKET
 from src.bidask.tvbars import fetch_bars
 
 ET = ZoneInfo("America/New_York")
@@ -73,10 +74,43 @@ SESSION_OPEN_MIN = 4 * 60        # 04:00 ET
 SESSION_CLOSE_MIN = 20 * 60      # 20:00 ET
 SESSION_MINUTES = SESSION_CLOSE_MIN - SESSION_OPEN_MIN  # 960
 
-# The regular session inside it. Used only to judge whether a historical
-# session is complete enough to average in — never as an anchor.
+# The regular session inside it. Used to judge whether a historical session is
+# complete enough to average in, and as the origin of the regular session's own
+# floor schedule below — never as the anchor of the measure itself.
 REGULAR_OPEN_MIN = 9 * 60 + 30   # 09:30 ET
 REGULAR_CLOSE_MIN = 16 * 60      # 16:00 ET
+
+# The crypto board's schedule key. It is deliberately NOT a session state:
+# crypto trades continuously and `session_state.py` is the equity path, which
+# is why that module does not carry this name. It exists here so one gate
+# mechanism covers both markets — a flat floor is a one-band schedule.
+CRYPTO = "crypto"
+
+# Where each state's own floor schedule starts, as a minute of the ET day.
+#
+# ⛔ A schedule is written in minutes since ITS OWN state began. The regular
+# session's floors are "minutes since 09:30", which is how a trader states them
+# and how `config/workflow_config.yaml` reads. Every other figure in this
+# module — `minutes_since_open`, `baseline_at`, `rvol_at_time` — counts from
+# the 04:00 anchor. `threshold_for` converts between the two, and getting that
+# conversion wrong shifts every regular-session band by five and a half hours:
+# the 0.7 opening floor would then hold until 15:00 and the board would admit
+# the whole universe all day.
+SCHEDULE_ORIGIN_MIN = {
+    PRE_MARKET: SESSION_OPEN_MIN,     # 04:00
+    MARKET: REGULAR_OPEN_MIN,         # 09:30
+    POST_MARKET: REGULAR_CLOSE_MIN,   # 16:00
+    # Continuous, so the anchor is the only origin there is. The schedule is
+    # flat, so the value never actually matters — it is stated rather than
+    # defaulted so a reader can see that it was decided.
+    CRYPTO: SESSION_OPEN_MIN,
+}
+
+# `config.py` cannot import this module — it sits upstream of `tvquote`, which
+# imports `config` for its cookie jar — so it carries its own copy of these
+# keys. `tests/test_bidask_rvol_at_time.py` pins the two equal, the same way
+# `feed.SESSION_LABELS` and `session_state.SESSION_STATES` are pinned.
+SCHEDULE_STATES = tuple(SCHEDULE_ORIGIN_MIN)
 
 BAR_MINUTES = 5
 BARS_PER_SESSION = SESSION_MINUTES // BAR_MINUTES  # 192
@@ -234,28 +268,52 @@ def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
 
 # ── threshold schedule ───────────────────────────────────────────
 
-def threshold_for(schedule, elapsed_minutes: float) -> Optional[float]:
-    """The floor that applies this many minutes into the session.
+def minutes_into_state(state: str, elapsed_minutes: float) -> float:
+    """Convert 04:00-anchored minutes into minutes since `state` began.
 
-    `schedule` is [[minutes, floor], ...] ascending. The floor for a band holds
-    from its own minute mark until the next one. Early in the session the
-    denominator is small and the ratio is noisy, which is why the floors start
-    loose and tighten: an unusual reading at 09:35 is worth less than the same
-    reading at 10:30.
+    See `SCHEDULE_ORIGIN_MIN`. An unknown state keeps the anchor, which is the
+    harmless direction: an unknown state has no schedule either, so the figure
+    is never looked up against one.
     """
-    if not schedule:
+    origin = SCHEDULE_ORIGIN_MIN.get(state, SESSION_OPEN_MIN) - SESSION_OPEN_MIN
+    return float(elapsed_minutes) - float(origin)
+
+
+def threshold_for(schedules, state: str, elapsed_minutes: float) -> Optional[float]:
+    """The floor that applies in `state`, this far into the extended day.
+
+    `schedules` maps a state to [[minutes, floor], ...] ascending — either a
+    dict or the tuple of pairs `BidAskConfig` carries. `elapsed_minutes` counts
+    from the 04:00 anchor; the bands count from the state's own origin, and the
+    conversion happens here so no caller has to remember it.
+
+    The floor for a band holds from its own minute mark until the next one.
+    Early in a window the denominator is small and the ratio is noisy, which is
+    why the regular session's floors start loose and tighten: an unusual reading
+    at 09:35 is worth less than the same reading at 10:30.
+
+    Returns None when `state` has no schedule — a closed market, or a value the
+    feed has never sent. ⛔ That is NOT "no floor, admit everything": the gate
+    reads None as *admit nothing*, because a state whose rules were never
+    written is a state this board cannot judge. `config.load_config` raises on
+    an empty schedule for a real state, so None only ever means a state the
+    board does not trade.
+    """
+    bands = dict(schedules or {}).get(state)
+    if not bands:
         return None
+    since_state = minutes_into_state(state, elapsed_minutes)
     applicable = None
-    for entry in schedule:
+    for entry in bands:
         minutes, floor = float(entry[0]), float(entry[1])
-        if elapsed_minutes >= minutes:
+        if since_state >= minutes:
             applicable = floor
         else:
             break
     # Before the first band starts, the first band's floor still applies —
     # a stepped schedule must never leave a window with no floor at all,
     # which would admit the whole universe on the opening print.
-    return applicable if applicable is not None else float(schedule[0][1])
+    return applicable if applicable is not None else float(bands[0][1])
 
 
 # ── on-disk cache ────────────────────────────────────────────────

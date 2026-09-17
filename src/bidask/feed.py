@@ -23,8 +23,10 @@ session — `Value.Traded >= $1M` matched 0 of 13,661 rows at 09:34 ET with
 `current_session` reading `market` and `close`/`volume` both live, while the
 average-volume leg alone matched 2,806. By 17:21 ET the same filter matched
 4,231. The universe was therefore empty on every poll until mid-morning and the
-equity tab was dark through the open — the same silent shape `tvquote.py`
-documents for `bid`/`ask`.
+equity tab was dark through the open — the same silent shape
+`docs/solutions/logic-errors/api-returns-null-for-fields-it-does-not-have.md`
+records for `bid`/`ask`, which this scanner also resolves and also answers with
+null on every row.
 
 Do not read that as "the field was withdrawn and may come back". It was never
 supported. Today's traded value is derived from `close * volume`, which is

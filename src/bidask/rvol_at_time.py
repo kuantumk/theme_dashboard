@@ -106,10 +106,11 @@ SCHEDULE_ORIGIN_MIN = {
     CRYPTO: SESSION_OPEN_MIN,
 }
 
-# `config.py` cannot import this module — it sits upstream of `tvquote`, which
-# imports `config` for its cookie jar — so it carries its own copy of these
-# keys. `tests/test_bidask_rvol_at_time.py` pins the two equal, the same way
-# `feed.SESSION_LABELS` and `session_state.SESSION_STATES` are pinned.
+# `config.py` cannot import this module — it sits upstream of `tvbars`, which
+# reaches `tvsocket`, which imports `config` for its cookie jar — so it carries
+# its own copy of these keys. `tests/test_bidask_rvol_at_time.py` pins the two
+# equal, the same way `feed.SESSION_LABELS` and `session_state.SESSION_STATES`
+# are pinned.
 SCHEDULE_STATES = tuple(SCHEDULE_ORIGIN_MIN)
 
 BAR_MINUTES = 5

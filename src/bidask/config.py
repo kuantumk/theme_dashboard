@@ -6,7 +6,6 @@ so thresholds are never hardcoded in the pipeline modules.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import FrozenSet, Optional
 
@@ -22,8 +21,8 @@ VALID_AVG_WINDOWS = (10, 30, 60, 90)
 # no session state at all.
 #
 # This module cannot import `rvol_at_time` to read `SCHEDULE_STATES` from it:
-# that module reaches `tvquote`, which imports `cookie_jar` from here, so the
-# import would be a cycle. `tests/test_bidask_rvol_at_time.py` pins the two
+# that module reaches `tvbars` and then `tvsocket`, which imports `cookie_jar`
+# from here, so the import would be a cycle. `tests/test_bidask_rvol_at_time.py` pins the two
 # tuples equal instead — the same arrangement `feed.SESSION_LABELS` and
 # `session_state.SESSION_STATES` already live under.
 RVOL_SCHEDULE_STATES = ("pre_market", "market", "post_market", "crypto")
@@ -31,22 +30,58 @@ RVOL_SCHEDULE_STATES = ("pre_market", "market", "post_market", "crypto")
 # Keys that no longer mean anything, each naming what replaced it. Ignoring one
 # would silently drop a leg of the gate — which is precisely how the previous
 # gate's volume leg went missing — so `load_config` raises instead.
+#
+# The second block retires the trade classifier and its accumulator. Those keys
+# are inert rather than dangerous, but a config key with no reader is a claim
+# that the board still does something it stopped doing, and a reader who tunes
+# one gets no feedback at all. Raising is the only answer that reaches them.
 RETIRED_KEYS = {
     "in_play_min_rvol":
         "floored the screener's raw `relative_volume_10d_calc`, which is "
         "session-to-date volume over a FULL-DAY average and therefore a "
-        "different filter every hour",
+        "different filter every hour. Use bidask.in_play_rvol_schedules, one "
+        "stepped floor on Relative Volume at Time per session state.",
     "in_play_min_volume_pace":
         "divided that raw figure by a market-wide intraday volume curve, which "
-        "still assumes every ticker shares the market's shape",
+        "still assumes every ticker shares the market's shape. Use "
+        "bidask.in_play_rvol_schedules, which compares a ticker against its "
+        "own history at the same time of day.",
     "in_play_rvol_schedule":
         "carried ONE stepped schedule, written in minutes since 09:30. The "
         "board now runs pre-market and after hours too, and each state has its "
-        "own floor",
+        "own floor. Use bidask.in_play_rvol_schedules, keyed by session state.",
     "in_play_min_change_pct":
         "admitted a ticker on an absolute price move alone. No ticker reaches "
-        "either column on price now: relative volume is the only admission "
-        "path, however far a stock has run",
+        "either column on price now: bidask.in_play_rvol_schedules is the only "
+        "admission path, however far a stock has run.",
+    "band_frac":
+        "sized the CLNV band a print was classified against. The board no "
+        "longer classifies trades: a ticker's side is its price against a "
+        "session-appropriate reference, and nothing replaces this key.",
+    "max_spread_pct":
+        "rejected a quote wider than this share of the mid as stale. The board "
+        "reads no quotes at all now — the equity quote socket went with the "
+        "classifier — and nothing replaces this key.",
+    "open_auction_minutes":
+        "excluded the opening auction, whose crosses have no meaningful "
+        "contemporaneous quote to classify against. A price-direction test has "
+        "no such problem, so the window is gone and nothing replaces this key.",
+    "close_auction_minutes":
+        "excluded the closing auction, for the same reason as "
+        "bidask.open_auction_minutes. Nothing replaces this key.",
+    "winsor_multiple":
+        "capped a poll's volume delta against its running median, bounding one "
+        "misclassified print. The board sums no observations now, so there is "
+        "no tail to cap and nothing replaces this key.",
+    "hit_window_minutes":
+        "bounded how much tape the per-ticker hit counters accumulated. The "
+        "board is stateless — it recomputes from price and relative volume "
+        "every poll — so nothing accumulates and nothing replaces this key.",
+    "min_hits_to_show":
+        "hid a ticker below this many classified observations. There are no "
+        "hit counts now; a ticker reaches a column by clearing "
+        "bidask.in_play_rvol_schedules, and the display caps are "
+        "bidask.max_rows_per_column and bidask.max_rows_per_group.",
 }
 
 
@@ -67,14 +102,6 @@ class BidAskConfig:
     # `src/bidask/rvol_at_time.py`.
     in_play_rvol_schedules: tuple
     in_play_rvol_sessions: int
-    band_frac: float
-    max_spread_pct: float
-    open_auction_minutes: int
-    close_auction_minutes: int
-    winsor_multiple: float
-    # Minutes of tape each hit counter covers. 0 disables the window.
-    hit_window_minutes: float
-    min_hits_to_show: int
     max_rows_per_column: int
     max_rows_per_group: int
     # Theme scoring. The cap bounds one extreme member so it cannot decide the
@@ -121,11 +148,8 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
     for retired, why in RETIRED_KEYS.items():
         if retired in raw:
             raise ValueError(
-                f"bidask.{retired} {why}. It is replaced by "
-                "bidask.in_play_rvol_schedules, one stepped floor on Relative "
-                "Volume at Time per session state (this ticker's volume since "
-                "the 04:00 anchor over its own average by the same time of "
-                "day). Update the key in config/workflow_config.yaml."
+                f"bidask.{retired} {why} Remove the key from "
+                "config/workflow_config.yaml."
             )
 
     window = int(raw.get("avg_window_days", 30))
@@ -135,41 +159,6 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
             f"screener. Valid windows: {', '.join(map(str, VALID_AVG_WINDOWS))}. "
             "(A 20-day window is accepted by the API but returns null.)"
         )
-
-    def _window_minutes(value) -> float:
-        """Minutes of tape per hit counter. 0 disables the window.
-
-        Raises rather than coercing. This value reaches the state payload, which
-        is serialized with `allow_nan=False`, and a NaN there costs the whole
-        document rather than one field. A negative value would prune every
-        observation the moment it was recorded, emptying the board with no
-        visible cause.
-        """
-        if value is None:
-            return 0.0
-        # `float(True)` is 1.0, so YAML `hit_window_minutes: true` — a natural
-        # way to write "yes, enable it" against a key documented as "0
-        # disables" — would silently become a one-minute horizon. At a 10s
-        # cadence that is ~6 observations per ticker, below `min_hits_to_show`,
-        # so the columns empty with no error. `_schedule` raises on malformed
-        # input for the same reason.
-        if isinstance(value, bool):
-            raise ValueError(
-                f"bidask.hit_window_minutes={value!r} is a boolean. Give a "
-                "number of minutes (0 disables the window)."
-            )
-        try:
-            minutes = float(value)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"bidask.hit_window_minutes={value!r} is not a number."
-            ) from exc
-        if not math.isfinite(minutes) or minutes < 0:
-            raise ValueError(
-                f"bidask.hit_window_minutes={value!r} must be a finite, "
-                "non-negative number of minutes (0 disables the window)."
-            )
-        return minutes
 
     def _bands(state: str, value) -> tuple:
         """Normalise one state's stepped floors, sorted by minute mark.
@@ -236,13 +225,6 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
         avg_window_days=window,
         in_play_rvol_schedules=_schedules(raw.get("in_play_rvol_schedules")),
         in_play_rvol_sessions=int(raw.get("in_play_rvol_sessions", 10)),
-        band_frac=float(raw.get("band_frac", 0.30)),
-        max_spread_pct=float(raw.get("max_spread_pct", 2.0)),
-        open_auction_minutes=int(raw.get("open_auction_minutes", 15)),
-        close_auction_minutes=int(raw.get("close_auction_minutes", 5)),
-        winsor_multiple=float(raw.get("winsor_multiple", 10.0)),
-        hit_window_minutes=_window_minutes(raw.get("hit_window_minutes", 30.0)),
-        min_hits_to_show=int(raw.get("min_hits_to_show", 3)),
         max_rows_per_column=int(raw.get("max_rows_per_column", 60)),
         max_rows_per_group=int(raw.get("max_rows_per_group", 12)),
         group_rvol_cap=float(raw.get("group_rvol_cap", 5.0)),

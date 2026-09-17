@@ -266,28 +266,13 @@ bidask:
     crypto:      [[0, 1.2]]
   in_play_rvol_sessions: 10     # sessions behind the historical average
 
-  # Classification (see KTD2/KTD3 in the plan). The band is CLNV's 30% of spread:
-  # exact-equality tests never fire on US equities because of sub-penny improvement.
-  band_frac: 0.30
-  max_spread_pct: 2.0           # reject quotes wider than this % of mid as stale
-  open_auction_minutes: 15      # equity only: reject prints inside the opening window
-  close_auction_minutes: 5      # equity only: reject prints inside the closing window
-  winsor_multiple: 10.0         # cap a poll's volume delta at this x its running median
-
-  # Minutes of tape each hit counter covers. 0 restores cumulative-since-open.
-  #
-  # Counters cannot run cumulatively: every poll adds the directional signal
-  # plus a small constant per-ticker bias, so the bias grows with the poll count
-  # while the signal stays bounded by the day's net move. Measured live
-  # 2026-08-20, the dashboard's hit increments tracked price at Spearman +0.40
-  # over a minute and +0.47 over three, while its cumulative session margin
-  # scored +0.10 against the day's move.
-  #
-  # 30 is NOT a measured optimum: swept against each window's own horizon on a
-  # 55-minute tape, 5 through 45 minutes and cumulative all scored +0.30 to
-  # +0.40. It is a density choice -- 167 median hits per ticker, 462 of 505
-  # tickers still on the board. See src/bidask/session.py.
-  hit_window_minutes: 30
+  # ⛔ The trade classifier and its accumulator are gone, and so are their keys:
+  # band_frac, max_spread_pct, open_auction_minutes, close_auction_minutes,
+  # winsor_multiple, hit_window_minutes and min_hits_to_show. The board is
+  # stateless — it recomputes each ticker's side from price and its relative
+  # volume every poll — so nothing accumulates and nothing is classified.
+  # Adding any of those keys back raises from `load_config`: see RETIRED_KEYS in
+  # src/bidask/config.py, which names what each one did.
 
   # Runtime cadence bounds for the in-app control. The floor protects an
   # undocumented endpoint from being hammered under a personal account.
@@ -360,7 +345,6 @@ bidask:
   group_breadth_min_members: 2
 
   # Display
-  min_hits_to_show: 3           # hide tickers below this total hit count
   max_rows_per_column: 60       # per-column render cap
   max_rows_per_group: 12        # per-group cap, so one large bucket (usually an
                                 #   industry fallback) cannot consume the column

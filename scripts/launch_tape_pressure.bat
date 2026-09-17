@@ -7,10 +7,16 @@ REM  the dashboard in your browser. Ctrl-C in this window stops it.
 REM
 REM  Requires TRADINGVIEW_SESSIONID and TRADINGVIEW_SESSION_SIGN in
 REM  .env - see .env.example. These are NOT optional for the equity
-REM  tab: US equity bid/ask comes from TradingView's quote websocket
-REM  (the screener API has no such field for US stocks), and that
-REM  socket needs the session cookie to mint its auth token. Without
-REM  them the crypto tab still works and equity classifies nothing.
+REM  tab: relative volume is its only admission path, and the
+REM  baselines behind it come from TradingView's chart websocket,
+REM  which needs the session cookie to mint its auth token. Without
+REM  them the warm-up fails and the equity board stays EMPTY - it
+REM  does not degrade to a partial board. The crypto tab is
+REM  unaffected.
+REM
+REM  Launch before the open if you can. The warm-up downloads one
+REM  bar series per ticker and takes a couple of minutes over the
+REM  full universe; the board gates nothing until it lands.
 REM
 REM  State is written to scripts\local_runs\ (gitignored), never
 REM  to docs\data\ or data\, so a local session never dirties the

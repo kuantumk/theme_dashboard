@@ -35,10 +35,10 @@ the series starts at 09:30 and the whole module answers the wrong question with
 no error anywhere. Symbols need an exchange prefix (`NYSE:GNRC`); the socket
 resolves nothing from a bare ticker.
 
-Auth and framing are imported from `src/bidask/tvquote.py` rather than
-restated. Two copies of a `~m~<len>~m~` parser would drift, and the quote
-socket's version already carries the reason it slices by declared length
-instead of matching braces.
+Auth and framing are imported from `src/bidask/tvsocket.py` rather than
+restated. Two copies of a `~m~<len>~m~` parser would drift, and the shared
+version already carries the reason it slices by declared length instead of
+matching braces.
 
 Cost
 ----
@@ -58,7 +58,7 @@ from typing import Iterable, Optional
 
 import websocket
 
-from src.bidask.tvquote import HEADERS, ORIGIN, QuoteAuthError, auth_token, encode, iter_frames
+from src.bidask.tvsocket import HEADERS, ORIGIN, QuoteAuthError, auth_token, encode, iter_frames
 
 SOCKET_URL = "wss://data.tradingview.com/socket.io/websocket?from=chart%2F"
 

@@ -203,9 +203,10 @@ class TestThresholdSchedule(unittest.TestCase):
 
 
 class TestScheduleStatesMatchTheConfigGuard(unittest.TestCase):
-    """`config.py` cannot import this module — `tvquote` imports `config` for
-    its cookie jar, so the edge would be a cycle — and so carries its own copy
-    of the valid state keys. Pinned here, exactly as `feed.SESSION_LABELS` and
+    """`config.py` cannot import this module — it reaches `tvbars` and then
+    `tvsocket`, which imports `config` for its cookie jar, so the edge would be
+    a cycle — and so carries its own copy of the valid state keys. Pinned here,
+    exactly as `feed.SESSION_LABELS` and
     `session_state.SESSION_STATES` are pinned to each other.
 
     A key in one table and not the other is a state the gate can be configured

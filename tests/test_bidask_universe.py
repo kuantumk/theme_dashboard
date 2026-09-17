@@ -117,11 +117,13 @@ class TestLiquidity(unittest.TestCase):
 class TestVolumeNumerator(unittest.TestCase):
     """The numerator is cumulative volume since 04:00, assembled per state.
 
-    `volume` is a regular-session counter: it does not move pre-market — 0 of
-    300 symbols changed over a 201-second pre-market gap while 262 of them saw
-    `premarket_volume` rise — and before the bell it still holds YESTERDAY's
-    completed day. Reading it in the pre-market would therefore divide a whole
-    previous session by this morning's expected few minutes and admit the entire
+    `volume` is a running EXTENDED-day total once a session is under way, so
+    from the open onward it already starts at 04:00 and is read alone. Before
+    the bell it is not today's figure at all: it still holds the previous
+    completed day, and it does not move — 0 of 300 symbols changed over a
+    201-second pre-market gap while 262 of them saw `premarket_volume` rise.
+    Reading it in the pre-market would therefore divide a whole previous
+    session by this morning's expected few minutes and admit the entire
     universe at once.
     """
 
@@ -546,8 +548,9 @@ class TestTradedValueFieldIsUnreliable(unittest.TestCase):
     It has never appeared in the 3,771-field metainfo, which lists every other
     column selected here — yet the scanner resolves it, which is what makes it
     dangerous. Selecting an unpublished field does NOT error; it returns null
-    whenever the vendor has no value, the same trap `tvquote.py` documents for
-    `bid`/`ask`. Verified 2026-08-21: null for every row through pre-market and
+    whenever the vendor has no value, the same trap
+    `docs/solutions/logic-errors/api-returns-null-for-fields-it-does-not-have.md`
+    records for `bid`/`ask`. Verified 2026-08-21: null for every row through pre-market and
     for at least the first four minutes of the session (`Value.Traded >= $1M`
     matched 0 of 13,661 at 09:34 ET with `current_session` reading `market` and
     `close`/`volume` live, against 2,806 for the average-volume leg alone), and

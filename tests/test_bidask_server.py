@@ -17,8 +17,7 @@ import socketserver
 from config.settings import PROJECT_ROOT
 from src.bidask.server import (
     STATE_FILENAME,
-    _crypto_session_context,
-    _equity_session_context,
+    _equity_session_date,
     _is_tracked_location,
     make_handler,
 )
@@ -34,35 +33,43 @@ class TestOutputLocationGuard(unittest.TestCase):
         self.assertFalse(_is_tracked_location(PROJECT_ROOT / "scripts" / "local_runs"))
 
 
-class TestSessionContext(unittest.TestCase):
-    def test_crypto_never_reports_an_auction_window(self):
-        _, in_auction = _crypto_session_context()
-        self.assertFalse(in_auction)
+class TestSessionDate(unittest.TestCase):
+    """The date that names the day's relative-volume baseline cache.
 
-    def test_equity_context_returns_a_date_and_flag(self):
-        date, in_auction = _equity_session_context()
-        self.assertRegex(date, r"^\d{4}-\d{2}-\d{2}$")
-        self.assertIsInstance(in_auction, bool)
+    It is ET, and it comes from the moment the caller already read. Two separate
+    clock reads can straddle midnight and name a cache for a day the elapsed
+    figure is not counting from.
+    """
 
-    def test_auction_window_is_bounded_on_both_sides(self):
-        # Regression: an unbounded lower test (`minutes < open+15`) is also true
-        # at 04:00 and 08:00, which rejected every extended-hours poll as an
-        # "auction" -- 18 hours of the day misdiagnosed.
+    def test_the_date_is_the_ET_trading_date(self):
+        from datetime import datetime as dt, timezone as tz
+
+        from src.bidask.server import ET as SERVER_ET
+
+        self.assertEqual(
+            _equity_session_date(dt(2026, 8, 10, 9, 45, tzinfo=SERVER_ET)),
+            "2026-08-10")
+        # 02:30 UTC on the 11th is 22:30 ET on the 10th: still that session.
+        self.assertEqual(
+            _equity_session_date(dt(2026, 8, 11, 2, 30, tzinfo=tz.utc)),
+            "2026-08-10")
+
+    def test_every_hour_of_the_extended_day_is_an_ordinary_poll(self):
+        """KTD8: there is no auction window left to reject a poll.
+
+        The window existed because an auction cross has no contemporaneous
+        quote for a trade classifier to judge. Nothing here classifies trades,
+        so 09:30 and 15:57 are polls like any other.
+        """
         from datetime import datetime as dt
 
         from src.bidask.server import ET as SERVER_ET
 
-        def at(hour, minute):
-            moment = dt(2026, 8, 10, hour, minute, tzinfo=SERVER_ET)
-            return _equity_session_context(moment)[1]
-
-        for hour, minute in [(0, 30), (4, 0), (8, 0), (9, 29),
-                             (12, 0), (16, 30), (20, 0), (23, 0)]:
-            self.assertFalse(at(hour, minute),
-                             f"{hour:02d}:{minute:02d} ET must not be an auction window")
-        for hour, minute in [(9, 30), (9, 44), (15, 55), (15, 59)]:
-            self.assertTrue(at(hour, minute),
-                            f"{hour:02d}:{minute:02d} ET must be an auction window")
+        for hour, minute in [(4, 0), (9, 30), (9, 44), (12, 0),
+                             (15, 55), (15, 59), (20, 0)]:
+            self.assertEqual(
+                _equity_session_date(dt(2026, 8, 10, hour, minute, tzinfo=SERVER_ET)),
+                "2026-08-10")
 
 
 class TestServerRouting(unittest.TestCase):
@@ -142,18 +149,14 @@ class TestAllDroppedAlarm(unittest.TestCase):
         self.assertEqual(state["matched"], 2806)
         self.assertEqual(state["universe"], 0)
 
-    def test_the_page_names_the_drop_before_it_blames_the_cookie(self):
-        # With no universe nothing is subscribed, so the quote-health branches
-        # would accuse the session cookie of a vendor field change. Order is
-        # the whole point of this pin; nothing on screen shows it.
+    def test_the_page_names_a_fully_dropped_universe(self):
+        # A 100% drop is upstream breakage, and the page has to say so — the
+        # default text blames the reader's own sliders.
         app = (PROJECT_ROOT / "src" / "bidask" / "web" / "app.js").read_text(encoding="utf-8")
         body = app.split("function emptyReason(")[1]
         reason = body.split("function ")[0]
         self.assertIn("view.matched > 0 && !view.universe", reason,
                       "emptyReason no longer names a fully-dropped universe")
-        self.assertLess(reason.index("view.matched > 0 && !view.universe"),
-                        reason.index("view.quotes"),
-                        "the all-dropped test must precede the quote-health tests")
 
 
 class TestSessionStateFromTheFeed(unittest.TestCase):
@@ -377,7 +380,6 @@ class TestPollOnceEndToEnd(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
             eng.themes = {}       # industry fallback, independent of the tag file
-            eng.quotes = None     # the quote socket is the next unit's to delete
             eng.profiles = {s: profile for s in ("GAPR", "HEAV", "QUIT")}
             eng.profile_status = f"ready ({len(eng.profiles)}/3)"
 
@@ -429,6 +431,109 @@ class TestPollOnceEndToEnd(unittest.TestCase):
     def test_the_payload_serializes_with_nan_forbidden(self):
         _, state = self.engine_and_state()
         json.dumps(state, allow_nan=False)
+
+
+class TestTheClassifierIsGone(unittest.TestCase):
+    """KTD8: one definition of strong and weak, and no accumulation behind it.
+
+    The classifier, the quote socket and the trailing-window accumulator were
+    mutually entangled — the socket existed to feed the classifier, the
+    accumulator to bound its bias — so a surviving fragment of any of them is a
+    second answer to the question the columns already answer.
+    """
+
+    def engine(self):
+        from src.bidask.config import load_config
+        from src.bidask.server import TapeEngine
+        with TemporaryDirectory() as tmp:
+            return TapeEngine(load_config(), Path(tmp), markets=("equity",))
+
+    def test_the_engine_owns_no_quote_stream_and_no_accumulator(self):
+        eng = self.engine()
+        for attribute in ("quotes", "quoted", "accumulators"):
+            self.assertFalse(hasattr(eng, attribute),
+                             f"TapeEngine still carries `{attribute}`")
+
+    def test_the_payload_carries_no_quote_or_counter_blocks(self):
+        state = self.engine().build_state()
+        self.assertNotIn("hit_window_minutes", state)
+        for key in ("quotes", "stats", "ask_side", "bid_side"):
+            self.assertNotIn(key, state["equity"],
+                             f"the state payload still publishes `{key}`")
+
+    def test_nothing_in_the_repo_imports_the_retired_modules(self):
+        # A surviving import is the one failure mode that would keep a second
+        # definition of strong and weak alive with nothing on screen to show it.
+        #
+        # The module PATH is parsed rather than the line searched: a substring
+        # scan matches a docstring that happens to open with "from the same
+        # row…", and it cannot tell `session` from the `session_state` module
+        # that survives.
+        import re
+        retired = {"classify", "tvquote", "session"}
+        statement = re.compile(r"^\s*(?:from|import)\s+([\w.]+)")
+        offenders = []
+        for folder in ("src", "tests"):
+            for path in sorted((PROJECT_ROOT / folder).rglob("*.py")):
+                for number, line in enumerate(
+                        path.read_text(encoding="utf-8").splitlines(), 1):
+                    found = statement.match(line)
+                    if found and retired & set(found.group(1).split(".")):
+                        offenders.append(f"{path.name}:{number}: {line.strip()}")
+        self.assertEqual(offenders, [])
+
+    def test_the_scan_above_would_notice_a_surviving_import(self):
+        """A guard that matches nothing is indistinguishable from a clean tree.
+
+        This one is deliberately narrow — it parses the module path — so it is
+        worth proving it still fires on the shape it exists to catch.
+        """
+        import re
+        retired = {"classify", "tvquote", "session"}
+        statement = re.compile(r"^\s*(?:from|import)\s+([\w.]+)")
+        for line, caught in (
+                ("from src.bidask.session import SessionAccumulator", True),
+                ("    from src.bidask.classify import classify", True),
+                ("import src.bidask.tvquote", True),
+                ("from src.bidask.session_state import MARKET", False),
+                ('    """…from the same per-day row as the payload."""', False)):
+            found = statement.match(line)
+            hit = bool(found and retired & set(found.group(1).split(".")))
+            self.assertEqual(hit, caught, line)
+
+
+class TestRetiredClassifierConfigKeys(unittest.TestCase):
+    """Every retired key raises and names what replaced it.
+
+    Silently ignoring one would leave a tunable in the YAML that the board no
+    longer reads — a config that claims a behaviour the code stopped having,
+    with no feedback at all for whoever tunes it.
+    """
+
+    KEYS = {
+        "band_frac": 0.3,
+        "max_spread_pct": 2.0,
+        "open_auction_minutes": 15,
+        "close_auction_minutes": 5,
+        "winsor_multiple": 10.0,
+        "hit_window_minutes": 30,
+        "min_hits_to_show": 3,
+    }
+
+    def test_each_key_raises_and_names_itself(self):
+        from src.bidask.config import load_config
+        for key, value in self.KEYS.items():
+            with self.subTest(key=key):
+                with self.assertRaises(ValueError) as caught:
+                    load_config({key: value})
+                self.assertIn(key, str(caught.exception))
+
+    def test_the_shipped_yaml_carries_none_of_them(self):
+        # `load_config` reads the shipped block, so a leftover key would raise
+        # on every launch — but only at launch, which is a poor place to find out.
+        from config.settings import CONFIG
+        block = CONFIG.get("bidask") or {}
+        self.assertEqual(sorted(set(self.KEYS) & set(block)), [])
 
 
 if __name__ == "__main__":

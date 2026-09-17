@@ -21,7 +21,7 @@ import sys
 import threading
 import time
 import webbrowser
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -30,13 +30,9 @@ from config.settings import PROJECT_ROOT
 from src.bidask.config import load_config
 from src.bidask.feed import fetch
 from src.bidask.grouping import SIDES_FIELD, build_columns, load_themes
-from src.bidask.session import SessionAccumulator
 from src.bidask.session_state import CLOSED, resolve_state, sides_for
-from src.bidask.tvquote import QuoteStream, merge_quotes
 from src.bidask.universe import apply_rvol_gate, build_universe
 from src.bidask.rvol_at_time import (
-    SESSION_CLOSE_MIN,
-    SESSION_OPEN_MIN,
     build_for_symbols,
     load_profiles,
     minutes_since_open,
@@ -80,33 +76,21 @@ def _is_tracked_location(path: Path) -> bool:
     return result.returncode != 0
 
 
-def _equity_session_context(now: Optional[datetime] = None) -> tuple[str, bool]:
-    """Return (session date, whether we are inside an auction window).
+def _equity_session_date(now: datetime) -> str:
+    """The ET trading date the caller's clock read falls in.
 
-    Auction prints are single large crosses with no meaningful contemporaneous
-    continuous quote, so classification is meaningless there.
+    Takes the moment rather than reading the clock, so the session date and the
+    elapsed-minutes figure derive from one reading. Two separate reads can
+    straddle midnight and name a baseline cache for a day the elapsed figure is
+    not counting from.
+
+    There is no auction window here any more. It existed because an auction
+    print is one large cross with no meaningful contemporaneous quote, so a
+    trade classifier could not judge it. A price against a session reference has
+    no such problem, and `bidask.open_auction_minutes` /
+    `bidask.close_auction_minutes` now raise from `load_config`.
     """
-    cfg = load_config()
-    now_et = (now or datetime.now(tz=ET)).astimezone(ET)
-    # Borrowed from `rvol_at_time` rather than restated. The caller reads the
-    # clock once so the session date, this test and the elapsed-minutes figure
-    # agree; that guarantee is empty if each defines the session separately.
-    open_min = SESSION_OPEN_MIN
-    close_min = SESSION_CLOSE_MIN
-    minutes = now_et.hour * 60 + now_et.minute
-    # Both windows are bounded. An unbounded lower test (`minutes < open+15`)
-    # is also true at 04:00 and 08:00, which would reject every pre-market and
-    # after-hours poll as an "auction" — 18 hours of the day misdiagnosed.
-    in_auction = (
-        (open_min <= minutes < open_min + cfg.open_auction_minutes)
-        or (close_min - cfg.close_auction_minutes <= minutes < close_min)
-    )
-    return now_et.strftime("%Y-%m-%d"), in_auction
-
-
-def _crypto_session_context() -> tuple[str, bool]:
-    """Crypto trades continuously: UTC day boundary, never an auction window."""
-    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d"), False
+    return now.astimezone(ET).strftime("%Y-%m-%d")
 
 
 def _session_state(rows) -> str:
@@ -125,14 +109,20 @@ def _session_state(rows) -> str:
 
 
 class TapeEngine:
-    """Owns one accumulator per market and rewrites the state file each poll."""
+    """Polls each market and rewrites the state file from that poll alone.
+
+    Nothing here remembers an earlier poll's tape. The board is a claim about
+    now: every ticker's side and score are recomputed from this poll's price and
+    relative volume, so there is no counter to age out and no accumulated bias
+    to bound. The one piece of carried state is the relative-volume baseline,
+    which depends only on completed sessions and is rebuilt once a day.
+    """
 
     def __init__(self, cfg, out_dir: Path, markets=MARKETS):
         self.cfg = cfg
         self.out_path = out_dir / STATE_FILENAME
         self.markets = markets
         self.themes = load_themes()
-        self.accumulators = {m: SessionAccumulator(cfg, m) for m in markets}
         self.errors = {m: "" for m in markets}
         self.feeds = {m: "" for m in markets}
         self.market_status = {m: "" for m in markets}
@@ -157,12 +147,6 @@ class TapeEngine:
         # an hour. A line per poll is noise, and noise is not a signal.
         self._all_dropped = {m: False for m in markets}
         self.consecutive_failures = 0
-        # Equity quotes come from the socket, never the screener: the `america`
-        # scanner has no bid/ask field, so every equity observation would be
-        # rejected as `no_quote` and the tab would render empty. Crypto needs no
-        # stream — the crypto scanner does publish bid/ask.
-        self.quotes = QuoteStream() if "equity" in markets else None
-        self.quoted = {m: 0 for m in markets}
         # Mutable so the in-app control can retune cadence without a restart.
         # cfg stays frozen; this is the live value the loop reads each cycle.
         self.poll_seconds = cfg.poll_seconds
@@ -186,8 +170,8 @@ class TapeEngine:
         The bars come from the TradingView chart socket (`src/bidask/tvbars.py`)
         — the only source here that carries real extended-hours volume, where
         yfinance returns those same bars with zero volume on every one. The
-        download would stall the poll loop and the quote socket if it ran
-        inline, so it runs in a background thread and caches to disk.
+        download would stall the poll loop if it ran inline, so it runs in a
+        background thread and caches to disk.
 
         It runs once per session because the baseline depends only on completed
         sessions. A same-day restart reuses the cache; a cache from another
@@ -266,12 +250,9 @@ class TapeEngine:
                           "change is the usual cause, not a quiet market")
                 else:
                     print(f"  {market}: universe recovered ({len(payload.rows)} rows)")
-            # Reset before the early exit: a merge count left over from the last
-            # good poll would report healthy quotes through a feed outage, which
-            # is the failure mode this whole field exists to expose. The board's
-            # own rows go with it, for the stronger version of the same reason —
-            # the columns are a claim about right now.
-            self.quoted[market] = 0
+            # Reset before the early exit. The columns are a claim about right
+            # now, so last poll's rows must not stand through a feed outage and
+            # say the market is doing something it may have stopped doing.
             self.qualified[market] = []
             self.pregate[market] = []
             self.gates[market] = None
@@ -288,15 +269,13 @@ class TapeEngine:
             if payload.rows.empty:
                 continue
 
-            # One clock read for the whole market, so the session date, the
-            # auction test and the elapsed-minutes figure cannot disagree.
+            # One clock read for the whole market, so the session date and the
+            # elapsed-minutes figure cannot disagree.
             if market == "equity":
                 now_et = datetime.now(tz=ET)
-                session_date, in_auction = _equity_session_context(now_et)
+                self.ensure_profiles(_equity_session_date(now_et), payload.rows)
                 elapsed = minutes_since_open(now_et)
-                self.ensure_profiles(session_date, payload.rows)
             else:
-                session_date, in_auction = _crypto_session_context()
                 elapsed = None
 
             # Liquidity first, and its result is kept: it is the gate's input
@@ -305,7 +284,6 @@ class TapeEngine:
             # breadth term would rank nothing.
             universe = build_universe(payload.rows, self.cfg, market=market)
             self.pregate[market] = universe.to_dict("records")
-            records = universe.to_dict("records")
 
             if market == "equity":
                 self.session_states[market] = state = _session_state(payload.rows)
@@ -314,14 +292,6 @@ class TapeEngine:
                                        elapsed_minutes=elapsed)
                 self.gates[market] = gate
                 records = gate.rows.to_dict("records")
-                if self.quotes is not None:
-                    # Track exactly the set on the board. The socket pushes on
-                    # change, so symbols subscribed this poll are quoted by the
-                    # next one.
-                    self.quotes.sync(gate.rows["ticker"].tolist()
-                                     if "ticker" in gate.rows else [])
-                    records, self.quoted[market] = merge_quotes(
-                        records, self.quotes.snapshot())
 
                 # Strong and weak are two independent tests, never a branch. A
                 # stock above today's open and below yesterday's close is
@@ -349,16 +319,6 @@ class TapeEngine:
             # means anything. Its 24-hour price reference is unwired for the
             # same reason. Both are the crypto unit's.
 
-            # Still fed, and no longer the source of either column. The
-            # accumulator, the classifier and the quote socket are the next
-            # unit's to delete; until then its counters keep the existing
-            # status bar alive rather than reading zero beside a live board.
-            self.accumulators[market].apply(
-                records,
-                session_date=session_date,
-                in_auction_window=in_auction,
-            )
-
         self.consecutive_failures = 0 if any_ok else self.consecutive_failures + 1
         # A write failure must not touch consecutive_failures: that counter
         # throttles the feed, and a busy state file says nothing about the feed.
@@ -369,13 +329,8 @@ class TapeEngine:
         state = {"poll_seconds": self.poll_seconds,
                  "min_poll_seconds": self.cfg.min_poll_seconds,
                  "max_poll_seconds": self.cfg.max_poll_seconds,
-                 # How much tape the hit counters cover. Published because the
-                 # page shows raw counts: without it "112 ask / 58 bid" reads as
-                 # the whole session, which is what it used to mean.
-                 "hit_window_minutes": self.cfg.hit_window_minutes,
                  "generated_at": datetime.now().strftime("%H:%M:%S")}
         for market in self.markets:
-            acc = self.accumulators[market]
             # The rows that cleared this poll's gate, ranked against the
             # pre-gate universe. Stateless: nothing here remembers an earlier
             # poll, so the columns describe the market now rather than the
@@ -387,14 +342,9 @@ class TapeEngine:
                 grouped=(market != "crypto"),
                 universe=self.pregate[market],
             )
-            ask_side = sum(s.ask_hits for s in acc.states.values())
-            bid_side = sum(s.bid_hits for s in acc.states.values())
             feed = self.feeds[market]
             state[market] = {
                 "columns": columns,
-                "ask_side": ask_side,
-                "bid_side": bid_side,
-                "stats": acc.snapshot_stats(),
                 "feed": feed,
                 "delayed": (not feed) or feed.startswith("delayed"),
                 # Distinct from `feed`: a real-time entitlement on a closed
@@ -407,19 +357,10 @@ class TapeEngine:
                 "scanned_at": datetime.now().strftime("%H:%M:%S"),
             }
             if market == "equity":
-                # ⛔ Published on every equity poll, never under the quote
-                # branch. The two answer different questions, and the socket is
-                # the next unit's to delete — nested, this block would go with
-                # it and take the board's only statement of why a column is
-                # empty along with it. A test pins it with the socket absent.
+                # The board's only statement of why a column is empty. Relative
+                # volume is the sole admission path, so this block is what
+                # separates a broken source from a quiet market.
                 state[market]["rvol"] = self.rvol_status(market)
-                if self.quotes is not None:
-                    # Carried so an empty column can name its own cause. Without
-                    # it a dead quote socket is indistinguishable from
-                    # thresholds set too high, which is exactly how the
-                    # screener's missing bid/ask went unnoticed for a session.
-                    state[market]["quotes"] = {**self.quotes.status(),
-                                               "merged": self.quoted[market]}
         return state
 
     def rvol_status(self, market: str) -> dict:
@@ -585,8 +526,6 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
     out_dir.mkdir(parents=True, exist_ok=True)
 
     engine = TapeEngine(cfg, out_dir)
-    if engine.quotes is not None:
-        engine.quotes.start()
     engine.write_state()  # so the page has something to fetch immediately
 
     stop = threading.Event()
@@ -657,8 +596,6 @@ def run(out_dir: Path, port: int, poll_seconds: Optional[int], open_browser: boo
             print("\n  stopping…")
         finally:
             stop.set()
-            if engine.quotes is not None:
-                engine.quotes.stop()
     return 0
 
 

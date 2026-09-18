@@ -8,6 +8,7 @@ symptoms:
   - "Rows with null bid/ask were classified as confident buy/sell signals instead of being rejected"
   - "Coverage metric reported 100% while every observation came from a degraded fallback path"
   - "Dashboard showed 'server unreachable' while the server was running and writing state normally"
+  - "Recurrence: no state file written at all after a scrubbing module was deleted as callerless, freezing both tabs behind a dead-feed message"
 root_cause: missing_validation
 resolution_type: code_fix
 tags:
@@ -17,9 +18,9 @@ tags:
   - validation
   - guard-clause
 related_files:
-  - src/bidask/classify.py
-  - src/bidask/session.py
   - src/bidask/server.py
+  - src/bidask/session_state.py
+  - src/bidask/rvol_at_time.py
 ---
 
 # NaN defeats numeric guard chains and silently corrupts JSON payloads
@@ -33,6 +34,19 @@ payload and made the browser reject the entire document — the page reported th
 server as unreachable while the server was healthy.
 
 Both defects came from one root fact and neither was caught by the test suite.
+
+**2026-09-17 — it recurred, in the one shape a caller sweep misses.** The
+classifier and its `session.py` display layer were deleted in the tape-pressure
+price/volume redesign. `session.py` had scrubbed non-finite values on the way
+into the payload, and it was removed as callerless once the columns stopped
+flowing through it. They had not stopped: the raw screener record now reaches
+the member payload **directly**, and the extended-hours columns are genuinely
+null for any name that did not trade in that window — 322 of 1,821 rows in the
+`premarket_*` trio on one live poll. `allow_nan=False` then raised on every
+write, no state file was produced at all, and both tabs froze while the page
+reported a dead feed. **The guard's caller had moved, not gone away.** The scrub
+lives in `src/bidask/server.py:_drop_non_finite` now, next to the serializer it
+protects.
 
 ## Symptoms
 
@@ -51,37 +65,48 @@ Both defects came from one root fact and neither was caught by the test suite.
 - **`is not None` filtering.** `{k: v for k, v in row.items() if v is not None}`
   does not drop NaN. pandas yields `float('nan')` for a null cell, not `None`,
   so the filter passes it straight through.
-- **Existing NaN awareness in the same file.** `_clean_symbol` in
-  `src/bidask/session.py` already documented this exact hazard for the *symbol*
-  field ("`float('nan')` is truthy, so a plain falsiness check lets it through").
-  Knowing the trap in one column did not generalize to the numeric ones.
+- **Existing NaN awareness in the same file.** The symbol cleaner in the
+  since-retired `src/bidask/session.py` already documented this exact hazard for
+  the *symbol* field ("`float('nan')` is truthy, so a plain falsiness check lets
+  it through"). Knowing the trap in one column did not generalize to the numeric
+  ones.
+- **Deleting a guard whose callers looked gone.** The 2026-09 recurrence above
+  passed a caller sweep: nothing imported the scrubbing helper any more, because
+  the data had been rerouted around it rather than stopped.
 - **A 194-test suite.** No test fed NaN through any numeric field. The suite
   covered the symbol case only, so both defects passed CI cleanly.
 
 ## Solution
 
 Guard for non-finiteness **before** the domain preconditions, rather than hoping
-the domain checks catch it:
+the domain checks catch it. Both live guards in the shipped board have this
+shape:
 
 ```python
-# src/bidask/classify.py — before any <= / > comparison
-if not all(math.isfinite(v) for v in (cur.last, cur.bid, cur.ask, cur.volume)):
-    return _rejected(REJECT_NO_QUOTE)
+# src/bidask/session_state.py:direction_of — before either comparison
+if not math.isfinite(value):
+    return 0                      # a null field is not a direction
+
+# src/bidask/rvol_at_time.py:rvol_at_time — before the domain test, not after
+if not math.isfinite(traded) or traded <= 0:
+    return 0.0                    # an unknown must never clear a floor
 ```
 
 Filter non-finite values out of anything destined for JSON, and make the
 serializer fail loudly rather than emit an unparseable token:
 
 ```python
-# src/bidask/session.py — _is_finite() rejects None *and* NaN
-return {k: row[k] for k in keys if k in row and _is_finite(row[k])}
+# src/bidask/server.py — the scrub, immediately upstream of the serializer
+for key, value in record.items():
+    if isinstance(value, float) and not math.isfinite(value):
+        record[key] = None
 
 # src/bidask/server.py — allow_nan=False turns a silent corruption into an error
 payload = json.dumps(self.build_state(), separators=(",", ":"), allow_nan=False)
 ```
 
-Coerce at the boundary too — `_num()` maps None *and* non-finite values to `0.0`,
-so a null field trips the positivity guard instead of slipping past it.
+Coerce at the boundary too, so a null field trips the domain guard instead of
+slipping past it.
 
 ## Why This Works
 
@@ -111,16 +136,20 @@ rather than woven into it.
 - **Pass `allow_nan=False` to `json.dumps`** on any payload a browser or another
   strict parser will read. It converts a silent corruption into a loud
   `ValueError` at the write site, next to the code that can fix it.
+- **When you delete a guard, find where its data went — not just who imported
+  it.** "No callers" answers a question about the code. The question that
+  matters is whether the values it cleaned still reach the consumer it was
+  protecting. In the 2026-09 recurrence they did, by a shorter path.
 - **Test NaN explicitly for every numeric field**, not just the one that bit you.
-  This codebase had NaN coverage for `symbol` and none for `bid`, `ask`, `last`,
-  or `volume`:
+  The original suite had NaN coverage for `symbol` and none for any numeric
+  column. Test the serializer end to end as well, so the guard is pinned by what
+  it protects rather than by its own call site:
 
 ```python
-def test_nan_quote_is_rejected_not_classified(self):
-    nan = float("nan")
-    obs = classify(cur=tick(last=10.10, bid=nan, ask=nan, volume=2000), ...)
-    self.assertEqual(obs.reason, REJECT_NO_QUOTE)
-    self.assertFalse(obs.certain)
+def test_the_whole_state_payload_is_json_serializable(self):
+    # `write_state` uses allow_nan=False, so one non-finite value costs the
+    # whole document rather than one field.
+    json.dumps(eng.build_state(), allow_nan=False)
 ```
 
 - **Assert strict JSON, not just round-trippable JSON.** `json.loads` accepts the

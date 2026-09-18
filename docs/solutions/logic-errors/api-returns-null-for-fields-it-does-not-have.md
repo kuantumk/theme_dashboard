@@ -18,7 +18,7 @@ tags:
   - error-surfacing
   - unverified-assumption
 related_files:
-  - src/bidask/tvquote.py
+  - src/bidask/tvsocket.py
   - src/bidask/feed.py
   - src/bidask/web/app.js
 ---
@@ -77,16 +77,25 @@ prose and never implemented as a runtime check. Nothing fired.
 
 ## Resolution
 
-- Read quotes from the websocket (`src/bidask/tvquote.py`); keep the screener for
-  what it is genuinely good at — universe selection, liquidity floors, the
-  in-play gate, sector/industry, period highs.
-- Take last price and volume from the socket too. The classifier compares a trade
-  price against its prevailing quote, so both legs must come from one clock;
-  mixing a screener `close` with a socket quote adds a second skew term.
-- Keep unquoted rows rather than dropping them, so they surface as `no_quote`
-  rejections instead of hiding a dead socket behind a quietly shrinking universe.
-- Make an empty column state its own cause: a `quotes N/M` health pill, and a
-  fallback that names the dominant rejection reason.
+At the time (2026-08-12): read quotes from TradingView's own quote websocket and
+keep the screener for what it is genuinely good at — universe selection,
+liquidity floors, sector/industry, period highs. Unquoted rows were kept rather
+than dropped, so they surfaced as `no_quote` rejections instead of hiding a dead
+socket behind a quietly shrinking universe, and a `quotes N/M` health pill made
+an empty column state its own cause.
+
+**⛔ Superseded in September 2026 — do not reach for the quote socket.** The
+board no longer classifies trades, so it reads no quote of any kind: a ticker's
+side is its price against a session-appropriate reference, and the only
+admission path is Relative Volume at Time. The quote stream was deleted with the
+classifier. `tvquote.py` is now `src/bidask/tvsocket.py` and carries only the
+shared transport — the JWT minted from the `sessionid` cookie and the
+`~m~<len>~m~` frame codec — which `src/bidask/tvbars.py` uses to pull chart bars.
+See the Tape Pressure Dashboard section of `CLAUDE.md`.
+
+What survived the redesign is the honesty machinery, and it is the part worth
+copying: an empty column still names its own cause, now from the `rvol` block of
+the state payload, with an `rvol N/M` coverage pill beside it.
 
 ## The generalizable lesson
 
@@ -99,6 +108,13 @@ credential debugging cannot.
 
 Corollaries:
 
+- **Metainfo settles "can it serve this", not "should I depend on it".** The
+  inverse trap also exists: `Value.Traded` has never appeared in the 3,771-field
+  catalogue and the scanner serves it anyway — an unlisted alias that was null
+  all pre-market, emptied the equity universe for a full session, and errored
+  nowhere. `relative_volume_intraday|5` is another, listed stock/ETF only while
+  serving the crypto scanner. A field absent from metainfo that returns values is
+  not a discovery; it is an undocumented dependency.
 - **Never let an empty UI blame user-controlled settings by default.** "No
   results above your thresholds" is a claim about the user's input; it must not
   be the message when the real state is "no input arrived." That single string

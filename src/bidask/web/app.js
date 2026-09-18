@@ -115,6 +115,18 @@
     return v.toFixed(v < 10 ? 1 : 0) + 'x';
   }
 
+  // How long a column has been still, as a trader reads a clock. Seconds below
+  // a minute, minutes above it — the figure decides whether a still tape is
+  // ordinary thinness or a frozen feed, so the unit has to be legible at a
+  // glance rather than a bare second count.
+  function fmtAge(seconds) {
+    const s = Math.max(0, Math.round(num(seconds) || 0));
+    if (s < 60) return s + 's';
+    const m = Math.floor(s / 60);
+    const rest = s % 60;
+    return rest ? `${m}m ${rest}s` : `${m}m`;
+  }
+
   function fmtMove(value) {
     const v = num(value);
     if (v === null) return '';
@@ -269,6 +281,19 @@
         + 'reading about the market.';
     }
     if (!r.polled) return 'Waiting for the first scan…';
+    // ⛔ Before the quiet-market sentence, and that order is the whole point.
+    // A frozen numerator reaches every branch above as healthy — each row
+    // still scores, so `unavailable` is false — while the denominator keeps
+    // advancing with the clock, so every reading falls and the board drains
+    // name by name. Reported after the line below, it would be printed under a
+    // sentence that has already told the reader the opposite.
+    if (r.stalled) {
+      return `No row's volume has changed in ${fmtAge(r.stall_seconds)}, across `
+        + `${r.stall_watched} names that were trading. The relative-volume numerator has `
+        + 'stopped advancing, so the readings behind this board are stale and its own floor '
+        + 'is now rejecting them. Late in a session a still tape can be genuine; during '
+        + 'active hours it means the volume column has frozen.';
+    }
     return `No ticker cleared the ${fmtRvol(r.floor)} volume floor for ${esc(stateLabel(r.session_state))}. `
       + `${r.scored} of ${r.polled} rows carried a usable relative volume, so the source is `
       + 'working and the market is quiet.';
@@ -421,12 +446,25 @@
     // third of the market reads as a calm one.
     const polled = num(r.polled) || 0;
     const scored = num(r.scored) || 0;
-    els.coverage.textContent = polled ? `rvol ${scored}/${polled}` : 'rvol —';
-    els.coverage.title = 'Rows with a usable Relative Volume at Time reading, over rows polled. '
-      + 'Relative volume is the only way onto the board, so this is how much of the market it '
-      + 'can judge at all.';
+    // ⛔ The pill, not `emptyReason`, is what catches the usual shape of this
+    // failure. A column that froze two minutes ago still has a full board on
+    // screen — every row scored, every chip looks live — and the empty-column
+    // text never renders. Without this marker the only symptom is the board
+    // slowly thinning over the next hour, which reads as interest fading.
+    els.coverage.textContent = (polled ? `rvol ${scored}/${polled}` : 'rvol —')
+      + (r.stalled ? ` · still ${fmtAge(r.stall_seconds)}` : '');
+    els.coverage.title = r.stalled
+      ? `No row's volume has changed in ${fmtAge(r.stall_seconds)}, across `
+        + `${r.stall_watched} names that were trading. Every reading on this board is that `
+        + 'old. Late in a session a still tape can be genuine; during active hours the '
+        + 'volume column has frozen and the board will drain as its floor rejects the '
+        + 'stale readings.'
+      : 'Rows with a usable Relative Volume at Time reading, over rows polled. '
+        + 'Relative volume is the only way onto the board, so this is how much of the market '
+        + 'it can judge at all.';
     els.coverage.className = 'pill'
-      + (!polled ? '' : (!scored ? ' error' : (scored * 2 < polled ? ' delayed' : ' live')));
+      + (r.stalled ? ' error'
+         : (!polled ? '' : (!scored ? ' error' : (scored * 2 < polled ? ' delayed' : ' live'))));
 
     // The floor in force and the state that selected it. The regular session
     // steps 0.7 → 1.0 → 1.2 through its first hour, so a block of tickers can

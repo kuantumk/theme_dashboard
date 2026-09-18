@@ -899,5 +899,131 @@ class TestEquityFeedPublishesAQualifiedSymbol(unittest.TestCase):
                            "a bare ticker still needs the fallback chain")
 
 
+class TestFrozenNumeratorReachesThePayload(unittest.TestCase):
+    """A populated-but-motionless volume column must reach the page.
+
+    ⛔ This is the one failure mode nothing else here can see. Every other
+    guard keys off absence — `source_unavailable` needs every reading to be
+    zero, `_drop_non_finite` needs a NaN, the warm-up guard needs a raise. A
+    column serving plausible static numbers trips none of them, and because
+    `baseline_at` keeps advancing the denominator, the board drains name by
+    name and ends at "the source is working and the market is quiet".
+
+    ⛔ The watch is DIAGNOSTIC. `test_a_stall_changes_nothing_but_the_wording`
+    is the load-bearing one: if a later edit lets the verdict filter or rank a
+    row, the engine stops being a pure function of the current poll.
+    """
+
+    ELAPSED = 390.0   # 10:30 ET, 60 minutes in, floor 1.2
+
+    def rows(self, volume):
+        import pandas as pd
+        return pd.DataFrame([
+            {"symbol": f"S{i}", "ticker": f"NASDAQ:S{i}", "close": 20.0,
+             "avg_volume": 1_000_000, "industry": "Software",
+             "current_session": "market", "premarket_volume": 0.0,
+             "volume": volume + i, "postmarket_volume": 0.0,
+             "change_from_open": 3.0, "change": 3.0}
+            for i in range(60)
+        ])
+
+    def drive(self, volumes_per_poll, gap_seconds=130.0):
+        """Run one poll per entry, `gap_seconds` apart on a pinned clock."""
+        from datetime import datetime, timedelta
+        from unittest import mock
+
+        import numpy as np
+
+        from src.bidask.config import load_config
+        from src.bidask.feed import Payload
+        from src.bidask.rvol_at_time import BARS_PER_SESSION
+        from src.bidask.server import ET, TapeEngine
+
+        profile = np.cumsum(np.full(BARS_PER_SESSION, 60_000.0 / BARS_PER_SESSION))
+        base = datetime(2026, 9, 18, 10, 30, tzinfo=ET)
+        # One timestamp per poll, not per call: `poll_once` reads the clock for
+        # the market grid and again for the payload's `generated_at`, and both
+        # belong to the same cycle.
+        tick = [base]
+        clock = mock.Mock()
+        clock.now.side_effect = lambda *a, **k: tick[0]
+        blocks = []
+        with TemporaryDirectory() as tmp:
+            eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
+            eng.themes = {}
+            eng.profiles["equity"] = {f"S{i}": profile for i in range(60)}
+            eng.profile_status["equity"] = "ready (60/60)"
+            for poll, volume in enumerate(volumes_per_poll):
+                tick[0] = base + timedelta(seconds=gap_seconds * poll)
+                payload = Payload(rows=self.rows(volume), feed="streaming",
+                                  matched=60, market_status="market open")
+                with mock.patch("src.bidask.server.fetch", return_value=payload), \
+                     mock.patch("src.bidask.server.datetime", clock), \
+                     mock.patch("src.bidask.server.minutes_since_open",
+                                return_value=self.ELAPSED), \
+                     mock.patch.object(TapeEngine, "ensure_profiles",
+                                       lambda *a: None):
+                    eng.poll_once()
+                blocks.append(eng.build_state()["equity"])
+        return eng, blocks
+
+    def test_an_advancing_column_is_never_called_stalled(self):
+        _, blocks = self.drive([500_000.0, 560_000.0, 620_000.0, 680_000.0])
+        for poll, block in enumerate(blocks):
+            self.assertFalse(block["rvol"]["stalled"],
+                             f"poll {poll} accused a feed that was moving")
+
+    def test_a_motionless_column_is_reported_as_stalled(self):
+        _, blocks = self.drive([500_000.0] * 4)
+        self.assertFalse(blocks[0]["rvol"]["stalled"], "the first poll anchors")
+        self.assertFalse(blocks[1]["rvol"]["stalled"], "one window is not proof")
+        self.assertTrue(blocks[2]["rvol"]["stalled"])
+        self.assertGreaterEqual(blocks[2]["rvol"]["stall_seconds"], 260.0)
+        self.assertEqual(blocks[2]["rvol"]["stall_watched"], 60)
+
+    def test_the_stall_survives_a_poll_that_could_not_compare(self):
+        """Polls land every 10s; the verdict must not flicker between windows."""
+        _, blocks = self.drive([500_000.0] * 3 + [500_000.0], gap_seconds=130.0)
+        self.assertTrue(blocks[-1]["rvol"]["stalled"])
+
+    def test_a_stall_changes_nothing_but_the_wording(self):
+        """⛔ The verdict is diagnostic. It may not move a row.
+
+        Two runs whose volumes differ only in whether they advance must render
+        the same tickers in the same columns. If this ever fails, the watch has
+        become an admission rule and the engine is no longer a pure function of
+        the current poll.
+        """
+        def columns(blocks):
+            side = blocks[-1]["columns"]["strong"]
+            return [(group["name"], tuple(m["symbol"] for m in group["members"]))
+                    for group in side]
+
+        _, frozen = self.drive([500_000.0] * 4)
+        _, moving = self.drive([500_000.0, 560_000.0, 620_000.0, 680_000.0])
+        self.assertTrue(frozen[-1]["rvol"]["stalled"])
+        self.assertFalse(moving[-1]["rvol"]["stalled"])
+        self.assertEqual(columns(frozen), columns(moving),
+                         "the stall verdict changed which tickers were admitted")
+
+    def test_a_failed_poll_withdraws_the_verdict(self):
+        """A poll that never happened cannot assert anything about the feed."""
+        from unittest import mock
+
+        from src.bidask.config import load_config
+        from src.bidask.feed import Payload
+        from src.bidask.server import TapeEngine
+
+        eng, _ = self.drive([500_000.0] * 3)
+        self.assertTrue(eng.build_state()["equity"]["rvol"]["stalled"])
+        dead = Payload(rows=self.rows(0.0).iloc[0:0], feed="", matched=0,
+                       market_status="", error="socket refused")
+        with TemporaryDirectory() as tmp, \
+             mock.patch("src.bidask.server.fetch", return_value=dead):
+            eng.out_path = Path(tmp) / "bidask_state.json"
+            eng.poll_once()
+        self.assertFalse(eng.build_state()["equity"]["rvol"]["stalled"])
+
+
 if __name__ == "__main__":
     unittest.main()

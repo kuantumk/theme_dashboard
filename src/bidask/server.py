@@ -33,7 +33,8 @@ from src.bidask.crypto_state import REF_24H, crypto_sides
 from src.bidask.feed import fetch
 from src.bidask.grouping import SIDES_FIELD, build_columns, load_themes
 from src.bidask.session_state import CLOSED, resolve_state, sides_for
-from src.bidask.universe import apply_rvol_gate, build_universe
+from src.bidask.stall import StallWatch
+from src.bidask.universe import apply_rvol_gate, build_universe, volume_since_anchor
 from src.bidask.rvol_at_time import (
     CRYPTO,
     CRYPTO_GRID,
@@ -196,6 +197,13 @@ class TapeEngine:
         self.pregate = {m: [] for m in markets}
         self.gates = {m: None for m in markets}
         self.session_states = {m: CLOSED for m in markets}
+        # Whether the vendor's volume column is still advancing. The board's
+        # every other guard keys off ABSENCE — a zero reading, a NaN, a raised
+        # warm-up — and a column that keeps serving plausible static numbers
+        # trips none of them. See `src/bidask/stall.py`; it is diagnostic only
+        # and must never reach a score, a side, or an admission.
+        self.stall = StallWatch()
+        self.stalls: dict = {m: None for m in markets}
         # Latched so the alarm prints on the transition rather than 360 times
         # an hour. A line per poll is noise, and noise is not a signal.
         self._all_dropped = {m: False for m in markets}
@@ -390,6 +398,10 @@ class TapeEngine:
             self.pregate[market] = []
             self.gates[market] = None
             self.session_states[market] = CLOSED
+            # A poll that did not happen cannot assert the feed has frozen. The
+            # watch keeps its reference — the next successful poll compares
+            # against it across the outage — but the published verdict goes.
+            self.stalls[market] = None
             if payload.error:
                 continue
             # A feed reading proves the response arrived, so the poll succeeded
@@ -439,6 +451,19 @@ class TapeEngine:
             else:
                 state = _session_state(payload.rows)
             self.session_states[market] = state
+
+            # ⛔ Watch the numerator the gate is about to divide, not some
+            # nearby column. `volume_since_anchor` is the same call
+            # `score_rvol_at_time` makes, so a vendor field that freezes is
+            # caught in the exact quantity that would go wrong — and the state
+            # travels with it, because the column being read changes at the
+            # bell and a comparison across that boundary measures the swap.
+            if "symbol" in universe.columns:
+                self.stalls[market] = self.stall.observe(
+                    market, state,
+                    dict(zip(universe["symbol"].astype(str),
+                             volume_since_anchor(universe, state))),
+                    now.timestamp())
 
             gate = apply_rvol_gate(universe, self.cfg, state=state,
                                    profiles=self.profiles.get(market, {}),
@@ -527,6 +552,7 @@ class TapeEngine:
         that board covers.
         """
         gate = self.gates.get(market)
+        stall = self.stalls.get(market)
         status = self.profile_status.get(market, "pending")
         return {
             # The warm-up's own state, so a thin board during the download
@@ -546,6 +572,14 @@ class TapeEngine:
             "polled": 0 if gate is None else gate.polled,
             "unavailable": bool(gate is not None and gate.source_unavailable),
             "reason": self._rvol_reason(market, gate),
+            # ⛔ The frozen-column verdict. `unavailable` above cannot cover
+            # it: that needs EVERY reading to be zero, and a column serving
+            # plausible static numbers scores every row. Because `baseline_at`
+            # keeps advancing the denominator, such a column drains the board
+            # over the session and reads as interest fading.
+            "stalled": bool(stall is not None and stall.stalled),
+            "stall_seconds": 0.0 if stall is None else round(stall.seconds, 1),
+            "stall_watched": 0 if stall is None else stall.watched,
         }
 
     def _rvol_reason(self, market: str, gate) -> str:

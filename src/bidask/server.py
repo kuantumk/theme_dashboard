@@ -131,9 +131,9 @@ def _drop_non_finite(record: dict) -> None:
     misreport.
 
     It is not a rare edge either: the extended-hours columns are genuinely
-    absent for any name that did not trade in that window, measured at 322 of
-    1,821 rows in the `premarket_*` trio and 4 in `postmarket_*` on one live
-    poll. Every equity poll carries some.
+    absent for any name that did not trade in that window, measured 2026-09-17
+    at 322 of 1,821 rows in the `premarket_*` trio and 4 in `postmarket_*` on
+    one live poll. Every equity poll carries some.
 
     The retired `session.py` scrubbed these on the way into its display meta.
     That module was deleted once the columns stopped flowing through it, but
@@ -221,6 +221,12 @@ class TapeEngine:
         self.profile_dates: dict = {m: None for m in markets}
         self.profile_status = {m: "pending" for m in markets}
         self._profile_threads: dict = {m: None for m in markets}
+        # Retry state for a warm-up that failed. `profile_dates` records
+        # success and the thread handle records in-flight, so without these a
+        # failure is the one outcome nothing remembers — and the next poll,
+        # ten seconds later, starts the whole download again.
+        self._profile_failures: dict = {m: 0 for m in markets}
+        self._profile_retry_at: dict = {m: 0.0 for m in markets}
 
     def ensure_profiles(self, market: str, session_date: str, rows) -> None:
         """Start this market's baseline warm-up once, off the poll thread.
@@ -248,10 +254,24 @@ class TapeEngine:
         thread = self._profile_threads.get(market)
         if thread is not None and thread.is_alive():
             return
+        # ⛔ A failed build must not relaunch on the next poll. `profile_dates`
+        # is set only on success, so without this the warm-up restarts every
+        # ~10 seconds — a ~1,900-symbol websocket download, against a vendor
+        # that just refused us, forever. The backoff reuses the feed's own
+        # schedule so one idea governs both retry paths.
+        if time.time() < self._profile_retry_at.get(market, 0.0):
+            return
         fetch_by_display = self._symbol_map(rows)
         if not fetch_by_display:
             return
         grid = MARKET_GRIDS.get(market, EQUITY_GRID)
+
+        def defer() -> None:
+            """Back off this market's warm-up after a failed attempt."""
+            self._profile_failures[market] = self._profile_failures.get(market, 0) + 1
+            step = BACKOFF_STEPS[min(self._profile_failures[market],
+                                     len(BACKOFF_STEPS) - 1)]
+            self._profile_retry_at[market] = time.time() + self.poll_seconds * step
 
         def warm() -> None:
             cached = load_profiles(self.out_path.parent, session_date,
@@ -272,6 +292,7 @@ class TapeEngine:
                                           grid=grid)
             except Exception as exc:  # noqa: BLE001 — the tape must keep running
                 self.profile_status[market] = f"failed ({type(exc).__name__})"
+                defer()
                 # There is no second admission path: relative volume is the
                 # gate. A failed build therefore empties the board, and the
                 # payload says so rather than letting it read as a quiet
@@ -284,8 +305,24 @@ class TapeEngine:
             # arrived is simply absent, which scores 0 and excludes the row.
             keyed = {display: built[fetch] for display, fetch
                      in fetch_by_display.items() if fetch in built}
+            # ⛔ Resolving NOTHING is a failure, not a finished warm-up. Every
+            # name requested here came from rows the screener returned in this
+            # same poll, so a build that keys zero of them did not find a quiet
+            # market — it failed to reach the vendor. Latching `profile_dates`
+            # on that empties the board for the rest of the session with a
+            # status pill reading `ready (0/1900)`, which is the quiet-market
+            # misreport this whole design exists to prevent.
+            if not keyed:
+                self.profile_status[market] = f"failed (0/{len(fetch_by_display)} resolved)"
+                defer()
+                print(f"  rvol baselines [{market}]: resolved 0 of "
+                      f"{len(fetch_by_display)}; treating as a failure, not a"
+                      " finished warm-up")
+                return
             self.profiles[market] = keyed
             self.profile_dates[market] = session_date
+            self._profile_failures[market] = 0
+            self._profile_retry_at[market] = 0.0
             self.profile_status[market] = f"ready ({len(keyed)}/{len(fetch_by_display)})"
             save_profiles(keyed, self.out_path.parent, session_date,
                           market=market, grid=grid)
@@ -372,7 +409,6 @@ class TapeEngine:
             # running board — a green unit test beside an unfiltered tab.
             grid = MARKET_GRIDS.get(market, EQUITY_GRID)
             now = datetime.now(tz=grid.tz)
-            self.ensure_profiles(market, _session_date(market, now), payload.rows)
             elapsed = minutes_since_open(now, grid=grid)
 
             # Liquidity first, and its result is kept: it is the gate's input
@@ -381,6 +417,18 @@ class TapeEngine:
             # breadth term would rank nothing.
             universe = build_universe(payload.rows, self.cfg, market=market)
             self.pregate[market] = universe.to_dict("records")
+
+            # Warm baselines for the liquidity-filtered set, not the raw
+            # response. A row below the dollar-volume floor can never reach a
+            # column, so a baseline for it is a websocket round trip spent on a
+            # curve nothing will read — measured 2,797 matched against 2,179
+            # surviving on one live poll, so roughly a fifth of the warm-up.
+            # The trade-off is named: a borderline name that crosses the floor
+            # later in the session now has no baseline, scores 0 and stays off
+            # the board. That is the same fail-closed rule an unknown reading
+            # already gets, and the alternative is paying for every row the
+            # floor rejects on every session.
+            self.ensure_profiles(market, _session_date(market, now), universe)
 
             # Crypto is not a session state — it has no open and no close — so
             # it carries the `crypto` gate key and its own 24-hour price

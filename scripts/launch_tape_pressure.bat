@@ -10,9 +10,9 @@ REM  .env - see .env.example. These are NOT optional for the equity
 REM  tab: relative volume is its only admission path, and the
 REM  baselines behind it come from TradingView's chart websocket,
 REM  which needs the session cookie to mint its auth token. Without
-REM  them the warm-up fails and the equity board stays EMPTY - it
-REM  does not degrade to a partial board. The crypto tab is
-REM  unaffected.
+REM  them the warm-up fails and BOTH boards stay EMPTY - neither
+REM  degrades to a partial board, because relative volume is the
+REM  only admission path on either tab.
 REM
 REM  Launch before the open if you can. The warm-up downloads one
 REM  bar series per ticker and takes a couple of minutes over the

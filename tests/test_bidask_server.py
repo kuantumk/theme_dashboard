@@ -5,16 +5,22 @@ would serve `.env`, which holds the TradingView, Alpaca, and IBKR credentials.
 """
 
 import json
+import pathlib
+import tempfile
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import mock
 
 import socketserver
 
 from config.settings import PROJECT_ROOT
+from src.bidask import server
+from src.bidask.config import load_config
 from src.bidask.server import (
     STATE_FILENAME,
     _drop_non_finite,
@@ -728,10 +734,6 @@ class TestCryptoSessionDate(unittest.TestCase):
         self.assertEqual(_session_date("equity", evening), "2026-09-17")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestNonFinitePayloadCells(unittest.TestCase):
     """A NaN in one member's row must not cost the whole board.
 
@@ -765,3 +767,137 @@ class TestNonFinitePayloadCells(unittest.TestCase):
         # it this is the exception that empties the board.
         with self.assertRaises(ValueError):
             json.dumps({"premarket_change": float("nan")}, allow_nan=False)
+
+
+class TestWarmUpRetryDiscipline(unittest.TestCase):
+    """A failed warm-up must back off, and resolving nothing is a failure.
+
+    `profile_dates` records success and the thread handle records in-flight, so
+    failure is the one outcome nothing else remembers. Without a retry clock a
+    raising build restarts a ~1,900-symbol websocket download every poll, at
+    the poll cadence, against a vendor that just refused. And a build that keys
+    ZERO symbols is not a quiet market: every name requested came from rows the
+    screener returned in that same poll, so latching it as `ready (0/N)` empties
+    the board for the session while the status pill claims success.
+    """
+
+    def engine(self):
+        cfg = load_config()
+        eng = server.TapeEngine.__new__(server.TapeEngine)
+        eng.cfg = cfg
+        eng.poll_seconds = cfg.poll_seconds
+        eng.out_path = pathlib.Path(tempfile.mkdtemp()) / server.STATE_FILENAME
+        eng.markets = ("equity",)
+        eng.profiles = {"equity": {}}
+        eng.profile_dates = {"equity": None}
+        eng.profile_status = {"equity": "pending"}
+        eng._profile_threads = {"equity": None}
+        eng._profile_failures = {"equity": 0}
+        eng._profile_retry_at = {"equity": 0.0}
+        return eng
+
+    def rows(self):
+        import pandas as pd
+        return pd.DataFrame([{"symbol": "AAA", "feed_symbol": "NASDAQ:AAA"}])
+
+    def warm(self, eng, builder):
+        with mock.patch.object(server, "load_profiles", return_value={}), \
+             mock.patch.object(server, "build_for_symbols", builder), \
+             mock.patch.object(server, "save_profiles", lambda *a, **k: True), \
+             mock.patch.object(server, "prune_cache", lambda *a, **k: None):
+            eng.ensure_profiles("equity", "2026-09-17", self.rows())
+            thread = eng._profile_threads["equity"]
+            if thread is not None:
+                thread.join(timeout=10)
+
+    def test_a_raising_build_arms_the_retry_clock(self):
+        def boom(*a, **k):
+            raise RuntimeError("socket refused")
+        eng = self.engine()
+        self.warm(eng, boom)
+        self.assertTrue(eng.profile_status["equity"].startswith("failed ("))
+        self.assertIsNone(eng.profile_dates["equity"],
+                          "a failure must not latch as a finished warm-up")
+        self.assertGreater(eng._profile_retry_at["equity"], time.time(),
+                           "the next poll would relaunch the whole download")
+
+    def test_resolving_zero_symbols_is_a_failure_not_a_finished_warm_up(self):
+        eng = self.engine()
+        self.warm(eng, lambda *a, **k: {})
+        self.assertIn("0/1", eng.profile_status["equity"])
+        self.assertTrue(eng.profile_status["equity"].startswith("failed ("),
+                        "ready (0/N) reads as a quiet market for the session")
+        self.assertIsNone(eng.profile_dates["equity"])
+        self.assertGreater(eng._profile_retry_at["equity"], time.time())
+
+    def test_an_armed_retry_clock_blocks_the_next_attempt(self):
+        eng = self.engine()
+        eng._profile_retry_at["equity"] = time.time() + 300
+        called = []
+
+        def builder(*a, **k):
+            called.append(1)
+            return {}
+
+        self.warm(eng, builder)
+        self.assertEqual(called, [], "the warm-up ran while it was backed off")
+
+    def test_success_clears_the_retry_state(self):
+        import numpy as np
+        from src.bidask.rvol_at_time import BARS_PER_SESSION
+        eng = self.engine()
+        eng._profile_failures["equity"] = 3
+        eng._profile_retry_at["equity"] = 1.0
+        curve = np.cumsum(np.full(BARS_PER_SESSION, 1000.0))
+        self.warm(eng, lambda *a, **k: {"NASDAQ:AAA": curve})
+        self.assertEqual(eng.profile_dates["equity"], "2026-09-17")
+        self.assertEqual(eng._profile_failures["equity"], 0)
+        self.assertEqual(eng._profile_retry_at["equity"], 0.0)
+        self.assertIn("AAA", eng.profiles["equity"],
+                      "curves are re-keyed to the display symbol")
+
+
+class TestWarmUpReceivesTheFilteredUniverse(unittest.TestCase):
+    """Baselines are warmed for rows that can actually reach a column.
+
+    A row under the dollar-volume floor is dropped before the gate, so a
+    baseline for it is a websocket round trip spent on a curve nothing reads --
+    measured 2,797 matched against 2,179 surviving on one live poll.
+    """
+
+    def test_ensure_profiles_is_handed_the_post_liquidity_rows(self):
+        source = pathlib.Path(server.__file__).read_text(encoding="utf-8")
+        call = "self.ensure_profiles(market, _session_date(market, now), universe)"
+        self.assertIn(call, source,
+                      "the warm-up must take the liquidity-filtered frame")
+        self.assertLess(source.index("universe = build_universe("),
+                        source.index(call),
+                        "the filter has to run before the warm-up gets its rows")
+
+
+class TestEquityFeedPublishesAQualifiedSymbol(unittest.TestCase):
+    """The equity feed carries the exchange the screener already sent.
+
+    `tvbars.qualified_symbols` falls back to trying NASDAQ, then NYSE, then
+    AMEX for a bare ticker. That is up to three resolve round trips per symbol
+    across the warm-up, and a wrong guess costs a full symbol timeout before
+    the next candidate. The screener's own `ticker` column already reads
+    `NASDAQ:WOLF`, so the fallback should almost never be reached.
+    """
+
+    def test_fetch_equities_sets_feed_symbol_like_fetch_crypto_does(self):
+        from src.bidask import feed as feed_mod
+        source = pathlib.Path(feed_mod.__file__).read_text(encoding="utf-8")
+        equity = source[source.index("def fetch_equities"):source.index("def fetch_crypto")]
+        self.assertIn('df["feed_symbol"]', equity,
+                      "the equity path must publish a qualified symbol too")
+
+    def test_a_qualified_symbol_skips_the_exchange_guessing(self):
+        from src.bidask.tvbars import qualified_symbols
+        self.assertEqual(qualified_symbols("NASDAQ:AAA"), ["NASDAQ:AAA"])
+        self.assertGreater(len(qualified_symbols("AAA")), 1,
+                           "a bare ticker still needs the fallback chain")
+
+
+if __name__ == "__main__":
+    unittest.main()

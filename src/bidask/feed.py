@@ -261,6 +261,14 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
     try:
         df = df.copy()
         df["symbol"] = df["ticker"].map(_bare_ticker) if "ticker" in df.columns else df["name"]
+        # The exchange-qualified name the chart socket needs, kept beside the
+        # bare display symbol exactly as `fetch_crypto` does. `ticker` already
+        # arrives as `NASDAQ:WOLF`, so publishing it here spares the warm-up
+        # from guessing: `tvbars.qualified_symbols` otherwise tries NASDAQ,
+        # then NYSE, then AMEX for every bare ticker, which is up to three
+        # resolve round trips per symbol across a ~1,900-symbol universe, and
+        # a wrong guess costs a full symbol timeout before the next candidate.
+        df["feed_symbol"] = df["ticker"] if "ticker" in df.columns else df["symbol"]
         df["avg_volume"] = df[cfg.avg_volume_field]
         df["change_pct"] = df["change"]
         df["rvol"] = df.get("relative_volume_10d_calc")

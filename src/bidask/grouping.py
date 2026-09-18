@@ -47,9 +47,9 @@ SIDE_WEAK = "weak"
 TOP_MEMBERS = 3
 
 # Defaults for the three scoring knobs, mirroring the `bidask:` block of
-# `config/workflow_config.yaml`. `BidAskConfig` does not carry these fields yet,
-# so `_tunable` reads them off the config object when they appear and falls back
-# here when they do not. `tests/test_bidask_grouping.py` pins these equal to the
+# `config/workflow_config.yaml`. `BidAskConfig` carries all three, so `_tunable`
+# reads them off the config object; these defaults are the fallback for a config
+# double that predates them, which is what the tests build. `tests/test_bidask_grouping.py` pins these equal to the
 # shipped YAML so the two cannot drift apart unnoticed.
 DEFAULT_RVOL_CAP = 5.0
 DEFAULT_BREADTH_COEF = 0.5

@@ -306,8 +306,56 @@ def rvol_at_time(volume_so_far, profile, elapsed_minutes: float,
     return traded / expected
 
 
-def _is_extended(minute_of_day: int, grid: MarketGrid = EQUITY_GRID) -> bool:
-    return not grid.is_core(minute_of_day)
+def _grid_minutes(index, grid: MarketGrid):
+    """Each bar's local minute of day and its local calendar day, as arrays.
+
+    ⛔ One timezone conversion per FRAME, not one per bar. The scalar
+    `grid.minute_of_day` calls `astimezone` on every stamp, which at the real
+    warm-up size — 1,800 symbols x 2,496 bars — is 4.5 million Python-level
+    conversions and measured 33.25s of a warm-up whose download is heading for
+    49s. The arithmetic below is identical; only the loop is gone.
+
+    ⛔ The day key is built from the LOCAL year, month and day rather than from
+    a normalised timestamp, so a DST boundary cannot move a bar into its
+    neighbour's day. A naive index is read as already local to this grid, which
+    is how `MarketGrid.minute_of_day` treats a naive stamp.
+    """
+    import pandas as pd
+
+    if not isinstance(index, pd.DatetimeIndex):
+        index = pd.DatetimeIndex(index)
+    local = index.tz_convert(grid.tz) if index.tz is not None else index
+    minute = (np.asarray(local.hour, dtype=np.int64) * 60
+              + np.asarray(local.minute, dtype=np.int64))
+    day = (np.asarray(local.year, dtype=np.int64) * 10_000
+           + np.asarray(local.month, dtype=np.int64) * 100
+           + np.asarray(local.day, dtype=np.int64))
+    return minute, day
+
+
+def _day_label(key: int) -> str:
+    """`20260917` back to `2026-09-17`, for the `exclude_date` comparison."""
+    return f"{key // 10_000:04d}-{key // 100 % 100:02d}-{key % 100:02d}"
+
+
+def _core_mask(minute, grid: MarketGrid):
+    """Which bars fall inside the window that decides completeness.
+
+    The array form of `MarketGrid.is_core`, and the ONLY spelling of that test
+    on the vectorised path. It replaced the scalar `_is_extended`, whose sole
+    callers were the two loops below — two inline copies of one predicate is
+    how a grid's core window comes to mean two different things.
+    """
+    return (minute >= grid.core_open_min) & (minute < grid.core_close_min)
+
+
+def _extended_is_dead(minute, volume, grid: MarketGrid) -> bool:
+    """`extended_volume_is_dead`, over arrays the caller already built."""
+    extended = ~_core_mask(minute, grid)
+    if not extended.any():
+        return False
+    outside = volume[extended]
+    return not bool(np.any(np.isfinite(outside) & (outside > 0)))
 
 
 def extended_volume_is_dead(frame, grid: MarketGrid = EQUITY_GRID) -> bool:
@@ -330,14 +378,8 @@ def extended_volume_is_dead(frame, grid: MarketGrid = EQUITY_GRID) -> bool:
     """
     if frame is None or len(frame) == 0:
         return False
-    seen = False
-    for stamp, volume in zip(frame.index, frame["Volume"].to_numpy(dtype=float)):
-        if not _is_extended(grid.minute_of_day(stamp), grid):
-            continue
-        seen = True
-        if math.isfinite(volume) and volume > 0:
-            return False
-    return seen
+    minute, _day = _grid_minutes(frame.index, grid)
+    return _extended_is_dead(minute, frame["Volume"].to_numpy(dtype=float), grid)
 
 
 def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
@@ -366,31 +408,40 @@ def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
     for symbol, frame in bars_by_symbol.items():
         if frame is None or len(frame) == 0:
             continue
-        if extended_volume_is_dead(frame, grid):
+        minute, day_key = _grid_minutes(frame.index, grid)
+        volume = frame["Volume"].to_numpy(dtype=float)
+        if _extended_is_dead(minute, volume, grid):
             continue
-        local = frame.index.tz_convert(grid.tz) if frame.index.tz else frame.index
-        curves = []
-        for _day, rows in frame.groupby(local.date):
-            if skip is not None and str(_day) == skip:
-                continue
-            slots = np.zeros(grid.slots, dtype=float)
-            core_bars = 0
-            for stamp, volume in zip(rows.index, rows["Volume"].to_numpy(dtype=float)):
-                minute_of_day = grid.minute_of_day(stamp)
-                if grid.is_core(minute_of_day):
-                    core_bars += 1
-                if not math.isfinite(volume):
-                    continue
-                index = (minute_of_day - grid.anchor_min) // BAR_MINUTES
-                if 0 <= index < grid.slots:
-                    slots[index] += volume
-            if core_bars < grid.min_core_bars:
-                continue
-            curves.append(np.cumsum(slots))
-        if not curves:
+
+        # `np.unique` returns the days sorted, which is the order pandas
+        # `groupby` produced and the order `[-sessions:]` depends on.
+        days, day_id = np.unique(day_key, return_inverse=True)
+
+        # Completeness is counted over EVERY bar of the day, including the ones
+        # whose volume is absent: a day that traded through the session with a
+        # few withdrawn cells is still a complete day.
+        core = _core_mask(minute, grid)
+        core_bars = np.bincount(day_id[core], minlength=len(days))
+
+        # One bincount over (day, slot) pairs flattened into a single index
+        # does what a nested loop over days and bars did. A bar outside the
+        # grid's own day, or carrying a non-finite volume, is dropped — filling
+        # it with zero would understate the baseline, and anything else would
+        # invent volume.
+        slot = (minute - grid.anchor_min) // BAR_MINUTES
+        usable = (slot >= 0) & (slot < grid.slots) & np.isfinite(volume)
+        totals = np.bincount(day_id[usable] * grid.slots + slot[usable],
+                             weights=volume[usable],
+                             minlength=len(days) * grid.slots)
+
+        keep = core_bars >= grid.min_core_bars
+        if skip is not None:
+            keep &= np.fromiter((_day_label(d) != skip for d in days),
+                                dtype=bool, count=len(days))
+        if not keep.any():
             continue
-        stacked = np.vstack(curves[-sessions:])
-        averaged = stacked.mean(axis=0)
+        curves = np.cumsum(totals.reshape(len(days), grid.slots)[keep], axis=1)
+        averaged = curves[-sessions:].mean(axis=0)
         if averaged[-1] <= 0:
             continue
         profiles[symbol] = averaged

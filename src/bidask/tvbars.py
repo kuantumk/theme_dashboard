@@ -105,9 +105,57 @@ REFUSAL_METHODS = ("series_error", "critical_error", "protocol_error")
 # 8 returned 57, and 12 returned 35. A lost symbol has no baseline, scores 0
 # and is excluded, so the board simply thins with nothing on screen to say why.
 # The retry below recovers a refusal, but it cannot recover throughput that was
-# never there. 6 workers covers ~1,900 tickers in 3-5 minutes, against the
-# ~1.7 minutes of the yfinance warm-up it replaces; launch before the bell.
+# never there.
+#
+# Batching is the lever that DOES scale, because the limit is on connections
+# rather than on concurrent series — see `batch_for`. Measured 2026-09-18,
+# 3 connections x 8 series matched 6 x 8 exactly (5.92s against 5.98s on 60
+# symbols), so past a handful of sockets the account, not the pool, is the
+# constraint. 6 is kept because it is the figure with two completeness runs
+# behind it.
 DEFAULT_WORKERS = 6
+
+# ⛔ Series opened on ONE connection and drained together, rather than one at a
+# time. The socket serves several at once and the shipped code did not use
+# that. Measured 2026-09-18 on 60 real screener symbols, 6 connections, all
+# returning 60 of 60:
+#
+#     bars    batch    s/symbol
+#     2,496       1    0.106 - 0.131   (the sequential drain this replaced)
+#     2,496       8    0.087
+#     2,496      16    0.203           <-- WORSE than 8
+#       768       8    0.075
+#       768      16    0.053
+#       768      32    0.040
+#
+# ⛔ There is no single best batch size, and the 16-at-2,496 row is why. The
+# account saturates near 27,000 bars/s, so once a batch has that much in flight
+# a bigger one queues instead of parallelising. Below the ceiling the opposite
+# holds: the bytes stop mattering and a fixed per-series cost dominates, which
+# only a wider batch amortises — 768 bars is barely faster than 2,496 at batch
+# 8, and three times faster at batch 32.
+#
+# So the rule holds bars-in-flight roughly constant rather than naming a batch.
+# 20,000 reproduces the measured best at the cold size (8) and stays inside the
+# measured-good range at the incremental one.
+BARS_IN_FLIGHT = 20_000
+MAX_BATCH = 32
+
+# How long the drain tolerates complete silence before giving up on whatever
+# has not answered. Applies to the BATCH, not to each symbol: every series is
+# in flight at once, so the budget is a silence timeout rather than a sum. A
+# symbol that never answers costs this once, not once per batch mate.
+BATCH_IDLE_TIMEOUT = SYMBOL_TIMEOUT
+
+
+def batch_for(bars: int) -> int:
+    """Series to keep in flight on one connection for a request of `bars`.
+
+    See `BARS_IN_FLIGHT`. Inversely proportional to the payload because the two
+    regimes have opposite constraints, and capped because nothing above 32 has
+    been measured for completeness.
+    """
+    return max(1, min(MAX_BATCH, BARS_IN_FLIGHT // max(1, int(bars))))
 
 
 class _SocketRefused(RuntimeError):
@@ -189,20 +237,31 @@ def bars_to_frame(collected: dict):
     return frame
 
 
+def _open_socket(token: str):
+    """One authenticated chart socket.
+
+    Separated from `_Connection` so the drain logic can be exercised against a
+    replayed socket. Before that seam existed, the routing, fallback and
+    refusal paths had no test coverage at all.
+    """
+    sock = websocket.create_connection(
+        SOCKET_URL,
+        header=[f"{k}: {v}" for k, v in HEADERS.items()],
+        origin=ORIGIN,
+        timeout=CONNECT_TIMEOUT,
+    )
+    sock.send(encode("set_auth_token", [token]))
+    sock.settimeout(READ_TIMEOUT)
+    return sock
+
+
 class _Connection:
-    """One authenticated chart socket, drained one symbol at a time."""
+    """One authenticated chart socket, carrying several series at once."""
 
     def __init__(self, token: str, *, interval: str, bars: int):
         self._interval = interval
         self._bars = bars
-        self._socket = websocket.create_connection(
-            SOCKET_URL,
-            header=[f"{k}: {v}" for k, v in HEADERS.items()],
-            origin=ORIGIN,
-            timeout=CONNECT_TIMEOUT,
-        )
-        self._socket.send(encode("set_auth_token", [token]))
-        self._socket.settimeout(READ_TIMEOUT)
+        self._socket = _open_socket(token)
 
     def close(self) -> None:
         try:
@@ -210,34 +269,53 @@ class _Connection:
         except Exception:  # noqa: BLE001 — already tearing down
             pass
 
-    def series(self, symbol: str) -> tuple[dict, str]:
-        """Collected bars for one exchange-qualified symbol, and how it ended.
+    def series_batch(self, symbols: list) -> list:
+        """Bars and an end reason for each symbol, in the order given.
 
-        The reason matters. `completed` and `symbol_error` are answers *about
-        the symbol* — try the next exchange. Anything else is the socket
-        refusing or going quiet, which is a transport problem and deserves a
-        fresh connection. Collapsing the two is what makes a concurrency limit
-        look like a delisted ticker and thins the board with no visible cause.
+        Every series is opened before any is drained, which is the whole gain:
+        the socket works on all of them at once. Positional results rather than
+        a dict keyed by symbol, because two caller keys can resolve to the same
+        exchange-qualified string and a dict would silently merge them.
+
+        The reason matters as much as the bars. `completed` and `symbol_error`
+        are answers *about the symbol* — try the next exchange. Anything else
+        is the socket refusing or going quiet, which is a transport problem and
+        deserves a fresh connection. Collapsing the two is what makes a
+        concurrency limit look like a delisted ticker and thins the board with
+        no visible cause.
         """
-        chart = _rand("cs_")
-        spec = {"symbol": symbol, "adjustment": "splits", "session": SESSION_KIND}
-        self._socket.send(encode("chart_create_session", [chart, ""]))
-        self._socket.send(encode("resolve_symbol",
-                                 [chart, "sym_1", "=" + json.dumps(spec, separators=(",", ":"))]))
-        self._socket.send(encode("create_series",
-                                 [chart, "sds_1", "s1", "sym_1", self._interval, self._bars, ""]))
+        charts = []
+        for symbol in symbols:
+            chart = _rand("cs_")
+            charts.append(chart)
+            spec = {"symbol": symbol, "adjustment": "splits",
+                    "session": SESSION_KIND}
+            self._socket.send(encode("chart_create_session", [chart, ""]))
+            self._socket.send(encode(
+                "resolve_symbol",
+                [chart, "sym_1", "=" + json.dumps(spec, separators=(",", ":"))]))
+            self._socket.send(encode(
+                "create_series",
+                [chart, "sds_1", "s1", "sym_1", self._interval, self._bars, ""]))
 
-        collected: dict = {}
-        reason = "timeout"
-        deadline = time.time() + SYMBOL_TIMEOUT
-        done = False
-        while not done and time.time() < deadline:
+        collected = {chart: {} for chart in charts}
+        reasons = {chart: "timeout" for chart in charts}
+        done = set()
+        # ⛔ A silence budget, not a per-symbol one. The series run
+        # concurrently, so summing a timeout per symbol would let one dead
+        # ticker hold a batch of 32 for ten minutes. Any frame at all — for any
+        # chart in the batch — proves the socket is working and resets it.
+        last_progress = time.time()
+        while len(done) < len(charts):
+            if time.time() - last_progress > BATCH_IDLE_TIMEOUT:
+                break
             try:
                 raw = self._socket.recv()
             except websocket.WebSocketTimeoutException:
                 continue
             if not raw:
                 continue
+            last_progress = time.time()
             for payload in iter_frames(raw):
                 if payload.startswith("~h~"):
                     # Echo verbatim. The server drops a connection that stops
@@ -250,24 +328,48 @@ class _Connection:
                     continue
                 if not isinstance(message, dict):
                     continue
+                params = message.get("p")
+                chart = (params[0] if isinstance(params, list) and params
+                         and isinstance(params[0], str) else None)
                 method = message.get("m")
+                # ⛔ The FIRST answer about a chart is the answer. A wrong
+                # exchange sends `symbol_error` and then `series_error` for the
+                # same chart — measured live 2026-09-18 — and `series_error`
+                # alone means the socket refused, which discards the chunk and
+                # reconnects. Letting the follow-up overwrite the reason made
+                # one bare ticker take every symbol batched with it down. The
+                # sequential drain returned on the first frame and never met
+                # this; a batch keeps reading, so it has to ignore the echo.
+                if chart in done:
+                    continue
                 if method in NOT_LISTED_METHODS or method in REFUSAL_METHODS:
-                    collected, reason, done = {}, str(method), True
-                    break
-                absorb_bars(message, collected)
-                if method == "series_completed":
-                    reason, done = "completed", True
-                    break
-        try:
-            self._socket.send(encode("chart_delete_session", [chart]))
-        except Exception:  # noqa: BLE001 — the socket is going away anyway
-            pass
-        return collected, reason
+                    if chart not in collected:
+                        # A refusal naming no chart in this batch is about the
+                        # connection, not about any one symbol. Charging it to
+                        # a ticker would drop that ticker for the session.
+                        raise _SocketRefused(str(method))
+                    collected[chart] = {}
+                    reasons[chart] = str(method)
+                    done.add(chart)
+                    continue
+                if chart in collected:
+                    absorb_bars(message, collected[chart])
+                    if method == "series_completed":
+                        reasons[chart] = "completed"
+                        done.add(chart)
+
+        for chart in charts:
+            try:
+                self._socket.send(encode("chart_delete_session", [chart]))
+            except Exception:  # noqa: BLE001 — the socket is going away anyway
+                break
+        return [(collected[chart], reasons[chart]) for chart in charts]
 
 
 def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
                bars: int = DEFAULT_BAR_COUNT, workers: int = DEFAULT_WORKERS,
-               token: Optional[str] = None) -> dict:
+               token: Optional[str] = None,
+               batch: Optional[int] = None) -> dict:
     """Extended-session 5-minute bars, keyed by the caller's own symbol string.
 
     The key is whatever was passed in — bare or exchange-qualified — so the
@@ -283,6 +385,7 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
     if not wanted:
         return {}
     token = token or auth_token()
+    size = batch_for(bars) if batch is None else max(1, int(batch))
 
     collected: dict = {}
     lock = threading.Lock()
@@ -295,13 +398,13 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
             with lock:
                 if cursor[0] >= len(queue):
                     break
-                symbol = queue[cursor[0]]
-                cursor[0] += 1
+                chunk = queue[cursor[0]:cursor[0] + size]
+                cursor[0] += len(chunk)
             for attempt in range(2):
                 try:
                     if connection is None:
                         connection = _Connection(token, interval=interval, bars=bars)
-                    frame = _resolve_one(connection, symbol)
+                    frames = _resolve_batch(connection, chunk)
                 except QuoteAuthError:
                     raise
                 except Exception:  # noqa: BLE001 — one dropped socket, not the warm-up
@@ -310,16 +413,21 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
                     connection = None
                     if attempt == 0:
                         continue
-                    frame = None
+                    frames = {}
                 break
-            if frame is not None and not frame.empty:
+            if frames:
                 with lock:
-                    collected[symbol] = frame
+                    for key, frame in frames.items():
+                        if frame is not None and not frame.empty:
+                            collected[key] = frame
         if connection is not None:
             connection.close()
 
+    # One worker per chunk at most: spinning up six sockets for forty symbols
+    # costs six handshakes to save nothing.
+    pool = max(1, min(workers, -(-len(wanted) // size)))
     threads = [threading.Thread(target=worker, daemon=True, name=f"tvbars-{i}")
-               for i in range(max(1, min(workers, len(wanted))))]
+               for i in range(pool)]
     for thread in threads:
         thread.start()
     for thread in threads:
@@ -327,18 +435,34 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
     return collected
 
 
-def _resolve_one(connection: "_Connection", symbol: str):
-    """Try each exchange candidate until one returns bars.
+def _resolve_batch(connection: "_Connection", symbols: list) -> dict:
+    """Resolve a chunk, advancing each symbol's exchange chain as needed.
 
-    Returns the frame, or raises `_SocketRefused` when the socket refused or
-    went quiet rather than answering that the symbol is not there. The caller
-    reconnects on that; falling through to the next exchange instead would
-    charge a transport failure to the symbol and drop it silently.
+    Returns `{caller symbol: frame}` for everything that answered, or raises
+    `_SocketRefused` when the socket refused rather than answering about a
+    symbol. The caller reconnects on that; treating it as "not listed here"
+    instead would charge a transport failure to the ticker and drop it for the
+    session.
+
+    ⛔ Each round asks only for the candidates still outstanding. A bare ticker
+    listed on NYSE costs one extra resolve round for itself, not a re-run of
+    the whole chunk, and its batch mates are already finished by then.
     """
-    for candidate in qualified_symbols(symbol):
-        rows, reason = connection.series(candidate)
-        if rows:
-            return bars_to_frame(rows)
-        if reason not in ("completed",) + NOT_LISTED_METHODS:
-            raise _SocketRefused(reason)
-    return None
+    chains = {symbol: qualified_symbols(symbol) for symbol in symbols}
+    step = {symbol: 0 for symbol in symbols if chains[symbol]}
+    out: dict = {}
+    while step:
+        keys = list(step)
+        results = connection.series_batch([chains[k][step[k]] for k in keys])
+        following = {}
+        for key, (rows, reason) in zip(keys, results):
+            if rows:
+                out[key] = bars_to_frame(rows)
+                continue
+            if reason not in ("completed",) + NOT_LISTED_METHODS:
+                raise _SocketRefused(reason)
+            nxt = step[key] + 1
+            if nxt < len(chains[key]):
+                following[key] = nxt
+        step = following
+    return out

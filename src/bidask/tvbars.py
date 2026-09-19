@@ -117,11 +117,29 @@ DEFAULT_WORKERS = 6
 
 # ⛔ Series opened on ONE connection and drained together, rather than one at a
 # time. The socket serves several at once and the shipped code did not use
-# that. Measured 2026-09-18 on 60 real screener symbols, 6 connections, all
-# returning 60 of 60:
+# that. All figures below are 2026-09-18, 60 real screener symbols, 6
+# connections, every configuration returning 60 of 60.
+#
+# ⛔ TWO HARNESSES, kept apart on purpose. Mixing a prototype's number with the
+# shipped fetcher's is the measurement trap this module's own speed-up ran into
+# — see `docs/solutions/conventions/benchmark-the-shipped-path-at-full-scale.md`.
+#
+# THIS FETCHER, `batch` driven through `fetch_bars` so the arms differ in one
+# parameter and nothing else:
 #
 #     bars    batch    s/symbol
-#     2,496       1    0.106 - 0.131   (the sequential drain this replaced)
+#     2,496       1    0.097, 0.089    (the sequential drain this replaced)
+#     2,496       8    0.078, 0.072
+#       768      26    0.043, 0.027
+#       384      32    0.032
+#
+# Over the full 1,859-symbol universe the same two arms read 200.7s and 99.8s.
+#
+# A STANDALONE PROBE, which is where the SHAPE below comes from. It reimplements
+# the drain, so its levels are not comparable with the table above — only the
+# ordering within this one run is:
+#
+#     bars    batch    s/symbol
 #     2,496       8    0.087
 #     2,496      16    0.203           <-- WORSE than 8
 #       768       8    0.075
@@ -132,12 +150,14 @@ DEFAULT_WORKERS = 6
 # account saturates near 27,000 bars/s, so once a batch has that much in flight
 # a bigger one queues instead of parallelising. Below the ceiling the opposite
 # holds: the bytes stop mattering and a fixed per-series cost dominates, which
-# only a wider batch amortises — 768 bars is barely faster than 2,496 at batch
-# 8, and three times faster at batch 32.
+# only a wider batch amortises — at 768 bars, batch 32 nearly doubled batch 8 in
+# that same run.
 #
 # So the rule holds bars-in-flight roughly constant rather than naming a batch.
 # 20,000 reproduces the measured best at the cold size (8) and stays inside the
-# measured-good range at the incremental one.
+# measured-good range at the incremental one. **The turning point has not been
+# re-measured through this fetcher**; re-run the sweep here before trusting it
+# at a payload size the table above does not cover.
 BARS_IN_FLIGHT = 20_000
 MAX_BATCH = 32
 

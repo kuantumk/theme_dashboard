@@ -148,6 +148,13 @@ The filter deciding which stocks are worth displaying, as distinct from which ar
 ### Coverage
 The share of polled stocks that produced a usable relative-volume reading. It is the health signal for the whole board — a collapse in coverage means the inputs have broken, which is otherwise indistinguishable from a quiet market — so it is published beside the columns rather than logged.
 
+It answers whether readings exist, not whether they are current. A stalled source scores every stock and leaves coverage untouched, so the two signals are published together rather than one standing for both.
+
+### Stalled source
+A source that keeps answering, with plausible figures that have stopped changing. It is a separate failure from one that errors, returns nothing, or returns blanks, and it is the hardest of them to see: every check that keys off an absent value passes. No single response reveals it — only two readings far enough apart to be comparable do.
+
+Where the figure feeds a ratio whose other half advances with the clock, a stalled source does not hold a board still, it empties one: every reading drifts below the threshold that admits it, one stock at a time. That reads as interest fading rather than as a fault, which is why the condition is named on screen rather than inferred from the board thinning.
+
 ### Warm-up
 The once-per-session download that builds each stock's own volume history. Nothing can be scored until it finishes, so it is a distinct cause of an empty board and is reported as one: a board still warming up is neither a broken feed nor a quiet market.
 
@@ -168,5 +175,5 @@ The state marking a stock as being at a low-risk entry point right now — contr
 - **ecosystem** and **family** were both used for the top level of the theme hierarchy, in the radar and the VARS tab respectively. These are one concept: **L1**. The retired names must not reappear in code, config, UI, or docs.
 - **Theme** and **leaf** are related but distinct: a theme is the narrative, a leaf is the full stored path that names it at a given depth. Scoring operates on leaves.
 - **Singleton** and **Uncategorized** are not interchangeable. Singleton is a decision that no group applies; Uncategorized means no decision has been made yet. Only the latter keeps a stock on the first-time-classification worklist.
-- **Feed state**, **session state** and **warm-up state** are three separate questions in the tape tools, and an empty board must say which one it is answering. A real-time data entitlement on a closed market is still a closed market, and a board whose baselines are still downloading is neither of those things.
+- **Feed state**, **session state**, **warm-up state** and **source freshness** are four separate questions in the tape tools, and an empty board must say which one it is answering. A real-time data entitlement on a closed market is still a closed market; a board whose baselines are still downloading is neither of those things; and a stalled source is none of the three, because it is answering, in-session, and fully warmed.
 - **ask hit**, **bid hit**, **position in spread**, **imbalance**, **delta** and **divergent** belonged to the retired trade-side classifier and no longer name anything the tape tools compute. Like **ecosystem** and **family**, they must not reappear in code, config, UI, or docs.

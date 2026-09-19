@@ -63,16 +63,18 @@ DEFAULT_MIN_ACTIVE = 25
 class StallReading:
     """One poll's verdict on whether the numerator column is still advancing.
 
-    `watched` is 0 whenever no comparison happened — inside the window, on the
-    first reading of a state, or with too few active symbols to judge. That is
-    a distinct outcome from "compared and found moving", and the page must not
-    render silence as evidence either way.
+    ⛔ `moved` and `watched` describe the most recent COMPARISON, not this
+    poll. The window is 120s and the board polls every 10s, so roughly one poll
+    in thirteen actually compares. Reporting zero on the other twelve made the
+    figures blink out on a page that redraws every poll — measured live
+    2026-09-18. They are 0 only until the first comparison of a state, which is
+    the honest reading: nothing has been compared yet.
     """
 
     stalled: bool       # two or more consecutive still windows
     seconds: float      # how long the column has been still, 0 when moving
-    moved: int          # symbols whose volume changed in the last comparison
-    watched: int        # symbols compared, or 0 when nothing was compared
+    moved: int          # symbols whose volume changed in the MOST RECENT comparison
+    watched: int        # symbols in that comparison, 0 until the first one
 
 
 @dataclass
@@ -85,6 +87,10 @@ class _Watch:
     last_moved_at: float = 0.0
     strikes: int = 0
     stalled: bool = False
+    # The most recent comparison's figures, carried between windows so a page
+    # redrawing every poll does not watch them blink out.
+    moved: int = 0
+    watched: int = 0
 
     def anchor(self, state: str, values: dict, now: float) -> None:
         self.state = state
@@ -93,6 +99,8 @@ class _Watch:
         self.last_moved_at = now
         self.strikes = 0
         self.stalled = False
+        self.moved = 0
+        self.watched = 0
 
 
 class StallWatch:
@@ -138,9 +146,11 @@ class StallWatch:
             return StallReading(False, 0.0, 0, 0)
 
         if now - watch.taken_at < self.window_seconds:
-            # Too soon to judge. The standing verdict persists so the pill does
-            # not flicker between polls, but nothing was compared this time.
-            return StallReading(watch.stalled, self._age(watch, now), 0, 0)
+            # Too soon to judge. The standing verdict and the last
+            # comparison's figures persist, so neither the pill nor the count
+            # beside it flickers between polls.
+            return StallReading(watch.stalled, self._age(watch, now),
+                                watch.moved, watch.watched)
 
         common = [s for s in active if s in watch.values]
         if len(common) < self.min_active:
@@ -153,6 +163,8 @@ class StallWatch:
         moved = sum(1 for s in common if active[s] != watch.values[s])
         watch.values = active
         watch.taken_at = now
+        watch.moved = moved
+        watch.watched = len(common)
         if moved:
             watch.strikes = 0
             watch.stalled = False

@@ -79,6 +79,29 @@ class TestAMovingSourceIsNeverAccused(unittest.TestCase):
         self.assertTrue(all(r.watched == 0 for r in readings[1:]),
                         "a reading inside the window is not a comparison")
 
+    def test_the_last_comparison_is_still_reported_between_windows(self):
+        """⛔ Found live 2026-09-18: the figures blinked out between windows.
+
+        The window is 120s and the board polls every 10s, so a comparison
+        happens on roughly one poll in thirteen. Reporting only the comparison
+        that just ran left the other twelve publishing `watched: 0` — the page
+        renders every poll, so the count it shows a reader vanished and
+        reappeared with nothing happening. The reading carries the MOST RECENT
+        comparison, not only a simultaneous one.
+        """
+        watch = StallWatch(window_seconds=120.0)
+        rows = volumes(200)
+        watch.observe("equity", MARKET, rows, now=0.0)
+        compared = watch.observe("equity", MARKET, volumes(200, base=2000.0),
+                                 now=130.0)
+        self.assertEqual(compared.watched, 200)
+        self.assertEqual(compared.moved, 200)
+        between = watch.observe("equity", MARKET, volumes(200, base=2000.0),
+                                now=140.0)
+        self.assertEqual(between.watched, 200,
+                         "the coverage figure vanished between windows")
+        self.assertEqual(between.moved, 200)
+
     def test_too_few_active_symbols_cannot_convict(self):
         """04:02 with three names trading is not evidence of a dead column."""
         watch = StallWatch(min_active=25)

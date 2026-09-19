@@ -134,6 +134,13 @@ class RvolGate:
         vendor for our own upstream floors. A closed market has no floor, so
         every row scoring zero is the board being shut rather than the source
         being broken, and the two must not render as the same sentence.
+
+        ⛔ This keys off ABSENCE, so it cannot see a column that keeps serving
+        plausible numbers and stops advancing: every row still scores, and the
+        board drains slowly instead as `baseline_at` advances the denominator
+        underneath a fixed numerator. `src/bidask/stall.py` is what catches
+        that, and the two are complements — do not widen either to cover the
+        other's case.
         """
         return self.floor is not None and self.polled > 0 and self.scored == 0
 

@@ -1,6 +1,7 @@
 ---
 title: "Authenticating a TradingView session and reading real-time data"
 date: 2026-08-12
+last_updated: 2026-09-18
 category: architecture-patterns
 module: bidask
 problem_type: architecture_pattern
@@ -54,7 +55,7 @@ in §5 are what diagnose either socket.
 |---|---|---|
 | Screener REST (`scanner.tradingview.com/<market>/scan`) | Fundamentals, technicals, session volume, traded value, sector/industry, period highs, `update_mode`, `current_session`. Crypto **also** gets `bid`/`ask`. | Universe selection and metadata — one request covers thousands of symbols |
 | Quote websocket (`wss://data.tradingview.com/socket.io/websocket`) | `lp` (last price), `bid`, `ask`, `bid_size`, `ask_size`, `volume` | Anything quote-shaped, and US equities specifically. **Not used by this repo any more** |
-| Chart websocket (same host, `?from=chart/`) | OHLCV bars at any resolution, including **extended hours with real volume** | Per-symbol history: baselines, intraday volume curves. One series request per symbol, so it belongs in a warm-up, never in a poll loop |
+| Chart websocket (same host, `?from=chart/`) | OHLCV bars at any resolution, including **extended hours with real volume** | Per-symbol history: baselines, intraday volume curves. One series request per symbol (many can share a connection), so it belongs in a warm-up, never in a poll loop |
 
 ⛔ **Studies are not part of that third row.** `create_study` for a Pine-based
 study — Relative Volume at Time among them — is refused with `Study not allowed
@@ -142,10 +143,22 @@ answers the wrong question with no error anywhere.
 Symbols are exchange-qualified (`NASDAQ:AAPL`), which is the form the screener's
 own `ticker` column already returns; neither socket resolves a bare ticker.
 `quote_add_symbols` accepts many symbols per call, so batch them. A chart session
-takes one symbol, so parallelism is per connection — and it has a ceiling:
-measured 2026-09-17 over one 60-symbol list, 6 concurrent sockets returned 60 of
-60 on both runs, 8 returned 57 and 12 returned 35. Past the ceiling you lose
-symbols rather than throughput, which is silent at the consumer.
+takes one symbol — **but one connection carries many chart sessions at once**, so
+parallelism is not bounded by the socket count. Opening several series and
+draining them together beat one-at-a-time by **2.0x** over the full 1,859-symbol
+universe on 2026-09-18 (200.7s against 99.8s, both resolving 1859 of 1859); see
+`_Connection.series_batch` and `batch_for` in `src/bidask/tvbars.py`. An earlier
+revision of this note said parallelism was per connection, and that sentence is
+why the drain stayed serial as long as it did.
+
+⛔ **Sockets are the leg with the ceiling, and batching is the leg that scales.**
+Measured 2026-09-17 over one 60-symbol list, 6 concurrent sockets returned 60 of
+60 on both runs, 8 returned 57 and 12 returned 35 — past the ceiling you lose
+symbols rather than throughput, which is silent at the consumer. Widening the
+batch instead has no such cost: measured 2026-09-18, 3 connections x 8 series
+matched 6 x 8 exactly. Reach for the batch before the socket count, and see
+[Benchmark the shipped path, at full scale](../conventions/benchmark-the-shipped-path-at-full-scale.md)
+before trusting any timing that decides between them.
 
 Two things the protocol requires that are easy to miss:
 
@@ -268,5 +281,5 @@ same cookies, on the same `streaming` feed. That contrast is the whole lesson.
 - [An API that returns null for fields it does not have looks exactly like a missing entitlement](../logic-errors/api-returns-null-for-fields-it-does-not-have.md) — the failure analysis this pattern came out of
 - [NaN defeats numeric guard chains](../logic-errors/nan-defeats-numeric-guard-chains.md) — why null quote fields must be rejected explicitly rather than falling through numeric guards
 - `src/bidask/tvsocket.py` — the shared transport: the token mint and the frame codec, and nothing else
-- `src/bidask/tvbars.py` — the production client built on it: chart sessions, the `extended` resolve, worker pool, refusal retry
+- `src/bidask/tvbars.py` — the production client built on it: batched chart sessions, the `extended` resolve, worker pool, refusal retry
 - `CLAUDE.md` > "Tape Pressure Dashboard" — the repo-level statement of which surface owns what

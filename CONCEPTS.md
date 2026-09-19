@@ -122,40 +122,41 @@ The twice-daily search for stocks reporting earnings imminently that also satisf
 ### RVol at time
 Volume so far today compared with volume by the same point in previous sessions, rather than against a whole-day average. The time-of-day alignment is the point: an hour into the session, total daily volume is not yet a meaningful comparison.
 
+The anchor the count starts from is part of the definition, not an implementation detail. Counting from the pre-market open gives a different number at every hour than counting from the regular open, and a vendor column carrying this name may be anchored somewhere else again — so the anchor is stated wherever the figure is shown.
+
 ---
 
 ## Tape pressure
 
 ### Tape pressure
-A reading of whether buyers or sellers are the aggressors right now, accumulated per stock over a trailing window rather than a whole session. It is an approximation inferred from periodic snapshots, not a measured share of buying volume, and is meaningful only in relative terms — a stock against its own history, or ranked against peers observed on the same cadence.
+Which side of a session-appropriate reference price a stock trades on, reported only for stocks trading on unusual participation for that time of day. Both halves are quantities the feed states plainly — a price against a reference, and a volume against the same stock's own history — rather than an inference about who initiated each trade.
 
-The window is not a display preference. Each observation carries a small constant bias particular to the stock on top of the directional signal; the signal is bounded by the day's move while the bias grows with the number of observations, so an unbounded accumulation eventually reports the bias instead of the tape.
+The reading carries no memory. Every poll recomputes it from the current price and the current volume ratio, so it describes the market now rather than the session so far. An accumulated form of it was retired: each observation carried a small constant bias particular to the stock on top of the directional signal, and because the bias grew with the number of observations while the signal stayed bounded by the day's move, a long enough accumulation reported the bias instead of the tape.
 
-### Ask hit
-An observation classified as buyer-initiated: the trade printed at or near the offer, meaning a buyer crossed the spread to get filled. The mirror case is a bid hit, where a seller crossed the spread downward.
+### Session state
+Which window a market is trading in — pre-market, regular session, after hours, or closed — taken from the feed's own report rather than from a clock. It is the unit that selects both the reference price and the participation floor, so the two are never chosen apart. A window the feed names but the tools carry no rules for counts as closed: a reference and a floor written for a different window are worse than no reading at all.
 
-Which offer is load-bearing. The comparison is against the book that prevailed *before* the trade, never the book observed after it — a book seen afterwards has already repriced in response to the trade, and comparing against it inverts the classification.
-
-### Position in spread
-Where a trade printed between the prevailing bid and offer, expressed as a fraction of the spread. Each stock has a habitual value that reflects how its order flow is routed and says nothing about direction, so it is the contaminant a tape-pressure reading must be scored against to show that the reading measures flow rather than that habit.
-
-### Imbalance
-The margin between a stock's buyer- and seller-initiated observations, normalized so that stocks observed for different lengths of time remain comparable. Raw counts alone partly measure observation cadence rather than genuine flow, which is what the normalization removes.
-
-### Delta
-The volume-weighted counterpart to the hit counts: each interval's traded volume signed by its classification and accumulated. It restores cross-stock comparability that counts alone lack, at the cost of letting one large print dominate.
-
-### Divergent
-The flag raised when a stock's count-based and volume-weighted readings disagree in direction. It marks the single-print artifact: one outsized trade steering the volume measure while the balance of activity points the other way.
-
-### Coverage
-The share of observed trades that produced a usable classification. It is the health signal for the whole reading — a collapse in coverage means the inputs have broken, which is otherwise indistinguishable from a quiet market.
-
-### In-play gate
-The filter deciding which stocks are worth displaying, as distinct from which are worth polling. It exists for the reader's attention rather than for throughput, and narrows a liquid universe to the names actually moving.
+### Reference price
+What a stock's direction is measured from, which differs by session state: the previous close before the open, the open or the previous close during the session, the regular close after it, and the price 24 hours ago in a market that never closes. Two references can be live at once, so a direction means nothing unless the reference is named beside it.
 
 ### Strong tape / weak tape
-The two columns a session's stocks are split into: those whose offers are being lifted, and those whose bids are being hit. Stocks with no net direction belong to neither — the tape has not spoken on them.
+The two columns a market's stocks are split into: those trading above a reference and those trading below one. The two tests are independent, so a stock above one live reference and below another appears in both columns — that double reading is the intended one, not a conflict to resolve. A stock sitting exactly on its reference, or one whose participation fails the floor, appears in neither.
+
+### Relative-volume gate
+The filter deciding which stocks are worth displaying, as distinct from which are worth polling. It exists for the reader's attention rather than for throughput, and it is the only way onto the board: no price move admits a stock on its own, however far it has run. Its floors are set per session state, and its configuration keys still carry the `in_play_` prefix of the retired gate they replaced.
+
+### Coverage
+The share of polled stocks that produced a usable relative-volume reading. It is the health signal for the whole board — a collapse in coverage means the inputs have broken, which is otherwise indistinguishable from a quiet market — so it is published beside the columns rather than logged.
+
+It answers whether readings exist, not whether they are current. A stalled source scores every stock and leaves coverage untouched, so the two signals are published together rather than one standing for both.
+
+### Stalled source
+A source that keeps answering, with plausible figures that have stopped changing. It is a separate failure from one that errors, returns nothing, or returns blanks, and it is the hardest of them to see: every check that keys off an absent value passes. No single response reveals it — only two readings far enough apart to be comparable do.
+
+Where the figure feeds a ratio whose other half advances with the clock, a stalled source does not hold a board still, it empties one: every reading drifts below the threshold that admits it, one stock at a time. That reads as interest fading rather than as a fault, which is why the condition is named on screen rather than inferred from the board thinning.
+
+### Warm-up
+The once-per-session download that builds each stock's own volume history. Nothing can be scored until it finishes, so it is a distinct cause of an empty board and is reported as one: a board still warming up is neither a broken feed nor a quiet market.
 
 ---
 
@@ -174,4 +175,5 @@ The state marking a stock as being at a low-risk entry point right now — contr
 - **ecosystem** and **family** were both used for the top level of the theme hierarchy, in the radar and the VARS tab respectively. These are one concept: **L1**. The retired names must not reappear in code, config, UI, or docs.
 - **Theme** and **leaf** are related but distinct: a theme is the narrative, a leaf is the full stored path that names it at a given depth. Scoring operates on leaves.
 - **Singleton** and **Uncategorized** are not interchangeable. Singleton is a decision that no group applies; Uncategorized means no decision has been made yet. Only the latter keeps a stock on the first-time-classification worklist.
-- **Feed state** and **market state** are distinct questions in the tape tools: a real-time data entitlement on a closed market is still a closed market.
+- **Feed state**, **session state**, **warm-up state** and **source freshness** are four separate questions in the tape tools, and an empty board must say which one it is answering. A real-time data entitlement on a closed market is still a closed market; a board whose baselines are still downloading is neither of those things; and a stalled source is none of the three, because it is answering, in-session, and fully warmed.
+- **ask hit**, **bid hit**, **position in spread**, **imbalance**, **delta** and **divergent** belonged to the retired trade-side classifier and no longer name anything the tape tools compute. Like **ecosystem** and **family**, they must not reappear in code, config, UI, or docs.

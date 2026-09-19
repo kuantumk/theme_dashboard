@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bid/Ask Tape Pressure</title>
+  <title>Tape Pressure</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,10 +16,9 @@
     <div class="status">
       <span class="pill" id="market-pill">—</span>
       <span class="pill" id="feed-pill">connecting</span>
-      <span class="pill" id="quotes-pill" hidden>quotes —</span>
-      <span class="pill" id="coverage-pill">coverage —</span>
-      <span class="pill" id="window-pill">—</span>
-      <span class="pill" id="polls-pill">0 scans</span>
+      <span class="pill" id="coverage-pill">rvol —</span>
+      <span class="pill" id="floor-pill">floor —</span>
+      <span class="pill" id="reference-pill">—</span>
       <span class="pill" id="scan-pill">—</span>
     </div>
   </div>
@@ -37,63 +36,47 @@
         <option value="120">120s</option>
       </select>
     </label>
-    <label class="control">
-      min hits
-      <input type="range" id="min-hits" min="1" max="40" value="3">
-      <span class="val" id="min-hits-val">3</span>
-    </label>
-    <label class="control" title="Dollar volume traded since session start (24h for crypto)">
+    <label class="control" title="Dollar volume traded since session start (since 00:00 UTC for crypto)">
       $ liquidity &ge;
       <input type="range" id="min-dollar-vol" min="0" max="70" value="30">
       <span class="val wide" id="min-dollar-vol-val">$1M</span>
     </label>
-    <label class="control" title="Share volume traded since session start (24h for crypto)">
+    <label class="control" title="Share volume traded since session start (since 00:00 UTC for crypto)">
       vol &ge;
       <input type="range" id="min-volume" min="0" max="60" value="17">
       <span class="val wide" id="min-volume-val">50K</span>
     </label>
-    <label class="control">
-      <input type="checkbox" id="hide-uncertain">
-      hide low-confidence
-    </label>
-    <label class="control">
-      <input type="checkbox" id="hide-divergent">
-      hide divergent
-    </label>
-  </div>
-
-  <div class="pressure">
-    <div class="pressure-labels">
-      <span class="buy" id="buy-label">Buying — (—)</span>
-      <span class="sell" id="sell-label">(—) — Selling</span>
-    </div>
-    <div class="pressure-track"><div class="pressure-fill" id="pressure-fill" style="width:50%"></div></div>
   </div>
 
   <div class="columns">
     <div class="column strong">
       <div class="column-head">
-        <span>Strong tape — offers being lifted</span>
+        <span>Strong — above its reference, on unusual volume</span>
         <span class="column-meta" id="strong-meta"></span>
       </div>
-      <div id="strong-body"><div class="empty">Waiting for the first scans…</div></div>
+      <div id="strong-body"><div class="empty">Waiting for the first scan…</div></div>
     </div>
     <div class="column weak">
       <div class="column-head">
-        <span>Weak tape — bids being hit</span>
+        <span>Weak — below its reference, on unusual volume</span>
         <span class="column-meta" id="weak-meta"></span>
       </div>
-      <div id="weak-body"><div class="empty">Waiting for the first scans…</div></div>
+      <div id="weak-body"><div class="empty">Waiting for the first scan…</div></div>
     </div>
   </div>
 
   <div class="footnote">
-    Hit counts are an <strong>approximation</strong> of order flow, not a measured share of buying
-    volume. Each scan contributes at most one classified observation, compared against a quote that
-    may be newer than the trade that set the last price. Read the numbers relatively — a ticker
-    against its own history, or ranked against peers on the same cadence.
-    Dashed borders mark tickers where the count-based and volume-weighted signals disagree, which
-    usually means a single large print is driving the reading.
+    Each scan asks two questions of every ticker and remembers nothing between scans. First,
+    <strong>where its price sits</strong> against the reference the current session supplies — the
+    open or yesterday's close during the session, yesterday's close before the bell, the 16:00
+    print after it, the price 24 hours ago on crypto. Second, whether its
+    <strong>Relative Volume at Time</strong> clears the floor for that session state: this ticker's
+    volume since the 04:00 anchor over the mean volume <em>it</em> had traded by the same point of
+    day across recent sessions. A price move admits nothing on its own.
+    Each chip shows that volume ratio and the move against the reference named beside it. A ticker
+    can legitimately appear in both columns — above today's open and below yesterday's close is one
+    stock being accumulated against one reference and distributed against another, and the labels
+    say which is which.
   </div>
 
   <script src="app.js"></script>

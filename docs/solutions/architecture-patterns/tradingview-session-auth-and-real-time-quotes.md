@@ -1,13 +1,14 @@
 ---
-title: "Authenticating a TradingView session and reading real-time quotes"
+title: "Authenticating a TradingView session and reading real-time data"
 date: 2026-08-12
+last_updated: 2026-09-18
 category: architecture-patterns
 module: bidask
 problem_type: architecture_pattern
 component: authentication
 severity: high
 applies_when:
-  - "Reading live bid/ask, last price, or session volume from TradingView"
+  - "Reading live prices, session volume, or intraday bars from TradingView"
   - "A TradingView field returns null and it is unclear whether the cause is auth, entitlement, or the wrong endpoint"
   - "Deciding which TradingView surface should own which part of a data pipeline"
 related_components:
@@ -22,7 +23,7 @@ tags:
   - market-data
 ---
 
-# Authenticating a TradingView session and reading real-time quotes
+# Authenticating a TradingView session and reading real-time data
 
 ## Context
 
@@ -37,14 +38,31 @@ missing market-data subscription. It was neither. The failure analysis lives in
 this doc is the positive counterpart — how to authenticate once and read
 genuinely real-time data.
 
+**One cookie pair opens every socket, and that is the durable part of this
+pattern.** The tape board no longer reads quotes at all — its price direction
+comes from the screener's own change fields — but the same auth chain and the
+same frame codec now carry **chart bars**, which are the only source of real
+extended-hours volume in reach. `src/bidask/tvsocket.py` holds both halves and
+nothing else; `src/bidask/tvbars.py` is its only consumer. The quote-stream
+sections below are kept because the protocol is identical and the discriminators
+in §5 are what diagnose either socket.
+
 ## Guidance
 
 ### 1. Pick the surface by what it actually serves
 
 | Surface | Serves | Use it for |
 |---|---|---|
-| Screener REST (`scanner.tradingview.com/<market>/scan`) | Fundamentals, technicals, session volume, traded value, sector/industry, period highs. Crypto **also** gets `bid`/`ask`. | Universe selection and metadata — one request covers thousands of symbols |
-| Quote websocket (`wss://data.tradingview.com/socket.io/websocket`) | `lp` (last price), `bid`, `ask`, `bid_size`, `ask_size`, `volume`, `update_mode`, `current_session` | Anything quote-shaped, and US equities specifically |
+| Screener REST (`scanner.tradingview.com/<market>/scan`) | Fundamentals, technicals, session volume, traded value, sector/industry, period highs, `update_mode`, `current_session`. Crypto **also** gets `bid`/`ask`. | Universe selection and metadata — one request covers thousands of symbols |
+| Quote websocket (`wss://data.tradingview.com/socket.io/websocket`) | `lp` (last price), `bid`, `ask`, `bid_size`, `ask_size`, `volume` | Anything quote-shaped, and US equities specifically. **Not used by this repo any more** |
+| Chart websocket (same host, `?from=chart/`) | OHLCV bars at any resolution, including **extended hours with real volume** | Per-symbol history: baselines, intraday volume curves. One series request per symbol (many can share a connection), so it belongs in a warm-up, never in a poll loop |
+
+⛔ **Studies are not part of that third row.** `create_study` for a Pine-based
+study — Relative Volume at Time among them — is refused with `Study not allowed
+in this connection` on both the `data` and `prodata` hosts, while the built-in
+`Volume@tv-basicstudies` returns values normally. The refusal is about the study
+class, not the route or the credentials. Pull the bars and compute the study
+yourself.
 
 Do not assume field availability is uniform across markets. Ask the service:
 `GET https://scanner.tradingview.com/<market>/metainfo` returns every field that
@@ -61,14 +79,14 @@ copied from a logged-in browser's cookie store, never obtained by programmatic
 login (that path triggers CAPTCHA and risks account flagging).
 
 ```bash
-# .env — see .env.example:14
+# .env — see .env.example
 TRADINGVIEW_SESSIONID=...
 TRADINGVIEW_SESSION_SIGN=...
 ```
 
-Loaded at `config/settings.py:29-33`, which accepts both `TRADINGVIEW_SESSIONID_SIGN`
+Loaded in `config/settings.py`, which accepts both `TRADINGVIEW_SESSIONID_SIGN`
 and `TRADINGVIEW_SESSION_SIGN` spellings, and assembled into a request jar by
-`cookie_jar()` at `src/bidask/config.py:101`.
+`cookie_jar()` in `src/bidask/config.py`.
 
 **Treat this pair as a full account session token.** It is not a scoped API key;
 it is revoked only by logging out of TradingView. Never log it, never let it
@@ -87,35 +105,60 @@ GET https://www.tradingview.com/quote_token/   (with the cookie jar)
 ```
 
 The response body is a *JSON string*, so strip the surrounding quotes before
-using it (`src/bidask/tvquote.py:228`). Fetch the token **before** opening the
-socket — a missing or rejected cookie should not cost a connection. Without
-cookies this endpoint fails outright rather than returning an anonymous token,
-so there is no unauthenticated fallback for this path.
+using it (`auth_token()` in `src/bidask/tvsocket.py`). Fetch the token **before**
+opening the socket — a missing or rejected cookie should not cost a connection.
+Without cookies this endpoint fails outright rather than returning an anonymous
+token, so there is no unauthenticated fallback for this path. The endpoint is
+named `quote_token/`, but the JWT it mints authenticates the chart socket just as
+well; there is one token, not one per surface.
 
 ### 4. Speak the wire protocol
 
 Messages are length-prefixed: `~m~<byte-length>~m~<payload>`.
 
 ```python
-def encode(method, params):                       # src/bidask/tvquote.py:110
+def encode(method, params):                # encode(), src/bidask/tvsocket.py
     payload = json.dumps({"m": method, "p": params}, separators=(",", ":"))
     return f"~m~{len(payload)}~m~{payload}"
 ```
 
-**Split incoming frames by the declared length, never by matching braces.** Quote
-payloads nest objects, so a non-greedy `\{.*?\}` pattern stops at the first inner
-`}` and silently truncates every message (`iter_frames`, `src/bidask/tvquote.py:92`).
+**Split incoming frames by the declared length, never by matching braces.**
+Payloads nest objects, so a non-greedy `\{.*?\}` pattern stops at the first inner
+`}` and silently truncates every message (`iter_frames()`, same module).
 
-Handshake order, then subscriptions:
+Handshake order for quotes, then subscriptions:
 
 1. `set_auth_token` — the JWT from step 3
 2. `quote_create_session` — an arbitrary unique session name (e.g. `qs_` + random)
 3. `quote_set_fields` — session name, then every field you want
 4. `quote_add_symbols` / `quote_remove_symbols` — session name, then symbols
 
+For bars the handshake is the same shape on a socket opened with `?from=chart/`:
+`set_auth_token`, `chart_create_session`, `resolve_symbol`, `create_series`.
+
+⛔ **`resolve_symbol` must be given `"session": "extended"` to reach pre-market
+and after-hours bars.** Without it the series starts at 09:30 and the caller
+answers the wrong question with no error anywhere.
+
 Symbols are exchange-qualified (`NASDAQ:AAPL`), which is the form the screener's
-own `ticker` column already returns. `quote_add_symbols` accepts many symbols per
-call, so batch them.
+own `ticker` column already returns; neither socket resolves a bare ticker.
+`quote_add_symbols` accepts many symbols per call, so batch them. A chart session
+takes one symbol — **but one connection carries many chart sessions at once**, so
+parallelism is not bounded by the socket count. Opening several series and
+draining them together beat one-at-a-time by **2.0x** over the full 1,859-symbol
+universe on 2026-09-18 (200.7s against 99.8s, both resolving 1859 of 1859); see
+`_Connection.series_batch` and `batch_for` in `src/bidask/tvbars.py`. An earlier
+revision of this note said parallelism was per connection, and that sentence is
+why the drain stayed serial as long as it did.
+
+⛔ **Sockets are the leg with the ceiling, and batching is the leg that scales.**
+Measured 2026-09-17 over one 60-symbol list, 6 concurrent sockets returned 60 of
+60 on both runs, 8 returned 57 and 12 returned 35 — past the ceiling you lose
+symbols rather than throughput, which is silent at the consumer. Widening the
+batch instead has no such cost: measured 2026-09-18, 3 connections x 8 series
+matched 6 x 8 exactly. Reach for the batch before the socket count, and see
+[Benchmark the shipped path, at full scale](../conventions/benchmark-the-shipped-path-at-full-scale.md)
+before trusting any timing that decides between them.
 
 Two things the protocol requires that are easy to miss:
 
@@ -137,14 +180,18 @@ way to confirm the cookies took effect:
 | `streaming` | Real-time |
 | `delayed_streaming_900` | 15-minute delayed (900s) — unauthenticated or unentitled |
 
-Treat any value beginning `delayed` as degraded (`DELAYED_PREFIX`,
-`src/bidask/feed.py:27`). Crypto returns `streaming` even unauthenticated, so
+Treat any value beginning `delayed` as degraded (`DELAYED_PREFIX` in
+`src/bidask/feed.py`). Crypto returns `streaming` even unauthenticated, so
 **verify on an equity symbol** — checking crypto proves nothing about the cookies.
 
 `current_session` is a different question: whether the *market* is trading, not
 whether your *feed* is live. A real-time entitlement on a closed market is still
 a closed market. During the US regular session it reports **`market`** — not
-`regular`, a plausible-looking value that never appears (`src/bidask/feed.py:45`).
+`regular`, a plausible-looking value that never appears (`SESSION_LABELS` in
+`src/bidask/feed.py`). Pre-market reads `pre_market` and after hours
+`post_market`; `extended` is documented by TradingView but was not observed in
+either probe, so treat an unmapped value as closed rather than guessing which
+window it names.
 
 ## Why This Matters
 
@@ -160,22 +207,28 @@ The concrete cost of getting this wrong: the equity tab rendered nothing for a
 full trading session, with 100% of observations rejected for want of a quote,
 because the code was asking a service that never had the field.
 
-The payoff for getting it right is large. The websocket is push-based and cheap
-at scale — measured on the real in-play universe, 296 symbols subscribed in 6
-frames all returned a quote within **0.4 seconds**, 99% of them two-sided. The
-~1% that never quote are OTC ADRs, which genuinely have no quote and should be
-surfaced as unquoted rather than silently dropped.
+The payoff for getting it right is large, on both sockets. The quote stream is
+push-based and cheap at scale — measured 2026-08, 296 symbols subscribed in 6
+frames all returned a quote within **0.4 seconds**, 99% of them two-sided, the
+~1% being OTC ADRs that genuinely have no quote. The chart socket is the only
+route to something no other source here supplies: measured 2026-09-17, 2,500
+five-minute bars per symbol across roughly eleven extended sessions, **carrying
+real extended-hours volume** — 53 pre-market bars and 239,052 shares for GNRC
+that morning. yfinance serves those same bars with **zero volume on every one**,
+which reads as a quiet ticker rather than as missing data and silently zeroes any
+denominator built from it.
 
 ## When to Apply
 
 - Any time a TradingView field comes back null — check `metainfo` before
   suspecting credentials.
-- When building a pipeline that needs both a wide universe and live quotes: use
-  both surfaces, each for its own job.
-- When last price and quote are compared against each other (trade
-  classification, spread analysis). Take **both legs from the socket** so they
-  share one clock; mixing a screener `close` with a socket quote adds a
-  cross-source skew on top of any polling skew.
+- When building a pipeline that needs both a wide universe and per-symbol
+  history: use both surfaces, each for its own job. One screener request covers
+  thousands of rows; bars cost one request per symbol, so they belong in a
+  once-per-session warm-up with its result cached.
+- When two figures are compared against each other, take **both legs from one
+  surface** so they share a clock. Mixing a screener value with a socket value
+  adds a cross-source skew on top of any polling skew.
 
 ## Examples
 
@@ -227,5 +280,6 @@ same cookies, on the same `streaming` feed. That contrast is the whole lesson.
 
 - [An API that returns null for fields it does not have looks exactly like a missing entitlement](../logic-errors/api-returns-null-for-fields-it-does-not-have.md) — the failure analysis this pattern came out of
 - [NaN defeats numeric guard chains](../logic-errors/nan-defeats-numeric-guard-chains.md) — why null quote fields must be rejected explicitly rather than falling through numeric guards
-- `src/bidask/tvquote.py` — the production client: reconnect/backoff, subscription diffing, copy-on-write quote publication
-- `CLAUDE.md` > "Tape Pressure Dashboard" — the repo-level statement of the two-surface split
+- `src/bidask/tvsocket.py` — the shared transport: the token mint and the frame codec, and nothing else
+- `src/bidask/tvbars.py` — the production client built on it: batched chart sessions, the `extended` resolve, worker pool, refusal retry
+- `CLAUDE.md` > "Tape Pressure Dashboard" — the repo-level statement of which surface owns what

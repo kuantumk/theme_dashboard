@@ -23,8 +23,10 @@ session — `Value.Traded >= $1M` matched 0 of 13,661 rows at 09:34 ET with
 `current_session` reading `market` and `close`/`volume` both live, while the
 average-volume leg alone matched 2,806. By 17:21 ET the same filter matched
 4,231. The universe was therefore empty on every poll until mid-morning and the
-equity tab was dark through the open — the same silent shape `tvquote.py`
-documents for `bid`/`ask`.
+equity tab was dark through the open — the same silent shape
+`docs/solutions/logic-errors/api-returns-null-for-fields-it-does-not-have.md`
+records for `bid`/`ask`, which this scanner also resolves and also answers with
+null on every row.
 
 Do not read that as "the field was withdrawn and may come back". It was never
 supported. Today's traded value is derived from `close * volume`, which is
@@ -47,9 +49,28 @@ from src.bidask.config import cookie_jar
 # (900s = the documented 15-minute delay), `streaming` with a valid cookie pair.
 DELAYED_PREFIX = "delayed"
 
+# No `bid`/`ask` here, and that is deliberate. The america scanner publishes
+# neither — 3,771 fields in its metainfo and not one is a quote field — but
+# selecting them does not error: every row comes back null, which is
+# indistinguishable from a lost entitlement or a dead feed. The board no longer
+# reads a book at all, so the columns come out rather than sit there returning
+# nulls that a future reader could mistake for a market with no quotes. The
+# crypto list below keeps its pair: that scanner genuinely does publish one.
+#
+# The extended-hours columns are the price references outside the regular
+# session (`src/bidask/session_state.py`) and the live volume numerator for the
+# relative-volume gate. `premarket_change` measures against the previous
+# session close and `postmarket_change` against the regular session close, so
+# each window is answered by the field written for it — `close` itself holds
+# the 16:00 print all through the after-hours window and cannot distinguish
+# them. Every one of these was non-null on 100% of rows through the regular
+# session when measured.
 EQUITY_COLUMNS = [
-    "name", "close", "bid", "ask", "change", "volume",
-    "relative_volume_10d_calc", "market_cap_basic", "sector", "industry",
+    "name", "close", "open", "change", "change_from_open", "volume",
+    "premarket_change", "premarket_close", "premarket_volume",
+    "postmarket_change", "postmarket_close", "postmarket_volume",
+    "relative_volume_10d_calc", "relative_volume_intraday|5",
+    "market_cap_basic", "sector", "industry",
     "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
     "price_52_week_high", "price_52_week_low",
     "update_mode", "last_bar_update_time", "current_session",
@@ -58,6 +79,12 @@ EQUITY_COLUMNS = [
 # `current_session` reports whether the market is actually trading, which is a
 # different question from `update_mode` (whether our *feed* is real-time). A
 # real-time entitlement on a closed market is still a closed market.
+#
+# `SESSION_STATES` in `src/bidask/session_state.py` reads the same field and
+# must carry the same keys: this table decides what the banner says, that one
+# decides which reference price and volume floor apply. A spelling added here
+# and not there renders a banner for a state the board has no rules for, so
+# `tests/test_bidask_session_state.py` pins the pair.
 SESSION_LABELS = {
     # `market` is what the feed actually sends while the regular session runs —
     # verified live, 2026-08-12. `regular` was assumed and never observed; an
@@ -74,9 +101,28 @@ SESSION_LABELS = {
     "holiday": "holiday",
 }
 
+# `24h_close_change|5` is the crypto board's whole price test — that market has
+# no open and no previous close, so `src/bidask/crypto_state.py` reads this one
+# field and labels the side "24h ago".
+#
+# `24h_vol|5` is the genuine 24-hour rolling volume, carried for display. It is
+# NOT what the relative-volume gate divides: `volume` is the UTC-day cumulative
+# (measured, see `fetch_crypto`) and a rolling window has no anchor to build a
+# baseline against.
+#
+# `relative_volume_10d_calc` and `relative_volume_intraday|5` are deliberately
+# absent. Both resolve on this scanner and both move — checked over a 125s gap,
+# 18 of 18 rows — so the movement test that condemns them on the equity
+# pre-market passes here. They are still the wrong quantity: `volume` is a
+# partial UTC day and `average_volume_10d_calc` is a full-day average, so the
+# ratio is mechanically scaled by how much of the day has passed. Measured
+# 2026-09-17 19:03 UTC, 79% through the day, the median row read 0.90; the same
+# participation at 01:00 UTC reads about 0.05. A flat 1.2 floor on that is a
+# different filter every hour — the exact failure the equity gate was
+# redesigned to escape. The board computes its own ratio instead (KTD2).
 CRYPTO_COLUMNS = [
     "base_currency", "close", "bid", "ask", "24h_close_change|5", "volume",
-    "high", "low", "update_mode", "last_bar_update_time",
+    "24h_vol|5", "high", "low", "update_mode", "last_bar_update_time",
 ]
 
 CRYPTO_EXCHANGE = "BINANCE"
@@ -215,6 +261,14 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
     try:
         df = df.copy()
         df["symbol"] = df["ticker"].map(_bare_ticker) if "ticker" in df.columns else df["name"]
+        # The exchange-qualified name the chart socket needs, kept beside the
+        # bare display symbol exactly as `fetch_crypto` does. `ticker` already
+        # arrives as `NASDAQ:WOLF`, so publishing it here spares the warm-up
+        # from guessing: `tvbars.qualified_symbols` otherwise tries NASDAQ,
+        # then NYSE, then AMEX for every bare ticker, which is up to three
+        # resolve round trips per symbol across a ~1,900-symbol universe, and
+        # a wrong guess costs a full symbol timeout before the next candidate.
+        df["feed_symbol"] = df["ticker"] if "ticker" in df.columns else df["symbol"]
         df["avg_volume"] = df[cfg.avg_volume_field]
         df["change_pct"] = df["change"]
         df["rvol"] = df.get("relative_volume_10d_calc")
@@ -262,16 +316,38 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
         return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
     df = df.drop_duplicates(subset="base_currency", keep="first").copy()
     df["symbol"] = df["base_currency"]
+    # The instrument behind the display symbol. Ordering by 24-hour volume puts
+    # the PERPETUAL first for most majors, so `BTC` on the board is
+    # `BINANCE:BTCUSDT.P` — measured 2026-09-17, 11 of the 13 surviving rows.
+    # The chart socket resolves nothing from a bare `BTC`, so the baseline
+    # warm-up fetches bars for this column and re-keys the result to `symbol`.
+    df["feed_symbol"] = df["ticker"] if "ticker" in df.columns else df["symbol"]
     df["change_pct"] = df["24h_close_change|5"]
     # Crypto has no session-scoped average-volume field and no auction windows,
     # so the equity liquidity gate does not apply. `high`/`low` are 24h rolling
     # rather than session extremes — see A3 in the plan.
     df["avg_volume"] = None
     df["rvol"] = None
-    # Crypto `volume` is 24h rolling rather than session-to-date — there is no
-    # session to date from. Labelled as 24h in the UI so it is not read as the
-    # same quantity the equity tab shows.
+    # ⛔ MEASURED 2026-09-17 19:03 UTC, 13 of 13 rows: crypto `volume` is the
+    # cumulative figure since **00:00 UTC**, matching a 5-minute bar sum from
+    # that anchor at a median ratio of 1.00026 — the 0.026% gap being the
+    # unclosed forming bar. An earlier revision of this file called it "24h
+    # rolling"; that was wrong, and it was the reason the crypto tab had no
+    # relative-volume numerator. A trailing-24h bar sum read 1.25x `volume` at
+    # the same moment, and the true rolling figure is `24h_vol|5`, carried
+    # beside it.
+    #
+    # So this is session-to-date traded value, exactly as on the equity tab,
+    # for a session that starts at UTC midnight.
     df["dollar_vol"] = _traded_value(df)
+    # The genuine 24-hour rolling figure, carried for display beside the
+    # 24-hour price reference. Published as null rather than NaN when a row
+    # cannot answer: `write_state` serializes with `allow_nan=False`, so one
+    # NaN costs the entire document rather than one field, and the page then
+    # freezes on its last good poll with nothing to say why.
+    if "24h_vol|5" in df.columns:
+        vol_24h = pd.to_numeric(df["24h_vol|5"], errors="coerce")
+        df["vol_24h"] = vol_24h.astype(object).where(vol_24h.notna(), None)
     return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
 
 

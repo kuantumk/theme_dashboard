@@ -24,9 +24,12 @@ tags:
 
 ## Context
 
-The tape-pressure classifier splits the market into strong-tape and weak-tape
-columns from polled quote snapshots. For months its recorded validation in
-`CLAUDE.md` read:
+The tape-pressure classifier split the market into strong-tape and weak-tape
+columns from polled quote snapshots. It was retired in September 2026 — the
+board now reads price direction and relative volume directly — but the lesson
+below is about the *validation*, not the classifier, and it applies to anything
+scored against an outcome series. For months the classifier's recorded
+validation in `CLAUDE.md` read:
 
 > Spearman(imbalance, same-window return) = +0.305, sign agreement 67.7%,
 > monotone quintiles. When the board looks wrong, suspect the gate, the ranking
@@ -38,10 +41,11 @@ sentence told every future reader to look somewhere else. It took a live
 debugging session and a from-scratch instrumented replica to find, because the
 recorded number said the place to look was already cleared.
 
-The measurement's target was contaminated. `classify.py` decides most
-observations with the tick rule, which is `sign(last − prior different last)`.
-Correlating the classifier's output against a **last-to-last** return therefore
-correlates the output partly with itself. Measured on 13,821 live observations:
+The measurement's target was contaminated. The classifier (`src/bidask/classify.py`,
+since deleted) decided most observations with the tick rule, which was
+`sign(last − prior different last)`. Correlating its output against a
+**last-to-last** return therefore correlated the output partly with itself.
+Measured on 13,821 live observations:
 
 | classifier sign scored against | Spearman |
 |---|---|
@@ -87,10 +91,13 @@ The tick rule reads only trade prices and the quote rule only the book, so two
 independent constructions agreeing twice as often is evidence neither
 correlation alone provides.
 
-**Write down what a validation does *not* establish.** The replacement note in
-`CLAUDE.md` records that the window sweep covers 55 minutes and that nothing
-measured six hours of accumulation under the corrected rule. A validation that
-states its own boundary cannot be read as clearing ground it never covered.
+**Write down what a validation does *not* establish.** A validation that states
+its own boundary cannot be read as clearing ground it never covered. The
+tape-pressure section of `CLAUDE.md` now opens with the strongest form of this:
+the board that replaced the classifier rests on a data-quality argument and the
+user's judgment, and **no forward-return measurement supports it**. That sentence
+is load-bearing in the honest direction — it stops a future reader citing the
+redesign as evidence the columns predict better, which nothing here shows.
 
 ## Why This Matters
 
@@ -131,8 +138,10 @@ print("  high correlation => it is, and adds nothing over price.")
 The target is a last-to-last move, and the interpretation is inverted: a low
 correlation is read as evidence the measure carries independent information,
 when a rule that reads a per-ticker constant scores low for exactly the opposite
-reason. Applied to the shipped classifier, that reading would have called
-`-0.009` a success.
+reason. Applied to the classifier as it then shipped, that reading would have
+called `-0.009` a success. The probe itself still runs — it reads the crypto
+scanner's own `bid`/`ask`, which that market genuinely serves — so the trap is
+live code, not history.
 
 Two validators in this repo already do it correctly and are worth copying
 rather than rewriting:

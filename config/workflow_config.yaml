@@ -233,49 +233,58 @@ bidask:
   min_avg_volume: 750000            # avg share volume
   avg_window_days: 30           # one of 10/30/60/90 — the feed returns null for 20
 
-  # "In play" gate: what is worth displaying, not what is worth polling.
+  # The relative-volume gate: the ONLY admission path to either column.
   #
-  # The volume leg is Relative Volume at Time (TradingView's Cumulative mode):
-  # this ticker's volume since 09:30 over the mean of ITS OWN 09:30-to-now
-  # volume across the last 10 sessions. 1.0 = exactly its usual participation
-  # by this point in the day. The screener's raw relative_volume_10d_calc
+  # Relative Volume at Time (TradingView's Cumulative mode): this ticker's
+  # volume since the 04:00 extended-session anchor over the mean of ITS OWN
+  # 04:00-to-now volume across the last 10 sessions. 1.0 = exactly its usual
+  # participation by this point of day. Computed in-app from chart bars -- see
+  # src/bidask/rvol_at_time.py. The screener's raw relative_volume_10d_calc
   # divides by a full-day average instead, so flooring it directly demands 16x
-  # normal participation at 09:35 and 1.8x at 15:00 -- see
-  # src/bidask/rvol_at_time.py. The retired in_play_min_rvol key raises.
+  # normal participation at 09:35 and 1.8x at 15:00; it is not used here and
+  # the retired keys that floored it raise.
   #
-  # Floors step up through the session because the denominator is small and the
-  # ratio noisy early on: [minutes since 09:30, floor]. Each floor holds until
-  # the next mark, and the first also covers the minutes before it.
-  in_play_rvol_schedule:
-    - [5, 0.8]
-    - [15, 1.0]
-    - [30, 1.2]
-    - [60, 1.5]
+  # A price move admits nothing on its own. The retired in_play_min_change_pct
+  # let a stock reach a column on a 3% move alone, however thin its tape; that
+  # key raises too rather than being ignored.
+  #
+  # ONE SCHEDULE PER SESSION STATE, each written in minutes since ITS OWN state
+  # began -- the market bands count from 09:30, not from the 04:00 anchor the
+  # measure itself uses. Each floor holds until the next mark, and the first
+  # also covers the minutes before it: a window with no floor would admit the
+  # whole universe on the opening print. The regular session's floors tighten
+  # because its denominator is small and the ratio noisy early on.
+  #
+  # There is no off switch. An empty schedule for any state raises, because a
+  # state with no floor admits nothing for its whole window and that reads on
+  # screen as a dead market rather than as a config mistake.
+  in_play_rvol_schedules:
+    pre_market:  [[0, 3.0]]
+    market:      [[0, 0.7], [15, 1.0], [30, 1.2]]
+    post_market: [[0, 1.5]]
+    # Crypto has no session state and one flat floor at all times. Its day is
+    # anchored at 00:00 UTC, not 04:00 ET -- MEASURED 2026-09-17, 13 of 13
+    # rows: the crypto scanner's `volume` matches a 5-minute bar sum from UTC
+    # midnight at a median ratio of 1.00026, where a trailing-24h sum reads
+    # 1.25x it. So 1.2 here means the same thing it means on the equity tab:
+    # this coin has traded 1.2x what IT usually had by this point of ITS day.
+    #
+    # Flat rather than stepped because a 24/7 market has no opening print to
+    # tighten away from. The equity bands exist because an early denominator
+    # is small and noisy; crypto's denominator at any UTC hour is a mean over
+    # ten complete days cut at that same hour, and it is never freshly zero
+    # except in the first minutes after midnight UTC, where the gate already
+    # fails closed on a zero baseline.
+    crypto:      [[0, 1.2]]
   in_play_rvol_sessions: 10     # sessions behind the historical average
-  in_play_min_change_pct: 3.0   # absolute % change; null disables this leg
 
-  # Classification (see KTD2/KTD3 in the plan). The band is CLNV's 30% of spread:
-  # exact-equality tests never fire on US equities because of sub-penny improvement.
-  band_frac: 0.30
-  max_spread_pct: 2.0           # reject quotes wider than this % of mid as stale
-  open_auction_minutes: 15      # equity only: reject prints inside the opening window
-  close_auction_minutes: 5      # equity only: reject prints inside the closing window
-  winsor_multiple: 10.0         # cap a poll's volume delta at this x its running median
-
-  # Minutes of tape each hit counter covers. 0 restores cumulative-since-open.
-  #
-  # Counters cannot run cumulatively: every poll adds the directional signal
-  # plus a small constant per-ticker bias, so the bias grows with the poll count
-  # while the signal stays bounded by the day's net move. Measured live
-  # 2026-08-20, the dashboard's hit increments tracked price at Spearman +0.40
-  # over a minute and +0.47 over three, while its cumulative session margin
-  # scored +0.10 against the day's move.
-  #
-  # 30 is NOT a measured optimum: swept against each window's own horizon on a
-  # 55-minute tape, 5 through 45 minutes and cumulative all scored +0.30 to
-  # +0.40. It is a density choice -- 167 median hits per ticker, 462 of 505
-  # tickers still on the board. See src/bidask/session.py.
-  hit_window_minutes: 30
+  # ⛔ The trade classifier and its accumulator are gone, and so are their keys:
+  # band_frac, max_spread_pct, open_auction_minutes, close_auction_minutes,
+  # winsor_multiple, hit_window_minutes and min_hits_to_show. The board is
+  # stateless — it recomputes each ticker's side from price and its relative
+  # volume every poll — so nothing accumulates and nothing is classified.
+  # Adding any of those keys back raises from `load_config`: see RETIRED_KEYS in
+  # src/bidask/config.py, which names what each one did.
 
   # Runtime cadence bounds for the in-app control. The floor protects an
   # undocumented endpoint from being hammered under a personal account.
@@ -315,8 +324,39 @@ bidask:
     - EURT
     - AEUR
 
+  # Theme scoring. A group scores the mean of its top three members' Relative
+  # Volume at Time, each capped first, plus an additive breadth term. The score
+  # this replaced was the SUM of its members' margins, which made breadth swamp
+  # intensity -- 0 of 67 single-name groups ever reached the screen. Splitting
+  # the two halves is what bounds each one separately.
+  #
+  # The cap is what lets a mean survive the tail: DLXY read 2090.8 in the
+  # measured session and would otherwise hand its theme a score three orders of
+  # magnitude above every rival. 5.0 sits above the measured p99 of 4.329 and
+  # binds 15 rows of 1,776, so ordering is preserved for better than 99% of the
+  # board while the tail stops deciding it. Capped BEFORE the mean, never after.
+  group_rvol_cap: 5.0
+
+  # Breadth adds `coefficient x the share of the group's members that cleared
+  # the gate`, and only ever adds. Share, not count: rosters run from 2 to 214
+  # members, so a count ranks by roster size -- the same reason the coil strip
+  # and the SI tab rank on share. The denominator is the group's members in the
+  # poll's liquidity-filtered universe BEFORE the volume gate; after it, every
+  # surviving row qualifies and the share is 1.0 for everyone.
+  #
+  # 0.5 is CHOSEN, not measured. Scores span the session floor (0.7) to the 5.0
+  # cap, so a fully-qualifying theme gains at most +0.5 and a single member at
+  # the cap still tops a broad theme running 3.5x -- the board stays
+  # intensity-led with breadth as a strong tiebreak. Raise it to let breadth
+  # decide; a value near the score span restores the failure above.
+  group_breadth_coef: 0.5
+
+  # Below this many qualifying members the breadth term is zero. Share alone
+  # hands a one-member group the maximum, which is the opposite of what the
+  # term is for. 2 mirrors the coil strip's own floor.
+  group_breadth_min_members: 2
+
   # Display
-  min_hits_to_show: 3           # hide tickers below this total hit count
   max_rows_per_column: 60       # per-column render cap
   max_rows_per_group: 12        # per-group cap, so one large bucket (usually an
                                 #   industry fallback) cannot consume the column

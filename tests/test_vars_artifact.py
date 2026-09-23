@@ -65,7 +65,14 @@ class VarsArtifactTests(unittest.TestCase):
                 "vars_2026-05-07.parquet": previous,
             }
 
-            def fake_build_snapshot(csv_file, day_flags):
+            # `newest_session` gates the highlight ladder's short rung, so the
+            # double has to accept it or it stops standing in for the real
+            # builder. Assert it too: only the newest parquet may read the one
+            # current short-interest figure.
+            seen_newest = {}
+
+            def fake_build_snapshot(csv_file, day_flags, newest_session=False):
+                seen_newest[csv_file.name] = newest_session
                 return snapshots[csv_file.name]
 
             with (
@@ -77,6 +84,11 @@ class VarsArtifactTests(unittest.TestCase):
                 current = export_dashboard_data.export_vars(day_flags={})
 
             self.assertEqual(current, latest)
+            self.assertEqual(
+                seen_newest,
+                {"vars_2026-05-08.parquet": True, "vars_2026-05-07.parquet": False},
+                "only the newest session may read the current short interest",
+            )
             self.assertEqual(
                 json.loads((output_dir / "vars.json").read_text(encoding="utf-8")),
                 latest,

@@ -164,10 +164,8 @@ def _highlight_flag(value):
     on every ticker whose tightness columns are absent. A missing flag fails
     closed instead.
     """
-    if value is None:
-        return False
     try:
-        if bool(value != value):  # NaN is the only value unequal to itself
+        if value is None or pd.isna(value):
             return False
         return bool(value)
     except (TypeError, ValueError):

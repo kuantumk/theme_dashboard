@@ -387,6 +387,29 @@ class HighlightTooltipTests(unittest.TestCase):
         for text in re.findall(r":\s*'([^']*)'", table.group(1)):
             self.assertGreater(len(text), 8, f'{text!r} names no rung')
 
+    def test_the_short_tooltip_quotes_the_floor_the_ladder_actually_gates_on(self):
+        """The tooltip hand-types the percentage the Python constant decides.
+
+        Nothing else binds them: the floor reaches no payload the browser reads,
+        so a retuned `HIGHLIGHT_SHORT_FLOOR` would leave this tooltip telling a
+        trader 20% while the ladder gated somewhere else. The docstring on
+        `compute_highlight_tier` openly invites that retune — it records the
+        level as chosen against the SI tab's 12% and the EP screener's 10% — so
+        the drift this pins is a likely edit, not a hypothetical one.
+        """
+        from src.indicators.create_technical_indicators import (
+            HIGHLIGHT_SHORT_FLOOR,
+        )
+
+        table = re.search(r'const HL_TIER_TIP = \{(.*?)\n  \};', APP, re.S)
+        self.assertIsNotNone(table, 'HL_TIER_TIP is gone')
+        short_tip = re.search(r"short:\s*'([^']*)'", table.group(1))
+        self.assertIsNotNone(short_tip, 'the short rung lost its wording')
+        self.assertIn(
+            f'{HIGHLIGHT_SHORT_FLOOR:g}%', short_tip.group(1),
+            f'the tooltip says {short_tip.group(1)!r} but the ladder gates at '
+            f'{HIGHLIGHT_SHORT_FLOOR:g}%')
+
     def test_the_split_stack_tooltip_states_positions_and_asserts_no_direction(self):
         """AE7 and R5. Two opposite trades produce this one reading.
 

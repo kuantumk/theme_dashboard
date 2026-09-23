@@ -1245,6 +1245,29 @@ def filter_metrics(row):
     )
 
 
+#: The only columns `_highlight_from_row` reads. A caller that needs nothing
+#: else passes this to `_bars_by_ticker` so a per-session row dict stays narrow.
+HIGHLIGHT_ROW_COLUMNS = ('tight_base', 'ema10', 'ema20', 'sma50')
+
+
+def _bars_by_ticker(master_df, columns=None):
+    """Index a master frame by upper-case ticker, as ``{ticker: row dict}``.
+
+    `columns` narrows the row dicts to the fields the caller reads. An absent
+    column is simply dropped rather than raising, so a back-dated parquet that
+    predates an indicator answers "missing" for it — which every consumer here
+    already treats as absent. `ticker` is always kept.
+    """
+    if columns is None:
+        frame = master_df
+    else:
+        keep = ['ticker'] + [c for c in columns if c in master_df.columns]
+        frame = master_df[keep]
+    return frame.set_index(
+        master_df['ticker'].astype(str).str.upper()
+    ).to_dict('index')
+
+
 def _highlight_from_row(row, short_interest=None):
     """Return the one highlight tier a payload row earns, or None.
 
@@ -1762,9 +1785,7 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
     if master_df is None or master_df.empty or not si_rows:
         return None
 
-    bars = master_df.set_index(
-        master_df['ticker'].astype(str).str.upper()
-    ).to_dict('index')
+    bars = _bars_by_ticker(master_df)
 
     report_date = ''
     if 'date' in master_df.columns and len(master_df):
@@ -1978,9 +1999,9 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     # composite, rs, vars, price, liquidity, tightness, coiled and screened. So
     # the highlight ladder reads the session's own master row through this
     # lookup, the same join `_build_si_snapshot` uses. `l1_score` stays as it is.
-    bars = master_df.set_index(
-        master_df['ticker'].astype(str).str.upper()
-    ).to_dict('index')
+    # Only the ladder's own columns: this runs once per retained session, and a
+    # full-width row dict would carry forty-odd columns nothing here reads.
+    bars = _bars_by_ticker(master_df, HIGHLIGHT_ROW_COLUMNS)
     short_rows = fundamentals if (fundamentals and newest_session) else {}
 
     def _member_highlight(ticker):

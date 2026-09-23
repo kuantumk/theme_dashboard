@@ -55,6 +55,9 @@
      been tuned against a live chip yet. */
   --hl-short: #3ad1ff;
   --hl-short-dim: rgba(58, 209, 255, 0.14);
+  /* Repeats the --green literal rather than var(--green): the yellow-collision
+     test resolves these three values to compare them, and an indirection would
+     still pass that test if --green were ever retuned to the selection yellow. */
   --hl-ma-up: #00e676;
   --hl-ma-up-dim: rgba(0, 230, 118, 0.14);
   --hl-ma-split: #ff8c3a;

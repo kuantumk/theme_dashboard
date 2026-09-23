@@ -24,14 +24,8 @@
   const RVOL_FIELD = 'rvol_at_time';
   const SIDES_FIELD = 'sides';
 
-  // KTD5's scoring constants, mirroring `bidask.group_rvol_cap` and
-  // `grouping.TOP_MEMBERS`. The cap is not optional: one row read 2090.8x in
-  // the measured session, and an uncapped mean hands its theme a score three
-  // orders of magnitude above every rival, so the ranking stops responding to
-  // anything else. The payload carries neither value, so these are a copy —
-  // `tests/test_bidask_column_meta_markup.py` pins them against the Python.
-  const RVOL_CAP = 5.0;
-  const TOP_MEMBERS = 3;
+  // The server publishes effective scoring settings with complete membership.
+  // Display caps apply only after the browser has filtered and ranked groups.
 
   // Which change field answers each reference, per session state. Mirrors
   // `REFERENCE_FIELDS` in `src/bidask/session_state.py` and the single pair in
@@ -62,6 +56,8 @@
   let state = null;
   let timer = null;
   let cadence = null;      // seconds; mirrors the server's live value
+  let refreshSequence = 0;
+  let appliedSequence = 0;
   let pickedTab = false;   // user has chosen a tab, so stop auto-selecting
 
   const els = {
@@ -210,28 +206,20 @@
   // Mean of the top three, each capped BEFORE the mean. Capping the mean
   // instead is a different operation: it lets one extreme member carry two
   // quiet ones to the ceiling.
-  function intensity(members) {
-    const values = members.map(m => Math.min(memberValue(m), RVOL_CAP))
+  function intensity(members, scoring) {
+    const values = members.map(m => Math.min(memberValue(m), scoring.rvol_cap))
       .sort((a, b) => b - a)
-      .slice(0, TOP_MEMBERS);
+      .slice(0, scoring.top_members);
     if (!values.length) return 0;
     return values.reduce((sum, v) => sum + v, 0) / values.length;
   }
 
-  // The breadth half is recovered from the published score rather than
-  // recomputed, because the payload carries neither the group's pre-gate roster
-  // nor the coefficient — see the report accompanying this change. The residual
-  // is exact for an unfiltered group, so a board with the sliders wide open
-  // shows precisely the numbers the server ranked on. Once members are filtered
-  // out the residual is scaled by the share that survived, which is an
-  // approximation of a term bounded by its own coefficient (0.5) against an
-  // intensity half spanning 0 to 5.
-  function groupScore(all, visible, published) {
-    const full = intensity(all);
-    const score = num(published);
-    const breadth = score === null ? 0 : Math.max(0, score - full);
-    const share = all.length ? visible.length / all.length : 0;
-    return intensity(visible) + breadth * share;
+  function groupScore(group, visible, scoring) {
+    // No filter removed a member: preserve the exact score the server ranked.
+    if (visible.length === group.members.length) return group.score;
+    const breadth = visible.length >= scoring.breadth_min_members && group.roster > 0
+      ? Math.max(0, scoring.breadth_coef * Math.min(1, visible.length / group.roster)) : 0;
+    return Math.round((intensity(visible, scoring) + breadth) * 10000) / 10000;
   }
 
   // ── honesty ───────────────────────────────────────────
@@ -299,13 +287,8 @@
       + 'working and the market is quiet.';
   }
 
-  // The server caps each column at a fixed number of rows, so most of the board
-  // never reaches the page — measured 2026-08-14, the strong column rendered 13
-  // of 124 themes and 111 of 367 in-play tickers. Saying nothing made a theme
-  // that was genuinely bid look identical to one nobody was tracking. The
-  // server publishes only the totals; the shown half is counted here, after the
-  // sliders above, because a count sent from the server would be pre-slider and
-  // would disagree with what is on screen.
+  // Count shown rows after sliders and display caps; server totals describe
+  // all admitted groups. Full membership remains available for scoring.
   function renderColumnMeta(el, kept, meta) {
     if (!el) return;
     if (!meta || !meta.groups_total) {
@@ -369,7 +352,7 @@
       </span>`;
   }
 
-  function renderColumn(groups, container, side, emptyMsg, meta, metaEl, sessionState) {
+  function renderColumn(groups, container, side, emptyMsg, meta, metaEl, sessionState, scoring) {
     const f = filters();
     const kept = [];
     (groups || []).forEach(group => {
@@ -379,7 +362,7 @@
         kept.push({
           name: group.name,
           origin: group.origin,
-          score: groupScore(all, members, group.score),
+          score: groupScore(group, members, scoring),
           members: members,
         });
       }
@@ -387,10 +370,18 @@
     // Both columns descend. The score is a capped relative volume plus a term
     // that only adds, so it is never negative — an ascending weak column would
     // lead with the quietest theme and spend its whole budget before reaching
-    // the ones being distributed. Ties break on name, as the server's do, so
-    // the order is stable across polls.
-    kept.sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
-    renderColumnMeta(metaEl, kept, meta);
+    // the ones being distributed. Stable sort retains the server's tie order
+    // for unchanged groups.
+    kept.sort((a, b) => b.score - a.score);
+    let budget = scoring.max_rows_per_column;
+    const shown = [];
+    for (const group of kept) {
+      if (budget <= 0) break;
+      const members = group.members.slice(0, Math.min(budget, scoring.max_rows_per_group));
+      shown.push({ ...group, members: members });
+      budget -= members.length;
+    }
+    renderColumnMeta(metaEl, shown, meta);
 
     if (!kept.length) {
       // The server admitted rows and the reader's own sliders then removed
@@ -405,11 +396,11 @@
       return;
     }
 
-    container.innerHTML = kept.map(group => {
+    container.innerHTML = shown.map(group => {
       const chips = group.members.map(m => renderChip(m, side, sessionState)).join('');
       const nameClass = group.origin === 'industry' ? 'group-name industry' : 'group-name';
       return `<div class="group">
-          <div class="group-head" title="Mean relative volume of the top ${TOP_MEMBERS} members, each capped at ${RVOL_CAP}x, plus a bonus for the share of the theme that qualified.">
+          <div class="group-head" title="Mean relative volume of the top ${scoring.top_members} members, each capped at ${scoring.rvol_cap}x, plus a bonus for the share of the theme that qualified.">
             <span class="${nameClass}">${esc(group.name)}</span>
             <span class="group-score">${group.score.toFixed(2)}</span>
           </div>
@@ -511,15 +502,20 @@
     // per row would let two tickers in one poll be labelled against different
     // references.
     const sessionState = (view.rvol && view.rvol.session_state) || '';
-    renderColumn(cols.strong, els.strong, 'strong', reason, cut.strong, els.strongMeta, sessionState);
-    renderColumn(cols.weak, els.weak, 'weak', reason, cut.weak, els.weakMeta, sessionState);
+    renderColumn(cols.strong, els.strong, 'strong', reason, cut.strong, els.strongMeta, sessionState, cols.scoring);
+    renderColumn(cols.weak, els.weak, 'weak', reason, cut.weak, els.weakMeta, sessionState, cols.scoring);
     window.scrollTo(0, y);
   }
 
   function refresh() {
-    fetch(STATE_URL + '?t=' + Date.now())
+    const sequence = ++refreshSequence;
+    // Compare with the last response applied, not the last request started:
+    // a slow connection must still advance while its next poll is pending.
+    return fetch(STATE_URL + '?t=' + Date.now())
       .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
       .then(data => {
+        if (sequence < appliedSequence) return;
+        appliedSequence = sequence;
         state = data;
         // Follow the server's live cadence: it is authoritative (it clamps to
         // configured bounds) and another tab may have changed it.
@@ -531,6 +527,8 @@
         render();
       })
       .catch(() => {
+        if (sequence < appliedSequence) return;
+        appliedSequence = sequence;
         els.feed.textContent = 'server unreachable';
         els.feed.className = 'pill error';
       });

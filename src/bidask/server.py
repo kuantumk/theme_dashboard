@@ -196,6 +196,7 @@ class TapeEngine:
         self.qualified = {m: [] for m in markets}
         self.pregate = {m: [] for m in markets}
         self.gates = {m: None for m in markets}
+        self.delayed_rows = {m: 0 for m in markets}
         self.session_states = {m: CLOSED for m in markets}
         # Whether the vendor's volume column is still advancing. The board's
         # every other guard keys off ABSENCE — a zero reading, a NaN, a raised
@@ -229,6 +230,8 @@ class TapeEngine:
         self.profile_dates: dict = {m: None for m in markets}
         self.profile_status = {m: "pending" for m in markets}
         self._profile_threads: dict = {m: None for m in markets}
+        self._profile_targets = {m: None for m in markets}
+        self._profile_lock = threading.Lock()
         # Retry state for a warm-up that failed. `profile_dates` records
         # success and the thread handle records in-flight, so without these a
         # failure is the one outcome nothing remembers — and the next poll,
@@ -247,96 +250,84 @@ class TapeEngine:
         The download would stall the poll loop if it ran inline, so it runs in
         a background thread and caches to disk.
 
-        It runs once per session because the baseline depends only on completed
-        sessions. A same-day restart reuses the cache; a cache from another
-        session is discarded rather than reused, because a stale baseline is
-        silently wrong for every ticker rather than visibly absent for all.
+        Profiles are valid for one session date and instrument. A restart
+        reuses today's cache; newly selected instruments warm incrementally.
+        Missing instruments retry with backoff without redownloading successes.
+        A rollover invalidates old curves before any row can use them.
 
         ⛔ Bars are requested for the row's own `feed_symbol` and the result is
-        re-keyed to its `symbol`. On the crypto tab those differ — the board
+        kept under that instrument key. On the crypto tab those differ — the board
         shows `BTC` while the instrument is `BINANCE:BTCUSDT.P` — and the chart
         socket resolves nothing from the display name.
         """
-        if self.profile_dates.get(market) == session_date:
-            return
-        thread = self._profile_threads.get(market)
-        if thread is not None and thread.is_alive():
-            return
-        # ⛔ A failed build must not relaunch on the next poll. `profile_dates`
-        # is set only on success, so without this the warm-up restarts every
-        # ~10 seconds — a ~1,900-symbol websocket download, against a vendor
-        # that just refused us, forever. The backoff reuses the feed's own
-        # schedule so one idea governs both retry paths.
-        if time.time() < self._profile_retry_at.get(market, 0.0):
-            return
-        fetch_by_display = self._symbol_map(rows)
-        if not fetch_by_display:
-            return
+        wanted = set(self._symbol_map(rows).values())
         grid = MARKET_GRIDS.get(market, EQUITY_GRID)
+        with self._profile_lock:
+            if self._profile_targets[market] != session_date:
+                self._profile_targets[market] = session_date
+                self.profiles[market] = {}
+                self.profile_dates[market] = None
+                self.profile_status[market] = "pending"
+                self._profile_failures[market] = 0
+                self._profile_retry_at[market] = 0.0
+            thread = self._profile_threads.get(market)
+            if thread is not None and thread.is_alive():
+                return
+            if not wanted or (self.profile_dates[market] == session_date
+                              and wanted <= self.profiles[market].keys()):
+                return
+            if time.time() < self._profile_retry_at[market]:
+                return
+            self.profile_status[market] = "pending"
 
         def defer() -> None:
-            """Back off this market's warm-up after a failed attempt."""
-            self._profile_failures[market] = self._profile_failures.get(market, 0) + 1
+            self._profile_failures[market] += 1
             step = BACKOFF_STEPS[min(self._profile_failures[market],
                                      len(BACKOFF_STEPS) - 1)]
             self._profile_retry_at[market] = time.time() + self.poll_seconds * step
 
         def warm() -> None:
-            cached = load_profiles(self.out_path.parent, session_date,
-                                   market=market, grid=grid)
-            if cached:
-                self.profiles[market] = cached
-                self.profile_dates[market] = session_date
-                self.profile_status[market] = f"cached ({len(cached)})"
-                print(f"  rvol baselines [{market}]: reused {len(cached)} "
-                      "from today's cache")
-                return
-            print(f"  rvol baselines [{market}]: building for "
-                  f"{len(fetch_by_display)} tickers…")
-            started = time.time()
             try:
-                built = build_for_symbols(list(fetch_by_display.values()),
-                                          sessions=self.cfg.in_play_rvol_sessions,
-                                          grid=grid)
-            except Exception as exc:  # noqa: BLE001 — the tape must keep running
-                self.profile_status[market] = f"failed ({type(exc).__name__})"
-                defer()
-                # There is no second admission path: relative volume is the
-                # gate. A failed build therefore empties the board, and the
-                # payload says so rather than letting it read as a quiet
-                # market.
-                print(f"  rvol baselines [{market}]: build failed "
-                      f"({type(exc).__name__}); the board stays empty until it"
-                      " succeeds")
-                return
-            # Back to the names the gate looks up. A symbol whose bars never
-            # arrived is simply absent, which scores 0 and excludes the row.
-            keyed = {display: built[fetch] for display, fetch
-                     in fetch_by_display.items() if fetch in built}
-            # ⛔ Resolving NOTHING is a failure, not a finished warm-up. Every
-            # name requested here came from rows the screener returned in this
-            # same poll, so a build that keys zero of them did not find a quiet
-            # market — it failed to reach the vendor. Latching `profile_dates`
-            # on that empties the board for the rest of the session with a
-            # status pill reading `ready (0/1900)`, which is the quiet-market
-            # misreport this whole design exists to prevent.
-            if not keyed:
-                self.profile_status[market] = f"failed (0/{len(fetch_by_display)} resolved)"
-                defer()
-                print(f"  rvol baselines [{market}]: resolved 0 of "
-                      f"{len(fetch_by_display)}; treating as a failure, not a"
-                      " finished warm-up")
-                return
-            self.profiles[market] = keyed
-            self.profile_dates[market] = session_date
-            self._profile_failures[market] = 0
-            self._profile_retry_at[market] = 0.0
-            self.profile_status[market] = f"ready ({len(keyed)}/{len(fetch_by_display)})"
-            save_profiles(keyed, self.out_path.parent, session_date,
-                          market=market, grid=grid)
-            prune_cache(self.out_path.parent, session_date, market=market)
-            print(f"  rvol baselines [{market}]: {len(keyed)}/"
-                  f"{len(fetch_by_display)} ready in {time.time() - started:.0f}s")
+                cached = load_profiles(self.out_path.parent, session_date,
+                                       market=market, grid=grid)
+                with self._profile_lock:
+                    if self._profile_targets[market] != session_date:
+                        return
+                    cached.update(self.profiles[market])
+                missing = wanted - cached.keys()
+                built = (build_for_symbols(sorted(missing),
+                         sessions=self.cfg.in_play_rvol_sessions,
+                         exclude_date=session_date, grid=grid)
+                         if missing else {})
+                profiles = {**cached, **built}
+                resolved = wanted & profiles.keys()
+                if not resolved:
+                    raise RuntimeError(f"0/{len(wanted)} resolved")
+                # Publication and cache maintenance share the date guard.
+                # An old worker must not overwrite a new day's status or
+                # prune its cache after midnight.
+                with self._profile_lock:
+                    if self._profile_targets[market] != session_date:
+                        return
+                    self.profiles[market] = profiles
+                    self.profile_dates[market] = session_date
+                    self.profile_status[market] = f"ready ({len(resolved)}/{len(wanted)})"
+                    if resolved == wanted:
+                        self._profile_failures[market] = 0
+                        self._profile_retry_at[market] = 0.0
+                    else:
+                        self.profile_status[market] += "; retrying missing instruments"
+                        defer()
+                    if save_profiles(profiles, self.out_path.parent, session_date,
+                                     market=market, grid=grid):
+                        prune_cache(self.out_path.parent, session_date, market=market)
+            except Exception as exc:  # the poll loop must survive warm-up failure
+                with self._profile_lock:
+                    if self._profile_targets[market] != session_date:
+                        return
+                    self.profile_status[market] = f"failed ({exc})"
+                    defer()
+                print(f"  rvol baselines [{market}]: {exc}")
 
         thread = threading.Thread(target=warm, daemon=True,
                                   name=f"bidask-rvol-warmup-{market}")
@@ -397,6 +388,7 @@ class TapeEngine:
             self.qualified[market] = []
             self.pregate[market] = []
             self.gates[market] = None
+            self.delayed_rows[market] = 0
             self.session_states[market] = CLOSED
             # A poll that did not happen cannot assert the feed has frozen. The
             # watch keeps its reference — the next successful poll compares
@@ -435,11 +427,8 @@ class TapeEngine:
             # column, so a baseline for it is a websocket round trip spent on a
             # curve nothing will read — measured 2,797 matched against 2,179
             # surviving on one live poll, so roughly a fifth of the warm-up.
-            # The trade-off is named: a borderline name that crosses the floor
-            # later in the session now has no baseline, scores 0 and stays off
-            # the board. That is the same fail-closed rule an unknown reading
-            # already gets, and the alternative is paying for every row the
-            # floor rejects on every session.
+            # Names crossing the liquidity floor later warm incrementally and
+            # remain excluded until their own instrument baseline is ready.
             self.ensure_profiles(market, _session_date(market, now), universe)
 
             # Crypto is not a session state — it has no open and no close — so
@@ -465,8 +454,30 @@ class TapeEngine:
                              volume_since_anchor(universe, state))),
                     now.timestamp())
 
+            # Profiles are stored by instrument, then mapped to this poll's
+            # display names only after checking the session date. A delayed
+            # snapshot has no trustworthy observation time in this feed, so it
+            # cannot share the wall-clock denominator or current floor.
+            with self._profile_lock:
+                current = (self.profiles.get(market, {})
+                           if self.profile_dates.get(market) == _session_date(market, now)
+                           else {})
+                profiles = {name: current[source] for name, source
+                            in self._symbol_map(universe).items() if source in current}
+            # Mixed entitlement responses retain each row's update mode.
+            # Removing its curve fails only that delayed row closed.
+            modes = (universe["update_mode"].fillna(payload.feed).astype(str)
+                     if "update_mode" in universe.columns else None)
+            if modes is not None:
+                delayed = set(universe.loc[modes.str.startswith("delayed"), "symbol"].astype(str))
+            elif payload.feed.startswith("delayed"):
+                delayed = set(universe["symbol"].astype(str))
+            else:
+                delayed = set()
+            profiles = {name: curve for name, curve in profiles.items() if name not in delayed}
+            self.delayed_rows[market] = len(delayed)
             gate = apply_rvol_gate(universe, self.cfg, state=state,
-                                   profiles=self.profiles.get(market, {}),
+                                   profiles=profiles,
                                    elapsed_minutes=elapsed)
             self.gates[market] = gate
             records = gate.rows.to_dict("records")
@@ -513,6 +524,7 @@ class TapeEngine:
                 self.cfg,
                 grouped=(market != "crypto"),
                 universe=self.pregate[market],
+                include_all=True,
             )
             feed = self.feeds[market]
             state[market] = {
@@ -571,6 +583,7 @@ class TapeEngine:
             "scored": 0 if gate is None else gate.scored,
             "polled": 0 if gate is None else gate.polled,
             "unavailable": bool(gate is not None and gate.source_unavailable),
+            "delayed_rows": self.delayed_rows.get(market, 0),
             "reason": self._rvol_reason(market, gate),
             # ⛔ The frozen-column verdict. `unavailable` above cannot cover
             # it: that needs EVERY reading to be zero, and a column serving
@@ -592,6 +605,8 @@ class TapeEngine:
         """
         if gate is None or not gate.source_unavailable:
             return ""
+        if self.delayed_rows.get(market, 0):
+            return "delayed volume has no trustworthy observation time"
         status = self.profile_status.get(market, "pending")
         if not self.profiles.get(market):
             return f"relative-volume baselines unavailable ({status})"

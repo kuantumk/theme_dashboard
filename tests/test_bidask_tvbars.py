@@ -280,5 +280,47 @@ class TestPureHelpers(unittest.TestCase):
                          ["Open", "High", "Low", "Close", "Volume"])
 
 
+class TestCompletionDeadline(unittest.TestCase):
+    def test_heartbeats_cannot_keep_an_unfinished_chart_alive(self):
+        tick = [0.0]
+        class Heartbeats(_FakeSocket):
+            def recv(self):
+                tick[0] += 1
+                return frame("~h~123")
+        sock = Heartbeats({})
+        with mock.patch.object(tvbars, "_open_socket", return_value=sock), \
+             mock.patch.object(tvbars.time, "monotonic", side_effect=lambda: tick[0]):
+            connection = tvbars._Connection("tok", interval="5", bars=100)
+            result = connection.series_batch(["NASDAQ:AAA"])
+        self.assertEqual(result, [({}, "timeout")])
+        self.assertLessEqual(tick[0], tvbars.BATCH_IDLE_TIMEOUT)
+        self.assertTrue(any("~h~123" in raw for raw in sock.sent))
+
+    def test_partial_rows_do_not_override_a_timeout(self):
+        connection = mock.Mock()
+        connection.series_batch.return_value = [({1: [1, 1, 1, 1, 1, 42]}, "timeout")]
+        with self.assertRaises(tvbars._SocketRefused):
+            tvbars._resolve_batch(connection, ["NASDAQ:AAA"])
+
+    def test_partial_download_is_retried_on_a_fresh_socket(self):
+        tick = [0.0]
+        opened = []
+        class TimedSocket(_FakeSocket):
+            def recv(self):
+                tick[0] += 1
+                return super().recv()
+        def opener(_token):
+            steps = ["bars"] if not opened else ["bars", "series_completed"]
+            sock = TimedSocket({"NASDAQ:AAA": steps})
+            opened.append(sock)
+            return sock
+        with mock.patch.object(tvbars, "_open_socket", side_effect=opener), \
+             mock.patch.object(tvbars.time, "monotonic", side_effect=lambda: tick[0]):
+            result = fetch_bars(["NASDAQ:AAA"], token="tok", workers=1)
+        self.assertEqual(len(opened), 2)
+        self.assertTrue(opened[0].closed)
+        self.assertEqual(len(result["NASDAQ:AAA"]), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

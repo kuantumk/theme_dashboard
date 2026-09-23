@@ -156,7 +156,7 @@ A source that keeps answering, with plausible figures that have stopped changing
 Where the figure feeds a ratio whose other half advances with the clock, a stalled source does not hold a board still, it empties one: every reading drifts below the threshold that admits it, one stock at a time. That reads as interest fading rather than as a fault, which is why the condition is named on screen rather than inferred from the board thinning.
 
 ### Warm-up
-The once-per-session download that builds each stock's own volume history. Nothing can be scored until it finishes, so it is a distinct cause of an empty board and is reported as one: a board still warming up is neither a broken feed nor a quiet market.
+The background download that builds each instrument's volume history for the current session date. A date rollover clears old histories; new or changed instruments warm incrementally, while instruments with valid histories keep scoring. A ticker stays excluded until its own history is ready. Warm-up is reported as a distinct cause of an empty board: it is neither a broken feed nor a quiet market.
 
 ---
 

@@ -23,6 +23,9 @@ if str(_ROOT) not in sys.path:
 from dotenv import load_dotenv  # noqa: E402
 load_dotenv(_ROOT / ".env")
 
+from src.indicators.create_technical_indicators import (  # noqa: E402
+    compute_highlight_tier,
+)
 from src.reporting.ep_scan_common import (  # noqa: E402
     scan_finviz_tickers,
     get_fundamentals,
@@ -109,6 +112,19 @@ def run_morning_scan() -> tuple[list, int]:
             'atr': technicals['atr'],
             'rvol': round(rvol, 2),
             'news': news,
+            # Same shape as the afternoon scan, and it must stay that way — a
+            # ticker may not read differently between the two tables. The ladder
+            # runs here because the short float never reaches
+            # `calculate_technicals`; placed there it would ship this tab with
+            # the moving-average rungs only. `sma50_full` is None below 50 bars,
+            # keeping a partial mean out of the ladder while `atr_multiple`
+            # still uses it. EP holds no tightness source, so no coil rung.
+            'highlight': compute_highlight_tier(
+                short_interest=fundamentals['short'],
+                ema10=technicals['ema10'],
+                ema20=technicals['ema20'],
+                sma50=technicals['sma50_full'],
+            ),
         }
         results.append(result)
 

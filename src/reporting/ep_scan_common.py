@@ -424,7 +424,19 @@ def get_premarket_price(ticker: str) -> Tuple[Optional[float], Optional[float]]:
 
 
 def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
-    """Calculate 52W high distance and ATR multiple from daily data."""
+    """Calculate 52W high distance, ATR multiple and moving averages from daily
+    data.
+
+    ``ema10`` and ``ema20`` feed the highlight ladder and carry full precision.
+    Rounding them would decide a near-tie between the two averages by the
+    second decimal rather than by the data.
+
+    ``sma50_full`` is the ladder's third input, and it is None below 50 bars.
+    ``sma50`` falls back to a mean of whatever history exists, which
+    ``atr_multiple`` needs and the ladder must never see: a partial mean is
+    finite and positive, the one shape the ladder's zero-as-missing rule cannot
+    catch, on exactly the recent listings an earnings scan surfaces.
+    """
     try:
         t = yf.Ticker(ticker)
         hist = t.history(period='1y')
@@ -438,6 +450,10 @@ def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
 
         sma50 = (float(hist['Close'].iloc[-50:].mean())
                  if len(hist) >= 50 else float(hist['Close'].mean()))
+
+        # Same convention as the indicator pipeline: ewm(span, adjust=False).
+        ema10 = float(hist['Close'].ewm(span=10, adjust=False).mean().iloc[-1])
+        ema20 = float(hist['Close'].ewm(span=20, adjust=False).mean().iloc[-1])
 
         high_low = hist['High'] - hist['Low']
         high_prev = (hist['High'] - hist['Close'].shift(1)).abs()
@@ -457,6 +473,9 @@ def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
             'dist_52w_high': round(dist_52w_high, 2),
             'atr_multiple': round(atr_multiple, 2),
             'sma50': round(sma50, 2),
+            'sma50_full': sma50 if len(hist) >= 50 else None,
+            'ema10': ema10,
+            'ema20': ema20,
             'atr': round(atr, 2),
             'close': round(last_close, 2),
         }

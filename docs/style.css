@@ -32,6 +32,33 @@
      because the chip's own opacity multiplies it — see .radar-chip.coiled. */
   --coil: #b085f5;
   --coil-dim: rgba(176, 133, 245, 0.30);
+  /* Highlight tiers. The server picks one rung per ticker — coil, short
+     interest, stacked averages, split stack — and the rung draws as a tint
+     behind the symbol. The coil pair above is the first rung; these are the
+     other three.
+
+     Each hue is picked against what the same row already owns. --accent
+     (#5566ff) is hover text and --accent2 (#4455ee) is the screened-chip
+     outline, so the short rung leans cyan and stays in the background channel
+     while the screened signal keeps the border. --hl-ma-up repeats the --green
+     value on purpose: a background composes with the day-pattern green TEXT
+     instead of replacing it. Orange is the one hue with no owner in :root,
+     which is why the split-stack rung takes it rather than the literal yellow —
+     yellow marks the selected ticker on every tab.
+
+     Only the *-dim tints are painted. The base hues are recorded as the tints'
+     parent colours and stay unpainted, because a tier rule may never set
+     `color`: that channel belongs to the green day-pattern flag.
+
+     A .radar-chip multiplies its background by the chip's own opacity, which is
+     why --coil-dim runs at 0.30 where these run at 0.14. These three have not
+     been tuned against a live chip yet. */
+  --hl-short: #3ad1ff;
+  --hl-short-dim: rgba(58, 209, 255, 0.14);
+  --hl-ma-up: #00e676;
+  --hl-ma-up-dim: rgba(0, 230, 118, 0.14);
+  --hl-ma-split: #ff8c3a;
+  --hl-ma-split-dim: rgba(255, 140, 58, 0.16);
   /* L1 section band — an indigo-tinted lift of --bg4 in the --accent hue, so a
      new L1 reads as a break in a long scroll without introducing a new color. */
   --l1-bg: #161a2c;
@@ -584,8 +611,19 @@ td.l {
 }
 
 /* ── TICKER LINK ────────────────────────────────────────── */
+/* The horizontal padding gives a highlight tint a box. A background on a bare
+   inline span hugs the glyphs, and this element carries no padding and no
+   display:inline-block, unlike a radar chip. The equal NEGATIVE margin hands
+   the width straight back: padding alone widens the first column on eight
+   tables and invalidates the six panel widths
+   tests/test_dashboard_panel_layout.py pins, each one measured from natural
+   table width. Change the two together or every table moves. A radar chip sets
+   its own padding and margin later in this file, at equal specificity, so it
+   wins on source order and is unaffected. */
 .tn-link {
   cursor: pointer;
+  padding: 0 3px;
+  margin: 0 -3px;
   border-bottom: 1px dotted rgba(136, 136, 136, 0.4);
   transition: color 0.15s;
   color: var(--text);
@@ -1936,6 +1974,68 @@ tbody tr.nav-active {
   opacity: 0.4;
 }
 
+/* ── HIGHLIGHT TIERS ────────────────────────────────────── */
+/* The other three rungs of the ladder the coil rules above open. Same channel,
+   same constraints: a BACKGROUND, never a colour, never a layout-affecting
+   property. Colour is taken by the green day-pattern flag, yellow by
+   selection, blue by screened and hover; a width change would move the
+   "+N more" count syncRadarClamps derives from chip wrapping.
+
+   Every rung is written TWICE, once for the chip and once for the plain span.
+   renderThemes is the only renderer that adds the radar-chip class, so the
+   other eight list tabs draw a bare ticker link and a chip-only rule ships the
+   tint invisible there. The coil rung needs the same second rule for the same
+   reason: it reached the eight table tabs with no plain-span rule to draw it. A
+   radar chip carries BOTH classes and each pair paints one token, so the two
+   rules of a pair cannot disagree. */
+.tn-link.coiled {
+  background: var(--coil-dim);
+}
+
+.radar-chip.hl-short {
+  background: var(--hl-short-dim);
+}
+
+.tn-link.hl-short {
+  background: var(--hl-short-dim);
+}
+
+.radar-chip.hl-ma-up {
+  background: var(--hl-ma-up-dim);
+}
+
+.tn-link.hl-ma-up {
+  background: var(--hl-ma-up-dim);
+}
+
+.radar-chip.hl-ma-split {
+  background: var(--hl-ma-split-dim);
+}
+
+.tn-link.hl-ma-split {
+  background: var(--hl-ma-split-dim);
+}
+
+/* Same restore the coil rung needs, for the same reason: the unscreened dim
+   (0.55) multiplies a tint that is already faint, and a stock the screeners
+   reject is the common case on this tab. */
+.radar-chip.hl-short.chip-quiet,
+.radar-chip.hl-ma-up.chip-quiet,
+.radar-chip.hl-ma-split.chip-quiet {
+  opacity: 0.85;
+}
+
+/* An armed V/A cutoff still wins — it is an explicit request to push the chip
+   back, and it outranks our wish to advertise a rung. Three classes to match
+   the specificity of the restore above; source order alone would not do it.
+   The table tabs need no counterpart: there the dim lands on the `td`, whose
+   opacity composites the span's background with everything else in the cell. */
+.radar-chip.hl-short.filtered-out,
+.radar-chip.hl-ma-up.filtered-out,
+.radar-chip.hl-ma-split.filtered-out {
+  opacity: 0.4;
+}
+
 /* Dim applied by an armed V/A filter toggle: reads like an unscreened chip but
    with the square outline dropped, so it stays distinct from both chip-screened
    (blue outline) and chip-quiet (grey outline kept). Must sit AFTER those two
@@ -1977,6 +2077,30 @@ tbody tr.nav-active {
    than reorder, or the coil opacity restore stops working instead. */
 .radar-chip.coiled.active-ticker,
 .radar-chip.coiled.filtered-out.active-ticker {
+  color: var(--yellow);
+  border-color: var(--yellow);
+  opacity: 1;
+}
+
+/* The same trap, three more times. Each tier's opacity pair above is three
+   classes (0,3,0) against the selection rule's two, so a selected chip in any
+   tier would render at 0.85 unscreened and 0.4 under an armed cutoff while the
+   same chip untinted renders at 1. Match the specificity rather than reorder,
+   or the opacity restores stop working instead.
+
+   This is the SELECTION rule, not a tier rule, which is why it is the one rule
+   here that sets `color`. The tint rules above must never set it: they have to
+   compose with the green day-pattern text, not replace it.
+
+   The plain span needs no counterpart. A tier rule there sets `background`
+   alone, while the selected ticker link sets `color` with !important and its
+   own underline, so the two never contend for a property. */
+.radar-chip.hl-short.active-ticker,
+.radar-chip.hl-short.filtered-out.active-ticker,
+.radar-chip.hl-ma-up.active-ticker,
+.radar-chip.hl-ma-up.filtered-out.active-ticker,
+.radar-chip.hl-ma-split.active-ticker,
+.radar-chip.hl-ma-split.filtered-out.active-ticker {
   color: var(--yellow);
   border-color: var(--yellow);
   opacity: 1;

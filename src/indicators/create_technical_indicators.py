@@ -154,6 +154,107 @@ def compute_tight_base(tightness, close, period_high,
     return (tight & holding).fillna(False).astype(bool)
 
 
+HIGHLIGHT_SHORT_FLOOR = 20.0  # percent of float; chosen, never measured
+
+
+def _highlight_flag(value):
+    """Read a rung's boolean input. Anything that is not plainly true is False.
+
+    `bool(float('nan'))` is True, so a bare truth test would fire the coil rung
+    on every ticker whose tightness columns are absent. A missing flag fails
+    closed instead.
+    """
+    if value is None:
+        return False
+    try:
+        if bool(value != value):  # NaN is the only value unequal to itself
+            return False
+        return bool(value)
+    except (TypeError, ValueError):
+        return False
+
+
+def _highlight_number(value):
+    """Read a rung's numeric input, or None when the value says nothing."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def _highlight_price(value):
+    """Read a price-scale input. Zero and below read as missing.
+
+    The snapshot builders call `.fillna(0)`, so an absent `sma50` arrives as
+    `0.0`. Every average sits above zero, so a bare comparison would report a
+    stacked trend on a stock that has none. A price of zero is impossible for a
+    real security, which makes zero a safe sentinel for absent. See
+    `docs/solutions/logic-errors/nan-defeats-numeric-guard-chains.md`.
+    """
+    number = _highlight_number(value)
+    return number if number is not None and number > 0 else None
+
+
+def compute_highlight_tier(tight_base=None, short_interest=None,
+                           ema10=None, ema20=None, sma50=None):
+    """Which one highlight a ticker earns: 'coil', 'short', 'ma_up',
+    'ma_split', or None.
+
+    The ladder runs in that order and stops at the first rung the ticker
+    satisfies:
+
+    1. ``tight_base`` is true — the same state the Themes tab tints today.
+    2. ``short_interest >= 20`` percent of float.
+    3. ``ema10 > ema20 > sma50``.
+    4. ``ema10 > ema20`` and ``ema20`` is not above ``sma50``.
+
+    **The order is a display preference, not a ranking claim.** Nothing
+    measures whether a coil predicts better than a crowded short, or either
+    better than a stacked average. The 20% floor is chosen as well: the SI tab
+    gates its roster at 12% and the EP screener at 10%, so three numbers
+    describe one idea and none is calibrated.
+
+    **A rung whose input is missing is skipped, and the ladder carries on.** So
+    a tier names the highest rung whose input the CALLER HOLDS, never the
+    absence of a higher one. Most Themes chips have no short-interest row, so a
+    crowded short there reads as stacked on every session — 'ma_up' must not be
+    read as "stacked and not crowded".
+
+    Rung 4 states where the averages sit and nothing more. Two opposite trades
+    produce that same reading, and this rung separates neither. Do not give it a
+    direction in the code, in a comment, or in a tooltip.
+
+    Rung 4 needs only the ``ema20`` against ``sma50`` comparison, because rung 3
+    has already established ``ema10 > ema20``. The request stated it as
+    ``ema20 < sma50 or ema10 < sma50``; with ``ema10 > ema20`` true,
+    ``ema10 < sma50`` forces ``ema20 < sma50``, so the second clause adds
+    nothing. Equal averages fall to rung 4. `tests/test_highlight_tier.py` pins
+    the reduced form against the request's original wording.
+
+    Takes plain scalars rather than a frame row, because the ETF recompute and
+    the EP scans hold neither. Shared with every producer for the same reason
+    `compute_inside_day` is — one definition cannot drift from itself.
+    """
+    if _highlight_flag(tight_base):
+        return 'coil'
+
+    short = _highlight_number(short_interest)
+    if short is not None and short >= HIGHLIGHT_SHORT_FLOOR:
+        return 'short'
+
+    fast = _highlight_price(ema10)
+    slow = _highlight_price(ema20)
+    base = _highlight_price(sma50)
+    # Both moving-average rungs read sma50, so one absent average answers
+    # neither of them.
+    if fast is None or slow is None or base is None:
+        return None
+    if fast <= slow:
+        return None
+    return 'ma_up' if slow > base else 'ma_split'
+
+
 DROP_WINDOW = 15    # sessions in the drawdown window
 DROP_LOOKBACK = 45  # sessions searched for the worst such window
 

@@ -15,7 +15,7 @@ The spec, from `build_profiles`' own contract:
 
 1. Cut days in the GRID's timezone, not the frame's.
 2. Bucket each bar's volume into slot `(minute_of_day - anchor) // 5`.
-3. Drop a bar outside the grid's day, and a non-finite volume.
+3. Drop bars outside the grid, and days with explicit invalid volume inside it.
 4. Drop a day carrying fewer than `min_core_bars` bars inside the core window.
 5. Drop `exclude_date` — today must not appear in its own denominator.
 6. Average the LAST `sessions` surviving days, elementwise, after a cumulative
@@ -51,6 +51,7 @@ def reference_profiles(bars_by_symbol, sessions=10, exclude_date=None,
                 continue
             slots = np.zeros(grid.slots, dtype=float)
             core = 0
+            invalid = False
             for stamp, local_stamp, volume in zip(frame.index, local,
                                                   frame["Volume"]):
                 if local_stamp.date() != day:
@@ -59,12 +60,13 @@ def reference_profiles(bars_by_symbol, sessions=10, exclude_date=None,
                 if grid.core_open_min <= minute < grid.core_close_min:
                     core += 1
                 value = float(volume)
-                if not math.isfinite(value):
-                    continue
                 slot = (minute - grid.anchor_min) // BAR_MINUTES
+                if not math.isfinite(value) or value < 0:
+                    invalid |= 0 <= slot < grid.slots
+                    continue
                 if 0 <= slot < grid.slots:
                     slots[slot] += value
-            if core < grid.min_core_bars:
+            if invalid or core < grid.min_core_bars:
                 continue
             curves.append(np.cumsum(slots))
         if not curves:

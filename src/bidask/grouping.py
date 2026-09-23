@@ -96,9 +96,8 @@ def _tally(total_groups: int, total_tickers: int) -> dict:
     hint that the other 111 existed, so a theme that was genuinely bid looked
     identical to one that was not being tracked at all.
 
-    Only the totals are published. The matching "shown" half is the browser's
-    to count, because it applies its own sliders after this cap — a count sent
-    from here would be pre-slider and would disagree with the screen.
+    Only the totals are published. The browser counts "shown" after its
+    sliders and display caps, so that figure agrees with the screen.
     """
     return {"groups_total": total_groups, "tickers_total": total_tickers}
 
@@ -204,7 +203,7 @@ def _roster_sizes(universe: list[dict], themes: dict) -> dict[str, int]:
 
 
 def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
-                  universe=None) -> dict:
+                  universe=None, include_all: bool = False) -> dict:
     """Split one poll's qualifying rows into strong-tape and weak-tape columns.
 
     `rows` are the rows that cleared the relative-volume gate. Each carries
@@ -226,7 +225,9 @@ def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
     theme and spend its whole budget before reaching the ones being distributed.
     There is no `reverse` parameter left to pass the wrong way round.
 
-    `truncated` carries per-side counts of what the display caps dropped.
+    `include_all` publishes complete scoring inputs for browser filtering;
+    display limits and effective scoring settings travel with the columns.
+    The default remains capped for direct callers. `truncated` carries totals.
     """
     strong_rows, weak_rows = [], []
     for source in rows:
@@ -244,9 +245,18 @@ def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
 
     pool = list(rows) if universe is None else list(universe)
     split = _flat if not grouped else _grouped
-    strong, strong_meta = split(strong_rows, themes, cfg, pool)
-    weak, weak_meta = split(weak_rows, themes, cfg, pool)
+    strong, strong_meta = split(strong_rows, themes, cfg, pool, include_all)
+    weak, weak_meta = split(weak_rows, themes, cfg, pool, include_all)
     return {
+        "scoring": {
+            "rvol_cap": _tunable(cfg, "group_rvol_cap", DEFAULT_RVOL_CAP),
+            "breadth_coef": _tunable(cfg, "group_breadth_coef", DEFAULT_BREADTH_COEF),
+            "breadth_min_members": int(_tunable(
+                cfg, "group_breadth_min_members", DEFAULT_BREADTH_MIN_MEMBERS)),
+            "top_members": TOP_MEMBERS,
+            "max_rows_per_column": cfg.max_rows_per_column,
+            "max_rows_per_group": cfg.max_rows_per_group if grouped else cfg.max_rows_per_column,
+        },
         "strong": strong,
         "weak": weak,
         "truncated": {"strong": strong_meta, "weak": weak_meta},
@@ -271,7 +281,7 @@ def _score(members: list[dict], roster: int, cfg) -> float:
     return round(total, 4)
 
 
-def _flat(rows: list[dict], _themes: dict, cfg, universe: list[dict]
+def _flat(rows: list[dict], _themes: dict, cfg, universe: list[dict], include_all: bool
           ) -> tuple[list[dict], dict]:
     """Crypto path: one pseudo-group, ranked. The taxonomy is equities-only.
 
@@ -290,12 +300,13 @@ def _flat(rows: list[dict], _themes: dict, cfg, universe: list[dict]
         # Scored before the column cap, so the ranking does not depend on how
         # many rows happen to fit.
         "score": _score(members, roster, cfg),
-        "members": members[: cfg.max_rows_per_column],
+        "roster": roster,
+        "members": members if include_all else members[: cfg.max_rows_per_column],
     }]
     return shown, _tally(1, total_tickers)
 
 
-def _grouped(rows: list[dict], themes: dict, cfg, universe: list[dict]
+def _grouped(rows: list[dict], themes: dict, cfg, universe: list[dict], include_all: bool
              ) -> tuple[list[dict], dict]:
     roster = _roster_sizes(universe, themes)
 
@@ -310,9 +321,13 @@ def _grouped(rows: list[dict], themes: dict, cfg, universe: list[dict]
     for bucket in groups:
         bucket["members"] = _dedupe(bucket["members"])
         bucket["members"].sort(key=_sort_key)
+        bucket["roster"] = roster.get(bucket["name"], 0)
         bucket["score"] = _score(bucket["members"],
                                  roster.get(bucket["name"], 0), cfg)
     groups.sort(key=lambda b: (-b["score"], b["name"]))
+
+    if include_all:
+        return groups, _tally(len(groups), len({r["symbol"] for r in rows}))
 
     # Cap per group *before* spending the column budget. Without the per-group
     # limit the top bucket takes as many slots as it has members and every other

@@ -321,21 +321,20 @@ class _Connection:
         collected = {chart: {} for chart in charts}
         reasons = {chart: "timeout" for chart in charts}
         done = set()
-        # ⛔ A silence budget, not a per-symbol one. The series run
-        # concurrently, so summing a timeout per symbol would let one dead
-        # ticker hold a batch of 32 for ten minutes. Any frame at all — for any
-        # chart in the batch — proves the socket is working and resets it.
-        last_progress = time.time()
+        # Bound unfinished chart work, even if the socket keeps sending
+        # heartbeats or updates for a series that has already completed.
+        deadline = time.monotonic() + BATCH_IDLE_TIMEOUT
         while len(done) < len(charts):
-            if time.time() - last_progress > BATCH_IDLE_TIMEOUT:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
                 break
+            self._socket.settimeout(min(READ_TIMEOUT, remaining))
             try:
                 raw = self._socket.recv()
             except websocket.WebSocketTimeoutException:
                 continue
             if not raw:
                 continue
-            last_progress = time.time()
             for payload in iter_frames(raw):
                 if payload.startswith("~h~"):
                     # Echo verbatim. The server drops a connection that stops
@@ -476,11 +475,11 @@ def _resolve_batch(connection: "_Connection", symbols: list) -> dict:
         results = connection.series_batch([chains[k][step[k]] for k in keys])
         following = {}
         for key, (rows, reason) in zip(keys, results):
+            if reason not in ("completed",) + NOT_LISTED_METHODS:
+                raise _SocketRefused(reason)
             if rows:
                 out[key] = bars_to_frame(rows)
                 continue
-            if reason not in ("completed",) + NOT_LISTED_METHODS:
-                raise _SocketRefused(reason)
             nxt = step[key] + 1
             if nxt < len(chains[key]):
                 following[key] = nxt

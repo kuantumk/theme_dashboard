@@ -7,8 +7,7 @@ payload renders `undefined` or nothing at all.
 
 These pins cannot catch an inverted sort or an unreadable label. The plan's
 Verification Contract covers those with a live board; this file covers the
-joins, the retired surfaces, and the two constants the browser had to copy from
-the Python because the payload does not carry them.
+joins, the retired surfaces, and the scoring settings supplied by Python.
 """
 
 import re
@@ -16,7 +15,7 @@ import unittest
 from pathlib import Path
 
 from src.bidask.crypto_state import CHANGE_FIELD, CRYPTO, REF_24H
-from src.bidask.grouping import DEFAULT_RVOL_CAP, RVOL_FIELD, SIDES_FIELD, TOP_MEMBERS
+from src.bidask.grouping import RVOL_FIELD, SIDES_FIELD
 from src.bidask.session_state import REFERENCE_FIELDS
 
 WEB = Path(__file__).resolve().parents[1] / "src" / "bidask" / "web"
@@ -190,28 +189,16 @@ class TestReferenceMarkerIsATextLabel(unittest.TestCase):
                       "the crypto session state is missing from the move table")
 
 
-class TestScoreConstantsMatchThePython(unittest.TestCase):
-    """The payload carries neither, so the browser holds a copy.
-
-    Without the cap the client sort is decided by the tail the server caps away:
-    one measured row read 2090.8x, three orders of magnitude above every rival.
-    """
-
-    def test_the_cap_matches(self):
-        match = re.search(r"const RVOL_CAP = ([\d.]+);", APP)
-        self.assertIsNotNone(match, "app.js lost its relative-volume cap")
-        self.assertAlmostEqual(float(match.group(1)), DEFAULT_RVOL_CAP)
-
-    def test_the_leader_count_matches(self):
-        match = re.search(r"const TOP_MEMBERS = (\d+);", APP)
-        self.assertIsNotNone(match, "app.js lost its top-member count")
-        self.assertEqual(int(match.group(1)), TOP_MEMBERS)
+class TestScoreContract(unittest.TestCase):
+    def test_scoring_settings_come_from_the_payload(self):
+        self.assertIn("cols.scoring", APP)
+        self.assertIn("scoring.rvol_cap", APP)
+        self.assertIn("scoring.top_members", APP)
+        self.assertNotIn("const RVOL_CAP", APP)
 
     def test_the_client_caps_before_it_means(self):
-        """Capping the mean instead lets one extreme member carry two quiet
-        ones to the ceiling — a different operation, not a simplification."""
         body = APP.split("function intensity(", 1)[1].split("\n  }", 1)[0]
-        self.assertIn("Math.min(memberValue(m), RVOL_CAP)", body)
+        self.assertIn("Math.min(memberValue(m), scoring.rvol_cap)", body)
 
     def test_both_columns_sort_descending(self):
         """The score is never negative now, so an ascending weak column would

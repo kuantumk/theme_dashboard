@@ -390,6 +390,7 @@ class TestPollOnceEndToEnd(unittest.TestCase):
             eng.profiles["equity"] = {s: profile
                                       for s in ("GAPR", "HEAV", "QUIT")}
             eng.profile_status["equity"] = "ready (3/3)"
+            eng.profile_dates["equity"] = server._session_date("equity", server.datetime.now(tz=server.ET))
 
             # The clock is pinned so the floor is 1.2 whatever hour the suite
             # runs at, and the warm-up is stubbed so no socket opens.
@@ -597,9 +598,10 @@ class TestCryptoPollReachesTheGate(unittest.TestCase):
                           market_status="24/7")
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("crypto",))
-            eng.profiles["crypto"] = ({s: profile for s in ("BTC", "ETH", "DOGE")}
+            eng.profiles["crypto"] = ({f"BINANCE:{s}USDT.P": profile for s in ("BTC", "ETH", "DOGE")}
                                       if profiles is None else profiles)
             eng.profile_status["crypto"] = "ready (3/3)"
+            eng.profile_dates["crypto"] = server._session_date("crypto", server.datetime.now(tz=server.UTC))
             with mock.patch("src.bidask.server.fetch", return_value=payload), \
                  mock.patch("src.bidask.server.minutes_since_open",
                             return_value=self.ELAPSED), \
@@ -782,18 +784,9 @@ class TestWarmUpRetryDiscipline(unittest.TestCase):
     """
 
     def engine(self):
-        cfg = load_config()
-        eng = server.TapeEngine.__new__(server.TapeEngine)
-        eng.cfg = cfg
-        eng.poll_seconds = cfg.poll_seconds
-        eng.out_path = pathlib.Path(tempfile.mkdtemp()) / server.STATE_FILENAME
-        eng.markets = ("equity",)
-        eng.profiles = {"equity": {}}
-        eng.profile_dates = {"equity": None}
-        eng.profile_status = {"equity": "pending"}
-        eng._profile_threads = {"equity": None}
-        eng._profile_failures = {"equity": 0}
-        eng._profile_retry_at = {"equity": 0.0}
+        eng = server.TapeEngine(load_config(), pathlib.Path(tempfile.mkdtemp()),
+                                markets=("equity",))
+        eng._profile_targets["equity"] = "2026-09-17"
         return eng
 
     def rows(self):
@@ -853,8 +846,8 @@ class TestWarmUpRetryDiscipline(unittest.TestCase):
         self.assertEqual(eng.profile_dates["equity"], "2026-09-17")
         self.assertEqual(eng._profile_failures["equity"], 0)
         self.assertEqual(eng._profile_retry_at["equity"], 0.0)
-        self.assertIn("AAA", eng.profiles["equity"],
-                      "curves are re-keyed to the display symbol")
+        self.assertIn("NASDAQ:AAA", eng.profiles["equity"],
+                      "curves retain their instrument identity")
 
 
 class TestWarmUpReceivesTheFilteredUniverse(unittest.TestCase):
@@ -953,6 +946,7 @@ class TestFrozenNumeratorReachesThePayload(unittest.TestCase):
             eng.themes = {}
             eng.profiles["equity"] = {f"S{i}": profile for i in range(60)}
             eng.profile_status["equity"] = "ready (60/60)"
+            eng.profile_dates["equity"] = "2026-09-18"
             for poll, volume in enumerate(volumes_per_poll):
                 tick[0] = base + timedelta(seconds=gap_seconds * poll)
                 payload = Payload(rows=self.rows(volume), feed="streaming",

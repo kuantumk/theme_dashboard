@@ -230,10 +230,10 @@ SCHEDULE_ORIGIN_MIN = {
 # are pinned.
 SCHEDULE_STATES = tuple(SCHEDULE_ORIGIN_MIN)
 
-# Bumped for the 04:00 anchor. A curve written under the 09:30 anchor has 78
-# slots meaning different clock times, so reading one would misdate every
-# lookup rather than fail — hence a version check rather than a length check.
-CACHE_VERSION = 3
+# Version 4 preserves fractional volumes, keys curves by feed instrument,
+# and excludes sessions with explicit invalid volume. Older caches cannot
+# recover that information and must be rebuilt.
+CACHE_VERSION = 4
 
 
 def minutes_since_open(now: Optional[datetime] = None,
@@ -417,9 +417,9 @@ def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
         # `groupby` produced and the order `[-sessions:]` depends on.
         days, day_id = np.unique(day_key, return_inverse=True)
 
-        # Completeness is counted over EVERY bar of the day, including the ones
-        # whose volume is absent: a day that traded through the session with a
-        # few withdrawn cells is still a complete day.
+        # An absent bar can mean no trades; an explicit invalid volume is an
+        # unknown observation. Drop that day's curve instead of treating the
+        # unknown as zero and understating every later cumulative baseline.
         core = _core_mask(minute, grid)
         core_bars = np.bincount(day_id[core], minlength=len(days))
 
@@ -429,12 +429,17 @@ def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
         # it with zero would understate the baseline, and anything else would
         # invent volume.
         slot = (minute - grid.anchor_min) // BAR_MINUTES
-        usable = (slot >= 0) & (slot < grid.slots) & np.isfinite(volume)
+        in_grid = (slot >= 0) & (slot < grid.slots)
+        valid_volume = np.isfinite(volume) & (volume >= 0)
+        usable = in_grid & valid_volume
         totals = np.bincount(day_id[usable] * grid.slots + slot[usable],
                              weights=volume[usable],
                              minlength=len(days) * grid.slots)
 
         keep = core_bars >= grid.min_core_bars
+        invalid_days = np.bincount(day_id[in_grid & ~valid_volume],
+                                   minlength=len(days))
+        keep &= invalid_days == 0
         if skip is not None:
             keep &= np.fromiter((_day_label(d) != skip for d in days),
                                 dtype=bool, count=len(days))
@@ -533,9 +538,8 @@ def save_profiles(profiles: dict, out_dir: Path, session_date: str,
         "bar_minutes": BAR_MINUTES,
         "anchor_minutes": grid.anchor_min,
         "anchor_tz": str(grid.tz),
-        # Rounded to whole shares: the figures are volume averages in the
-        # millions, so the decimals are noise and they triple the file size.
-        "profiles": {s: [int(round(v)) for v in curve] for s, curve in profiles.items()},
+        # Crypto volumes and averaged equity shares can both be fractional.
+        "profiles": {s: [float(v) for v in curve] for s, curve in profiles.items()},
     }
     tmp = path.with_suffix(".tmp")
     try:

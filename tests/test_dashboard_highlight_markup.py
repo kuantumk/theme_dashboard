@@ -431,6 +431,31 @@ class HighlightTooltipTests(unittest.TestCase):
         for text in re.findall(r":\s*'([^']*)'", table.group(1)):
             self.assertGreater(len(text), 8, f'{text!r} names no rung')
 
+    def test_the_short_column_colour_break_sits_on_the_ladder_floor(self):
+        """Five render sites band the Short% figure at the same 20 the rung uses.
+
+        `CLAUDE.md` says the two agree by coincidence of literal, not by
+        construction. So a retuned floor would leave the tint and the number
+        beside it disagreeing on the same row — a crowded short shown as crowded
+        by one and not the other — with nothing on screen and no test to say so.
+        Binding them here is cheaper than the shared constant that would need a
+        payload field to reach the browser.
+        """
+        from src.indicators.create_technical_indicators import (
+            HIGHLIGHT_SHORT_FLOOR,
+        )
+
+        floor = f'{HIGHLIGHT_SHORT_FLOOR:g}'
+        breaks = re.findall(r"(?:shortVal|t\.si)\s*>=\s*(\d+(?:\.\d+)?)\s*\?\s*'up'", APP)
+        self.assertGreaterEqual(
+            len(breaks), 5,
+            'the Short% colour break moved or was renamed; re-point this test')
+        for found in set(breaks):
+            self.assertEqual(
+                float(found), float(floor),
+                f'a Short% column bands at {found} while the rung gates at '
+                f'{floor}; the tint and the number would disagree on one row')
+
     def test_the_short_tooltip_quotes_the_floor_the_ladder_actually_gates_on(self):
         """The tooltip hand-types the percentage the Python constant decides.
 

@@ -30,6 +30,32 @@ def compute_spy_cum_norm_100(spy_df):
     return norm_change.rolling(window=100, min_periods=1).sum()
 
 
+def compute_ema_pair(close):
+    """EMA10 and EMA20 on one close series, as ``(ema10, ema20)``.
+
+    Three producers feed the highlight ladder — this pipeline, the ETF recompute
+    and the EP scans — and each used to spell these two formulas out with a
+    comment asserting it matched the others. That is the shape this project was
+    already bitten by and fixed once: `compute_inside_day` below exists because
+    the same definition lived in two places and was one edit away from drifting.
+    """
+    return (close.ewm(span=10, adjust=False).mean(),
+            close.ewm(span=20, adjust=False).mean())
+
+
+def compute_sma50_full(close):
+    """The 50-day mean the highlight ladder reads, over a FULL window only.
+
+    Distinct from the pipeline's `sma50`, which settles for 25 bars because
+    `atr_multi_50sma`, `dist_sma50_pct` and the screeners want it that way. On a
+    listing with 25 to 49 sessions that column holds a partial mean wearing a
+    50-day label — finite and positive, so the ladder's zero-as-missing rule
+    cannot see it, and the stock scores a stacked trend it has no window to
+    support. Below 50 bars this returns NaN, which every consumer reads as absent.
+    """
+    return close.rolling(window=50, min_periods=50).mean()
+
+
 def compute_inside_day(open_, high, low, close):
     """Return the inside-day flag: candle engulfed OR body engulfed.
 
@@ -155,6 +181,13 @@ def compute_tight_base(tightness, close, period_high,
 
 
 HIGHLIGHT_SHORT_FLOOR = 20.0  # percent of float; chosen, never measured
+
+#: Every value `compute_highlight_tier` can return, in ladder order. The
+#: browser's class and tooltip tables key off these exact strings, so renaming
+#: one here would blank that rung's tint and wording on every tab while both
+#: sides still looked internally consistent.
+#: `tests/test_dashboard_highlight_markup.py` pins the two vocabularies together.
+HIGHLIGHT_TIERS = ('coil', 'short', 'ma_up', 'ma_split')
 
 
 def _highlight_flag(value):
@@ -375,22 +408,15 @@ def calculate_technical_indicators():
             daily['price_chg_pct0'] = daily['close'] / daily['close'].shift(periods=1) - 1
 
             # EMA10, EMA20
-            daily['ema10'] = daily['close'].ewm(span=10, adjust=False).mean()
-            daily['ema20'] = daily['close'].ewm(span=20, adjust=False).mean()
+            daily['ema10'], daily['ema20'] = compute_ema_pair(daily['close'])
 
             # SMAs — require half the window to avoid spurious values for new listings
             daily['sma25'] = daily['close'].rolling(window=25, min_periods=13).mean()
             daily['sma30'] = daily['close'].rolling(window=30, min_periods=15).mean()
             daily['sma50'] = daily['close'].rolling(window=50, min_periods=25).mean()
-            # The highlight ladder's third input, and the ONLY consumer that
-            # needs a full window. `sma50` above settles for 25 bars, which is
-            # right for `atr_multi_50sma` and the screeners but hands the ladder
-            # a 30-bar mean wearing a 50-day label on a young listing: finite,
-            # positive, and therefore invisible to the ladder's zero-as-missing
-            # rule. Verified — a 30-session rising series scores `ma_up` off the
-            # 25-bar column and correctly scores nothing off this one. The EP
-            # scans already refuse the same shape through their own `sma50_full`.
-            daily['sma50_full'] = daily['close'].rolling(window=50, min_periods=50).mean()
+            # The highlight ladder's third input. See `compute_sma50_full` for
+            # why it cannot share the 25-bar `sma50` above.
+            daily['sma50_full'] = compute_sma50_full(daily['close'])
             daily['sma100'] = daily['close'].rolling(window=100, min_periods=50).mean()
             daily['sma200'] = daily['close'].rolling(window=200, min_periods=100).mean()
 

@@ -72,6 +72,18 @@ RENDER_SITES = (
 )
 
 
+def _strip_js_comments(source):
+    """Drop `//` and `/* */` comments so a mention cannot pass for a call.
+
+    Proven by mutation: deleting the real `${hlClass(t.highlight)}` from a render
+    site and leaving a stale comment that names `hlClass(...)` satisfied the
+    per-site check while the tab rendered no tint at all. A comment is the one
+    thing that looks like the call and does nothing.
+    """
+    without_blocks = re.sub(r'/\*.*?\*/', '', source, flags=re.S)
+    return re.sub(r'(?<![:/])//[^\n]*', '', without_blocks)
+
+
 def _rule_body(selector):
     """Return the declaration block for an exact selector, or None."""
     m = re.search(re.escape(selector) + r'\s*\{([^}]*)\}', CSS)
@@ -337,7 +349,7 @@ class HighlightRenderSiteTests(unittest.TestCase):
         tab renders exactly as before with nothing to say why.
         """
         for name in RENDER_SITES:
-            body = _fn_body(name)
+            body = _strip_js_comments(_fn_body(name))
             emits = 'hlClass(' in body or 'hlChipClass(' in body
             self.assertTrue(emits, f'{name} emits no highlight class')
             names = 'hlTitle(' in body or 'HL_TIER_TIP[' in body
@@ -430,6 +442,28 @@ class HighlightTooltipTests(unittest.TestCase):
                          'every rung the server can return needs a wording')
         for text in re.findall(r":\s*'([^']*)'", table.group(1)):
             self.assertGreater(len(text), 8, f'{text!r} names no rung')
+
+    def test_the_browser_knows_every_tier_the_ladder_can_return(self):
+        """One vocabulary, two languages, and nothing else binds them.
+
+        Rename a rung in Python and the tint and tooltip for it go blank on every
+        tab, while each side still reads as internally consistent — the ladder
+        returns a string nobody looks up, and the tables hold a key nobody sends.
+        The asymmetry below is deliberate: the tooltip table names all four rungs,
+        while the class table omits `coil`, because the Themes chip takes that one
+        class from the radar's own boolean.
+        """
+        from src.indicators.create_technical_indicators import HIGHLIGHT_TIERS
+
+        def keys_of(table):
+            m = re.search(r'const ' + table + r' = \{(.*?)\n  \};', APP, re.S)
+            self.assertIsNotNone(m, f'{table} is gone')
+            return re.findall(r'^\s*(\w+):', m.group(1), re.M)
+
+        self.assertEqual(list(HIGHLIGHT_TIERS), keys_of('HL_TIER_TIP'))
+        self.assertEqual(
+            [t for t in HIGHLIGHT_TIERS if t != 'coil'], keys_of('HL_TIER_CLASS'),
+            'the class table must carry every rung except coil')
 
     def test_the_short_column_colour_break_sits_on_the_ladder_floor(self):
         """Five render sites band the Short% figure at the same 20 the rung uses.

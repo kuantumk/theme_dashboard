@@ -22,8 +22,10 @@ from config.settings import (
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 from src.indicators.create_technical_indicators import (
+    compute_ema_pair,
     compute_highlight_tier,
     compute_inside_day,
+    compute_sma50_full,
     compute_spy_cum_norm_100,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
@@ -1031,15 +1033,11 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
             # ADR% (20-day rolling avg of high/low ratio - 1)
             adr_pct = (high / low).rolling(window=20, min_periods=1).mean() - 1
 
-            # EMA10 and EMA20 use the same spans `create_technical_indicators`
-            # uses, so an ETF's highlight tier means what a stock's does. The
-            # SMA50 deliberately differs from that module's `sma50` column and
-            # matches its `sma50_full` instead: this series feeds the highlight
-            # ladder and nothing else, and a partial mean would tint a young ETF
-            # off a 30-bar average wearing a 50-day label.
-            ema10 = close.ewm(span=10, adjust=False).mean()
-            ema20 = close.ewm(span=20, adjust=False).mean()
-            sma50 = close.rolling(window=50, min_periods=50).mean()
+            # Shared with the indicator pipeline, so an ETF's tier means what a
+            # stock's does. The SMA50 here is the full-window one the ladder
+            # needs, not the pipeline's 25-bar `sma50` column.
+            ema10, ema20 = compute_ema_pair(close)
+            sma50 = compute_sma50_full(close)
 
             # ATR14
             high_low = high - low

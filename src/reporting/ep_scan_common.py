@@ -22,6 +22,11 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+from src.indicators.create_technical_indicators import (
+    compute_ema_pair,
+    compute_sma50_full,
+)
+
 try:
     from finvizfinance.screener.overview import Overview
     from finvizfinance.quote import finvizfinance as FinvizQuote
@@ -451,9 +456,11 @@ def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
         sma50 = (float(hist['Close'].iloc[-50:].mean())
                  if len(hist) >= 50 else float(hist['Close'].mean()))
 
-        # Same convention as the indicator pipeline: ewm(span, adjust=False).
-        ema10 = float(hist['Close'].ewm(span=10, adjust=False).mean().iloc[-1])
-        ema20 = float(hist['Close'].ewm(span=20, adjust=False).mean().iloc[-1])
+        # Shared with the indicator pipeline so the two cannot drift.
+        ema10_series, ema20_series = compute_ema_pair(hist['Close'])
+        ema10 = float(ema10_series.iloc[-1])
+        ema20 = float(ema20_series.iloc[-1])
+        sma50_full = compute_sma50_full(hist['Close']).iloc[-1]
 
         high_low = hist['High'] - hist['Low']
         high_prev = (hist['High'] - hist['Close'].shift(1)).abs()
@@ -473,7 +480,9 @@ def calculate_technicals(ticker: str, ref_price: float) -> Optional[Dict]:
             'dist_52w_high': round(dist_52w_high, 2),
             'atr_multiple': round(atr_multiple, 2),
             'sma50': round(sma50, 2),
-            'sma50_full': sma50 if len(hist) >= 50 else None,
+            # None rather than NaN, so the shape stays JSON-safe even though only
+            # the ladder reads it today.
+            'sma50_full': None if pd.isna(sma50_full) else float(sma50_full),
             'ema10': ema10,
             'ema20': ema20,
             'atr': round(atr, 2),

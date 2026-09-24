@@ -348,6 +348,24 @@ class PartialWindowTests(unittest.TestCase):
         row = {'ema10': 12.0, 'ema20': 11.0, 'sma50': 99.0, 'sma50_full': 10.0}
         self.assertEqual(ex._highlight_from_row(row), 'ma_up')
 
+    def test_a_frame_missing_the_column_entirely_does_not_raise(self):
+        """The case the next workflow run after this ships will actually hit.
+
+        The local parquet cache keeps the newest ten sessions, so it can still
+        hold sessions written before `sma50_full` existed. `_bars_by_ticker` drops
+        an absent column instead of raising, and the ladder then answers nothing.
+        Narrowing that filter to a plain `master_df[['ticker', *columns]]` would
+        turn the same input into a KeyError, and no other test would see it.
+        """
+        frame = _master_frame().drop(columns=['sma50_full', 'tight_base'])
+        bars = ex._bars_by_ticker(frame, ex.HIGHLIGHT_ROW_COLUMNS)
+        self.assertIn('COILER', bars)
+        self.assertNotIn('sma50_full', bars['COILER'])
+        for ticker in bars:
+            self.assertIsNone(
+                ex._highlight_from_row(bars[ticker]),
+                f'{ticker} earned a tier from a frame with no full-window SMA50')
+
     def test_the_narrowed_lookup_carries_the_full_window_column(self):
         # A column list that forgot `sma50_full` would blank the two
         # moving-average rungs on every tab with nothing on screen to say why.

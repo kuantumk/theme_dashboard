@@ -985,10 +985,12 @@ def enrich_etf_with_metrics(data_list, metrics, ticker_key='ticker'):
 
 
 def fetch_etf_metrics(tickers, spy_cum_norm_100):
-    """Download recent OHLC for ETF tickers and compute VARS + ticker color.
+    """Download recent OHLC for ETF tickers and compute VARS, colour and tier.
 
     Standalone fetch that does NOT pollute the main price data pipeline.
-    Returns ``{ticker: {'vars': float|None, 'color': 'green'|None}}``.
+    Returns ``{ticker: {'vars': float|None, 'color': 'green'|None,
+    'highlight': str|None}}``. Only the moving-average rungs can reach the tier
+    here: an ETF carries neither short interest nor a tight-base column.
     VARS uses the same formula as :mod:`create_technical_indicators` so values
     are comparable to the stock VARS leaderboard; the SPY baseline series is
     passed in by the caller (sourced from price_daily_ta.pkl's SPY).
@@ -1029,12 +1031,15 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
             # ADR% (20-day rolling avg of high/low ratio - 1)
             adr_pct = (high / low).rolling(window=20, min_periods=1).mean() - 1
 
-            # EMA10, EMA20, SMA50 — the same windows and minimum periods
-            # `create_technical_indicators` uses, so an ETF's highlight tier
-            # means what a stock's does.
+            # EMA10 and EMA20 use the same spans `create_technical_indicators`
+            # uses, so an ETF's highlight tier means what a stock's does. The
+            # SMA50 deliberately differs from that module's `sma50` column and
+            # matches its `sma50_full` instead: this series feeds the highlight
+            # ladder and nothing else, and a partial mean would tint a young ETF
+            # off a 30-bar average wearing a 50-day label.
             ema10 = close.ewm(span=10, adjust=False).mean()
             ema20 = close.ewm(span=20, adjust=False).mean()
-            sma50 = close.rolling(window=50, min_periods=25).mean()
+            sma50 = close.rolling(window=50, min_periods=50).mean()
 
             # ATR14
             high_low = high - low
@@ -1247,7 +1252,8 @@ def filter_metrics(row):
 
 #: The only columns `_highlight_from_row` reads. A caller that needs nothing
 #: else passes this to `_bars_by_ticker` so a per-session row dict stays narrow.
-HIGHLIGHT_ROW_COLUMNS = ('tight_base', 'ema10', 'ema20', 'sma50')
+#: `sma50_full`, not `sma50` — see `_highlight_from_row`.
+HIGHLIGHT_ROW_COLUMNS = ('tight_base', 'ema10', 'ema20', 'sma50_full')
 
 
 def _bars_by_ticker(master_df, columns=None):
@@ -1292,7 +1298,13 @@ def _highlight_from_row(row, short_interest=None):
         short_interest=short_interest,
         ema10=row.get('ema10'),
         ema20=row.get('ema20'),
-        sma50=row.get('sma50'),
+        # `sma50_full`, never `sma50`. The pipeline's `sma50` settles for 25 bars,
+        # so a young listing carries a 30-bar mean under a 50-day name — finite
+        # and positive, which is the one shape the zero-as-missing rule cannot
+        # catch. A parquet predating the column answers None and skips both
+        # moving-average rungs: the fail-closed direction, and it heals on the
+        # next workflow run, since every run rebuilds 130 sessions.
+        sma50=row.get('sma50_full'),
     )
 
 
@@ -2400,7 +2412,7 @@ def _load_fundamentals_for_tickers(tickers):
         ''', unique).fetchall()
         conn.close()
     except Exception as e:
-        print(f"   Warning: fundamentals lookup failed for parabolic export: {e}")
+        print(f"   Warning: fundamentals lookup failed: {e}")
         return {}
 
     return {

@@ -84,7 +84,12 @@ def _master_frame(date_str=DATE):
             'tight_base': tight,
             'ema10': ema10,
             'ema20': ema20,
-            'sma50': sma50,
+            # Both columns, because a real master parquet carries both and the
+            # ladder must read the full-window one. `sma50` settles for 25 bars,
+            # so it holds a partial mean on a young listing; the deliberately
+            # wrong value here fails every test if the ladder ever reads it.
+            'sma50': 999.0,
+            'sma50_full': sma50,
             'days_since_highest_volume': 3,
         })
     return pd.DataFrame(rows)
@@ -320,6 +325,36 @@ class NewestSessionOnlyTests(unittest.TestCase):
             'ma_up')
 
 
+class PartialWindowTests(unittest.TestCase):
+    """The ladder reads `sma50_full`, never the 25-bar `sma50`.
+
+    A master row carries both. `sma50` settles for 25 bars because
+    `atr_multi_50sma` and the screeners want it that way, so on a young listing
+    it holds a partial mean — finite, positive, and invisible to the
+    zero-as-missing rule. Reading it would state a stacked trend on a stock with
+    no 50-day trend to read.
+    """
+
+    def test_a_row_carrying_only_the_partial_average_earns_no_tier(self):
+        row = {'ema10': 12.0, 'ema20': 11.0, 'sma50': 10.0}
+        self.assertIsNone(ex._highlight_from_row(row))
+
+    def test_the_full_window_column_is_what_answers(self):
+        row = {'ema10': 12.0, 'ema20': 11.0, 'sma50_full': 10.0}
+        self.assertEqual(ex._highlight_from_row(row), 'ma_up')
+
+    def test_the_partial_average_cannot_override_the_full_one(self):
+        # Both present and disagreeing: the full window decides.
+        row = {'ema10': 12.0, 'ema20': 11.0, 'sma50': 99.0, 'sma50_full': 10.0}
+        self.assertEqual(ex._highlight_from_row(row), 'ma_up')
+
+    def test_the_narrowed_lookup_carries_the_full_window_column(self):
+        # A column list that forgot `sma50_full` would blank the two
+        # moving-average rungs on every tab with nothing on screen to say why.
+        self.assertIn('sma50_full', ex.HIGHLIGHT_ROW_COLUMNS)
+        self.assertNotIn('sma50', ex.HIGHLIGHT_ROW_COLUMNS)
+
+
 class SiHighlightTests(unittest.TestCase):
     """The SI tab builds the current session only, so it always holds the rung."""
 
@@ -397,6 +432,30 @@ class EtfHighlightTests(unittest.TestCase):
         metrics = _etf_metrics(frame)
         self.assertEqual(metrics['TQQQ']['color'], 'green')
         self.assertIsNone(metrics['TQQQ']['highlight'])
+
+    def test_a_partial_window_earns_no_tier_however_plainly_it_rises(self):
+        """The one input shape zero-as-missing cannot catch.
+
+        Between 25 and 49 bars a `min_periods=25` average returns a number — a
+        30-bar mean wearing a 50-day label, finite and positive. Measured: such a
+        series scored `ma_up` before this producer moved to a full window, which
+        is a stacked-trend claim about a stock with no 50-day trend to read. The
+        20-bar case above never reached the ladder at all, so it did not cover
+        this. The EP scans refuse the same shape through their own `sma50_full`.
+        """
+        for bars in (25, 30, 49):
+            with self.subTest(bars=bars):
+                metrics = _etf_metrics(
+                    _etf_frame([100.0 + i for i in range(bars)]))
+                tier = metrics.get('TQQQ', {}).get('highlight')
+                self.assertIsNone(
+                    tier,
+                    f'{bars} bars scored {tier!r} off a partial 50-day mean')
+
+    def test_fifty_bars_is_the_first_window_the_ladder_will_read(self):
+        """The boundary the test above stops at, from the other side."""
+        metrics = _etf_metrics(_etf_frame([100.0 + i for i in range(50)]))
+        self.assertEqual(metrics['TQQQ']['highlight'], 'ma_up')
 
 
 if __name__ == '__main__':

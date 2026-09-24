@@ -256,6 +256,28 @@ class HighlightTintStyleTests(unittest.TestCase):
             sel_at, dim_at,
             'the selection override must follow the rules it beats')
 
+    def test_no_painted_tint_borrows_the_selection_yellow(self):
+        """The base hues are documentation; the `*-dim` values are what paint.
+
+        Checking the base tokens alone leaves the real hole open: setting
+        `--hl-ma-split-dim` to the selection yellow at 0.16 alpha passed both the
+        base-token check and the distinctness check, because neither compares a
+        painted value against `--yellow`. A tint that reads as selection is the
+        one collision this whole colour scheme exists to avoid.
+        """
+        yellow = re.search(r'--yellow:\s*#?([0-9a-fA-F]{6})\s*;', CSS)
+        self.assertIsNotNone(yellow, '--yellow is gone')
+        r, g, b = (int(yellow.group(1)[i:i + 2], 16) for i in (0, 2, 4))
+        for token in ('coil-dim',) + tuple(f'{t}-dim' for t in NEW_TIERS):
+            m = re.search(r'--' + re.escape(token) + r':\s*([^;]+);', CSS)
+            self.assertIsNotNone(m, f'--{token} token is missing')
+            channels = re.findall(r'\d+', m.group(1))
+            self.assertGreaterEqual(
+                len(channels), 3, f'--{token} is not an rgb/rgba value')
+            self.assertNotEqual(
+                (r, g, b), tuple(int(c) for c in channels[:3]),
+                f'--{token} paints the selection yellow')
+
     def test_no_tier_borrows_the_selection_yellow(self):
         """R11. Yellow marks the selected ticker on every tab, so no rung may
         take it — the two would be indistinguishable on a dense panel."""
@@ -264,6 +286,28 @@ class HighlightTintStyleTests(unittest.TestCase):
             m = re.search(r'--' + re.escape(tier) + r':\s*([^;]+);', CSS)
             self.assertIsNotNone(m, f'--{tier} token is missing')
             self.assertNotEqual(yellow, m.group(1).strip().lower())
+
+    def test_the_span_reserves_its_tint_box_without_occupying_width(self):
+        """The padding and the negative margin must stay equal and opposite.
+
+        A background on a bare inline span hugs the glyphs, so `.tn-link` pads
+        itself; the negative margin gives the width back. Keep only the padding
+        and eight tables widen, which invalidates the six panel widths
+        `tests/test_dashboard_panel_layout.py` pins — and that module compares CSS
+        literals rather than measuring a rendered table, so it would stay green
+        while every one of those widths was wrong. Nothing else pins this pair.
+        """
+        body = _rule_body('.tn-link')
+        self.assertIsNotNone(body, '.tn-link rule is missing')
+        pad = re.search(r'padding:\s*0\s+(\d+)px', body)
+        margin = re.search(r'margin:\s*0\s+-(\d+)px', body)
+        self.assertIsNotNone(pad, '.tn-link lost the padding its tint needs')
+        self.assertIsNotNone(
+            margin, '.tn-link has padding with no negative margin to cancel it')
+        self.assertEqual(
+            pad.group(1), margin.group(1),
+            'the padding and negative margin must cancel exactly, or the eight '
+            'table tabs widen and the pinned panel widths are all wrong')
 
     def test_each_rung_paints_its_own_tint(self):
         """Four rungs sharing a tint would collapse the ladder into one signal.

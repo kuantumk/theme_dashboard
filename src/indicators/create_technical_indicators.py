@@ -382,6 +382,15 @@ def calculate_technical_indicators():
             daily['sma25'] = daily['close'].rolling(window=25, min_periods=13).mean()
             daily['sma30'] = daily['close'].rolling(window=30, min_periods=15).mean()
             daily['sma50'] = daily['close'].rolling(window=50, min_periods=25).mean()
+            # The highlight ladder's third input, and the ONLY consumer that
+            # needs a full window. `sma50` above settles for 25 bars, which is
+            # right for `atr_multi_50sma` and the screeners but hands the ladder
+            # a 30-bar mean wearing a 50-day label on a young listing: finite,
+            # positive, and therefore invisible to the ladder's zero-as-missing
+            # rule. Verified — a 30-session rising series scores `ma_up` off the
+            # 25-bar column and correctly scores nothing off this one. The EP
+            # scans already refuse the same shape through their own `sma50_full`.
+            daily['sma50_full'] = daily['close'].rolling(window=50, min_periods=50).mean()
             daily['sma100'] = daily['close'].rolling(window=100, min_periods=50).mean()
             daily['sma200'] = daily['close'].rolling(window=200, min_periods=100).mean()
 

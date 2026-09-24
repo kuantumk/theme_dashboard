@@ -1122,6 +1122,66 @@
     return parts.join('');
   }
 
+  // ── HIGHLIGHT TIERS ───────────────────────────────────
+  /* The server runs one ladder per ticker — a tight base, a crowded short,
+     stacked averages, a stack below the 50-day — and publishes the winning rung
+     as `highlight`. These three helpers turn that one value into a background
+     class and a tooltip on the ticker span. They add no `data-` attribute:
+     `filterAttrs` and `syncRadarClamps` keep the inputs they already read.
+
+     An unknown value yields no class and no tooltip. Code pull requests reset
+     `docs/data/`, so the field is absent until the next daily workflow run, and
+     an absent field must render as nothing rather than as a rung. */
+  const HL_TIER_CLASS = {
+    short: 'hl-short',
+    ma_up: 'hl-ma-up',
+    ma_split: 'hl-ma-split',
+  };
+
+  /* The rung in words, at all nine render sites. The tints are otherwise
+     colour-only, and green and orange are the two closest hues on the board, so
+     a colour-vision-deficient reader cannot separate the two moving-average
+     rungs from the tint alone.
+
+     ⛔ `ma_split` states WHERE the averages sit and stops there. One reading
+     covers a stock reclaiming its short-term averages from below and a stock
+     that has just lost its 50-day — opposite trades this rung does not
+     separate. Never give it a direction: no "turning", "rolling over",
+     "recovering", "weakening", "breaking down". */
+  const HL_TIER_TIP = {
+    coil: 'in a tight base',
+    short: 'short interest 20% of float or more',
+    ma_up: 'EMA10 above EMA20 above SMA50',
+    ma_split: 'EMA10 above EMA20, EMA20 not above SMA50',
+  };
+
+  /** The tier class for a bare ticker span, with a leading space, or ''.
+   *
+   * The coil rung maps here because the eight table tabs carry no `coiled`
+   * boolean — only the tier. Drop it and the violet tint stays on the Themes
+   * chip, leaving the ladder's top rung invisible on eight of the nine tabs.
+   */
+  function hlClass(tier) {
+    const cls = tier === 'coil' ? 'coiled' : HL_TIER_CLASS[tier];
+    return cls ? ' ' + cls : '';
+  }
+
+  /** The tier class for a radar chip's class array, or '' for none.
+   *
+   * Coil is deliberately missing: `renderThemes` pushes `coiled` from the
+   * radar's own boolean, so mapping the tier here too would put one class on
+   * the chip twice.
+   */
+  function hlChipClass(tier) {
+    return HL_TIER_CLASS[tier] || '';
+  }
+
+  /** The tier tooltip as a ready-to-interpolate title attribute, or ''. */
+  function hlTitle(tier) {
+    const tip = HL_TIER_TIP[tier];
+    return tip ? ` title="${escAttr(tip)}"` : '';
+  }
+
   function loadThemeData() {
     // Load current themes and history in parallel
     Promise.all([
@@ -2287,8 +2347,16 @@
           const cls = ['tn-link', 'radar-chip', t.is_screened ? 'chip-screened' : 'chip-quiet'];
           if (t.ticker_color === 'green') cls.push('day-pattern-green');
           if (t.coiled) cls.push('coiled');
+          // Only the three lower rungs come from the tier field. The coil rung
+          // arrives on the line above, from the radar's own boolean, and the
+          // server returns 'coil' exactly when that boolean is true — so a chip
+          // never carries two tints.
+          const tierCls = hlChipClass(t.highlight);
+          if (tierCls) cls.push(tierCls);
           const coilTip = t.coiled ? ` · coiled (${fmt(t.tightness, 2)} of ADR)` : '';
-          const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}${coilTip}`;
+          // A coiled chip already names its rung, and names the band with it.
+          const tierTip = t.coiled ? '' : (HL_TIER_TIP[t.highlight] || '');
+          const tip = `RS ${t.rs ?? '—'} · VARS ${t.vars ?? '—'} · $${t.price ?? '—'}${coilTip}${tierTip ? ' · ' + tierTip : ''}`;
           return `<span class="${cls.join(' ')}"${filterAttrs(t)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(grp.name + ' · ' + t.ticker)}" title="${escAttr(tip)}">${escHtml(t.ticker)}</span>`;
         }).join('');
         html += `
@@ -2443,7 +2511,7 @@
         html += `
                 <tr${filterAttrs(t)}>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -2522,7 +2590,7 @@
         html += `
                 <tr${filterAttrs(t)}>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -2631,7 +2699,7 @@
           html += `
                 <tr${filterAttrs(t)}>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -2747,7 +2815,7 @@
           html += `
                 <tr>
                   <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
+                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
                       ${escHtml(t.ticker)}
                     </span>
                   </td>
@@ -2817,7 +2885,7 @@
       html += `
         <tr${filterAttrs(row)}>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
           </td>
           <td>${row.float ?? '—'}</td>
           <td class="${instClass}">${row.inst ?? '—'}</td>
@@ -2927,7 +2995,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${varsClass}"><strong>${varsText}</strong></td>
@@ -3038,7 +3106,7 @@
       html += `
         <tr>
           <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
+            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
           </td>
           <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
           <td class="${varsClass}"><strong>${varsText}</strong></td>
@@ -3278,7 +3346,7 @@
     return `
       <tr>
         <td class="l">
-          <span class="tn-link" data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP ' + label)}">${escHtml(row.ticker)}</span>
+          <span class="tn-link${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP ' + label)}">${escHtml(row.ticker)}</span>
         </td>
         <td class="${floatClass}">${floatStr}</td>
         <td class="${shortClass}">${shortStr}</td>

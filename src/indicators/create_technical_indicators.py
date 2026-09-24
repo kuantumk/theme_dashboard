@@ -30,6 +30,32 @@ def compute_spy_cum_norm_100(spy_df):
     return norm_change.rolling(window=100, min_periods=1).sum()
 
 
+def compute_ema_pair(close):
+    """EMA10 and EMA20 on one close series, as ``(ema10, ema20)``.
+
+    Three producers feed the highlight ladder — this pipeline, the ETF recompute
+    and the EP scans — and each used to spell these two formulas out with a
+    comment asserting it matched the others. That is the shape this project was
+    already bitten by and fixed once: `compute_inside_day` below exists because
+    the same definition lived in two places and was one edit away from drifting.
+    """
+    return (close.ewm(span=10, adjust=False).mean(),
+            close.ewm(span=20, adjust=False).mean())
+
+
+def compute_sma50_full(close):
+    """The 50-day mean the highlight ladder reads, over a FULL window only.
+
+    Distinct from the pipeline's `sma50`, which settles for 25 bars because
+    `atr_multi_50sma`, `dist_sma50_pct` and the screeners want it that way. On a
+    listing with 25 to 49 sessions that column holds a partial mean wearing a
+    50-day label — finite and positive, so the ladder's zero-as-missing rule
+    cannot see it, and the stock scores a stacked trend it has no window to
+    support. Below 50 bars this returns NaN, which every consumer reads as absent.
+    """
+    return close.rolling(window=50, min_periods=50).mean()
+
+
 def compute_inside_day(open_, high, low, close):
     """Return the inside-day flag: candle engulfed OR body engulfed.
 
@@ -154,6 +180,112 @@ def compute_tight_base(tightness, close, period_high,
     return (tight & holding).fillna(False).astype(bool)
 
 
+HIGHLIGHT_SHORT_FLOOR = 20.0  # percent of float; chosen, never measured
+
+#: Every value `compute_highlight_tier` can return, in ladder order. The
+#: browser's class and tooltip tables key off these exact strings, so renaming
+#: one here would blank that rung's tint and wording on every tab while both
+#: sides still looked internally consistent.
+#: `tests/test_dashboard_highlight_markup.py` pins the two vocabularies together.
+HIGHLIGHT_TIERS = ('coil', 'short', 'ma_up', 'ma_split')
+
+
+def _highlight_flag(value):
+    """Read a rung's boolean input. Anything that is not plainly true is False.
+
+    `bool(float('nan'))` is True, so a bare truth test would fire the coil rung
+    on every ticker whose tightness columns are absent. A missing flag fails
+    closed instead.
+    """
+    try:
+        if value is None or pd.isna(value):
+            return False
+        return bool(value)
+    except (TypeError, ValueError):
+        return False
+
+
+def _highlight_number(value):
+    """Read a rung's numeric input, or None when the value says nothing."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def _highlight_price(value):
+    """Read a price-scale input. Zero and below read as missing.
+
+    The snapshot builders call `.fillna(0)`, so an absent `sma50` arrives as
+    `0.0`. Every average sits above zero, so a bare comparison would report a
+    stacked trend on a stock that has none. A price of zero is impossible for a
+    real security, which makes zero a safe sentinel for absent. See
+    `docs/solutions/logic-errors/nan-defeats-numeric-guard-chains.md`.
+    """
+    number = _highlight_number(value)
+    return number if number is not None and number > 0 else None
+
+
+def compute_highlight_tier(tight_base=None, short_interest=None,
+                           ema10=None, ema20=None, sma50=None):
+    """Which one highlight a ticker earns: 'coil', 'short', 'ma_up',
+    'ma_split', or None.
+
+    The ladder runs in that order and stops at the first rung the ticker
+    satisfies:
+
+    1. ``tight_base`` is true — the same state the Themes tab tints today.
+    2. ``short_interest >= 20`` percent of float.
+    3. ``ema10 > ema20 > sma50``.
+    4. ``ema10 > ema20`` and ``ema20`` is not above ``sma50``.
+
+    **The order is a display preference, not a ranking claim.** Nothing
+    measures whether a coil predicts better than a crowded short, or either
+    better than a stacked average. The 20% floor is chosen as well: the SI tab
+    gates its roster at 12% and the EP screener at 10%, so three numbers
+    describe one idea and none is calibrated.
+
+    **A rung whose input is missing is skipped, and the ladder carries on.** So
+    a tier names the highest rung whose input the CALLER HOLDS, never the
+    absence of a higher one. Most Themes chips have no short-interest row, so a
+    crowded short there reads as stacked on every session — 'ma_up' must not be
+    read as "stacked and not crowded".
+
+    Rung 4 states where the averages sit and nothing more. Two opposite trades
+    produce that same reading, and this rung separates neither. Do not give it a
+    direction in the code, in a comment, or in a tooltip.
+
+    Rung 4 needs only the ``ema20`` against ``sma50`` comparison, because rung 3
+    has already established ``ema10 > ema20``. The request stated it as
+    ``ema20 < sma50 or ema10 < sma50``; with ``ema10 > ema20`` true,
+    ``ema10 < sma50`` forces ``ema20 < sma50``, so the second clause adds
+    nothing. Equal averages fall to rung 4. `tests/test_highlight_tier.py` pins
+    the reduced form against the request's original wording.
+
+    Takes plain scalars rather than a frame row, because the ETF recompute and
+    the EP scans hold neither. Shared with every producer for the same reason
+    `compute_inside_day` is — one definition cannot drift from itself.
+    """
+    if _highlight_flag(tight_base):
+        return 'coil'
+
+    short = _highlight_number(short_interest)
+    if short is not None and short >= HIGHLIGHT_SHORT_FLOOR:
+        return 'short'
+
+    fast = _highlight_price(ema10)
+    slow = _highlight_price(ema20)
+    base = _highlight_price(sma50)
+    # Both moving-average rungs read sma50, so one absent average answers
+    # neither of them.
+    if fast is None or slow is None or base is None:
+        return None
+    if fast <= slow:
+        return None
+    return 'ma_up' if slow > base else 'ma_split'
+
+
 DROP_WINDOW = 15    # sessions in the drawdown window
 DROP_LOOKBACK = 45  # sessions searched for the worst such window
 
@@ -276,13 +408,15 @@ def calculate_technical_indicators():
             daily['price_chg_pct0'] = daily['close'] / daily['close'].shift(periods=1) - 1
 
             # EMA10, EMA20
-            daily['ema10'] = daily['close'].ewm(span=10, adjust=False).mean()
-            daily['ema20'] = daily['close'].ewm(span=20, adjust=False).mean()
+            daily['ema10'], daily['ema20'] = compute_ema_pair(daily['close'])
 
             # SMAs — require half the window to avoid spurious values for new listings
             daily['sma25'] = daily['close'].rolling(window=25, min_periods=13).mean()
             daily['sma30'] = daily['close'].rolling(window=30, min_periods=15).mean()
             daily['sma50'] = daily['close'].rolling(window=50, min_periods=25).mean()
+            # The highlight ladder's third input. See `compute_sma50_full` for
+            # why it cannot share the 25-bar `sma50` above.
+            daily['sma50_full'] = compute_sma50_full(daily['close'])
             daily['sma100'] = daily['close'].rolling(window=100, min_periods=50).mean()
             daily['sma200'] = daily['close'].rolling(window=200, min_periods=100).mean()
 

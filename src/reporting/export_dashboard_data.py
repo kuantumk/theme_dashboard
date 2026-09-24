@@ -22,7 +22,10 @@ from config.settings import (
 import src.stock_utils as su
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 from src.indicators.create_technical_indicators import (
+    compute_ema_pair,
+    compute_highlight_tier,
     compute_inside_day,
+    compute_sma50_full,
     compute_spy_cum_norm_100,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
@@ -960,7 +963,11 @@ def enrich_with_ticker_color(data_list, flags, ticker_key='ticker'):
 
 
 def enrich_etf_with_metrics(data_list, metrics, ticker_key='ticker'):
-    """Attach vars + ticker_color to ETF row dicts. Returns (vars_count, color_count)."""
+    """Attach vars, ticker_color and the highlight tier to ETF row dicts.
+
+    Returns (vars_count, color_count). The tier rides along beside the other
+    two; `fetch_etf_metrics` prints its own count.
+    """
     vars_count = 0
     color_count = 0
     for item in data_list:
@@ -974,14 +981,18 @@ def enrich_etf_with_metrics(data_list, metrics, ticker_key='ticker'):
         if m.get('color'):
             item['ticker_color'] = m['color']
             color_count += 1
+        if m.get('highlight'):
+            item['highlight'] = m['highlight']
     return vars_count, color_count
 
 
 def fetch_etf_metrics(tickers, spy_cum_norm_100):
-    """Download recent OHLC for ETF tickers and compute VARS + ticker color.
+    """Download recent OHLC for ETF tickers and compute VARS, colour and tier.
 
     Standalone fetch that does NOT pollute the main price data pipeline.
-    Returns ``{ticker: {'vars': float|None, 'color': 'green'|None}}``.
+    Returns ``{ticker: {'vars': float|None, 'color': 'green'|None,
+    'highlight': str|None}}``. Only the moving-average rungs can reach the tier
+    here: an ETF carries neither short interest nor a tight-base column.
     VARS uses the same formula as :mod:`create_technical_indicators` so values
     are comparable to the stock VARS leaderboard; the SPY baseline series is
     passed in by the caller (sourced from price_daily_ta.pkl's SPY).
@@ -1022,9 +1033,11 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
             # ADR% (20-day rolling avg of high/low ratio - 1)
             adr_pct = (high / low).rolling(window=20, min_periods=1).mean() - 1
 
-            # EMA10, EMA20
-            ema10 = close.ewm(span=10, adjust=False).mean()
-            ema20 = close.ewm(span=20, adjust=False).mean()
+            # Shared with the indicator pipeline, so an ETF's tier means what a
+            # stock's does. The SMA50 here is the full-window one the ladder
+            # needs, not the pipeline's 25-bar `sma50` column.
+            ema10, ema20 = compute_ema_pair(close)
+            sma50 = compute_sma50_full(close)
 
             # ATR14
             high_low = high - low
@@ -1060,16 +1073,35 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
                 if close_to_ema10 or close_to_ema20:
                     color = 'green'
 
-            if vars_value is None and color is None:
+            # Highlight tier. An ETF has no short interest and no tight base
+            # here, so only the two moving-average rungs can fire. Below the
+            # SMA50 minimum period the average is NaN, which the tier function
+            # reads as absent and answers None.
+            highlight = compute_highlight_tier(
+                ema10=ema10.iloc[-1],
+                ema20=ema20.iloc[-1],
+                sma50=sma50.iloc[-1],
+            )
+
+            # A row carrying only a tier still reaches the payload — the skip
+            # asks whether this ETF earned any metric at all, and the tier is
+            # one of them.
+            if vars_value is None and color is None and highlight is None:
                 continue
-            metrics[ticker] = {'vars': vars_value, 'color': color}
+            metrics[ticker] = {
+                'vars': vars_value, 'color': color, 'highlight': highlight,
+            }
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")
             continue
 
     vars_n = sum(1 for m in metrics.values() if m.get('vars') is not None)
     color_n = sum(1 for m in metrics.values() if m.get('color'))
-    print(f"   Computed VARS for {vars_n} ETFs; {color_n} have tight/inside-day color")
+    tier_n = sum(1 for m in metrics.values() if m.get('highlight'))
+    print(
+        f"   Computed VARS for {vars_n} ETFs; {color_n} have tight/inside-day "
+        f"color; {tier_n} carry a highlight tier"
+    )
     return metrics
 
 
@@ -1216,11 +1248,74 @@ def filter_metrics(row):
     )
 
 
-def _build_momentum_136_snapshot(csv_file, day_flags):
+#: The only columns `_highlight_from_row` reads. A caller that needs nothing
+#: else passes this to `_bars_by_ticker` so a per-session row dict stays narrow.
+#: `sma50_full`, not `sma50` — see `_highlight_from_row`.
+HIGHLIGHT_ROW_COLUMNS = ('tight_base', 'ema10', 'ema20', 'sma50_full')
+
+
+def _bars_by_ticker(master_df, columns=None):
+    """Index a master frame by upper-case ticker, as ``{ticker: row dict}``.
+
+    `columns` narrows the row dicts to the fields the caller reads. An absent
+    column is simply dropped rather than raising, so a back-dated parquet that
+    predates an indicator answers "missing" for it — which every consumer here
+    already treats as absent. `ticker` is always kept.
+    """
+    if columns is None:
+        frame = master_df
+    else:
+        keep = ['ticker'] + [c for c in columns if c in master_df.columns]
+        frame = master_df[keep]
+    return frame.set_index(
+        master_df['ticker'].astype(str).str.upper()
+    ).to_dict('index')
+
+
+def _highlight_from_row(row, short_interest=None):
+    """Return the one highlight tier a payload row earns, or None.
+
+    Reads `tight_base`, `ema10`, `ema20` and `sma50` off the session's own
+    master bar and hands them to `compute_highlight_tier` raw. That function
+    already maps missing, zero and non-finite inputs to "absent", so a second
+    copy of that rule here could only drift from it. Some builders load their
+    frame with `.fillna(0)` and `_build_radar_snapshot` deliberately does not,
+    which is exactly why the reading belongs in one place.
+
+    ⛔ **Pass `short_interest` only for the session a tab renders as current.**
+    Finviz publishes today's figure with no per-session history, so handing it
+    to an older session pins today's crowding onto an old price bar. The short
+    rung outranks the coil and moving-average rungs, which *are* computed from
+    that session's own parquet, so today's number would erase that session's
+    real signal across the whole retention window. CLAUDE.md's SI section calls
+    that shape "a fabricated number, not a stale one". A historical session
+    therefore renders only the rungs its own parquet supports.
+    """
+    return compute_highlight_tier(
+        tight_base=row.get('tight_base'),
+        short_interest=short_interest,
+        ema10=row.get('ema10'),
+        ema20=row.get('ema20'),
+        # `sma50_full`, never `sma50`. The pipeline's `sma50` settles for 25 bars,
+        # so a young listing carries a 30-bar mean under a 50-day name — finite
+        # and positive, which is the one shape the zero-as-missing rule cannot
+        # catch. A parquet predating the column answers None and skips both
+        # moving-average rungs: the fail-closed direction, and it heals on the
+        # next workflow run, since every run rebuilds 130 sessions.
+        sma50=row.get('sma50_full'),
+    )
+
+
+def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     """Build a single momentum_136 snapshot dict from one screener CSV.
 
     Returns the JSON-serializable {'report_date', 'themes': [...]} structure or
     None if the CSV is empty / unreadable. Pure function — no I/O side effects.
+
+    `newest_session` says whether this snapshot is the one the tab renders as
+    current. Only then does short interest reach the highlight ladder — see
+    `_highlight_from_row`. It defaults to False so a new history loop that
+    forgets to pass it drops a rung rather than fabricating one.
     """
     import sqlite3
     import pandas as pd
@@ -1283,6 +1378,8 @@ def _build_momentum_136_snapshot(csv_file, day_flags):
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
             'inst': _fmt_inst(f.get('inst_transactions')),
             'short': round(float(short_val), 1) if short_val is not None else None,
+            'highlight': _highlight_from_row(
+                row, short_val if newest_session else None),
         }
 
     # Build theme list (sort tickers within theme by RS desc, themes by count desc)
@@ -1341,7 +1438,10 @@ def export_momentum_136(day_flags):
     for csv_file in csvs:
         if cutoff is not None and csv_file.stem.replace('momentum_136_', '') < cutoff:
             continue
-        snap = _build_momentum_136_snapshot(csv_file, day_flags)
+        # The first snapshot to land becomes momentum_136.json, so it is the
+        # only one allowed the short rung.
+        snap = _build_momentum_136_snapshot(
+            csv_file, day_flags, newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -1369,7 +1469,7 @@ def export_momentum_136(day_flags):
     print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
 
 
-def _build_vars_snapshot(csv_file, day_flags):
+def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
     """Build a single VARS snapshot dict from one screener CSV.
 
     Tickers are grouped by leaf theme path, then leaves are clustered under
@@ -1383,6 +1483,9 @@ def _build_vars_snapshot(csv_file, day_flags):
     L1 is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
     has >= 3 members. The `network` payload stays leaf-level so the viz is
     unchanged. Returns the JSON dict or None if the CSV is empty. Pure function.
+
+    `newest_session` gates the highlight ladder's short rung, as in
+    `_build_momentum_136_snapshot`.
     """
     import sqlite3
     from src.themes.theme_registry import load_ticker_themes
@@ -1442,6 +1545,8 @@ def _build_vars_snapshot(csv_file, day_flags):
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
             'inst': _fmt_inst(f.get('inst_transactions')),
             'short': round(float(short_val), 1) if short_val is not None else None,
+            'highlight': _highlight_from_row(
+                row, short_val if newest_session else None),
         }
 
     # Leaf tables — drop Uncategorized/Singleton; no per-leaf minimum (L1
@@ -1549,7 +1654,9 @@ def export_vars(day_flags):
     for csv_file in csvs:
         if cutoff is not None and csv_file.stem.replace('vars_', '') < cutoff:
             continue
-        snap = _build_vars_snapshot(csv_file, day_flags)
+        # The first snapshot to land becomes vars.json, so it is the only one
+        # allowed the short rung.
+        snap = _build_vars_snapshot(csv_file, day_flags, newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -1688,9 +1795,7 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
     if master_df is None or master_df.empty or not si_rows:
         return None
 
-    bars = master_df.set_index(
-        master_df['ticker'].astype(str).str.upper()
-    ).to_dict('index')
+    bars = _bars_by_ticker(master_df)
 
     report_date = ''
     if 'date' in master_df.columns and len(master_df):
@@ -1724,6 +1829,10 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
             'float': _fmt_float_m(row.get('float_shares')),
             'inst': _fmt_inst(row.get('inst_trans')),
             'ticker_color': day_flags.get(ticker),
+            # `export_si` builds only the newest master parquet, so this
+            # snapshot is always the current session and the roster's own short
+            # interest may reach the ladder. Its age travels in `si_stale`.
+            'highlight': _highlight_from_row(bar, si_value),
         }
 
     if not per_ticker:
@@ -1867,7 +1976,8 @@ def export_si(day_flags, root=None, out_dir=None, si_file=None):
     return snapshot
 
 
-def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf=None):
+def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf=None,
+                          fundamentals=None, newest_session=False):
     """Build one L1 Radar session snapshot from a master parquet.
 
     Unlike the retired screened-themes backfill, the radar scores ALL tagged
@@ -1881,6 +1991,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     `tickers_per_leaf=None` ships every scored member (what `radar.json` wants,
     so the dashboard can expand a leaf to its full roster); an int caps the
     chips per leaf, which is how history entries stay small.
+
+    `fundamentals` is the short-interest table the caller loads once per run,
+    and `newest_session` says whether this session may read it. See
+    `_highlight_from_row` for why an older session must not.
     """
     from src.themes.l1_score import compute_radar
 
@@ -1890,6 +2004,24 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
     if not csv_date:
         return None
+
+    # `compute_radar`'s member dicts carry no moving averages — only ticker,
+    # composite, rs, vars, price, liquidity, tightness, coiled and screened. So
+    # the highlight ladder reads the session's own master row through this
+    # lookup, the same join `_build_si_snapshot` uses. `l1_score` stays as it is.
+    # Only the ladder's own columns: this runs once per retained session, and a
+    # full-width row dict would carry forty-odd columns nothing here reads.
+    bars = _bars_by_ticker(master_df, HIGHLIGHT_ROW_COLUMNS)
+    short_rows = fundamentals if (fundamentals and newest_session) else {}
+
+    def _member_highlight(ticker):
+        key = str(ticker).upper()
+        # A member with no master row earns no tier. An empty dict answers
+        # every rung with "absent", which is what the ladder wants.
+        return _highlight_from_row(
+            bars.get(key) or {},
+            (short_rows.get(key) or {}).get('short_interest'),
+        )
 
     body = compute_radar(master_df, screened_tickers=screened_set)
     if body is None:
@@ -1920,6 +2052,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'tightness': _round_or_none(m.get('tightness'), 3),
                 'coiled': bool(m.get('coiled', False)),
                 'is_screened': bool(m.get('is_screened', False)),
+                'highlight': _member_highlight(m['ticker']),
             } for m in (leaf['members'] if tickers_per_leaf is None
                         else leaf['members'][:tickers_per_leaf])]
             if day_flags:
@@ -1982,6 +2115,13 @@ def export_radar(day_flags, root=None, out_dir=None):
     cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
     chip_cap = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
 
+    # Short interest loads once, outside the session loop — the loop runs about
+    # 124 times and Finviz publishes one current figure, not a series. The
+    # radar's universe is every tagged ticker, so that is the key set to ask
+    # for; `fundamentals.db` holds the screened union, and the rest miss.
+    from src.themes.theme_registry import load_ticker_themes
+    fundamentals = _load_fundamentals_for_tickers(load_ticker_themes().keys())
+
     history = []
     for master_file in master_files:
         date_str = master_file.stem.replace('master_', '')
@@ -1996,6 +2136,8 @@ def export_radar(day_flags, root=None, out_dir=None):
         snap = _build_radar_snapshot(
             master_file, screened_set, day_flags,
             tickers_per_leaf=None if not history else chip_cap,
+            fundamentals=fundamentals,
+            newest_session=not history,
         )
         if snap is None:
             continue
@@ -2036,7 +2178,7 @@ def export_radar(day_flags, root=None, out_dir=None):
     return current
 
 
-def _build_volume_snapshot(date_str, day_flags):
+def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     """Build a single Volume snapshot from the volspike + denvol CSVs for one date.
 
     Unions the tickers from both scans (tagging each with which scan matched),
@@ -2044,6 +2186,9 @@ def _build_volume_snapshot(date_str, day_flags):
     avg VARS desc. ALL themes are shown (no min-ticker filter); Uncategorized and
     Singleton sink to the bottom. Returns the JSON dict, or None if neither CSV
     has rows. Pure function.
+
+    `newest_session` gates the highlight ladder's short rung, as in
+    `_build_momentum_136_snapshot`.
     """
     import sqlite3
     import pandas as pd
@@ -2126,6 +2271,8 @@ def _build_volume_snapshot(date_str, day_flags):
             'sales': _fmt_growth(f.get('sales_growth_yoy')),
             'inst': _fmt_inst(f.get('inst_transactions')),
             'short': round(float(short_val), 1) if short_val is not None else None,
+            'highlight': _highlight_from_row(
+                row, short_val if newest_session else None),
         }
 
     # Build theme list — show ALL themes (no min-ticker filter); sort by avg VARS desc.
@@ -2187,7 +2334,9 @@ def export_volume(day_flags):
     for date_str in sorted(dates, reverse=True):
         if cutoff is not None and date_str < cutoff:
             continue
-        snap = _build_volume_snapshot(date_str, day_flags)
+        # The first snapshot to land becomes volume.json, so it is the only one
+        # allowed the short rung.
+        snap = _build_volume_snapshot(date_str, day_flags, newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -2261,7 +2410,7 @@ def _load_fundamentals_for_tickers(tickers):
         ''', unique).fetchall()
         conn.close()
     except Exception as e:
-        print(f"   Warning: fundamentals lookup failed for parabolic export: {e}")
+        print(f"   Warning: fundamentals lookup failed: {e}")
         return {}
 
     return {
@@ -2348,7 +2497,12 @@ def filter_parabolic_candidates(master_df, previous_df=None):
     )
 
 
-def _parabolic_item_from_row(row, fundamentals):
+def _parabolic_item_from_row(row, fundamentals, newest_session=False):
+    """One parabolic payload row.
+
+    `newest_session` gates the highlight ladder's short rung, as in
+    `_build_momentum_136_snapshot`.
+    """
     ticker = str(row.get('ticker', '')).upper()
     f = fundamentals.get(ticker, {})
     short_val = f.get('short_interest')
@@ -2370,12 +2524,14 @@ def _parabolic_item_from_row(row, fundamentals):
         'previous_session_high': _round_or_none(row.get('previous_session_high'), 2),
         'current_session_volume': _int_or_none(row.get('volume')),
         'previous_session_volume': _int_or_none(row.get('previous_session_volume')),
+        'highlight': _highlight_from_row(
+            row, short_val if newest_session else None),
     }
 
 
-def _parabolic_snapshot(report_date, candidates, fundamentals):
+def _parabolic_snapshot(report_date, candidates, fundamentals, newest_session=False):
     tickers = [
-        _parabolic_item_from_row(row, fundamentals)
+        _parabolic_item_from_row(row, fundamentals, newest_session=newest_session)
         for _, row in candidates.iterrows()
     ]
     return {
@@ -2421,7 +2577,10 @@ def export_parabolic():
 
     history = []
     for report_date, candidates in candidate_sets:
-        snapshot = _parabolic_snapshot(report_date, candidates, fundamentals)
+        # `candidate_sets` runs newest first, so the first snapshot becomes
+        # parabolic.json and is the only one allowed the short rung.
+        snapshot = _parabolic_snapshot(
+            report_date, candidates, fundamentals, newest_session=not history)
         history.append(snapshot)
 
     current = history[0]

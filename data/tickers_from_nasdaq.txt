@@ -1006,7 +1006,7 @@ Y|ALOVW|Aldabra 4 Liquidity Opportunity Vehicle, Inc. - Warrants|Q|G|N|100|N|N||
 
 Y|ALOY|REalloys Inc. - Common Stock|Q|S|N|100|N|N||ALOY|N
 
-Y|ALP|Alpha Compute Corp  - Ordinary Shares|Q|S|N|100|N|D||ALP|N
+Y|ALP|Alpha Compute Corp  - Ordinary Shares|Q|S|N|100|N|N||ALP|N
 
 Y|ALPS|ALPS Group Inc - Ordinary Share|Q|G|N|100|N|D||ALPS|N
 
@@ -1684,7 +1684,7 @@ Y|ASG|Liberty All-Star Growth Fund, Inc.|N| |N|100|N||ASG|ASG|N
 
 Y|ASGI|abrdn Global Infrastructure Income Fund Common Shares of Beneficial Interest|N| |N|100|N||ASGI|ASGI|N
 
-Y|ASGI.V|abrdn Global Infrastructure Income Fund Rights (expiring October 15, 2026) Rights when issued|N| |N|100|N||ASGIrw|ASGI^#|N
+Y|ASGI.R|abrdn Global Infrastructure Income Fund Rights (expiring October 15, 2026) Rights|N| |N|100|N||ASGIr|ASGI^|N
 
 Y|ASGM|Virtus AlphaSimplex Global Macro ETF|P| |Y|100|N||ASGM|ASGM|N
 
@@ -2427,6 +2427,8 @@ Y|BC$C|Brunswick Corporation 6.375% Notes due 2049|N| |N|100|N||BCpC|BC-C|N
 Y|BCAL|California BanCorp - Common Stock|Q|S|N|100|N|N||BCAL|N
 
 Y|BCAT|BlackRock Capital Allocation Term Trust Common Shares of Beneficial Interest|N| |N|100|N||BCAT|BCAT|N
+
+Y|BCAT.V|BlackRock Capital Allocation Term Trust Rights (expiring October 21, 2026) Rights when issued|N| |N|100|N||BCATrw|BCAT^#|N
 
 Y|BCAX|Bicara Therapeutics Inc. - Common Stock|Q|G|N|100|N|N||BCAX|N
 
@@ -3673,8 +3675,6 @@ Y|BTOC|Armlogi Holding Corp. - common stock|Q|S|N|100|N|D||BTOC|N
 Y|BTOT|iShares Total USD Fixed Income Market ETF|P| |Y|100|N||BTOT|BTOT|N
 
 Y|BTQ|BTQ Technologies Corp. - Common Stock|Q|G|N|100|N|N||BTQ|N
-
-Y|BTR|Beacon Tactical Risk ETF|P| |Y|100|N||BTR|BTR|N
 
 Y|BTRN|Global X Bitcoin Trend Strategy ETF|P| |Y|100|N||BTRN|BTRN|N
 
@@ -5952,6 +5952,8 @@ Y|DBX|Dropbox, Inc. - Class A Common Stock|Q|Q|N|100|N|N||DBX|N
 
 Y|DC|Dakota Gold Corp. Common Stock|A| |N|100|N||DC|DC|N
 
+Y|DCAP|T-Strive Digital Credit Preferred Income ETF|Z| |Y|100|N||DCAP|DCAP|N
+
 Y|DCBG|Dime Commercial Bancshares, Inc. 9.000% Junior Subordinated Notes|N| |N|100|N||DCBG|DCBG|N
 
 Y|DCBO|Docebo Inc. - Common Shares|Q|Q|N|100|N|N||DCBO|N
@@ -6547,8 +6549,6 @@ Y|DOL|WisdomTree True Developed International Fund|P| |Y|100|N||DOL|DOL|N
 Y|DOLE|Dole plc Ordinary Shares|N| |N|100|N||DOLE|DOLE|N
 
 Y|DOMH|Dominari Holdings Inc. - Common Stock|Q|S|N|100|N|N||DOMH|N
-
-Y|DOMO|Domo, Inc. - Class B Common Stock|Q|G|N|100|N|N||DOMO|N
 
 Y|DON|WisdomTree U.S. MidCap Dividend Fund|P| |Y|100|N||DON|DON|N
 
@@ -8488,7 +8488,7 @@ Y|FGIIW|FG Imperii Acquisition Corp. - Warrants|Q|G|N|100|N|N||FGIIW|N
 
 Y|FGIWW|FGI Industries Ltd. - warrant|Q|S|N|100|N|N||FGIWW|N
 
-Y|FGL|Founder Group Limited - Class A Ordinary Shares|Q|S|N|100|N|N||FGL|N
+Y|FGL|Founder Group Limited - Class A Ordinary Shares|Q|S|N|100|N|D||FGL|N
 
 Y|FGM|First Trust Germany AlphaDEX Fund|Q|G|Y|100|N|N||FGM|N
 
@@ -8638,7 +8638,13 @@ Y|FIZZ|National Beverage Corp. - Common Stock|Q|Q|N|100|N|N||FIZZ|N
 
 Y|FJAN|FT Vest U.S. Equity Buffer ETF - January|Z| |Y|100|N||FJAN|FJAN|N
 
+Y|FJDI|ARC Group Securities Acquisition I - Class A Ordinary Shares|Q|G|N|100|N|N||FJDI|N
+
+Y|FJDIR|ARC Group Securities Acquisition I - Rights|Q|G|N|100|N|N||FJDIR|N
+
 Y|FJDIU|ARC Group Securities Acquisition I - Units|Q|G|N|100|N|N||FJDIU|N
+
+Y|FJDIW|ARC Group Securities Acquisition I - Warrants|Q|G|N|100|N|N||FJDIW|N
 
 Y|FJET|Starfighters Space, Inc. Common Stock|A| |N|100|N||FJET|FJET|N
 
@@ -10594,7 +10600,7 @@ Y|HAFN|Hafnia Limited Common Shares|N| |N|100|N||HAFN|HAFN|N
 
 Y|HAIL|State Street SPDR S&P Kensho Smart Mobility ETF|P| |Y|100|N||HAIL|HAIL|N
 
-Y|HAIN|The Hain Celestial Group, Inc. - Common Stock|Q|Q|N|100|N|D||HAIN|N
+Y|HAIN|The Hain Celestial Group, Inc. - Common Stock|Q|S|N|100|N|D||HAIN|N
 
 Y|HAKY|Amplify HACK Cybersecurity Covered Call ETF|P| |Y|100|N||HAKY|HAKY|N
 
@@ -11196,6 +11202,8 @@ Y|HUBG|Hub Group, Inc. - Class A Common Stock|Q|Q|N|100|N|E||HUBG|N
 
 Y|HUBS|HubSpot, Inc. Common Stock|N| |N|40|N||HUBS|HUBS|N
 
+Y|HUCK|Huckleberry.ai, Inc. - Class B Common Stock|Q|G|N|100|N|N||HUCK|N
+
 Y|HUDI|Huadi International Group Co., Ltd. - Ordinary Shares|Q|S|N|100|N|D||HUDI|N
 
 Y|HUHU|HUHUTECH International Group Inc. - Ordinary Shares|Q|S|N|100|N|N||HUHU|N
@@ -11230,12 +11238,6 @@ Y|HUYA|HUYA Inc. American depositary shares, each  representing one Class A ordi
 
 Y|HVAC|AdvisorShares HVAC and Industrials ETF|P| |Y|100|N||HVAC|HVAC|N
 
-Y|HVII|Hennessy Capital Investment Corp. VII - Ordinary Shares|Q|G|N|100|N|N||HVII|N
-
-Y|HVIIR|Hennessy Capital Investment Corp. VII - Rights|Q|G|N|100|N|N||HVIIR|N
-
-Y|HVIIU|Hennessy Capital Investment Corp. VII - Unit|Q|G|N|100|N|N||HVIIU|N
-
 Y|HVMC|Highview Merger Corp. - Class A Ordinary Share|Q|G|N|100|N|N||HVMC|N
 
 Y|HVMCU|Highview Merger Corp. - Units|Q|G|N|100|N|N||HVMCU|N
@@ -11259,6 +11261,8 @@ Y|HWIV|Hotchkis & Wiley International Value Fund|Q|G|Y|100|N|N||HWIV|N
 Y|HWKN|Hawkins, Inc. - Common Stock|Q|Q|N|100|N|N||HWKN|N
 
 Y|HWM|Howmet Aerospace Inc. Common Stock|N| |N|100|N||HWM|HWM|N
+
+Y|HWMV|Hotchkis & Wiley Mid-Cap Value Fund|Q|G|Y|100|N|N||HWMV|N
 
 Y|HWO|Hotchkis & Wiley Opportunities Fund|Q|G|Y|100|N|N||HWO|N
 
@@ -11924,7 +11928,7 @@ Y|IMC|IMC Rare Earths Ltd Ordinary Shares|A| |N|100|N||IMC|IMC|N
 
 Y|IMCB|iShares Morningstar Mid-Cap ETF|P| |Y|100|N||IMCB|IMCB|N
 
-Y|IMCC|IM Cannabis Corp. - Common Shares|Q|S|N|100|N|D||IMCC|N
+Y|IMCC|IM Cannabis Corp. - Common Shares|Q|S|N|100|N|N||IMCC|N
 
 Y|IMCG|iShares Morningstar Mid-Cap Growth ETF|P| |Y|100|N||IMCG|IMCG|N
 
@@ -12078,7 +12082,7 @@ Y|INLF|INLIF LIMITED - Class A Ordinary shares|Q|S|N|100|N|N||INLF|N
 
 Y|INLX|Intellinetics, Inc. Common Stock|A| |N|100|N||INLX|INLX|N
 
-Y|INM|InMed Pharmaceuticals Inc. - Common Shares|Q|S|N|100|N|N||INM|N
+Y|INM|InMed Pharmaceuticals Inc. - Common Shares|Q|S|N|100|N|D||INM|N
 
 Y|INMB|INmune Bio Inc. - Common stock|Q|S|N|100|N|N||INMB|N
 
@@ -13742,11 +13746,11 @@ Y|LBTYK|Liberty Global Ltd. - Class C Common Shares|Q|Q|N|100|N|N||LBTYK|N
 
 Y|LCAP|Principal Capital Appreciation Select ETF|Z| |Y|100|N||LCAP|LCAP|N
 
-Y|LCCC|Lakeshore Acquisition III Corp. - Ordinary Shares|Q|G|N|100|N|N||LCCC|N
+Y|LCCC|Lakeshore Acquisition III Corp. - Ordinary Shares|Q|S|N|100|N|N||LCCC|N
 
-Y|LCCCR|Lakeshore Acquisition III Corp. - Rights|Q|G|N|100|N|N||LCCCR|N
+Y|LCCCR|Lakeshore Acquisition III Corp. - Rights|Q|S|N|100|N|N||LCCCR|N
 
-Y|LCCCU|Lakeshore Acquisition III Corp. - Unit|Q|G|N|100|N|N||LCCCU|N
+Y|LCCCU|Lakeshore Acquisition III Corp. - Unit|Q|S|N|100|N|N||LCCCU|N
 
 Y|LCDS|JPMorgan Fundamental Data Science Large Core ETF|Q|G|Y|100|N|N||LCDS|N
 
@@ -14905,6 +14909,8 @@ Y|MGEE|MGE Energy Inc. - Common Stock|Q|Q|N|100|N|N||MGEE|N
 Y|MGF|Aberdeen Government Markets Income Fund Common Shares of Beneficial Interest|N| |N|100|N||MGF|MGF|N
 
 Y|MGIH|Millennium Group International Holdings Limited - Ordinary Shares|Q|S|N|100|N|N||MGIH|N
+
+Y|MGIN|Man Active Global Infrastructure ETF|P| |Y|100|N||MGIN|MGIN|N
 
 Y|MGK|Vanguard Morningstar Mega Cap Growth ETF|P| |Y|40|N||MGK|MGK|N
 
@@ -17237,6 +17243,8 @@ Y|ONDU|Tradr 2X Long ONDS Daily ETF|Z| |Y|100|N||ONDU|ONDU|N
 Y|ONEG|OneConstruction Group Limited - Ordinary Shares|Q|S|N|100|N|N||ONEG|N
 
 Y|ONEH|TrueShares Equity Hedge ETF|Z| |Y|100|N||ONEH|ONEH|N
+
+Y|ONEN|ONE Nuclear Energy Inc. - Common Stock|Q|G|N|100|N|N||ONEN|N
 
 Y|ONEO|State Street SPDR Russell 1000 Momentum Focus ETF|P| |Y|100|N||ONEO|ONEO|N
 
@@ -19674,7 +19682,7 @@ Y|REAL|The RealReal, Inc. - Common Stock|Q|Q|N|100|N|N||REAL|N
 
 Y|REAX|Real REMAX Group Inc. - Common Stock|Q|S|N|100|N|N||REAX|N
 
-Y|REBN|Reborn Coffee, Inc. - Common Stock|Q|S|N|100|N|N||REBN|N
+Y|REBN|Reborn Coffee, Inc. - Common Stock|Q|S|N|100|N|D||REBN|N
 
 Y|RECI|Columbia Research Enhanced Core Premium Income ETF|P| |Y|100|N||RECI|RECI|N
 
@@ -22648,8 +22656,6 @@ Y|TBLU|Tortoise Global Water ETF|N| |Y|100|N||TBLU|TBLU|N
 
 Y|TBN|Tamboran Resources Corporation Common stock|N| |N|100|N||TBN|TBN|N
 
-Y|TBPH|Theravance Biopharma, Inc. - Ordinary Shares|Q|G|N|100|N|N||TBPH|N
-
 Y|TBT|ProShares UltraShort Lehman 20  Year Treasury|P| |Y|100|N||TBT|TBT|N
 
 Y|TBUX|T. Rowe Price Ultra Short-Term Bond ETF|P| |Y|100|N||TBUX|TBUX|N
@@ -23114,6 +23120,8 @@ Y|TLG|Touchstone Large Company Growth ETF|Q|G|Y|100|N|N||TLG|N
 
 Y|TLH|iShares 10-20 Year Treasury Bond ETF|P| |Y|100|N||TLH|TLH|N
 
+Y|TLIE|American Beacon The London Company Income Equity ETF|P| |Y|100|N||TLIE|TLIE|N
+
 Y|TLIH|Ten-League International Holdings Limited - Ordinary Shares|Q|S|N|100|N|N||TLIH|N
 
 Y|TLK|PT Telekomunikasi Indonesia, Tbk|N| |N|100|N||TLK|TLK|N
@@ -23309,6 +23317,8 @@ Y|TOPS|TOP Ships, Inc. Common Stock|A| |N|100|N||TOPS|TOPS|N
 Y|TOPT|iShares Top 20 U.S. Stocks ETF|P| |Y|100|N||TOPT|TOPT|N
 
 Y|TOPW|Roundhill Top WeeklyPay ETF|Z| |Y|100|N||TOPW|TOPW|N
+
+Y|TORK|KraneShares Actuator ETF|Q|G|Y|100|N|N||TORK|N
 
 Y|TORO|Toro Corp. - Common stock|Q|S|N|100|N|N||TORO|N
 
@@ -24433,6 +24443,8 @@ Y|VACI.U|Viking Acquisition Corp. I Units, each consisting of one Class A ordina
 Y|VACI.W|Viking Acquisition Corp. I Warrants to purchase one Class A Ordinary Share|N| |N|100|N||VACI.WS|VACI+|N
 
 Y|VAI|Valor Energy Incorporated - Common Stock|Q|S|N|100|N|D||VAI|N
+
+Y|VAIC|VegaShares US Equity Autocallable Conservative Income ETF|P| |Y|100|N||VAIC|VAIC|N
 
 Y|VAIE|VegaShares US Equity Autocallable Income ETF|P| |Y|100|N||VAIE|VAIE|N
 
@@ -26324,7 +26336,7 @@ Y|YSWY|Yesway, Inc. - Class A Common Stock|Q|Q|N|100|N|N||YSWY|N
 
 Y|YSXT|YSX Tech. Co., Ltd  - Class A Ordinary Shares|Q|S|N|100|N|N||YSXT|N
 
-Y|YTRA|Yatra Online, Inc. - Ordinary Shares|Q|S|N|100|N|D||YTRA|N
+Y|YTRA|Yatra Online, Inc. - Ordinary Shares|Q|S|N|100|N|N||YTRA|N
 
 Y|YUM|Yum! Brands, Inc.|N| |N|100|N||YUM|YUM|N
 
@@ -26336,7 +26348,7 @@ Y|YXI|ProShares Short FTSE China 50|P| |Y|100|N||YXI|YXI|N
 
 Y|YXT|YXT.COM GROUP HOLDING LIMITED - American Depository Shares|Q|G|N|100|N|N||YXT|N
 
-Y|YYAI|AiRWA Inc. - Common Stock|Q|S|N|100|N|E||YYAI|N
+Y|YYAI|AiRWA Inc. - Common Stock|Q|S|N|100|N|N||YYAI|N
 
 Y|YYY|Amplify CEF High Income ETF|P| |Y|100|N||YYY|YYY|N
 
@@ -26554,4 +26566,4 @@ Y|ZZZTT|ETF|F| |Y|100|Y||ZZZTT|ZZZTT|N
 
 Y|ZZZTX|TXSE Test Stk 5 Common Stock|F| |N|40|Y||ZZZTX|ZZZTX|N
 
-File Creation Time: 0923202618:03|||||
+File Creation Time: 0924202618:02|||||

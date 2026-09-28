@@ -75,6 +75,32 @@ def parse_finviz_value(value_str: str) -> Optional[float]:
         return None
 
 
+def parse_snapshot_tables(soup: BeautifulSoup) -> Dict[str, str]:
+    """Read every label -> value pair from a Finviz quote page's snapshot.
+
+    Finviz renders the quote snapshot as SEVERAL
+    <table class="snapshot-table2"> blocks (one per column group), not a
+    single table. soup.find() would grab only the first block (Index..IPO)
+    and miss Shs Float / P/E / EPS this Y / Sales Q/Q / Short Float /
+    Inst Own / Inst Trans. Merge the pairs from every block.
+
+    This is the one parser for the quote page: the EP scans use it too.
+    finvizfinance's ``ticker_fundament()`` stopped working in the late-June
+    2026 redesign (it reads the removed ``div.quote-links`` first), and that
+    silently emptied the EP tab. Returns an empty dict when no block exists.
+    """
+    data_dict = {}
+    for table in soup.find_all('table', class_='snapshot-table2'):
+        for row in table.find_all('tr'):
+            cells = row.find_all('td')
+            for i in range(0, len(cells), 2):
+                if i + 1 < len(cells):
+                    key = cells[i].get_text(strip=True)
+                    value = cells[i + 1].get_text(strip=True)
+                    data_dict[key] = value
+    return data_dict
+
+
 def get_fundamental_data(ticker: str) -> Optional[Dict]:
     """Fetch fundamental data for a single ticker from finviz."""
     url = f"https://finviz.com/quote.ashx?t={ticker}"
@@ -88,26 +114,9 @@ def get_fundamental_data(ticker: str) -> Optional[Dict]:
             response.raise_for_status()
 
             soup = BeautifulSoup(response.content, 'html.parser')
-
-            # Finviz renders the quote snapshot as SEVERAL
-            # <table class="snapshot-table2"> blocks (one per column group), not
-            # a single table. soup.find() would grab only the first block
-            # (Index..IPO) and miss Shs Float / P/E / EPS this Y / Sales Q/Q /
-            # Short Float / Inst Own / Inst Trans, leaving every fundamental but
-            # Market Cap NULL. Merge label->value pairs from every block.
-            tables = soup.find_all('table', class_='snapshot-table2')
-            if not tables:
+            data_dict = parse_snapshot_tables(soup)
+            if not data_dict:
                 return None
-
-            data_dict = {}
-            for table in tables:
-                for row in table.find_all('tr'):
-                    cells = row.find_all('td')
-                    for i in range(0, len(cells), 2):
-                        if i + 1 < len(cells):
-                            key = cells[i].get_text(strip=True)
-                            value = cells[i + 1].get_text(strip=True)
-                            data_dict[key] = value
 
             fundamentals = {
                 'market_cap': parse_finviz_value(data_dict.get('Market Cap')),

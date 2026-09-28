@@ -1,12 +1,11 @@
 name: EP Scan — Morning (BMO Earnings)
 
 on:
-  schedule:
-    # Dual-cron for DST-aware 5:45 AM Pacific (Mon-Fri)
-    # 12:45 PM UTC = 5:45 AM PDT (Mar-Nov)
-    - cron: '45 12 * * 1-5'
-    # 1:45 PM UTC = 5:45 AM PST (Nov-Mar)
-    - cron: '45 13 * * 1-5'
+  # No schedule. The 5:45 AM Pacific cron (12:45/13:45 UTC) was removed on
+  # 2026-09-27 because GitHub started it late: 45-80 minutes in August, and
+  # 4-5 hours in September (12:40 PM to 2:00 PM ET). A pre-market scan that
+  # lands after the open is of no use. Another trigger is still to be chosen.
+  # Manual runs still work; the schedule guard below allows workflow_dispatch.
   workflow_dispatch:
 
 permissions:

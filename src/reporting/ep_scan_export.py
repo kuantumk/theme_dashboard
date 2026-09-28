@@ -9,6 +9,7 @@ Schedule: Run at ~1:30 PM Pacific daily (after-hours price has stabilized).
 """
 
 import json
+import sys
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -17,16 +18,25 @@ import yfinance as yf
 import pandas as pd
 import pytz
 
-try:
-    from finvizfinance.screener.overview import Overview
-    from finvizfinance.quote import finvizfinance
-    FINVIZ_AVAILABLE = True
-except ImportError:
-    FINVIZ_AVAILABLE = False
-    print("Warning: finvizfinance not installed. Install with: uv sync")
-
 # Output path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# Both Finviz helpers come from the live EP scans, which carry the fixes for
+# Finviz's 2026 redesigns: the shared fundamentals lookup (finvizfinance's
+# ticker_fundament() raises on every ticker since late June) and the ticker
+# repair view (the screener doubles each ticker's first letter since July 15).
+from src.reporting.ep_scan_common import (  # noqa: E402
+    FINVIZ_AVAILABLE,
+    get_fundamentals,
+    make_ticker_repair_view,
+)
+
+if FINVIZ_AVAILABLE:
+    from finvizfinance.screener.overview import Overview
+    _EarningsOverview = make_ticker_repair_view(Overview)
+
 DOCS_DATA_DIR = PROJECT_ROOT / "docs" / "data"
 
 EASTERN = pytz.timezone('US/Eastern')
@@ -38,7 +48,7 @@ def get_earnings_tickers(schedule_filter: str) -> list:
     if not FINVIZ_AVAILABLE:
         return []
     try:
-        overview = Overview()
+        overview = _EarningsOverview()
         overview.set_filter(filters_dict={'Earnings Date': schedule_filter})
         df = overview.screener_view()
         if df is None or df.empty:
@@ -47,46 +57,6 @@ def get_earnings_tickers(schedule_filter: str) -> list:
     except Exception as e:
         print(f"  Warning: finviz earnings fetch failed ({schedule_filter}): {e}")
         return []
-
-
-def get_fundamentals(ticker: str) -> dict | None:
-    """Fetch float shares and short float % from finviz."""
-    if not FINVIZ_AVAILABLE:
-        return None
-    try:
-        stock = finvizfinance(ticker)
-        f = stock.ticker_fundament()
-
-        # Float shares (M)
-        float_str = f.get('Shs Float', 'N/A')
-        stock_float = None
-        if 'M' in str(float_str):
-            stock_float = float(float_str.replace('M', ''))
-        elif 'B' in str(float_str):
-            stock_float = float(float_str.replace('B', '')) * 1000
-
-        # Short float %
-        short_str = f.get('Short Float', 'N/A')
-        short_pct = float(short_str.replace('%', '')) if '%' in str(short_str) else None
-
-        # Average Volume
-        vol_str = f.get('Avg Volume', 'N/A')
-        avg_vol = None
-        if 'K' in str(vol_str):
-            avg_vol = float(vol_str.replace('K', '')) * 1000
-        elif 'M' in str(vol_str):
-            avg_vol = float(vol_str.replace('M', '')) * 1000000
-        elif 'B' in str(vol_str):
-            avg_vol = float(vol_str.replace('B', '')) * 1000000000
-
-        return {
-            'float': stock_float,
-            'short': short_pct,
-            'avg_volume': avg_vol,
-        }
-    except Exception as e:
-        print(f"  Warning [{ticker}]: finviz fundamentals failed: {e}")
-        return None
 
 
 # ── Yahoo Finance helpers ─────────────────────────────────────────────────────

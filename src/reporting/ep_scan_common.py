@@ -22,6 +22,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+from src.data_collection.fetch_fundamental_data import parse_snapshot_tables
 from src.indicators.create_technical_indicators import (
     compute_ema_pair,
     compute_sma50_full,
@@ -173,8 +174,15 @@ def get_fundamentals(ticker: str) -> Optional[Dict]:
     if not FINVIZ_AVAILABLE:
         return None
     try:
+        # Read the snapshot tables directly. finvizfinance's
+        # ticker_fundament() raises on every ticker since the late-June 2026
+        # quote-page redesign, which dropped every EP candidate as "missing
+        # fundamental data". The quote object still fetches the page.
         stock = FinvizQuote(ticker)
-        f = stock.ticker_fundament()
+        f = parse_snapshot_tables(stock.soup)
+        if not f:
+            print(f"  [{ticker}] fundamentals failed: no snapshot table on quote page")
+            return None
 
         float_str = f.get('Shs Float', 'N/A')
         stock_float = None

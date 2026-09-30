@@ -479,16 +479,24 @@ class HighlightTooltipTests(unittest.TestCase):
             HIGHLIGHT_SHORT_FLOOR,
         )
 
-        floor = f'{HIGHLIGHT_SHORT_FLOOR:g}'
-        breaks = re.findall(r"(?:shortVal|t\.si)\s*>=\s*(\d+(?:\.\d+)?)\s*\?\s*'up'", APP)
+        # The five sites share one band table (COLOR_BANDS.short), whose green
+        # band opens at SHORT_CROWDED_PCT. Bind that constant to the floor, the
+        # table to the constant, and the five sites to the table.
+        const = re.search(r'const SHORT_CROWDED_PCT = (\d+(?:\.\d+)?);', APP)
+        self.assertIsNotNone(
+            const, 'SHORT_CROWDED_PCT moved or was renamed; re-point this test')
+        self.assertEqual(
+            float(const.group(1)), HIGHLIGHT_SHORT_FLOOR,
+            f'the Short% column bands at {const.group(1)} while the rung gates '
+            f'at {HIGHLIGHT_SHORT_FLOOR:g}; the tint and the number would '
+            f'disagree on one row')
+        table = re.search(r'\n    short: \{\n\s*bands: \[\{([^}]*)\}', APP)
+        self.assertIsNotNone(table, 'COLOR_BANDS.short moved; re-point this test')
+        self.assertIn("at: SHORT_CROWDED_PCT, out: 'up'", table.group(1))
+        sites = re.findall(r'pickBand\(COLOR_BANDS\.short,', APP)
         self.assertGreaterEqual(
-            len(breaks), 5,
-            'the Short% colour break moved or was renamed; re-point this test')
-        for found in set(breaks):
-            self.assertEqual(
-                float(found), float(floor),
-                f'a Short% column bands at {found} while the rung gates at '
-                f'{floor}; the tint and the number would disagree on one row')
+            len(sites), 5,
+            'a Short% column stopped reading COLOR_BANDS.short; re-point this test')
 
     def test_the_short_tooltip_quotes_the_floor_the_ladder_actually_gates_on(self):
         """The tooltip hand-types the percentage the Python constant decides.

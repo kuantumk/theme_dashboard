@@ -7,7 +7,7 @@
   <title>Market Monitor</title>
   <meta name="description"
     content="Real-time market dashboard with macro overview, stock themes, industry ETFs, and leveraged ETF tracking.">
-  <link rel="stylesheet" href="style.css?v=20260901">
+  <link rel="stylesheet" href="style.css?v=20260929">
 </head>
 
 <body>
@@ -53,6 +53,7 @@
       <button class="tab-btn" data-tab="ep" id="tab-ep">EP</button>
       <button class="tab-btn" data-tab="parabolic" id="tab-parabolic">Parabolic</button>
       <button class="tab-btn" data-tab="si" id="tab-si">SI</button>
+      <button class="tab-btn" data-tab="legends" id="tab-legends">Legends</button>
     </div>
 
     <!-- ══ TAB 1: MACRO OVERVIEW ═════════════════════════ -->
@@ -435,21 +436,9 @@
             <div id="themeviz-overlay" class="themeviz-overlay"></div>
             <div id="themeviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
           </div>
-          <div class="themeviz-legend">
-            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing theme (score ≥ 100)</span>
-            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
-            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
-            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
-            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
-            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
-            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
-            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
-            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
-          </div>
+          <!-- Drawn by legends.js from COLOR_BANDS, the tables the nodes are
+               painted from, so this key cannot drift from the network. -->
+          <div class="themeviz-legend" data-viz-legend="rs"></div>
         </div>
       </div>
       <div class="resize-handle" data-panel="themeviz"></div>
@@ -594,21 +583,9 @@
             <div id="momentumviz-overlay" class="themeviz-overlay"></div>
             <div id="momentumviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
           </div>
-          <div class="themeviz-legend">
-            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing (strength ≥ 100)</span>
-            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
-            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
-            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
-            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
-            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
-            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
-            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
-            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
-          </div>
+          <!-- Drawn by legends.js from COLOR_BANDS, the tables the nodes are
+               painted from, so this key cannot drift from the network. -->
+          <div class="themeviz-legend" data-viz-legend="rs"></div>
         </div>
       </div>
       <div class="resize-handle" data-panel="momentumviz"></div>
@@ -636,21 +613,9 @@
             <div id="volumeviz-overlay" class="themeviz-overlay"></div>
             <div id="volumeviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
           </div>
-          <div class="themeviz-legend">
-            <span class="lg-item"><span class="lg-dot lg-blazing"></span>Blazing (strength ≥ 100)</span>
-            <span class="lg-item"><span class="lg-dot lg-strong"></span>Strong (≥ 80)</span>
-            <span class="lg-item"><span class="lg-dot lg-solid"></span>Solid (≥ 60)</span>
-            <span class="lg-item"><span class="lg-dot lg-faded"></span>Faded</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-dot lg-rs90"></span>RS ≥ 90</span>
-            <span class="lg-item"><span class="lg-dot lg-rs80"></span>RS ≥ 80</span>
-            <span class="lg-item"><span class="lg-dot lg-rs50"></span>RS ≥ 50</span>
-            <span class="lg-item"><span class="lg-dot lg-rs0"></span>RS &lt; 50</span>
-            <span class="lg-sep">|</span>
-            <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight setup (entry-ready)</span>
-            <span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>
-            <span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>
-          </div>
+          <!-- Drawn by legends.js from COLOR_BANDS, the tables the nodes are
+               painted from, so this key cannot drift from the network. -->
+          <div class="themeviz-legend" data-viz-legend="vars"></div>
         </div>
       </div>
       <div class="resize-handle" data-panel="volumeviz"></div>
@@ -869,14 +834,9 @@
           <div id="varsviz-overlay" class="themeviz-overlay"></div>
           <div id="varsviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
         </div>
-        <div class="themeviz-legend">
-          <span class="lg-item"><span class="lg-dot lg-vars6"></span>VARS ≥ 6</span>
-          <span class="lg-item"><span class="lg-dot lg-vars4"></span>VARS ≥ 4</span>
-          <span class="lg-item"><span class="lg-dot lg-vars2"></span>VARS ≥ 2</span>
-          <span class="lg-item"><span class="lg-dot lg-varslow"></span>VARS &lt; 2</span>
-          <span class="lg-sep">·</span>
-          <span class="lg-item"><span class="lg-ring lg-tight"></span>Tight / inside day on MA</span>
-        </div>
+        <!-- Drawn by legends.js from COLOR_BANDS, the tables the nodes are
+             painted from, so this key cannot drift from the network. -->
+        <div class="themeviz-legend" data-viz-legend="vars"></div>
       </div>
     </div>
     <div class="resize-handle" data-panel="varsviz"></div>
@@ -972,10 +932,21 @@
     </div>
   </div>
 
+  <!-- ══ TAB: LEGENDS ══════════════════════════════════ -->
+  <!-- One scrolling page, not a list/chart split: it holds no tickers and
+       opens no chart. docs/legends.js draws it from window.MM_COLORS, the
+       registry app.js builds from the same tables its render sites call. -->
+  <div class="tab-content" id="content-legends">
+    <div class="legend-page" id="legend-page">
+      <div class="loading">Loading legend...</div>
+    </div>
+  </div>
+
   </div> <!-- Enclosing app-wrap -->
 
   <script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
-  <script src="app.js?v=20260901"></script>
+  <script src="app.js?v=20260929"></script>
+  <script src="legends.js?v=20260929"></script>
 </body>
 
 </html>

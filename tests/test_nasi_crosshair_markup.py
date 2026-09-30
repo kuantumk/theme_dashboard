@@ -314,8 +314,8 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
     def test_rails_are_not_the_marker_colour(self) -> None:
         """A red rail would sit under the red markers it labels.
 
-        The 80 rail lands at y 116 and the markers there cover y 110.9-117.5
-        (centres 112.9-115.5, plus ry: 2), so the pair would read as one
+        The 80 rail lands at y 124 and the markers there cover y 115.8-125.0
+        (centres 117.8-123.0, plus ry: 2), so the pair would read as one
         thickened line. Rails stay amber on both sides; the markers carry the
         signal colour.
         """
@@ -437,9 +437,9 @@ class NasiCrosshairMarkupTests(unittest.TestCase):
     def test_the_rsi_pane_draws_exactly_two_rails(self) -> None:
         """The dashed 12 rail was removed when the oversold level became 11.
 
-        The RSI pane spans 40 viewBox units for 0-100 and the chart renders at
-        a 1:1 vertical scale, so one RSI point is 0.4 CSS px: rails at 11 and
-        12 draw as a single thickened line. In the plotted 252 sessions both
+        The RSI pane spans 80 viewBox units for 0-100 and the chart renders at
+        a 1:1 vertical scale, so one RSI point is 0.8 CSS px: rails at 11 and
+        12 draw as a near-single thickened line. In the plotted 252 sessions both
         thresholds mark the same three episodes, so 11 does the 12 band's job
         on its own.
         """

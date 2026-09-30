@@ -74,27 +74,29 @@
           <div class="breadth-grid" id="breadth-container">
             <div class="breadth-item">
               <div class="breadth-label">CNN Fear & Greed</div>
-              <div class="breadth-value" id="fg-value">—</div>
-              <div class="breadth-sub" id="fg-rating"></div>
+              <!-- Score and rating share one row ("31.6 FEAR") to save a line. -->
+              <div class="breadth-value-row">
+                <div class="breadth-value" id="fg-value">—</div>
+                <div class="breadth-sub" id="fg-rating"></div>
+              </div>
             </div>
             <!-- NAAIM: active-manager equity exposure, surveyed weekly on
-                 Wednesdays. The survey-date line is the staleness defence, not
+                 Wednesdays. The survey date beside the title is the staleness defence, not
                  decoration — the reading stands unchanged for six days by
                  design, so without a date a dead fetch and an ordinary
                  mid-week view look identical. That is precisely how the
                  previous NAAIM tile sat frozen at 79.70% for weeks. -->
             <div class="breadth-item">
-              <div class="breadth-label">NAAIM Exposure</div>
+              <div class="breadth-label">NAAIM Exposure<span class="breadth-date" id="naaim-as-of"></span></div>
               <div class="breadth-value" id="naaim-value">—</div>
-              <div class="breadth-sub" id="naaim-as-of"></div>
             </div>
             <!-- The one tile carrying three figures rather than one, so it uses
                  .aaii-parts instead of .breadth-value (see style.css). The
-                 week-ending line is the staleness signal: AAII publishes on
+                 week-ending date beside the title is the staleness signal: AAII publishes on
                  Thursdays, so the same figures stand all week and a dead fetch
                  is otherwise indistinguishable from a normal Monday. -->
             <div class="breadth-item bi-wide">
-              <div class="breadth-label">AAII Sentiment</div>
+              <div class="breadth-label">AAII Sentiment<span class="breadth-date" id="aaii-week"></span></div>
               <div class="aaii-parts">
                 <div class="aaii-part">
                   <div class="aaii-num" id="aaii-bull">—</div>
@@ -109,7 +111,6 @@
                   <div class="aaii-plabel">Bear</div>
                 </div>
               </div>
-              <div class="breadth-sub" id="aaii-week"></div>
             </div>
             <div class="breadth-item">
               <div class="breadth-label">NCFD</div>
@@ -151,7 +152,7 @@
             <!-- role="img" would declare this non-interactive; the chart takes
                  pointer input for the crosshair readout below, so it carries an
                  img-like description without the contradicting role. -->
-            <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 152"
+            <svg class="nasi-chart" id="nasi-chart" viewBox="0 0 600 192"
                  preserveAspectRatio="none"
                  aria-label="Nasdaq McClellan Summation Index and its 14-day RSI"></svg>
             <!-- Crosshair readout. Replaces the former range + legend row: that

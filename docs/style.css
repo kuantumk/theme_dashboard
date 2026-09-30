@@ -917,16 +917,18 @@ tr.filtered-out:hover td {
    exactly, so there is no ragged half-row and no width threshold to cross. It
    also hands the extra room to the one tile that renders three figures instead
    of one (see .aaii-parts below) while every other tile keeps the half-width it
-   has always had — which is why nothing here needs a reduced type scale.
+   has always had.
 
    An earlier revision put all three sentiment tiles in one row over a
-   twelve-column grid, which forced every other number down to 17px to fit and
-   needed a container query to survive a narrow panel. This shape needs neither. */
+   twelve-column grid, which needed a container query to survive a narrow
+   panel. This shape does not. Every figure in the grid now shares the AAII
+   17px scale by choice, not to fit: the height it saves goes to the NASI RSI
+   pane below. */
 .breadth-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px 12px;
 }
 
 .bi-wide {
@@ -936,7 +938,7 @@ tr.filtered-out:hover td {
 .breadth-item {
   background: transparent;
   border: 1px solid var(--border);
-  padding: 12px 14px;
+  padding: 6px 10px;
 }
 
 .breadth-label {
@@ -945,7 +947,7 @@ tr.filtered-out:hover td {
   font-weight: 300;
   letter-spacing: 0;
   color: var(--text3);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 /* ⛔ If this ever needs a different scale for some tiles, retune it HERE or via
@@ -959,21 +961,18 @@ tr.filtered-out:hover td {
    writes textContent and never touches className. */
 .breadth-value {
   font-family: var(--display);
-  font-size: 28px;
+  font-size: 17px;
   font-weight: 200;
-  letter-spacing: -1.2px;
+  letter-spacing: -0.6px;
 }
 
 /* AAII tile. The only tile in the grid carrying three figures, so it needs its
    own type scale rather than a .breadth-value override.
 
-   The 17px was originally forced: at half width the tile had ~140px of text
-   room and three numbers at 28px did not fit. That constraint is gone — the
-   tile now spans both columns (.bi-wide) and has ~517px of room, where 28px
-   would fit comfortably. The smaller scale is kept deliberately: these are
-   three sub-readings of one survey, not three headline figures, and holding
-   them below the single-number tiles keeps that reading. Bump it if you
-   disagree — nothing measures against 17px any more.
+   17px is now the scale of every figure in the grid: .breadth-value was
+   brought down to match it so the saved height could go to the NASI RSI pane.
+   Change the two together, or the AAII figures stop reading as the same
+   kind of number as the tiles around them.
 
    The figures are deliberately uncoloured. Every other tile here tints by
    contrarian meaning -- a low NCFD reads green because washed-out breadth is a
@@ -997,13 +996,20 @@ tr.filtered-out:hover td {
   color: var(--text);
 }
 
+/* Figure and label on one row ("32.7% Bull"), matching "31.6 FEAR" in the
+   Fear & Greed tile, to save a line. */
+.aaii-part {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
 .aaii-plabel {
   font-family: var(--display);
   font-size: 9px;
   font-weight: 300;
   color: var(--text3);
   letter-spacing: 0;
-  margin-top: 1px;
 }
 
 /* ── NASI (Nasdaq McClellan Summation + RSI) ──────────────
@@ -1080,7 +1086,7 @@ tr.filtered-out:hover td {
 .nasi-chart {
   display: block;
   width: 100%;
-  height: 152px;
+  height: 192px;
   overflow: visible;
   pointer-events: all;
   cursor: crosshair;
@@ -1135,6 +1141,27 @@ tr.filtered-out:hover td {
 
 .nasi-ro-val + .nasi-ro-lbl {
   margin-left: 6px;
+}
+
+/* Fear & Greed score and rating on one row ("31.6 FEAR"). A wrapper, not a
+   modifier on .breadth-value, because loadBreadthData rewrites that element's
+   className (see the warning above .breadth-value). */
+.breadth-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.breadth-value-row .breadth-sub {
+  margin-top: 0;
+}
+
+/* Survey date on the NAAIM and AAII title rows ("NAAIM Exposure - Sep 23").
+   One step brighter than the label: it is the staleness signal for a weekly
+   reading, so it must stay legible. The " - " separator comes from app.js, so
+   an empty span leaves no dangling dash before the first payload. */
+.breadth-date {
+  color: var(--text2);
 }
 
 .breadth-sub {

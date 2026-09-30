@@ -652,14 +652,15 @@
             nv.textContent = data.naaim.value.toFixed(2) + '%';
           }
           const na = document.getElementById('naaim-as-of');
-          // Name the gap rather than leaving the line blank. The reading stands
+          // The date sits on the title row (" - Sep 23"). Name the gap rather
+          // than leaving it blank. The reading stands
           // unchanged for six days by design, so the date is the only thing
           // separating a dead fetch from an ordinary mid-week view — its
           // absence has to read as absence.
           if (na) {
             na.textContent = data.naaim.as_of
-              ? 'Survey ' + formatSurveyWeek(data.naaim.as_of)
-              : 'date unknown';
+              ? ' - ' + formatSurveyWeek(data.naaim.as_of)
+              : ' - date unknown';
           }
         }
 
@@ -683,13 +684,14 @@
             if (el) el.textContent = val != null ? val.toFixed(1) + '%' : '—';
           });
           const wk = document.getElementById('aaii-week');
-          // Name the gap rather than leaving the line blank: the date is the
+          // The date sits on the title row (" - Sep 23"). Name the gap rather
+          // than leaving it blank: the date is the
           // only thing separating a frozen fetch from an ordinary mid-week
           // view, so its absence has to read as absence.
           if (wk) {
             wk.textContent = data.aaii.week_ending
-              ? 'Week ending ' + formatSurveyWeek(data.aaii.week_ending)
-              : 'week ending unknown';
+              ? ' - ' + formatSurveyWeek(data.aaii.week_ending)
+              : ' - date unknown';
           }
         }
 
@@ -779,8 +781,10 @@
     return pickBand(COLOR_BANDS.nasiRsi, rsi);
   }
 
-  // Geometry of the two stacked panes inside viewBox "0 0 600 152".
-  const NASI_GEO = { w: 600, top: 6, botTop: 94, rsiTop: 108, rsiBot: 148 };
+  // Geometry of the two stacked panes inside viewBox "0 0 600 192".
+  // The RSI pane (80 units) is taller than the summation pane needs to be
+  // relative to it: RSI carries the signal, the summation only its shape.
+  const NASI_GEO = { w: 600, top: 6, botTop: 94, rsiTop: 108, rsiBot: 188 };
 
   // Last rendered history, so a resize can redraw at the new x-scale. The
   // oversold markers are sized from the live scale, so a stale render leaves
@@ -877,15 +881,16 @@
       fill: 'var(--amber)', opacity: 0.16
     });
     // Two rails, both amber. Rail hue is deliberately NOT the marker hue: the
-    // 80 rail sits at y 116 and the markers there cover y 110.9-117.5 (centres
-    // 112.9-115.5, plus ry: 2), so a red rail would sit under the red markers
+    // 80 rail sits at y 124 and the markers there cover y 115.8-125.0 (centres
+    // 117.8-123.0, plus ry: 2), so a red rail would sit under the red markers
     // it labels and the pair would read as one thickened line. The markers
     // carry the signal colour; the rails stay neutral on both sides. Position
-    // separates the two thresholds — they are 27.6 viewBox units apart.
+    // separates the two thresholds — they are 55.2 viewBox units apart.
     //
-    // Do not add a third rail near the oversold end. The pane gives 40 units to
-    // 0-100 at a 1:1 vertical scale, so one RSI point is 0.4 CSS px: the
-    // retired 12 rail drew as one thickened line against 11 and marked the same
+    // Do not add a third rail near the oversold end. The pane gives 80 units to
+    // 0-100 at a 1:1 vertical scale, so one RSI point is 0.8 CSS px: the
+    // retired 12 rail drew as one thickened line against 11 (at the old 40-unit
+    // pane) and marked the same
     // three episodes in the plotted window.
     [
       [NASI_OVERSOLD, 'var(--amber)', null],
@@ -897,7 +902,7 @@
     line(path('rsi', yRsi), 'var(--text2)', 1.2);
 
     // Mark every session that actually reached either band — these are the
-    // signal dates, and they are easy to miss on a 40px-tall pane.
+    // signal dates, and they are easy to miss on an 80px-tall pane.
     //
     // Both bands use a *level* test, never a crossing test. The panel reports a
     // phase, not a signal date, so an overbought stretch has to read as a run:

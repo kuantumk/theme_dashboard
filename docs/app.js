@@ -173,24 +173,11 @@
       const el = document.getElementById('market-status');
       const txt = document.getElementById('market-status-text');
 
-      if (day === 0 || day === 6) {
-        el.className = 'market-status closed';
-        txt.textContent = 'MARKET CLOSED';
-        return;
-      }
-      if (mins >= 240 && mins < 570) {
-        el.className = 'market-status premarket';
-        txt.textContent = 'PRE-MARKET';
-      } else if (mins >= 570 && mins < 960) {
-        el.className = 'market-status open';
-        txt.textContent = 'US MARKET LIVE';
-      } else if (mins >= 960 && mins < 1200) {
-        el.className = 'market-status premarket';
-        txt.textContent = 'AFTER HOURS';
-      } else {
-        el.className = 'market-status closed';
-        txt.textContent = 'MARKET CLOSED';
-      }
+      const weekend = day === 0 || day === 6;
+      const state = (!weekend && MARKET_SESSIONS.find(w => mins >= w.from && mins < w.to))
+        || MARKET_CLOSED;
+      el.className = 'market-status ' + state.cls;
+      txt.textContent = state.text;
     }
     update();
     setInterval(update, 30000);
@@ -334,10 +321,10 @@
           { "id": "MASimple@tv-basicstudies", "inputs": { "length": 200 } }
         ],
         "studies_overrides": {
-          "moving average exponential.ma.color": "#4CAF50",
+          "moving average exponential.ma.color": CHART_MA_COLORS.ema,
           "moving average exponential.ma.linewidth": 1,
           "moving average exponential.ma.transparency": 20,
-          "moving average.ma.color": "#FFD700",
+          "moving average.ma.color": CHART_MA_COLORS.sma,
           "moving average.ma.linewidth": 1,
           "moving average.ma.transparency": 20
         },
@@ -591,7 +578,7 @@
                 tdPrice.textContent = priceStr;
                 tdPrice.className = 'val-price';
                 if (item.d1 != null) {
-                  tdPrice.classList.add(item.d1 > 0 ? 'pos' : item.d1 < 0 ? 'neg' : 'neu');
+                  tdPrice.classList.add(pickBand(COLOR_BANDS.macroChange, item.d1));
                 }
                 tr.appendChild(tdPrice);
 
@@ -599,7 +586,7 @@
                   const val = item[k];
                   const td = document.createElement('td');
                   td.textContent = val != null ? (val > 0 ? '+' : '') + val.toFixed(1) + '%' : '—';
-                  td.className = val != null ? (val > 0 ? 'pos' : val < 0 ? 'neg' : 'neu') : 'neu';
+                  td.className = pickBand(COLOR_BANDS.macroChange, val);
                   td.classList.add('val-pct');
                   tr.appendChild(td);
                 });
@@ -642,7 +629,7 @@
         if (data.fear_greed && data.fear_greed.score != null) {
           const el = document.getElementById('fg-value');
           el.textContent = data.fear_greed.score.toFixed(1);
-          el.className = 'breadth-value ' + (data.fear_greed.score >= 50 ? 'up' : 'dn');
+          el.className = 'breadth-value ' + pickBand(COLOR_BANDS.fearGreed, data.fear_greed.score);
           if (data.fear_greed.rating) {
             document.getElementById('fg-rating').textContent = data.fear_greed.rating.toUpperCase();
           }
@@ -715,16 +702,7 @@
 
           if (valEl && val != null) {
             valEl.textContent = val.toFixed(1) + '%';
-            let colorClass = 'neu';
-            if (key === 'ncfd') {
-              if (val < 20) colorClass = 'up';
-              else if (val > 85) colorClass = 'dn';
-            } else if (key === 'mmfi') {
-              if (val < 15.5) colorClass = 'up';
-            } else if (key === 'mmth' || key === 'mmtw') {
-              if (val < 20) colorClass = 'up';
-            }
-            valEl.className = 'breadth-value ' + colorClass;
+            valEl.className = 'breadth-value ' + pickBand(COLOR_BANDS[key], val);
           }
           if (histEl) {
             // Only render history if there's more than 1 item, to avoid redundancy
@@ -750,7 +728,7 @@
         const oscEl = document.getElementById('nasi-osc');
         if (oscEl && cur.oscillator != null) {
           oscEl.textContent = (cur.oscillator >= 0 ? '+' : '') + cur.oscillator.toFixed(2);
-          oscEl.className = 'nasi-stat-val ' + (cur.oscillator >= 0 ? 'pos' : 'neg');
+          oscEl.className = 'nasi-stat-val ' + pickBand(COLOR_BANDS.nasiOsc, cur.oscillator);
         }
 
         const rsiEl = document.getElementById('nasi-rsi');
@@ -798,10 +776,7 @@
   }
 
   function nasiRsiState(rsi) {
-    if (rsi <= NASI_OVERSOLD) return 'oversold';
-    if (rsi <= NASI_WATCH) return 'watch';
-    if (rsi >= NASI_OVERBOUGHT) return 'overbought';
-    return '';
+    return pickBand(COLOR_BANDS.nasiRsi, rsi);
   }
 
   // Geometry of the two stacked panes inside viewBox "0 0 600 152".
@@ -1025,18 +1000,10 @@
     const last5 = history.slice(-5);
     last5.forEach((val, i) => {
       const span = document.createElement('span');
-      span.className = 'breadth-hist-num';
+      // Same table as the tile itself, so a history number and the headline
+      // figure above it can never tint by different rules.
+      span.className = 'breadth-hist-num ' + pickBand(COLOR_BANDS[key], val);
       span.textContent = val.toFixed(1);
-      let color = 'var(--text3)';
-      if (key === 'ncfd') {
-        if (val < 20) color = 'var(--green)';
-        else if (val > 85) color = 'var(--red)';
-      } else if (key === 'mmfi') {
-        if (val < 15.5) color = 'var(--green)';
-      } else if (key === 'mmth' || key === 'mmtw') {
-        if (val < 20) color = 'var(--green)';
-      }
-      span.style.color = color;
       span.title = 'Session ' + (i + 1) + ': ' + val.toFixed(1) + '%';
       el.appendChild(span);
     });
@@ -1181,6 +1148,242 @@
     const tip = HL_TIER_TIP[tier];
     return tip ? ` title="${escAttr(tip)}"` : '';
   }
+
+  // ── COLOR SCHEME REGISTRY ─────────────────────────────
+  /* Every threshold that picks a colour lives here, once. The render sites
+     call `pickBand` on these tables, and the Legends tab (docs/legends.js)
+     reads the SAME tables through `window.MM_COLORS` to draw its rows. So a
+     retuned threshold changes the tab and its legend in one edit, and a
+     retuned CSS colour reaches both because the legend paints its samples with
+     the real classes.
+
+     A table is read top-down and the first band whose test passes wins.
+     `missing` covers null, '' and anything that does not parse as a number;
+     `otherwise` covers a number that no band claims.
+
+     ⛔ Do not inline a threshold back into a render site. The legend cannot
+     see an inline literal, so it would keep describing the old rule.
+     tests/test_dashboard_legends.py fails if a render site stops calling
+     `pickBand` for these columns. */
+
+  // Short interest at or above this share of float reads as crowded. It is the
+  // same floor the highlight ladder's short rung uses (HIGHLIGHT_SHORT_FLOOR in
+  // create_technical_indicators.py); tests/test_dashboard_highlight_markup.py
+  // binds the two, so the tint and the number beside it cannot disagree.
+  const SHORT_CROWDED_PCT = 20;
+
+  const COLOR_BANDS = {
+    // RS% column — Momentum, Volume, VARS.
+    rs: {
+      bands: [{ op: '>=', at: 80, out: 'up' }, { op: '<=', at: 20, out: 'dn' }],
+      otherwise: '', missing: '',
+    },
+    // VARS column — Volume, VARS, Industry, Lev ETF.
+    vars: {
+      bands: [{ op: '>=', at: 6, out: 'up' }, { op: '<', at: 2, out: 'dn' }],
+      otherwise: '', missing: '',
+    },
+    // Short% column (Momentum, Volume, VARS, Parabolic) and SI% (SI tab).
+    short: {
+      bands: [{ op: '>=', at: SHORT_CROWDED_PCT, out: 'up' }, { op: '>=', at: 10, out: 'short-blue' }],
+      otherwise: 'short-white', missing: 'neu',
+    },
+    // Inst% column — the latest change in institutional ownership.
+    inst: {
+      bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    // Signed percent columns: EPS%, Sales%, Intra%, Daily%, Monthly%, AH/PM Chg%.
+    pct: {
+      bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    // Parabolic tab, ATRMul: distance from the 50-day SMA in ATR units.
+    parabolicAtr: {
+      bands: [{ op: '>=', at: 15, out: 'dn' }, { op: '>=', at: 12, out: 'short-blue' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    // EP tab columns.
+    epFloat: {
+      bands: [{ op: '<', at: 150, out: 'ep-float-green' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    epShort: {
+      bands: [{ op: '>', at: 20, out: 'up' }, { op: '>', at: 10, out: 'short-blue' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    epDist52w: {
+      bands: [{ op: '>', at: -10, out: 'up' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    epAtr: {
+      bands: [
+        { op: '<', at: 5, out: 'up' },
+        { op: '<', at: 7, out: 'short-blue' },
+        { op: '<', at: 9, out: 'neu' },
+      ],
+      otherwise: 'dn', missing: 'neu',
+    },
+    epRvol: {
+      bands: [{ op: '>=', at: 3, out: 'rvol-high' }, { op: '>=', at: 1.5, out: 'rvol-medium' }],
+      otherwise: 'rvol-low', missing: 'neu',
+    },
+    // Overview: macro price and change columns. `pos`/`neg` rather than
+    // `up`/`dn` because these carry !important over the price cell class.
+    macroChange: {
+      bands: [{ op: '>', at: 0, out: 'pos' }, { op: '<', at: 0, out: 'neg' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    // Overview breadth tiles. The four breadth tiles tint by CONTRARIAN
+    // meaning: washed-out breadth is a bullish setup, so a low reading is green.
+    fearGreed: {
+      bands: [{ op: '>=', at: 50, out: 'up' }],
+      otherwise: 'dn', missing: 'neu',
+    },
+    ncfd: {
+      bands: [{ op: '<', at: 20, out: 'up' }, { op: '>', at: 85, out: 'dn' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    mmfi: {
+      bands: [{ op: '<', at: 15.5, out: 'up' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    mmtw: {
+      bands: [{ op: '<', at: 20, out: 'up' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    mmth: {
+      bands: [{ op: '<', at: 20, out: 'up' }],
+      otherwise: 'neu', missing: 'neu',
+    },
+    // NASI header figures.
+    nasiOsc: {
+      bands: [{ op: '>=', at: 0, out: 'pos' }],
+      otherwise: 'neg', missing: '',
+    },
+    nasiRsi: {
+      bands: [
+        { op: '<=', at: NASI_OVERSOLD, out: 'oversold' },
+        { op: '<=', at: NASI_WATCH, out: 'watch' },
+        { op: '>=', at: NASI_OVERBOUGHT, out: 'overbought' },
+      ],
+      otherwise: '', missing: '',
+    },
+    // Network viz ticker nodes. These return a fill colour, not a class.
+    vizRs: {
+      bands: [
+        { op: '>=', at: 90, out: '#00e676' },
+        { op: '>=', at: 80, out: '#00c8ff' },
+        { op: '>=', at: 50, out: '#ffb300' },
+      ],
+      otherwise: '#ff3355', missing: '#ff3355',
+    },
+    vizVars: {
+      bands: [
+        { op: '>=', at: 6, out: '#00e676' },
+        { op: '>=', at: 4, out: '#00c8ff' },
+        { op: '>=', at: 2, out: '#ffb300' },
+      ],
+      otherwise: '#ff3355', missing: '#ff3355',
+    },
+    // Network viz theme nodes: warm scale by strength. `themeFill` then pales
+    // the saturation by actionability, so a pale node is a less actionable one.
+    vizThemeStrength: {
+      bands: [
+        { op: '>=', at: 65, out: { hue: 14, sat: 92, light: 56, label: 'Blazing' } },
+        { op: '>=', at: 55, out: { hue: 35, sat: 88, light: 53, label: 'Strong' } },
+        { op: '>=', at: 45, out: { hue: 50, sat: 70, light: 48, label: 'Solid' } },
+      ],
+      otherwise: { hue: 215, sat: 14, light: 40, label: 'Faded' },
+      missing: { hue: 215, sat: 14, light: 40, label: 'Faded' },
+    },
+  };
+
+  const BAND_TESTS = {
+    '>=': (v, at) => v >= at,
+    '>': (v, at) => v > at,
+    '<=': (v, at) => v <= at,
+    '<': (v, at) => v < at,
+  };
+
+  /** The output of the first band `raw` satisfies. Strings like "+12.3%" parse. */
+  function pickBand(table, raw) {
+    if (raw == null || raw === '') return table.missing;
+    const v = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/[+%,]/g, ''));
+    if (!Number.isFinite(v)) return table.missing;
+    for (const b of table.bands) {
+      if (BAND_TESTS[b.op](v, b.at)) return b.out;
+    }
+    return table.otherwise;
+  }
+
+  /* Rules the SERVER evaluates, mirrored here so the Legends tab can state them
+     and draw candles that satisfy them. The browser never re-decides these —
+     it reads `ticker_color` and `highlight` off the payload. The mirror is
+     pinned to its Python and config sources by tests/test_dashboard_legends.py,
+     so a retuned server rule fails that test until this block follows it. */
+  const PATTERN_RULES = {
+    // Day-pattern green (create_technical_indicators.py).
+    tightDayBodyAdr: 0.2,     // tight_day: |close - open| / close < 0.2 x ADR%
+    closeToMaAtr: 0.5,        // close_to_ma: |close - EMA10 or EMA20| < 0.5 x ATR14
+    // Coil rung (config/workflow_config.yaml `tightness:`).
+    coilWindow: 3,            // closes in the band
+    coilAdrFraction: 0.30,    // band width at or under this many ADRs
+    coilHighLookback: 50,     // period high the location gate reads
+    coilHighFrac: 0.70,       // close holds at least this share of that high
+    // Short rung.
+    shortFloorPct: SHORT_CROWDED_PCT,
+    // HOT badges.
+    varsHotRs: 70,            // vars_tab.hot_rs_threshold
+    varsHotMinMembers: 3,     // export_dashboard_data._build_vars_snapshot
+    siHotRadarRank: 10,       // si_tab.hot_radar_rank
+  };
+
+  /* US equity session windows in ET minutes after midnight, for the header
+     badge. Anything outside them, and every weekend minute, reads closed. */
+  const MARKET_SESSIONS = [
+    { from: 240, to: 570, cls: 'premarket', text: 'PRE-MARKET' },
+    { from: 570, to: 960, cls: 'open', text: 'US MARKET LIVE' },
+    { from: 960, to: 1200, cls: 'premarket', text: 'AFTER HOURS' },
+  ];
+  const MARKET_CLOSED = { cls: 'closed', text: 'MARKET CLOSED' };
+
+  /* Network viz paint that is not a band. The cytoscape style reads every
+     colour from here — tests/test_dashboard_legends.py fails on a raw hex
+     literal inside that style array — so the Legends tab stays in step. */
+  const VIZ_COLORS = {
+    l1Fill: '#1a2434',        // L1 hub hexagon body
+    l1Accent: '#fde68a',      // L1 hub label and border; rank-1 theme ring; is_a edge
+    themeLabel: '#ffffff',
+    themeRing: '#0c0f15',     // theme node outline (width grows with actionability)
+    tickerLabel: '#c8d8ea',
+    bridge: '#ffffff',        // ticker tagged into two or more themes
+    selected: '#ffd700',      // selected ticker, matches --yellow
+    edge: '#243044',          // theme -> member
+    leaderEdge: '#7292b0',    // theme -> its leader
+    labelOutline: '#000000',
+    themeLabelOutline: '#07090d',
+  };
+
+  /* Hot-theme filters for the network tabs. A theme node is drawn only when it
+     clears these. */
+  const VIZ_HOT = { rs: 70, breadth: 3, vars: 2, varsBreadth: 1 };
+
+  /* Moving-average line colours on the TradingView chart. The free embed
+     applies one colour per study TYPE, so both EMAs share one colour and both
+     SMAs share the other. */
+  const CHART_MA_COLORS = { ema: '#4CAF50', sma: '#FFD700' };
+
+  /* A read-only view for docs/legends.js, which renders outside this closure.
+     The Legends tab reads ONLY this object, so anything it describes must be
+     reachable from here — never copied into legends.js as a literal. */
+  window.MM_COLORS = Object.freeze({
+    COLOR_BANDS, pickBand, PATTERN_RULES, MARKET_SESSIONS, MARKET_CLOSED,
+    VIZ_COLORS, VIZ_HOT, CHART_MA_COLORS, HL_TIER_CLASS, HL_TIER_TIP,
+    NASI: { oversold: NASI_OVERSOLD, watch: NASI_WATCH, overbought: NASI_OVERBOUGHT },
+    rsFill, varsFill, themeFill,
+    cutoffs: () => ({ vol: tickerFilters.vol, adr: tickerFilters.adr }),
+  });
 
   function loadThemeData() {
     // Load current themes and history in parallel
@@ -1647,31 +1850,20 @@
   }
 
   function themeFill(strength, action) {
-    // Warm-scale by strength; saturation modulated by actionability.
-    // Strength bands tuned for the new theme-score range (~30-80 typical).
-    let hue, baseSat, light;
-    if (strength >= 65)       { hue = 14;  baseSat = 92; light = 56; }   // scarlet — blazing
-    else if (strength >= 55)  { hue = 35;  baseSat = 88; light = 53; }   // orange — strong
-    else if (strength >= 45)  { hue = 50;  baseSat = 70; light = 48; }   // gold   — solid
-    else                      { hue = 215; baseSat = 14; light = 40; }   // slate  — faded
+    // Warm scale by strength (COLOR_BANDS.vizThemeStrength, tuned for the
+    // theme-score range of ~30-80); saturation paled by actionability.
+    const { hue, sat: baseSat, light } = pickBand(COLOR_BANDS.vizThemeStrength, strength);
     const sat = Math.round(baseSat * Math.max(0.45, Math.min(1.0, action)));
     return `hsl(${hue}, ${sat}%, ${light}%)`;
   }
 
   function rsFill(rs) {
-    // Match dashboard 4-tier ticker palette
-    if (rs >= 90) return '#00e676';   // --green
-    if (rs >= 80) return '#00c8ff';   // --accent (cyan)
-    if (rs >= 50) return '#ffb300';   // --amber
-    return '#ff3355';                  // --red
+    return pickBand(COLOR_BANDS.vizRs, rs);
   }
 
   function varsFill(v) {
-    // 4-tier palette aligned to VARS bands (>2 is screener gate; >6 is exceptional)
-    if (v >= 6) return '#00e676';
-    if (v >= 4) return '#00c8ff';
-    if (v >= 2) return '#ffb300';
-    return '#ff3355';
+    // >2 is the screener gate; >6 is exceptional.
+    return pickBand(COLOR_BANDS.vizVars, v);
   }
 
   function actionabilityLabel(a) {
@@ -1744,7 +1936,8 @@
   }
 
   function filterAndRankThemes(snap, mode) {
-    const HOT_RS = 70, HOT_BREADTH = 3, HOT_VARS = 2, HOT_VARS_BREADTH = 1;
+    const HOT_RS = VIZ_HOT.rs, HOT_BREADTH = VIZ_HOT.breadth;
+    const HOT_VARS = VIZ_HOT.vars, HOT_VARS_BREADTH = VIZ_HOT.varsBreadth;
     if (mode === 'vars' || mode === 'volume') {
       // VARS/Volume export — keep singletons so a lone leader still shows its theme
       let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_VARS_BREADTH);
@@ -1996,10 +2189,10 @@
       },
       style: [
         { selector: 'node[kind = "l1"]', style: {
-            'background-color': '#1a2434',
+            'background-color': VIZ_COLORS.l1Fill,
             'background-opacity': 0.65,
             'label': 'data(label)',
-            'color': '#fde68a',
+            'color': VIZ_COLORS.l1Accent,
             'font-size': 18,
             'font-weight': 'bold',
             'font-family': 'DM Sans, system-ui, sans-serif',
@@ -2007,40 +2200,40 @@
             'height': 'mapData(strength, 30, 160, 70, 160)',
             'shape': 'round-hexagon',
             'border-width': 3,
-            'border-color': '#fde68a',
+            'border-color': VIZ_COLORS.l1Accent,
             'border-opacity': 0.75,
             'text-valign': 'center', 'text-halign': 'center',
-            'text-outline-color': '#000000', 'text-outline-width': 3,
+            'text-outline-color': VIZ_COLORS.labelOutline, 'text-outline-width': 3,
             'text-wrap': 'wrap', 'text-max-width': 140,
             'z-index': 1,
         }},
         { selector: 'node[kind = "theme"]', style: {
             'background-color': 'data(fill)',
             'label': 'data(label)',
-            'color': '#ffffff',
+            'color': VIZ_COLORS.themeLabel,
             'font-size': 13,
             'font-weight': 'bold',
             'font-family': 'DM Sans, system-ui, sans-serif',
             'width':  'mapData(strength, 30, 80, 32, 110)',
             'height': 'mapData(strength, 30, 80, 32, 110)',
             'border-width': 'data(ringWidth)',
-            'border-color': '#0c0f15',
+            'border-color': VIZ_COLORS.themeRing,
             'border-opacity': 0.95,
             'text-valign': 'center', 'text-halign': 'center',
-            'text-outline-color': '#07090d', 'text-outline-width': 2,
+            'text-outline-color': VIZ_COLORS.themeLabelOutline, 'text-outline-width': 2,
             'text-wrap': 'wrap', 'text-max-width': 110,
         }},
         { selector: 'node[kind = "theme"][rank = 1]', style: {
-            'border-color': '#fde68a',
+            'border-color': VIZ_COLORS.l1Accent,
             'border-width': 6,
             'shadow-blur': 30,
-            'shadow-color': '#fde68a',
+            'shadow-color': VIZ_COLORS.l1Accent,
             'shadow-opacity': 0.55,
         }},
         { selector: 'node[kind = "ticker"]', style: {
             'background-color': 'data(fill)',
             'label': 'data(label)',
-            'color': '#c8d8ea',
+            'color': VIZ_COLORS.tickerLabel,
             'font-size': 10,
             'font-family': 'IBM Plex Mono, monospace',
             'width':  'mapData(rs, 0, 100, 14, 32)',
@@ -2060,19 +2253,19 @@
         }},
         { selector: 'node.bridge', style: {
             'border-width': 2,
-            'border-color': '#ffffff',
+            'border-color': VIZ_COLORS.bridge,
             'border-opacity': 0.85,
         }},
         { selector: 'node.leader.bridge', style: {
             'border-width': 2,
-            'border-color': '#ffffff',
+            'border-color': VIZ_COLORS.bridge,
         }},
         { selector: 'node.active-ticker', style: {
             'border-width': 4,
-            'border-color': '#ffd700',
+            'border-color': VIZ_COLORS.selected,
             'border-opacity': 1.0,
             'shadow-blur': 28,
-            'shadow-color': '#ffd700',
+            'shadow-color': VIZ_COLORS.selected,
             'shadow-opacity': 0.95,
             'shadow-offset-x': 0,
             'shadow-offset-y': 0,
@@ -2080,17 +2273,17 @@
         }},
         { selector: 'edge', style: {
             'width': 'mapData(weight, 0, 100, 1, 4.5)',
-            'line-color': '#243044',
+            'line-color': VIZ_COLORS.edge,
             'opacity': 0.55,
             'curve-style': 'bezier',
         }},
         { selector: 'edge[?isLeader]', style: {
-            'line-color': '#7292b0',
+            'line-color': VIZ_COLORS.leaderEdge,
             'opacity': 0.85,
         }},
         { selector: 'edge[kind = "is_a"]', style: {
             'width': 2,
-            'line-color': '#fde68a',
+            'line-color': VIZ_COLORS.l1Accent,
             'line-style': 'dashed',
             'line-dash-pattern': [6, 4],
             'opacity': 0.35,
@@ -2503,11 +2696,11 @@
       `;
 
       (theme.tickers || []).forEach(t => {
-        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+        const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
         const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+        const instClass = pickBand(COLOR_BANDS.inst, instVal);
         const shortVal = parseFloat(t.short);
-        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+        const shortClass = pickBand(COLOR_BANDS.short, shortVal);
         html += `
                 <tr${filterAttrs(t)}>
                   <td class="l">
@@ -2578,12 +2771,12 @@
       `;
 
       tickers.forEach(t => {
-        const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
-        const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+        const varsClass = pickBand(COLOR_BANDS.vars, t.vars);
+        const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
         const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+        const instClass = pickBand(COLOR_BANDS.inst, instVal);
         const shortVal = parseFloat(t.short);
-        const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+        const shortClass = pickBand(COLOR_BANDS.short, shortVal);
         const scan = t.scan || '';
         const days = (typeof t.days_since_hv === 'number') ? `${t.days_since_hv}d` : '';
         const scanLabel = scan ? (days ? `${scan} · ${days}` : scan) : '—';
@@ -2685,12 +2878,12 @@
         `;
 
         tickers.forEach(t => {
-          const varsClass = t.vars >= 6 ? 'up' : t.vars < 2 ? 'dn' : '';
-          const rsClass = t.rs >= 80 ? 'up' : t.rs <= 20 ? 'dn' : '';
+          const varsClass = pickBand(COLOR_BANDS.vars, t.vars);
+          const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
           const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-          const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+          const instClass = pickBand(COLOR_BANDS.inst, instVal);
           const shortVal = parseFloat(t.short);
-          const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+          const shortClass = pickBand(COLOR_BANDS.short, shortVal);
           const accel = (typeof t.vars_20ema === 'number')
             ? (t.vars > t.vars_20ema
               ? '<span class="accel accel-up">▲</span>'
@@ -2808,9 +3001,9 @@
         tickers.forEach(t => {
           // Matches the VARS tab's Short% banding so one number reads the
           // same on both tabs.
-          const siClass = t.si >= 20 ? 'up' : t.si >= 10 ? 'short-blue' : 'short-white';
+          const siClass = pickBand(COLOR_BANDS.short, t.si);
           const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-          const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+          const instClass = pickBand(COLOR_BANDS.inst, instVal);
           const fmtPct = (v) => (typeof v === 'number') ? v.toFixed(1) : '—';
           html += `
                 <tr>
@@ -2875,11 +3068,11 @@
     let html = '';
     parabolicData.forEach(row => {
       const instVal = parseFloat(String(row.inst).replace(/[+%]/g, ''));
-      const instClass = isNaN(instVal) ? 'neu' : instVal > 0 ? 'up' : instVal < 0 ? 'dn' : 'neu';
+      const instClass = pickBand(COLOR_BANDS.inst, instVal);
       const shortVal = parseFloat(row.short);
-      const shortClass = isNaN(shortVal) ? 'neu' : shortVal >= 20 ? 'up' : shortVal >= 10 ? 'short-blue' : 'short-white';
+      const shortClass = pickBand(COLOR_BANDS.short, shortVal);
       const atrVal = parseFloat(row.atr_multi_50sma);
-      const atrClass = isNaN(atrVal) ? 'neu' : atrVal >= 15 ? 'dn' : atrVal >= 12 ? 'short-blue' : 'neu';
+      const atrClass = pickBand(COLOR_BANDS.parabolicAtr, atrVal);
       const atrStr = isNaN(atrVal) ? '—' : atrVal.toFixed(1) + 'x';
 
       html += `
@@ -2990,7 +3183,7 @@
 
     let html = '';
     industryData.forEach(row => {
-      const varsClass = row.vars == null ? '' : (row.vars >= 6 ? 'up' : row.vars < 2 ? 'dn' : '');
+      const varsClass = pickBand(COLOR_BANDS.vars, row.vars);
       const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
       html += `
         <tr>
@@ -3101,7 +3294,7 @@
 
     let html = '';
     etfData.forEach(row => {
-      const varsClass = row.vars == null ? '' : (row.vars >= 6 ? 'up' : row.vars < 2 ? 'dn' : '');
+      const varsClass = pickBand(COLOR_BANDS.vars, row.vars);
       const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
       html += `
         <tr>
@@ -3326,7 +3519,7 @@
   }
 
   function epRow(row, chgKey, priceKey, label) {
-    const floatClass = (row.float != null && row.float < 150) ? 'ep-float-green' : 'neu';
+    const floatClass = pickBand(COLOR_BANDS.epFloat, row.float);
     const shortClass = epShortClass(row.short);
     const dist52wClass = epDist52wClass(row.dist_52w_high);
     const atrClass = epAtrClass(row.atr_multiple);
@@ -3361,30 +3554,19 @@
 
   // EP color helpers
   function epShortClass(val) {
-    if (val == null) return 'neu';
-    if (val > 20) return 'up';
-    if (val > 10) return 'short-blue';
-    return 'neu';
+    return pickBand(COLOR_BANDS.epShort, val);
   }
 
   function epDist52wClass(val) {
-    if (val == null) return 'neu';
-    return val > -10 ? 'up' : 'neu';
+    return pickBand(COLOR_BANDS.epDist52w, val);
   }
 
   function epAtrClass(val) {
-    if (val == null) return 'neu';
-    if (val < 5) return 'up';
-    if (val < 7) return 'short-blue';
-    if (val < 9) return 'neu';
-    return 'dn';
+    return pickBand(COLOR_BANDS.epAtr, val);
   }
 
   function epRvolClass(val) {
-    if (val == null) return 'neu';
-    if (val >= 3) return 'rvol-high';
-    if (val >= 1.5) return 'rvol-medium';
-    return 'rvol-low';
+    return pickBand(COLOR_BANDS.epRvol, val);
   }
 
   // ── EP NEWS (shown on ticker click) ───────────────────────
@@ -3446,21 +3628,7 @@
   }
 
   function pctClass(val) {
-    if (val == null || val === '') return 'neu';
-    const n = parseFloat(val);
-    if (isNaN(n)) return 'neu';
-    return n > 0 ? 'up' : n < 0 ? 'dn' : 'neu';
-  }
-
-  // RS_STS% color: >=90 green, >=80 blue, >=50 yellow, <50 red
-  function rsStsPctClass(val) {
-    if (val == null) return 'neu';
-    const n = parseFloat(val);
-    if (isNaN(n)) return 'neu';
-    if (n >= 90) return 'rs-green';
-    if (n >= 80) return 'rs-blue';
-    if (n >= 50) return 'rs-yellow';
-    return 'rs-red';
+    return pickBand(COLOR_BANDS.pct, val);
   }
 
   function fmtPct(val) {

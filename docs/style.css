@@ -572,23 +572,6 @@ td.l {
   color: var(--text3);
 }
 
-/* RS_STS% tiered colors (functional, preserved) */
-.rs-green {
-  color: #00e676;
-}
-
-.rs-blue {
-  color: #5566ff;
-}
-
-.rs-yellow {
-  color: #ffb300;
-}
-
-.rs-red {
-  color: #ff3355;
-}
-
 /* Short% special colors */
 .short-blue {
   color: #5566ff;
@@ -1660,23 +1643,10 @@ tbody tr.nav-active {
 
 .lg-dot { border-radius: 50%; }
 
-/* Theme strength swatches (functional) */
-.lg-blazing { background: hsl(14, 90%, 55%); }
-.lg-strong  { background: hsl(35, 85%, 52%); }
-.lg-solid   { background: hsl(50, 65%, 48%); }
-.lg-faded   { background: hsl(215, 14%, 42%); }
-
-/* Ticker RS swatches (functional) */
-.lg-rs90 { background: var(--green); }
-.lg-rs80 { background: var(--accent); }
-.lg-rs50 { background: var(--amber); }
-.lg-rs0  { background: var(--red); }
-
-/* VARS node swatches — hex values mirror varsFill() in app.js (functional). */
-.lg-vars6   { background: #00e676; }
-.lg-vars4   { background: #5566ff; }
-.lg-vars2   { background: #ffb300; }
-.lg-varslow { background: #ff3355; }
+/* Swatch colours are set inline by legends.js from COLOR_BANDS, the tables
+   the nodes are painted from. The former hard-coded swatch classes had
+   drifted from the nodes (a blue swatch for a cyan node, "score >= 100" for a
+   band that starts at 65), which is why they are gone. */
 
 .lg-ring { border-radius: 50%; background: transparent; }
 .lg-tight  { border: 2px solid var(--green); box-shadow: 0 0 6px rgba(0, 230, 118, 0.7); }
@@ -2112,4 +2082,508 @@ tbody tr.nav-active {
 .radar-boosted {
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ── LEGENDS TAB ───────────────────────────────────────── */
+/* One scrolling page. The samples inside it are real dashboard markup —
+   .tn-link, .radar-chip, .theme-header and so on — so they wear the real
+   rules. Rules here only lay the samples out; they must never set a sample's
+   colour, or the legend would show a colour the other tabs do not. */
+.legend-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 40px;
+}
+
+.legend-page::-webkit-scrollbar { width: 6px; }
+.legend-page::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.lg-head h1 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 300;
+  margin-bottom: 4px;
+}
+
+.lg-head p,
+.lg-intro {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text2);
+  max-width: 860px;
+  line-height: 1.5;
+}
+
+.lg-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+
+.lg-toc-link {
+  font-family: var(--display);
+  font-size: 11px;
+  color: var(--text2);
+  text-decoration: none;
+  border: 1px solid var(--border2);
+  padding: 3px 9px;
+}
+
+.lg-toc-link:hover {
+  color: var(--text);
+  border-color: var(--text3);
+}
+
+.lg-section {
+  margin-top: 26px;
+  scroll-margin-top: 10px;
+}
+
+.lg-section h2 {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 400;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border2);
+}
+
+/* One alignment grid for the whole page. Every sample — the well in a card
+   header, the key column of a list, the sample column of a band table — is
+   --lg-key wide, and every explanation starts --lg-gap to its right. So
+   titles, key text and rule text all start at one x in every card. */
+.legend-page {
+  --lg-key: 112px;
+  --lg-gap: 12px;
+}
+
+/* Cards in a row stretch to one height; "Used on" is pinned to the bottom of
+   each, so the footers line up across the row. */
+.lg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  align-items: stretch;
+  /* A full-width card cannot fill the cells left beside a card before it;
+     dense packing lets a later card take them instead of leaving a hole. */
+  grid-auto-flow: row dense;
+}
+
+.lg-card {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+  padding: 12px 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A sample ticker must never break mid-symbol under the card's
+   overflow-wrap: "TIC / K" reads as two tickers. */
+.lg-card .tn-link {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+/* A control sample keeps its own width; the text beside it wraps instead. */
+.lg-card .coil-sort-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.lg-card .radar-controls {
+  flex-wrap: wrap;
+}
+
+/* Pins and counts are nowrap on the Themes tab; in a phone-width card they
+   must wrap. */
+.lg-card .coil-pin,
+.lg-card .radar-n {
+  white-space: normal;
+}
+
+/* A card with several figures spans the row, so its figures sit side by side
+   instead of stretching one column far below its neighbours. */
+.lg-card.lg-wide {
+  grid-column: 1 / -1;
+}
+
+.lg-card-hdr {
+  display: grid;
+  grid-template-columns: var(--lg-key) 1fr;
+  column-gap: var(--lg-gap);
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lg-card-hdr h3 {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+/* A fixed well, so a wide sample ("hover me") and a narrow one (a swatch)
+   leave the title at the same x. */
+.lg-sample {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.lg-where {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.lg-where-lbl {
+  font-family: var(--display);
+  font-size: 9px;
+  color: var(--text3);
+  margin-right: 4px;
+}
+
+.lg-where-tag {
+  font-family: var(--display);
+  font-size: 9px;
+  color: var(--text3);
+  border: 1px solid var(--border);
+  padding: 0 5px;
+}
+
+.lg-body {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text2);
+  line-height: 1.55;
+}
+
+.lg-body > :first-child { margin-top: 0; }
+.lg-body > :last-child { margin-bottom: 0; }
+.lg-body p { margin: 6px 0; }
+.lg-body b { color: var(--text); font-weight: 400; }
+
+.lg-rules {
+  margin: 6px 0 6px 16px;
+}
+
+.lg-rules li { margin: 3px 0; }
+
+/* Key lists: sample column | explanation. */
+.lg-keys {
+  list-style: none;
+  margin: 6px 0;
+}
+
+.lg-keys li {
+  display: grid;
+  grid-template-columns: var(--lg-key) 1fr;
+  column-gap: var(--lg-gap);
+  align-items: center;
+  margin: 5px 0;
+}
+
+.lg-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  min-width: 0;
+}
+
+/* Market badges and the blue markers are wider than a ticker, so those two
+   cards widen their own key column; the text column still lines up within
+   the card. */
+.lg-wide-keys .lg-keys li {
+  grid-template-columns: 148px 1fr;
+}
+
+.lg-hex {
+  width: 13px;
+  height: 13px;
+}
+
+.lg-formula {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+}
+
+.lg-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.lg-chips { margin: 6px 0; }
+
+.lg-sub { margin: 8px 0; }
+
+.lg-subgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  column-gap: 20px;
+}
+
+.lg-sub h4 {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.lg-band-table {
+  width: auto;
+  margin: 4px 0;
+}
+
+.lg-band-table td {
+  padding: 2px 0;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* The sample column matches the key column of the lists, so rule text starts
+   at the same x as every other explanation in the card. */
+.lg-band-table td.lg-bt-sample {
+  /* border-box (the global `*` rule), so the width carries the gap too. */
+  width: calc(var(--lg-key) + var(--lg-gap));
+  min-width: calc(var(--lg-key) + var(--lg-gap));
+  padding-right: var(--lg-gap);
+}
+
+/* The global `td` rule is nowrap for the data tables; a rule sentence must
+   wrap in a narrow card instead of pushing it wider. */
+.lg-band-table td.lg-bt-cond {
+  font-family: var(--mono);
+  color: var(--text2);
+  white-space: normal;
+}
+
+.lg-num {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.lg-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.lg-round { border-radius: 50%; }
+
+.lg-line {
+  display: inline-block;
+  width: 22px;
+  height: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.lg-edge-demo {
+  display: inline-block;
+  width: 40px;
+  border-top: 2px dashed;
+  vertical-align: middle;
+}
+
+.lg-l1-swatch {
+  display: inline-block;
+  width: 40px;
+  height: 16px;
+  background: var(--l1-bg);
+  border: 1px solid var(--l1-edge);
+  border-left: 3px solid var(--accent);
+}
+
+.lg-mini {
+  width: auto;
+  margin: 6px 0;
+}
+
+.lg-mini td { font-size: 12px; }
+
+.lg-ladder {
+  list-style: none;
+  margin: 4px 0 8px;
+}
+
+/* rung | sample | wording. The first two columns plus their gap add up to
+   --lg-key, so the wording lines up with the key lists. */
+.lg-ladder li {
+  display: grid;
+  grid-template-columns: 12px calc(var(--lg-key) - 12px - var(--lg-gap)) 1fr;
+  column-gap: var(--lg-gap);
+  align-items: center;
+  margin: 5px 0;
+}
+
+.lg-rung {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.lg-static {
+  display: inline-block;
+  cursor: default;
+}
+
+.card-lbl.lg-static,
+.ep-news-item.lg-static {
+  padding: 0;
+  border: 0;
+  display: inline;
+}
+
+.radar-more.lg-static {
+  display: inline;
+  margin: 0;
+}
+
+.lg-key .resize-handle.lg-handle-demo {
+  display: inline-block;
+  height: 18px;
+}
+
+.themeviz-tooltip.lg-static-tip {
+  position: static;
+  display: inline-block;
+  margin: 4px 0;
+}
+
+.lg-jump-demo {
+  padding: 6px 10px;
+  margin: 10px 3px 4px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.lg-pulse-demo {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+}
+
+.lg-pulse-demo .tight-pulse-ring {
+  inset: 0;
+}
+
+/* Side-by-side figures share one width, and each ends its checks with the
+   verdict pinned to the bottom, so the three result lines sit on one row. */
+.lg-figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.lg-fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lg-fig-checks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lg-fig figcaption {
+  font-family: var(--display);
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.lg-candles {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.lg-svg-label {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.lg-svg-note {
+  font-family: var(--display);
+  font-size: 9px;
+}
+
+.lg-checks {
+  list-style: none;
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.lg-mark {
+  display: inline-block;
+  width: 14px;
+  font-weight: 600;
+}
+
+.lg-ok .lg-mark { color: var(--green); }
+.lg-no .lg-mark { color: var(--red); }
+
+.lg-verdict {
+  font-family: var(--display);
+  font-size: 11px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.lg-verdict.lg-ok { color: var(--text); }
+/* The picture no longer shows what its caption claims: a threshold moved and
+   the scenario needs retuning. Loud on purpose. */
+.lg-verdict.lg-no { color: var(--red); }
+
+.themeviz-legend .lg-more {
+  margin-left: auto;
+  color: var(--text2);
+  text-decoration: none;
+}
+
+.themeviz-legend .lg-more:hover { color: var(--text); }
+
+@media (max-width: 600px) {
+  .legend-page { --lg-key: 92px; }
+  .lg-wide-keys .lg-keys li { grid-template-columns: 132px 1fr; }
+}
+
+@media (max-width: 1100px) {
+  .lg-grid { grid-template-columns: 1fr; }
 }

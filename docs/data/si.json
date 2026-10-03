@@ -1,30 +1,61 @@
 {
-  "report_date": "2026-09-30",
+  "report_date": "2026-10-02",
   "si_date": "2026-09-25",
   "si_stale": true,
-  "n_tickers": 115,
-  "n_themes": 11,
+  "n_tickers": 109,
+  "n_themes": 10,
   "themes": [
     {
       "name": "AI",
       "score": 54.87,
-      "n": 31,
-      "n_leaves": 9,
+      "n": 24,
+      "n_leaves": 8,
       "radar_rank": 1,
       "hot": true,
       "leaves": [
         {
+          "name": "AI / Data Center / Power & Cooling",
+          "score": 51.27,
+          "n": 2,
+          "tickers": [
+            {
+              "ticker": "WOLF",
+              "si": 74.83,
+              "dd60": -20.7,
+              "drop15": -36.1,
+              "streak": 5,
+              "price": 31.17,
+              "float": "34.9",
+              "inst": "+47.7",
+              "ticker_color": null,
+              "highlight": "short"
+            },
+            {
+              "ticker": "SEI",
+              "si": 27.7,
+              "dd60": -1.9,
+              "drop15": -28.3,
+              "streak": 4,
+              "price": 71.38,
+              "float": "56.7",
+              "inst": "+11.8",
+              "ticker_color": null,
+              "highlight": "short"
+            }
+          ]
+        },
+        {
           "name": "AI / Data Center / Cloud & Hyperscalers",
           "score": 41.69,
-          "n": 14,
+          "n": 10,
           "tickers": [
             {
               "ticker": "WYFI",
               "si": 50.49,
-              "dd60": -55.8,
-              "drop15": -47.0,
-              "streak": 4,
-              "price": 18.01,
+              "dd60": -57.1,
+              "drop15": -43.0,
+              "streak": 5,
+              "price": 17.48,
               "float": "9.5",
               "inst": "+5.2",
               "ticker_color": null,
@@ -33,10 +64,10 @@
             {
               "ticker": "WULF",
               "si": 39.28,
-              "dd60": -39.8,
-              "drop15": -35.0,
+              "dd60": -39.3,
+              "drop15": -23.2,
               "streak": 7,
-              "price": 14.8,
+              "price": 14.91,
               "float": "308.4",
               "inst": "+24.4",
               "ticker_color": null,
@@ -45,10 +76,10 @@
             {
               "ticker": "BTDR",
               "si": 35.3,
-              "dd60": -29.0,
-              "drop15": -37.9,
+              "dd60": -25.4,
+              "drop15": -30.4,
               "streak": 7,
-              "price": 10.49,
+              "price": 11.02,
               "float": "155.7",
               "inst": "+36.7",
               "ticker_color": null,
@@ -57,46 +88,22 @@
             {
               "ticker": "MARA",
               "si": 27.68,
-              "dd60": -21.4,
+              "dd60": -22.2,
               "drop15": -27.9,
-              "streak": 6,
-              "price": 11.33,
+              "streak": 7,
+              "price": 11.21,
               "float": "377.8",
               "inst": "+8.1",
               "ticker_color": null,
               "highlight": "short"
             },
             {
-              "ticker": "IREN",
-              "si": 24.06,
-              "dd60": -17.2,
-              "drop15": -31.8,
-              "streak": 6,
-              "price": 40.88,
-              "float": "345.3",
-              "inst": "+19.6",
-              "ticker_color": null,
-              "highlight": "short"
-            },
-            {
-              "ticker": "APLD",
-              "si": 22.0,
-              "dd60": -27.4,
-              "drop15": -28.1,
-              "streak": 4,
-              "price": 24.37,
-              "float": "263.0",
-              "inst": "+4.8",
-              "ticker_color": null,
-              "highlight": "short"
-            },
-            {
               "ticker": "CIFR",
               "si": 21.33,
-              "dd60": -41.0,
+              "dd60": -41.5,
               "drop15": -36.8,
-              "streak": 6,
-              "price": 15.82,
+              "streak": 7,
+              "price": 15.71,
               "float": "341.3",
               "inst": "+17.1",
               "ticker_color": null,
@@ -105,10 +112,10 @@
             {
               "ticker": "NBIS",
               "si": 20.98,
-              "dd60": -16.0,
-              "drop15": -32.9,
+              "dd60": -17.3,
+              "drop15": -28.1,
               "streak": 6,
-              "price": 235.88,
+              "price": 232.28,
               "float": "223.0",
               "inst": "+26.3",
               "ticker_color": null,
@@ -117,117 +124,50 @@
             {
               "ticker": "CORZ",
               "si": 20.47,
-              "dd60": -35.2,
-              "drop15": -24.5,
+              "dd60": -33.3,
+              "drop15": -24.4,
               "streak": 6,
-              "price": 15.98,
+              "price": 16.45,
               "float": "308.4",
               "inst": "-1.9",
               "ticker_color": null,
               "highlight": "short"
             },
             {
-              "ticker": "GLXY",
-              "si": 16.56,
-              "dd60": -17.8,
-              "drop15": -28.1,
-              "streak": 6,
-              "price": 22.74,
-              "float": "186.0",
-              "inst": "+3.4",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "CRWV",
-              "si": 14.84,
-              "dd60": -25.8,
-              "drop15": -32.4,
-              "streak": 5,
-              "price": 87.12,
-              "float": "370.2",
-              "inst": "+33.1",
-              "ticker_color": "green",
-              "highlight": null
-            },
-            {
               "ticker": "HUT",
               "si": 14.84,
-              "dd60": -28.5,
+              "dd60": -28.3,
               "drop15": -29.5,
               "streak": 5,
-              "price": 86.1,
+              "price": 86.36,
               "float": "112.4",
               "inst": "+0.5",
               "ticker_color": null,
-              "highlight": "ma_up"
+              "highlight": null
             },
             {
               "ticker": "FSLY",
               "si": 14.51,
-              "dd60": -18.1,
+              "dd60": -15.8,
               "drop15": -31.9,
               "streak": 5,
-              "price": 25.67,
+              "price": 26.39,
               "float": "148.6",
               "inst": "+9.2",
               "ticker_color": "green",
-              "highlight": "coil"
+              "highlight": "ma_up"
             },
             {
               "ticker": "BRUN",
               "si": 13.18,
-              "dd60": -48.5,
-              "drop15": -48.2,
-              "streak": 6,
-              "price": 16.5,
+              "dd60": -46.1,
+              "drop15": -34.2,
+              "streak": 3,
+              "price": 16.51,
               "float": "37.1",
               "inst": "+247.3",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "AI / Data Center / Power & Cooling",
-          "score": 40.13,
-          "n": 3,
-          "tickers": [
-            {
-              "ticker": "WOLF",
-              "si": 74.83,
-              "dd60": -28.4,
-              "drop15": -46.1,
-              "streak": 5,
-              "price": 28.13,
-              "float": "34.9",
-              "inst": "+47.7",
-              "ticker_color": null,
-              "highlight": "coil"
-            },
-            {
-              "ticker": "SEI",
-              "si": 27.7,
-              "dd60": -2.1,
-              "drop15": -39.3,
-              "streak": 6,
-              "price": 71.18,
-              "float": "56.7",
-              "inst": "+11.8",
-              "ticker_color": null,
-              "highlight": "short"
-            },
-            {
-              "ticker": "NVTS",
-              "si": 17.85,
-              "dd60": -22.3,
-              "drop15": -31.3,
-              "streak": 3,
-              "price": 11.61,
-              "float": "225.7",
-              "inst": "+13.8",
-              "ticker_color": null,
-              "highlight": "coil"
             }
           ]
         },
@@ -239,10 +179,10 @@
             {
               "ticker": "PATH",
               "si": 26.08,
-              "dd60": -31.8,
+              "dd60": -29.3,
               "drop15": -31.6,
               "streak": 5,
-              "price": 12.84,
+              "price": 13.32,
               "float": "399.6",
               "inst": "+9.9",
               "ticker_color": null,
@@ -251,10 +191,10 @@
             {
               "ticker": "TEM",
               "si": 25.94,
-              "dd60": -8.1,
-              "drop15": -32.4,
+              "dd60": -14.1,
+              "drop15": -28.0,
               "streak": 5,
-              "price": 81.9,
+              "price": 76.5,
               "float": "108.2",
               "inst": "+4.3",
               "ticker_color": null,
@@ -263,45 +203,26 @@
             {
               "ticker": "CNXC",
               "si": 18.17,
-              "dd60": -26.3,
+              "dd60": -26.4,
               "drop15": -20.9,
               "streak": 5,
-              "price": 24.95,
+              "price": 24.91,
               "float": "47.3",
               "inst": "+2.9",
               "ticker_color": null,
-              "highlight": "coil"
+              "highlight": null
             },
             {
               "ticker": "RDDT",
               "si": 14.05,
-              "dd60": -31.5,
+              "dd60": -28.1,
               "drop15": -30.8,
               "streak": 5,
-              "price": 142.44,
+              "price": 149.53,
               "float": "141.3",
               "inst": "-1.2",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "AI / Data Center / Memory",
-          "score": 18.0,
-          "n": 1,
-          "tickers": [
-            {
-              "ticker": "MRAM",
-              "si": 18.0,
-              "dd60": -8.5,
-              "drop15": -29.8,
-              "streak": 5,
-              "price": 18.44,
-              "float": "20.5",
-              "inst": "-2.3",
-              "ticker_color": null,
-              "highlight": "ma_up"
             }
           ]
         },
@@ -313,26 +234,26 @@
             {
               "ticker": "AEHR",
               "si": 16.42,
-              "dd60": -32.4,
+              "dd60": -27.3,
               "drop15": -47.6,
               "streak": 11,
-              "price": 99.62,
+              "price": 107.21,
               "float": "31.2",
               "inst": "+3.3",
-              "ticker_color": "green",
-              "highlight": "ma_split"
+              "ticker_color": null,
+              "highlight": "ma_up"
             },
             {
               "ticker": "AMKR",
               "si": 16.28,
-              "dd60": -28.8,
-              "drop15": -40.8,
+              "dd60": -22.5,
+              "drop15": -29.2,
               "streak": 5,
-              "price": 52.38,
+              "price": 56.02,
               "float": "60.8",
               "inst": "-4.5",
               "ticker_color": null,
-              "highlight": "ma_split"
+              "highlight": "ma_up"
             }
           ]
         },
@@ -344,10 +265,10 @@
             {
               "ticker": "AAOI",
               "si": 15.28,
-              "dd60": -38.3,
-              "drop15": -39.0,
-              "streak": 4,
-              "price": 99.26,
+              "dd60": -28.2,
+              "drop15": -35.2,
+              "streak": 3,
+              "price": 115.59,
               "float": "80.5",
               "inst": "-2.4",
               "ticker_color": null,
@@ -356,10 +277,10 @@
             {
               "ticker": "AXTI",
               "si": 14.03,
-              "dd60": -20.8,
+              "dd60": -12.2,
               "drop15": -41.5,
               "streak": 5,
-              "price": 77.41,
+              "price": 85.87,
               "float": "62.8",
               "inst": "+26.8",
               "ticker_color": null,
@@ -375,22 +296,22 @@
             {
               "ticker": "PENG",
               "si": 14.45,
-              "dd60": -39.1,
-              "drop15": -46.3,
-              "streak": 5,
-              "price": 54.69,
+              "dd60": -38.8,
+              "drop15": -36.8,
+              "streak": 4,
+              "price": 54.98,
               "float": "49.0",
               "inst": "+8.8",
-              "ticker_color": null,
-              "highlight": "ma_split"
+              "ticker_color": "green",
+              "highlight": "ma_up"
             },
             {
               "ticker": "CBRS",
               "si": 13.16,
-              "dd60": -33.1,
+              "dd60": -37.3,
               "drop15": -34.1,
               "streak": 7,
-              "price": 177.65,
+              "price": 166.43,
               "float": "97.3",
               "inst": "+72.3",
               "ticker_color": null,
@@ -406,53 +327,41 @@
             {
               "ticker": "PENG",
               "si": 14.45,
-              "dd60": -39.1,
-              "drop15": -46.3,
-              "streak": 5,
-              "price": 54.69,
+              "dd60": -38.8,
+              "drop15": -36.8,
+              "streak": 4,
+              "price": 54.98,
               "float": "49.0",
               "inst": "+8.8",
-              "ticker_color": null,
-              "highlight": "ma_split"
+              "ticker_color": "green",
+              "highlight": "ma_up"
             },
             {
               "ticker": "VSH",
               "si": 12.43,
-              "dd60": -29.6,
-              "drop15": -32.9,
+              "dd60": -25.9,
+              "drop15": -24.4,
               "streak": 5,
-              "price": 32.55,
+              "price": 34.27,
               "float": "140.0",
               "inst": "+15.1",
-              "ticker_color": "green",
-              "highlight": "coil"
+              "ticker_color": null,
+              "highlight": "ma_split"
             }
           ]
         },
         {
           "name": "AI / Drug Discovery",
-          "score": 13.19,
-          "n": 2,
+          "score": 13.0,
+          "n": 1,
           "tickers": [
-            {
-              "ticker": "ABCL",
-              "si": 13.38,
-              "dd60": -2.8,
-              "drop15": -26.1,
-              "streak": 3,
-              "price": 14.59,
-              "float": "253.6",
-              "inst": "-5.0",
-              "ticker_color": null,
-              "highlight": "ma_up"
-            },
             {
               "ticker": "GENB",
               "si": 13.0,
-              "dd60": -33.7,
+              "dd60": -39.1,
               "drop15": -25.1,
               "streak": 4,
-              "price": 15.02,
+              "price": 13.8,
               "float": "55.2",
               "inst": "+6.8",
               "ticker_color": null,
@@ -465,9 +374,9 @@
     {
       "name": "Fintech & Crypto",
       "score": 35.93,
-      "n": 14,
-      "n_leaves": 4,
-      "radar_rank": 6,
+      "n": 11,
+      "n_leaves": 3,
+      "radar_rank": 5,
       "hot": true,
       "leaves": [
         {
@@ -478,10 +387,10 @@
             {
               "ticker": "BTDR",
               "si": 35.3,
-              "dd60": -29.0,
-              "drop15": -37.9,
+              "dd60": -25.4,
+              "drop15": -30.4,
               "streak": 7,
-              "price": 10.49,
+              "price": 11.02,
               "float": "155.7",
               "inst": "+36.7",
               "ticker_color": null,
@@ -490,10 +399,10 @@
             {
               "ticker": "CLSK",
               "si": 32.03,
-              "dd60": -20.0,
+              "dd60": -20.9,
               "drop15": -26.2,
-              "streak": 6,
-              "price": 12.88,
+              "streak": 7,
+              "price": 12.74,
               "float": "245.3",
               "inst": "+12.7",
               "ticker_color": null,
@@ -502,10 +411,10 @@
             {
               "ticker": "MARA",
               "si": 27.68,
-              "dd60": -21.4,
+              "dd60": -22.2,
               "drop15": -27.9,
-              "streak": 6,
-              "price": 11.33,
+              "streak": 7,
+              "price": 11.21,
               "float": "377.8",
               "inst": "+8.1",
               "ticker_color": null,
@@ -514,10 +423,10 @@
             {
               "ticker": "CIFR",
               "si": 21.33,
-              "dd60": -41.0,
+              "dd60": -41.5,
               "drop15": -36.8,
-              "streak": 6,
-              "price": 15.82,
+              "streak": 7,
+              "price": 15.71,
               "float": "341.3",
               "inst": "+17.1",
               "ticker_color": null,
@@ -526,65 +435,41 @@
             {
               "ticker": "HUT",
               "si": 14.84,
-              "dd60": -28.5,
+              "dd60": -28.3,
               "drop15": -29.5,
               "streak": 5,
-              "price": 86.1,
+              "price": 86.36,
               "float": "112.4",
               "inst": "+0.5",
               "ticker_color": null,
-              "highlight": "ma_up"
+              "highlight": null
             }
           ]
         },
         {
           "name": "Fintech & Crypto / Crypto / Generalist",
-          "score": 28.45,
-          "n": 4,
+          "score": 29.88,
+          "n": 2,
           "tickers": [
             {
               "ticker": "WULF",
               "si": 39.28,
-              "dd60": -39.8,
-              "drop15": -35.0,
+              "dd60": -39.3,
+              "drop15": -23.2,
               "streak": 7,
-              "price": 14.8,
+              "price": 14.91,
               "float": "308.4",
               "inst": "+24.4",
               "ticker_color": null,
               "highlight": "short"
             },
             {
-              "ticker": "IREN",
-              "si": 24.06,
-              "dd60": -17.2,
-              "drop15": -31.8,
-              "streak": 6,
-              "price": 40.88,
-              "float": "345.3",
-              "inst": "+19.6",
-              "ticker_color": null,
-              "highlight": "short"
-            },
-            {
-              "ticker": "APLD",
-              "si": 22.0,
-              "dd60": -27.4,
-              "drop15": -28.1,
-              "streak": 4,
-              "price": 24.37,
-              "float": "263.0",
-              "inst": "+4.8",
-              "ticker_color": null,
-              "highlight": "short"
-            },
-            {
               "ticker": "CORZ",
               "si": 20.47,
-              "dd60": -35.2,
-              "drop15": -24.5,
+              "dd60": -33.3,
+              "drop15": -24.4,
               "streak": 6,
-              "price": 15.98,
+              "price": 16.45,
               "float": "308.4",
               "inst": "-1.9",
               "ticker_color": null,
@@ -600,10 +485,10 @@
             {
               "ticker": "UPST",
               "si": 33.22,
-              "dd60": -33.7,
-              "drop15": -20.0,
+              "dd60": -33.8,
+              "drop15": -18.7,
               "streak": 5,
-              "price": 22.99,
+              "price": 22.95,
               "float": "83.2",
               "inst": "+0.6",
               "ticker_color": null,
@@ -612,10 +497,10 @@
             {
               "ticker": "FOUR",
               "si": 26.72,
-              "dd60": -37.0,
+              "dd60": -38.0,
               "drop15": -26.8,
               "streak": 4,
-              "price": 36.17,
+              "price": 35.58,
               "float": "55.6",
               "inst": "-2.8",
               "ticker_color": null,
@@ -624,45 +509,26 @@
             {
               "ticker": "LMND",
               "si": 15.82,
-              "dd60": -39.5,
-              "drop15": -33.3,
+              "dd60": -35.7,
+              "drop15": -31.6,
               "streak": 3,
-              "price": 45.14,
+              "price": 46.76,
               "float": "68.6",
               "inst": "+2.5",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": null
             },
             {
               "ticker": "PGY",
               "si": 15.63,
-              "dd60": -26.9,
+              "dd60": -26.4,
               "drop15": -26.0,
               "streak": 4,
-              "price": 17.32,
+              "price": 17.44,
               "float": "64.9",
               "inst": "-7.2",
               "ticker_color": null,
-              "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "Fintech & Crypto / Crypto / Infrastructure",
-          "score": 16.56,
-          "n": 1,
-          "tickers": [
-            {
-              "ticker": "GLXY",
-              "si": 16.56,
-              "dd60": -17.8,
-              "drop15": -28.1,
-              "streak": 6,
-              "price": 22.74,
-              "float": "186.0",
-              "inst": "+3.4",
-              "ticker_color": null,
-              "highlight": null
+              "highlight": "coil"
             }
           ]
         }
@@ -671,9 +537,9 @@
     {
       "name": "Biotech",
       "score": 32.15,
-      "n": 32,
-      "n_leaves": 20,
-      "radar_rank": 2,
+      "n": 34,
+      "n_leaves": 21,
+      "radar_rank": 4,
       "hot": true,
       "leaves": [
         {
@@ -684,13 +550,13 @@
             {
               "ticker": "GLUE",
               "si": 32.02,
-              "dd60": -52.6,
+              "dd60": -55.2,
               "drop15": -37.4,
               "streak": 6,
-              "price": 11.93,
+              "price": 11.26,
               "float": "60.2",
               "inst": "+5.8",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": "short"
             }
           ]
@@ -703,22 +569,22 @@
             {
               "ticker": "NTLA",
               "si": 34.85,
-              "dd60": -29.7,
-              "drop15": -35.9,
+              "dd60": -29.4,
+              "drop15": -28.2,
               "streak": 5,
-              "price": 12.06,
+              "price": 12.12,
               "float": "133.9",
               "inst": "+29.8",
-              "ticker_color": "green",
-              "highlight": "short"
+              "ticker_color": null,
+              "highlight": "coil"
             },
             {
               "ticker": "BEAM",
               "si": 27.55,
-              "dd60": -35.3,
-              "drop15": -29.4,
+              "dd60": -31.3,
+              "drop15": -25.6,
               "streak": 4,
-              "price": 24.45,
+              "price": 24.5,
               "float": "94.0",
               "inst": "+0.9",
               "ticker_color": null,
@@ -734,14 +600,14 @@
             {
               "ticker": "VERA",
               "si": 29.11,
-              "dd60": -26.1,
+              "dd60": -28.2,
               "drop15": -30.6,
-              "streak": 4,
-              "price": 32.29,
+              "streak": 5,
+              "price": 30.99,
               "float": "58.5",
               "inst": "+8.5",
-              "ticker_color": "green",
-              "highlight": "coil"
+              "ticker_color": null,
+              "highlight": "short"
             }
           ]
         },
@@ -753,10 +619,10 @@
             {
               "ticker": "SLS",
               "si": 29.58,
-              "dd60": -21.4,
-              "drop15": -26.6,
+              "dd60": -27.7,
+              "drop15": -25.8,
               "streak": 3,
-              "price": 12.31,
+              "price": 11.33,
               "float": "199.7",
               "inst": "+11.1",
               "ticker_color": null,
@@ -765,10 +631,10 @@
             {
               "ticker": "CRVS",
               "si": 26.51,
-              "dd60": -30.1,
+              "dd60": -32.7,
               "drop15": -20.7,
               "streak": 5,
-              "price": 11.52,
+              "price": 10.9,
               "float": "64.8",
               "inst": "+1.1",
               "ticker_color": null,
@@ -777,10 +643,10 @@
             {
               "ticker": "IOVA",
               "si": 22.15,
-              "dd60": -3.1,
+              "dd60": -7.0,
               "drop15": -25.7,
-              "streak": 6,
-              "price": 14.82,
+              "streak": 3,
+              "price": 14.23,
               "float": "393.4",
               "inst": "+4.5",
               "ticker_color": null,
@@ -789,10 +655,10 @@
             {
               "ticker": "CADL",
               "si": 20.12,
-              "dd60": -25.4,
+              "dd60": -27.3,
               "drop15": -23.3,
               "streak": 6,
-              "price": 10.44,
+              "price": 10.18,
               "float": "61.3",
               "inst": "+11.6",
               "ticker_color": null,
@@ -808,29 +674,29 @@
             {
               "ticker": "REPL",
               "si": 25.68,
-              "dd60": -18.9,
+              "dd60": -17.6,
               "drop15": -51.3,
               "streak": 6,
-              "price": 13.24,
+              "price": 13.45,
               "float": "88.6",
               "inst": "+18.6",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": "short"
             }
           ]
         },
         {
           "name": "Biotech / Oncology / General",
-          "score": 23.04,
-          "n": 4,
+          "score": 22.19,
+          "n": 3,
           "tickers": [
             {
               "ticker": "CRVS",
               "si": 26.51,
-              "dd60": -30.1,
+              "dd60": -32.7,
               "drop15": -20.7,
               "streak": 5,
-              "price": 11.52,
+              "price": 10.9,
               "float": "64.8",
               "inst": "+1.1",
               "ticker_color": null,
@@ -839,34 +705,22 @@
             {
               "ticker": "SNDX",
               "si": 25.46,
-              "dd60": -25.5,
-              "drop15": -22.6,
+              "dd60": -27.6,
+              "drop15": -21.6,
               "streak": 6,
-              "price": 18.8,
+              "price": 18.22,
               "float": "81.2",
               "inst": "+10.8",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": "short"
-            },
-            {
-              "ticker": "KURA",
-              "si": 17.15,
-              "dd60": -22.9,
-              "drop15": -26.3,
-              "streak": 6,
-              "price": 10.71,
-              "float": "86.4",
-              "inst": "+3.1",
-              "ticker_color": null,
-              "highlight": null
             },
             {
               "ticker": "DNA",
               "si": 14.59,
-              "dd60": -4.4,
+              "dd60": -7.9,
               "drop15": -30.3,
               "streak": 5,
-              "price": 12.83,
+              "price": 12.35,
               "float": "49.1",
               "inst": "+8.3",
               "ticker_color": null,
@@ -875,21 +729,69 @@
           ]
         },
         {
-          "name": "Biotech / Cardiovascular",
-          "score": 20.54,
-          "n": 1,
+          "name": "Biotech / Rare Disease",
+          "score": 21.02,
+          "n": 5,
           "tickers": [
             {
-              "ticker": "NAMS",
-              "si": 20.54,
-              "dd60": -34.8,
-              "drop15": -23.4,
-              "streak": 4,
-              "price": 24.32,
-              "float": "76.3",
-              "inst": "-2.4",
+              "ticker": "SRPT",
+              "si": 25.32,
+              "dd60": -25.6,
+              "drop15": -24.2,
+              "streak": 3,
+              "price": 17.57,
+              "float": "100.4",
+              "inst": "+4.6",
               "ticker_color": null,
               "highlight": "short"
+            },
+            {
+              "ticker": "SRRK",
+              "si": 19.3,
+              "dd60": -25.3,
+              "drop15": -21.3,
+              "streak": 6,
+              "price": 46.16,
+              "float": "100.6",
+              "inst": "+4.3",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "RARE",
+              "si": 18.43,
+              "dd60": -57.6,
+              "drop15": -51.5,
+              "streak": 4,
+              "price": 14.75,
+              "float": "89.9",
+              "inst": "+1.1",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "DYN",
+              "si": 14.87,
+              "dd60": -44.3,
+              "drop15": -35.8,
+              "streak": 6,
+              "price": 15.2,
+              "float": "157.2",
+              "inst": "+1.4",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "AGIO",
+              "si": 12.97,
+              "dd60": -25.9,
+              "drop15": -27.2,
+              "streak": 4,
+              "price": 31.8,
+              "float": "58.2",
+              "inst": "+3.7",
+              "ticker_color": null,
+              "highlight": null
             }
           ]
         },
@@ -901,10 +803,10 @@
             {
               "ticker": "TEM",
               "si": 25.94,
-              "dd60": -8.1,
-              "drop15": -32.4,
+              "dd60": -14.1,
+              "drop15": -28.0,
               "streak": 5,
-              "price": 81.9,
+              "price": 76.5,
               "float": "108.2",
               "inst": "+4.3",
               "ticker_color": null,
@@ -913,14 +815,33 @@
             {
               "ticker": "DNA",
               "si": 14.59,
-              "dd60": -4.4,
+              "dd60": -7.9,
               "drop15": -30.3,
               "streak": 5,
-              "price": 12.83,
+              "price": 12.35,
               "float": "49.1",
               "inst": "+8.3",
               "ticker_color": null,
               "highlight": "ma_up"
+            }
+          ]
+        },
+        {
+          "name": "Biotech / Metabolic & Obesity",
+          "score": 20.0,
+          "n": 1,
+          "tickers": [
+            {
+              "ticker": "VKTX",
+              "si": 20.0,
+              "dd60": -29.2,
+              "drop15": -26.7,
+              "streak": 9,
+              "price": 30.51,
+              "float": "112.9",
+              "inst": "+2.1",
+              "ticker_color": null,
+              "highlight": "short"
             }
           ]
         },
@@ -932,10 +853,10 @@
             {
               "ticker": "VOR",
               "si": 24.37,
-              "dd60": -26.6,
+              "dd60": -30.5,
               "drop15": -27.1,
               "streak": 4,
-              "price": 19.08,
+              "price": 18.06,
               "float": "32.4",
               "inst": "+20.3",
               "ticker_color": null,
@@ -944,22 +865,22 @@
             {
               "ticker": "NKTR",
               "si": 17.35,
-              "dd60": -22.1,
-              "drop15": -25.3,
+              "dd60": -39.6,
+              "drop15": -33.5,
               "streak": 5,
-              "price": 60.55,
+              "price": 46.99,
               "float": "33.1",
               "inst": "+31.3",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": null
             },
             {
               "ticker": "CLYM",
               "si": 16.42,
-              "dd60": -37.4,
+              "dd60": -40.3,
               "drop15": -27.7,
               "streak": 6,
-              "price": 11.47,
+              "price": 10.94,
               "float": "51.8",
               "inst": "+74.1",
               "ticker_color": null,
@@ -968,10 +889,10 @@
             {
               "ticker": "IMMX",
               "si": 16.34,
-              "dd60": -31.1,
-              "drop15": -26.5,
+              "dd60": -32.3,
+              "drop15": -25.1,
               "streak": 3,
-              "price": 10.4,
+              "price": 10.23,
               "float": "58.9",
               "inst": "+77.9",
               "ticker_color": null,
@@ -980,12 +901,129 @@
             {
               "ticker": "ORKA",
               "si": 12.97,
-              "dd60": -27.9,
+              "dd60": -27.8,
               "drop15": -19.5,
               "streak": 5,
-              "price": 83.29,
+              "price": 83.42,
               "float": "58.8",
               "inst": "+53.5",
+              "ticker_color": null,
+              "highlight": "coil"
+            }
+          ]
+        },
+        {
+          "name": "Biotech / Cell & Gene Therapy",
+          "score": 19.02,
+          "n": 3,
+          "tickers": [
+            {
+              "ticker": "SRPT",
+              "si": 25.32,
+              "dd60": -25.6,
+              "drop15": -24.2,
+              "streak": 3,
+              "price": 17.57,
+              "float": "100.4",
+              "inst": "+4.6",
+              "ticker_color": null,
+              "highlight": "short"
+            },
+            {
+              "ticker": "IMMX",
+              "si": 16.34,
+              "dd60": -32.3,
+              "drop15": -25.1,
+              "streak": 3,
+              "price": 10.23,
+              "float": "58.9",
+              "inst": "+77.9",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "QURE",
+              "si": 15.39,
+              "dd60": -54.8,
+              "drop15": -48.4,
+              "streak": 8,
+              "price": 23.37,
+              "float": "64.5",
+              "inst": "+5.5",
+              "ticker_color": null,
+              "highlight": null
+            }
+          ]
+        },
+        {
+          "name": "Biotech / Cardiovascular",
+          "score": 17.84,
+          "n": 2,
+          "tickers": [
+            {
+              "ticker": "NAMS",
+              "si": 20.54,
+              "dd60": -33.4,
+              "drop15": -23.4,
+              "streak": 4,
+              "price": 24.16,
+              "float": "76.3",
+              "inst": "-2.4",
+              "ticker_color": "green",
+              "highlight": "short"
+            },
+            {
+              "ticker": "MLYS",
+              "si": 15.14,
+              "dd60": -25.9,
+              "drop15": -21.3,
+              "streak": 5,
+              "price": 23.72,
+              "float": "60.6",
+              "inst": "+12.1",
+              "ticker_color": null,
+              "highlight": null
+            }
+          ]
+        },
+        {
+          "name": "Biotech / Neuroscience",
+          "score": 15.98,
+          "n": 3,
+          "tickers": [
+            {
+              "ticker": "SRRK",
+              "si": 19.3,
+              "dd60": -25.3,
+              "drop15": -21.3,
+              "streak": 6,
+              "price": 46.16,
+              "float": "100.6",
+              "inst": "+4.3",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "BHVN",
+              "si": 15.91,
+              "dd60": -29.4,
+              "drop15": -29.1,
+              "streak": 5,
+              "price": 12.87,
+              "float": "128.6",
+              "inst": "-5.8",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "AMLX",
+              "si": 12.72,
+              "dd60": -32.5,
+              "drop15": -20.3,
+              "streak": 4,
+              "price": 27.79,
+              "float": "106.3",
+              "inst": "+0.2",
               "ticker_color": null,
               "highlight": null
             }
@@ -999,10 +1037,10 @@
             {
               "ticker": "LQDA",
               "si": 15.98,
-              "dd60": -67.7,
-              "drop15": -58.9,
+              "dd60": -70.1,
+              "drop15": -62.0,
               "streak": 3,
-              "price": 30.26,
+              "price": 27.99,
               "float": "77.5",
               "inst": "+15.7",
               "ticker_color": null,
@@ -1018,43 +1056,12 @@
             {
               "ticker": "LQDA",
               "si": 15.98,
-              "dd60": -67.7,
-              "drop15": -58.9,
+              "dd60": -70.1,
+              "drop15": -62.0,
               "streak": 3,
-              "price": 30.26,
+              "price": 27.99,
               "float": "77.5",
               "inst": "+15.7",
-              "ticker_color": null,
-              "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "Biotech / Cell & Gene Therapy",
-          "score": 15.87,
-          "n": 2,
-          "tickers": [
-            {
-              "ticker": "IMMX",
-              "si": 16.34,
-              "dd60": -31.1,
-              "drop15": -26.5,
-              "streak": 3,
-              "price": 10.4,
-              "float": "58.9",
-              "inst": "+77.9",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "QURE",
-              "si": 15.39,
-              "dd60": -53.3,
-              "drop15": -47.5,
-              "streak": 8,
-              "price": 24.16,
-              "float": "64.5",
-              "inst": "+5.5",
               "ticker_color": null,
               "highlight": null
             }
@@ -1068,10 +1075,10 @@
             {
               "ticker": "IMNM",
               "si": 15.77,
-              "dd60": -28.4,
+              "dd60": -30.5,
               "drop15": -21.2,
               "streak": 6,
-              "price": 21.51,
+              "price": 20.89,
               "float": "103.0",
               "inst": "-0.7",
               "ticker_color": null,
@@ -1080,72 +1087,48 @@
           ]
         },
         {
-          "name": "Biotech / Rare Disease",
-          "score": 15.42,
-          "n": 3,
+          "name": "Biotech / Drug Discovery Platform",
+          "score": 14.38,
+          "n": 2,
           "tickers": [
             {
-              "ticker": "RARE",
-              "si": 18.43,
-              "dd60": -58.0,
-              "drop15": -51.5,
+              "ticker": "IMNM",
+              "si": 15.77,
+              "dd60": -30.5,
+              "drop15": -21.2,
               "streak": 6,
-              "price": 15.03,
-              "float": "89.9",
-              "inst": "+1.1",
+              "price": 20.89,
+              "float": "103.0",
+              "inst": "-0.7",
               "ticker_color": null,
               "highlight": null
             },
             {
-              "ticker": "DYN",
-              "si": 14.87,
-              "dd60": -41.0,
-              "drop15": -35.8,
-              "streak": 6,
-              "price": 16.11,
-              "float": "157.2",
-              "inst": "+1.4",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "AGIO",
-              "si": 12.97,
-              "dd60": -24.4,
-              "drop15": -27.2,
+              "ticker": "GENB",
+              "si": 13.0,
+              "dd60": -39.1,
+              "drop15": -25.1,
               "streak": 4,
-              "price": 33.25,
-              "float": "58.2",
-              "inst": "+3.7",
+              "price": 13.8,
+              "float": "55.2",
+              "inst": "+6.8",
               "ticker_color": null,
-              "highlight": "coil"
+              "highlight": null
             }
           ]
         },
         {
           "name": "Biotech / Oncology / Precision",
-          "score": 14.89,
-          "n": 3,
+          "score": 13.75,
+          "n": 2,
           "tickers": [
-            {
-              "ticker": "KURA",
-              "si": 17.15,
-              "dd60": -22.9,
-              "drop15": -26.3,
-              "streak": 6,
-              "price": 10.71,
-              "float": "86.4",
-              "inst": "+3.1",
-              "ticker_color": null,
-              "highlight": null
-            },
             {
               "ticker": "ELVN",
               "si": 14.14,
-              "dd60": -26.4,
+              "dd60": -25.9,
               "drop15": -25.0,
               "streak": 6,
-              "price": 45.84,
+              "price": 46.21,
               "float": "61.0",
               "inst": "+37.4",
               "ticker_color": null,
@@ -1154,88 +1137,14 @@
             {
               "ticker": "ERAS",
               "si": 13.37,
-              "dd60": -32.1,
+              "dd60": -31.8,
               "drop15": -24.2,
               "streak": 6,
-              "price": 14.66,
+              "price": 14.74,
               "float": "247.2",
               "inst": "+1.8",
-              "ticker_color": null,
-              "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "Biotech / Neuroscience",
-          "score": 14.32,
-          "n": 2,
-          "tickers": [
-            {
-              "ticker": "BHVN",
-              "si": 15.91,
-              "dd60": -26.8,
-              "drop15": -29.1,
-              "streak": 5,
-              "price": 13.35,
-              "float": "128.6",
-              "inst": "-5.8",
               "ticker_color": "green",
               "highlight": "coil"
-            },
-            {
-              "ticker": "AMLX",
-              "si": 12.72,
-              "dd60": -29.3,
-              "drop15": -20.3,
-              "streak": 4,
-              "price": 29.1,
-              "float": "106.3",
-              "inst": "+0.2",
-              "ticker_color": null,
-              "highlight": null
-            }
-          ]
-        },
-        {
-          "name": "Biotech / Drug Discovery Platform",
-          "score": 14.05,
-          "n": 3,
-          "tickers": [
-            {
-              "ticker": "IMNM",
-              "si": 15.77,
-              "dd60": -28.4,
-              "drop15": -21.2,
-              "streak": 6,
-              "price": 21.51,
-              "float": "103.0",
-              "inst": "-0.7",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "ABCL",
-              "si": 13.38,
-              "dd60": -2.8,
-              "drop15": -26.1,
-              "streak": 3,
-              "price": 14.59,
-              "float": "253.6",
-              "inst": "-5.0",
-              "ticker_color": null,
-              "highlight": "ma_up"
-            },
-            {
-              "ticker": "GENB",
-              "si": 13.0,
-              "dd60": -33.7,
-              "drop15": -25.1,
-              "streak": 4,
-              "price": 15.02,
-              "float": "55.2",
-              "inst": "+6.8",
-              "ticker_color": null,
-              "highlight": null
             }
           ]
         },
@@ -1247,14 +1156,14 @@
             {
               "ticker": "ERAS",
               "si": 13.37,
-              "dd60": -32.1,
+              "dd60": -31.8,
               "drop15": -24.2,
               "streak": 6,
-              "price": 14.66,
+              "price": 14.74,
               "float": "247.2",
               "inst": "+1.8",
-              "ticker_color": null,
-              "highlight": null
+              "ticker_color": "green",
+              "highlight": "coil"
             }
           ]
         },
@@ -1266,14 +1175,14 @@
             {
               "ticker": "ORKA",
               "si": 12.97,
-              "dd60": -27.9,
+              "dd60": -27.8,
               "drop15": -19.5,
               "streak": 5,
-              "price": 83.29,
+              "price": 83.42,
               "float": "58.8",
               "inst": "+53.5",
               "ticker_color": null,
-              "highlight": null
+              "highlight": "coil"
             }
           ]
         },
@@ -1285,10 +1194,10 @@
             {
               "ticker": "IONS",
               "si": 12.82,
-              "dd60": -48.5,
-              "drop15": -36.0,
+              "dd60": -37.5,
+              "drop15": -29.5,
               "streak": 9,
-              "price": 44.65,
+              "price": 44.0,
               "float": "162.9",
               "inst": "+4.4",
               "ticker_color": null,
@@ -1303,7 +1212,7 @@
       "score": 30.31,
       "n": 5,
       "n_leaves": 3,
-      "radar_rank": 15,
+      "radar_rank": 16,
       "hot": false,
       "leaves": [
         {
@@ -1314,13 +1223,13 @@
             {
               "ticker": "FCEL",
               "si": 32.72,
-              "dd60": -36.1,
+              "dd60": -35.5,
               "drop15": -35.6,
               "streak": 4,
-              "price": 16.42,
+              "price": 16.57,
               "float": "76.1",
               "inst": "+33.4",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": "short"
             }
           ]
@@ -1333,37 +1242,37 @@
             {
               "ticker": "CSIQ",
               "si": 38.53,
-              "dd60": -31.1,
+              "dd60": -33.1,
               "drop15": -24.9,
               "streak": 5,
-              "price": 11.52,
+              "price": 11.19,
               "float": "47.6",
               "inst": "+16.7",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": "short"
             },
             {
               "ticker": "SEDG",
               "si": 19.68,
-              "dd60": -45.1,
+              "dd60": -46.8,
               "drop15": -40.6,
               "streak": 4,
-              "price": 31.87,
+              "price": 30.87,
               "float": "60.5",
               "inst": "-7.6",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": null
             },
             {
               "ticker": "ENPH",
               "si": 18.64,
-              "dd60": -29.2,
-              "drop15": -22.0,
+              "dd60": -28.2,
+              "drop15": -20.4,
               "streak": 5,
-              "price": 32.99,
+              "price": 33.47,
               "float": "128.1",
               "inst": "-3.4",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
             }
           ]
@@ -1376,10 +1285,10 @@
             {
               "ticker": "MWH",
               "si": 13.11,
-              "dd60": -28.0,
+              "dd60": -26.2,
               "drop15": -26.0,
               "streak": 7,
-              "price": 24.02,
+              "price": 24.63,
               "float": "45.5",
               "inst": "+11.9",
               "ticker_color": null,
@@ -1392,23 +1301,23 @@
     {
       "name": "Software & Internet",
       "score": 28.45,
-      "n": 9,
-      "n_leaves": 5,
+      "n": 8,
+      "n_leaves": 4,
       "radar_rank": 3,
       "hot": true,
       "leaves": [
         {
           "name": "Software & Internet / E-commerce",
-          "score": 24.01,
-          "n": 3,
+          "score": 28.01,
+          "n": 2,
           "tickers": [
             {
               "ticker": "GRPN",
               "si": 39.89,
-              "dd60": -33.9,
+              "dd60": -34.7,
               "drop15": -30.2,
               "streak": 6,
-              "price": 19.76,
+              "price": 19.53,
               "float": "32.9",
               "inst": "-2.8",
               "ticker_color": null,
@@ -1417,24 +1326,12 @@
             {
               "ticker": "PTRN",
               "si": 16.13,
-              "dd60": -42.4,
+              "dd60": -41.6,
               "drop15": -24.6,
               "streak": 5,
-              "price": 17.16,
+              "price": 17.4,
               "float": "41.0",
               "inst": "+20.4",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "WIX",
-              "si": 16.02,
-              "dd60": -25.5,
-              "drop15": -17.7,
-              "streak": 4,
-              "price": 72.13,
-              "float": "39.9",
-              "inst": "-31.3",
               "ticker_color": null,
               "highlight": null
             }
@@ -1448,22 +1345,22 @@
             {
               "ticker": "KVYO",
               "si": 24.15,
-              "dd60": -24.8,
+              "dd60": -22.6,
               "drop15": -25.3,
               "streak": 4,
-              "price": 15.73,
+              "price": 16.19,
               "float": "81.3",
               "inst": "-9.3",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": "short"
             },
             {
               "ticker": "TTD",
               "si": 21.31,
-              "dd60": -40.7,
+              "dd60": -41.1,
               "drop15": -31.9,
               "streak": 10,
-              "price": 12.17,
+              "price": 12.1,
               "float": "415.5",
               "inst": "+0.1",
               "ticker_color": null,
@@ -1472,10 +1369,10 @@
             {
               "ticker": "YELP",
               "si": 20.01,
-              "dd60": -36.7,
+              "dd60": -38.0,
               "drop15": -20.9,
               "streak": 7,
-              "price": 18.5,
+              "price": 18.11,
               "float": "51.8",
               "inst": "-2.6",
               "ticker_color": null,
@@ -1491,31 +1388,12 @@
             {
               "ticker": "CNXC",
               "si": 18.17,
-              "dd60": -26.3,
+              "dd60": -26.4,
               "drop15": -20.9,
               "streak": 5,
-              "price": 24.95,
+              "price": 24.91,
               "float": "47.3",
               "inst": "+2.9",
-              "ticker_color": null,
-              "highlight": "coil"
-            }
-          ]
-        },
-        {
-          "name": "Software & Internet / Data & Analytics",
-          "score": 16.02,
-          "n": 1,
-          "tickers": [
-            {
-              "ticker": "WIX",
-              "si": 16.02,
-              "dd60": -25.5,
-              "drop15": -17.7,
-              "streak": 4,
-              "price": 72.13,
-              "float": "39.9",
-              "inst": "-31.3",
               "ticker_color": null,
               "highlight": null
             }
@@ -1529,25 +1407,25 @@
             {
               "ticker": "FIG",
               "si": 15.66,
-              "dd60": -32.7,
+              "dd60": -30.9,
               "drop15": -28.1,
               "streak": 8,
-              "price": 21.02,
+              "price": 21.57,
               "float": "226.3",
               "inst": "+11.3",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
             },
             {
               "ticker": "TTAN",
               "si": 14.38,
-              "dd60": -36.1,
+              "dd60": -34.6,
               "drop15": -46.1,
               "streak": 5,
-              "price": 65.79,
+              "price": 67.34,
               "float": "58.4",
               "inst": "+9.8",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
             }
           ]
@@ -1555,84 +1433,72 @@
       ]
     },
     {
-      "name": "Space",
-      "score": 25.45,
-      "n": 5,
+      "name": "Nuclear",
+      "score": 25.75,
+      "n": 4,
       "n_leaves": 2,
-      "radar_rank": 24,
+      "radar_rank": 31,
       "hot": false,
       "leaves": [
         {
-          "name": "Space / Satellites & Communication",
-          "score": 34.77,
-          "n": 1,
+          "name": "Nuclear / SMR & Reactors",
+          "score": 23.82,
+          "n": 2,
           "tickers": [
             {
-              "ticker": "ASTS",
-              "si": 34.77,
-              "dd60": -24.5,
-              "drop15": -29.2,
-              "streak": 3,
-              "price": 58.86,
-              "float": "187.7",
-              "inst": "+1.6",
-              "ticker_color": "green",
-              "highlight": "short"
+              "ticker": "NNE",
+              "si": 34.49,
+              "dd60": -25.6,
+              "drop15": -19.2,
+              "streak": 6,
+              "price": 15.73,
+              "float": "44.8",
+              "inst": "+0.6",
+              "ticker_color": null,
+              "highlight": "coil"
+            },
+            {
+              "ticker": "XE",
+              "si": 13.15,
+              "dd60": -41.9,
+              "drop15": -25.4,
+              "streak": 6,
+              "price": 13.95,
+              "float": "160.8",
+              "inst": "+44.0",
+              "ticker_color": null,
+              "highlight": null
             }
           ]
         },
         {
-          "name": "Space / Infrastructure",
-          "score": 19.77,
-          "n": 4,
+          "name": "Nuclear / Uranium Mining",
+          "score": 21.38,
+          "n": 2,
           "tickers": [
             {
-              "ticker": "LUNR",
-              "si": 23.78,
-              "dd60": -31.7,
-              "drop15": -33.1,
-              "streak": 5,
-              "price": 14.24,
-              "float": "152.7",
-              "inst": "+12.8",
+              "ticker": "OKLO",
+              "si": 21.39,
+              "dd60": -28.6,
+              "drop15": -20.5,
+              "streak": 6,
+              "price": 36.14,
+              "float": "157.3",
+              "inst": "-6.1",
               "ticker_color": null,
               "highlight": "short"
             },
             {
-              "ticker": "VOYG",
-              "si": 17.8,
-              "dd60": -33.4,
-              "drop15": -33.6,
-              "streak": 3,
-              "price": 30.25,
-              "float": "52.7",
-              "inst": "+20.9",
-              "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "RDW",
-              "si": 17.73,
-              "dd60": -26.4,
+              "ticker": "UUUU",
+              "si": 21.37,
+              "dd60": -35.1,
               "drop15": -26.5,
-              "streak": 4,
-              "price": 10.44,
-              "float": "240.6",
-              "inst": "+7.2",
+              "streak": 6,
+              "price": 10.71,
+              "float": "260.6",
+              "inst": "+5.2",
               "ticker_color": null,
-              "highlight": null
-            },
-            {
-              "ticker": "KRMN",
-              "si": 12.08,
-              "dd60": -49.1,
-              "drop15": -40.9,
-              "streak": 13,
-              "price": 32.42,
-              "float": "116.8",
-              "inst": "+12.5",
-              "ticker_color": null,
-              "highlight": null
+              "highlight": "short"
             }
           ]
         }
@@ -1654,10 +1520,10 @@
             {
               "ticker": "WHR",
               "si": 24.94,
-              "dd60": -34.9,
+              "dd60": -35.3,
               "drop15": -22.3,
               "streak": 7,
-              "price": 30.68,
+              "price": 30.48,
               "float": "62.3",
               "inst": "-2.6",
               "ticker_color": null,
@@ -1666,14 +1532,14 @@
             {
               "ticker": "BOBS",
               "si": 21.04,
-              "dd60": -28.9,
+              "dd60": -27.2,
               "drop15": -23.1,
               "streak": 3,
-              "price": 13.86,
+              "price": 14.19,
               "float": "30.6",
               "inst": "+1.8",
               "ticker_color": "green",
-              "highlight": "coil"
+              "highlight": "short"
             }
           ]
         },
@@ -1685,10 +1551,10 @@
             {
               "ticker": "ODD",
               "si": 22.31,
-              "dd60": -7.4,
+              "dd60": -6.2,
               "drop15": -28.8,
               "streak": 3,
-              "price": 18.66,
+              "price": 18.92,
               "float": "28.1",
               "inst": "+3.1",
               "ticker_color": null,
@@ -1704,10 +1570,10 @@
             {
               "ticker": "EYE",
               "si": 20.42,
-              "dd60": -31.5,
+              "dd60": -31.4,
               "drop15": -24.3,
               "streak": 5,
-              "price": 16.38,
+              "price": 16.4,
               "float": "76.8",
               "inst": "+3.3",
               "ticker_color": null,
@@ -1723,26 +1589,26 @@
             {
               "ticker": "WING",
               "si": 18.33,
-              "dd60": -36.7,
+              "dd60": -35.5,
               "drop15": -20.1,
               "streak": 3,
-              "price": 105.37,
+              "price": 104.36,
               "float": "27.0",
               "inst": "+0.4",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": null
             },
             {
               "ticker": "CAVA",
               "si": 14.24,
-              "dd60": -28.5,
+              "dd60": -28.1,
               "drop15": -30.5,
               "streak": 7,
-              "price": 54.1,
+              "price": 54.41,
               "float": "103.1",
               "inst": "-4.5",
               "ticker_color": null,
-              "highlight": null
+              "highlight": "coil"
             }
           ]
         },
@@ -1754,10 +1620,10 @@
             {
               "ticker": "COCO",
               "si": 12.04,
-              "dd60": -28.4,
+              "dd60": -30.0,
               "drop15": -24.4,
               "streak": 4,
-              "price": 57.26,
+              "price": 55.97,
               "float": "48.4",
               "inst": "-1.5",
               "ticker_color": null,
@@ -1772,7 +1638,7 @@
       "score": 22.42,
       "n": 5,
       "n_leaves": 3,
-      "radar_rank": 20,
+      "radar_rank": 23,
       "hot": false,
       "leaves": [
         {
@@ -1783,10 +1649,10 @@
             {
               "ticker": "HYMC",
               "si": 26.37,
-              "dd60": -36.0,
+              "dd60": -36.4,
               "drop15": -24.1,
               "streak": 4,
-              "price": 19.04,
+              "price": 18.93,
               "float": "48.8",
               "inst": "+19.9",
               "ticker_color": null,
@@ -1802,10 +1668,10 @@
             {
               "ticker": "MP",
               "si": 23.17,
-              "dd60": -24.3,
-              "drop15": -28.1,
+              "dd60": -26.2,
+              "drop15": -20.8,
               "streak": 5,
-              "price": 47.29,
+              "price": 46.09,
               "float": "144.9",
               "inst": "+7.9",
               "ticker_color": null,
@@ -1814,22 +1680,22 @@
             {
               "ticker": "GRML",
               "si": 17.72,
-              "dd60": -41.7,
+              "dd60": -50.0,
               "drop15": -69.2,
               "streak": 4,
-              "price": 10.62,
+              "price": 9.11,
               "float": "2.9",
               "inst": "+3.6",
-              "ticker_color": "green",
+              "ticker_color": null,
               "highlight": "ma_up"
             },
             {
               "ticker": "USAR",
               "si": 15.63,
-              "dd60": -31.4,
-              "drop15": -30.7,
+              "dd60": -32.7,
+              "drop15": -22.4,
               "streak": 5,
-              "price": 14.08,
+              "price": 13.8,
               "float": "249.8",
               "inst": "+13.3",
               "ticker_color": null,
@@ -1845,10 +1711,10 @@
             {
               "ticker": "CENX",
               "si": 14.21,
-              "dd60": -35.2,
+              "dd60": -35.9,
               "drop15": -24.6,
               "streak": 5,
-              "price": 35.98,
+              "price": 35.62,
               "float": "68.3",
               "inst": "+3.6",
               "ticker_color": null,
@@ -1861,9 +1727,9 @@
     {
       "name": "MedTech",
       "score": 20.89,
-      "n": 4,
-      "n_leaves": 3,
-      "radar_rank": 13,
+      "n": 5,
+      "n_leaves": 4,
+      "radar_rank": 18,
       "hot": false,
       "leaves": [
         {
@@ -1874,25 +1740,25 @@
             {
               "ticker": "BBNX",
               "si": 23.63,
-              "dd60": -19.4,
+              "dd60": -19.5,
               "drop15": -28.0,
-              "streak": 6,
-              "price": 18.98,
+              "streak": 7,
+              "price": 18.96,
               "float": "44.9",
               "inst": "-4.8",
               "ticker_color": null,
-              "highlight": "short"
+              "highlight": "coil"
             },
             {
               "ticker": "TNDM",
               "si": 18.15,
-              "dd60": -34.3,
+              "dd60": -33.5,
               "drop15": -26.7,
               "streak": 10,
-              "price": 16.31,
+              "price": 16.5,
               "float": "68.7",
               "inst": "-0.9",
-              "ticker_color": null,
+              "ticker_color": "green",
               "highlight": null
             }
           ]
@@ -1905,10 +1771,10 @@
             {
               "ticker": "QDEL",
               "si": 20.88,
-              "dd60": -44.6,
+              "dd60": -45.5,
               "drop15": -30.7,
               "streak": 6,
-              "price": 10.54,
+              "price": 10.38,
               "float": "68.0",
               "inst": "-4.7",
               "ticker_color": null,
@@ -1924,12 +1790,31 @@
             {
               "ticker": "ENOV",
               "si": 16.86,
-              "dd60": -42.3,
+              "dd60": -43.0,
               "drop15": -30.5,
               "streak": 5,
-              "price": 18.27,
+              "price": 18.05,
               "float": "56.2",
               "inst": "+3.1",
+              "ticker_color": "green",
+              "highlight": null
+            }
+          ]
+        },
+        {
+          "name": "MedTech / Surgical Robotics",
+          "score": 13.62,
+          "n": 1,
+          "tickers": [
+            {
+              "ticker": "PRCT",
+              "si": 13.62,
+              "dd60": -25.8,
+              "drop15": -24.4,
+              "streak": 6,
+              "price": 17.02,
+              "float": "54.6",
+              "inst": "-3.6",
               "ticker_color": null,
               "highlight": null
             }
@@ -1938,120 +1823,65 @@
       ]
     },
     {
-      "name": "Nuclear",
-      "score": 18.64,
-      "n": 3,
-      "n_leaves": 2,
-      "radar_rank": 32,
+      "name": "Space",
+      "score": 19.77,
+      "n": 4,
+      "n_leaves": 1,
+      "radar_rank": 24,
       "hot": false,
       "leaves": [
         {
-          "name": "Nuclear / Uranium Mining",
-          "score": 21.38,
-          "n": 2,
+          "name": "Space / Infrastructure",
+          "score": 19.77,
+          "n": 4,
           "tickers": [
             {
-              "ticker": "OKLO",
-              "si": 21.39,
-              "dd60": -26.9,
-              "drop15": -25.2,
-              "streak": 6,
-              "price": 37.02,
-              "float": "157.3",
-              "inst": "-6.1",
-              "ticker_color": "green",
-              "highlight": "coil"
-            },
-            {
-              "ticker": "UUUU",
-              "si": 21.37,
-              "dd60": -33.2,
-              "drop15": -26.5,
-              "streak": 6,
-              "price": 11.03,
-              "float": "260.6",
-              "inst": "+5.2",
+              "ticker": "LUNR",
+              "si": 23.78,
+              "dd60": -32.6,
+              "drop15": -27.9,
+              "streak": 5,
+              "price": 14.05,
+              "float": "152.7",
+              "inst": "+12.8",
               "ticker_color": null,
               "highlight": "short"
-            }
-          ]
-        },
-        {
-          "name": "Nuclear / SMR & Reactors",
-          "score": 13.15,
-          "n": 1,
-          "tickers": [
-            {
-              "ticker": "XE",
-              "si": 13.15,
-              "dd60": -40.9,
-              "drop15": -25.4,
-              "streak": 5,
-              "price": 14.18,
-              "float": "160.8",
-              "inst": "+44.0",
-              "ticker_color": null,
-              "highlight": null
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Cybersecurity",
-      "score": 14.43,
-      "n": 3,
-      "n_leaves": 2,
-      "radar_rank": 4,
-      "hot": true,
-      "leaves": [
-        {
-          "name": "Cybersecurity / Network",
-          "score": 14.51,
-          "n": 1,
-          "tickers": [
-            {
-              "ticker": "FSLY",
-              "si": 14.51,
-              "dd60": -18.1,
-              "drop15": -31.9,
-              "streak": 5,
-              "price": 25.67,
-              "float": "148.6",
-              "inst": "+9.2",
-              "ticker_color": "green",
-              "highlight": "coil"
-            }
-          ]
-        },
-        {
-          "name": "Cybersecurity / Generalist",
-          "score": 14.39,
-          "n": 2,
-          "tickers": [
-            {
-              "ticker": "TENB",
-              "si": 16.77,
-              "dd60": -16.7,
-              "drop15": -26.2,
-              "streak": 5,
-              "price": 36.39,
-              "float": "108.4",
-              "inst": "+1.0",
-              "ticker_color": null,
-              "highlight": "ma_up"
             },
             {
-              "ticker": "RPD",
-              "si": 12.01,
-              "dd60": -17.4,
-              "drop15": -27.6,
-              "streak": 2,
-              "price": 12.22,
-              "float": "64.3",
-              "inst": "+10.5",
+              "ticker": "VOYG",
+              "si": 17.8,
+              "dd60": -34.1,
+              "drop15": -26.6,
+              "streak": 3,
+              "price": 29.91,
+              "float": "52.7",
+              "inst": "+20.9",
               "ticker_color": null,
-              "highlight": "ma_up"
+              "highlight": null
+            },
+            {
+              "ticker": "RDW",
+              "si": 17.73,
+              "dd60": -25.5,
+              "drop15": -24.4,
+              "streak": 4,
+              "price": 10.57,
+              "float": "240.6",
+              "inst": "+7.2",
+              "ticker_color": null,
+              "highlight": null
+            },
+            {
+              "ticker": "KRMN",
+              "si": 12.08,
+              "dd60": -50.0,
+              "drop15": -40.9,
+              "streak": 13,
+              "price": 31.89,
+              "float": "116.8",
+              "inst": "+12.5",
+              "ticker_color": null,
+              "highlight": null
             }
           ]
         }

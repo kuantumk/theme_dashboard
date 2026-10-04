@@ -26,16 +26,17 @@
      distinct from --amber, which the V/A cutoff dropdowns own in the same panel. */
   --yellow: #ffd700;
   --ydim: rgba(255, 215, 0, 0.10);
-  /* Coil marker. Violet because every other hue on a radar chip is spoken for:
-     green is the day-pattern flag, blue is screened/hover, yellow is selection,
-     amber belongs to the V/A cutoffs and the HOT badge. The alpha is high
-     because the chip's own opacity multiplies it — see .radar-chip.coiled. */
-  --coil: #b085f5;
-  --coil-dim: rgba(176, 133, 245, 0.30);
-  /* Highlight tiers. The server picks one rung per ticker — coil, short
-     interest, stacked averages, split stack — and the rung draws as a tint
-     behind the symbol. The coil pair above is the first rung; these are the
-     other three.
+  /* Tight-range marker. Violet because every other hue on a radar chip is
+     spoken for: green is the day-pattern flag, blue is screened/hover, yellow is
+     selection, amber belongs to the V/A cutoffs and the HOT badge. The alpha is
+     high because the chip's own opacity multiplies it — see
+     .radar-chip.tight-range. */
+  --tight: #b085f5;
+  --tight-dim: rgba(176, 133, 245, 0.30);
+  /* Highlight tiers. The server picks one rung per ticker — tight range,
+     short interest, stacked averages, split stack — and the rung draws as a
+     tint behind the symbol. The tight pair above is the first rung; these are
+     the other three.
 
      Each hue is picked against what the same row already owns. --accent
      (#5566ff) is hover text and --accent2 (#4455ee) is the screened-chip
@@ -51,7 +52,7 @@
      `color`: that channel belongs to the green day-pattern flag.
 
      A .radar-chip multiplies its background by the chip's own opacity, which is
-     why --coil-dim runs at 0.30 where these run at 0.14. These three have not
+     why --tight-dim runs at 0.30 where these run at 0.14. These three have not
      been tuned against a live chip yet. */
   --hl-short: #3ad1ff;
   --hl-short-dim: rgba(58, 209, 255, 0.14);
@@ -1746,17 +1747,17 @@ tbody tr.nav-active {
   flex-shrink: 0;
 }
 
-/* Coil count on a leaf or L1 header. Deliberately NOT folded into .radar-n or
+/* Tight count on a leaf or L1 header. Deliberately NOT folded into .radar-n or
    .theme-score: those are 10-11px --text3/--text2, the dimmest treatments on
    the row and the ones a scanning eye is trained to skip. This is the one
    signal the tab exists to surface, so it gets the .hot-badge treatment in the
-   coil colour instead. */
-.coil-badge {
+   tight colour instead. */
+.tight-badge {
   font-family: var(--display);
   font-size: 9px;
   font-weight: 500;
-  color: var(--coil);
-  border: 1px solid var(--coil);
+  color: var(--tight);
+  border: 1px solid var(--tight);
   padding: 0 4px;
   margin-left: 6px;
   letter-spacing: 0.5px;
@@ -1764,55 +1765,55 @@ tbody tr.nav-active {
   flex-shrink: 0;
 }
 
-/* Coil sort control. Lives in the tab body, not the time-travel bar: the
+/* Tight sort control. Lives in the tab body, not the time-travel bar: the
    list panel's default width is measured from the widest bar, so adding a
    control there would re-wrap it and force a re-measure (see CLAUDE.md). This
    sort also applies to one tab only, which makes the shared bar the wrong
    home for it regardless. */
-/* Pinned coil strip. This is the feature's answer to the original miss: a
-   coiled theme at rank 27 is unreachable by a marker inside its own block,
+/* Pinned tight strip. This is the feature's answer to the original miss: a
+   tight theme at rank 27 is unreachable by a marker inside its own block,
    because the reader never scrolls that far. The strip names the leading
-   coiled themes above the board, at any rank, with no click required. Ranked
+   tight themes above the board, at any rank, with no click required. Ranked
    by share rather than raw count — rosters run 2 to 214 members, so a raw
-   count just lists the biggest L1s (same lesson as byCoil, the tape-pressure
+   count just lists the biggest L1s (same lesson as byTight, the tape-pressure
    board, and the SI tab). */
-.coil-strip {
+.tight-strip {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 7px 9px;
   margin-bottom: 8px;
-  border: 1px solid var(--coil);
+  border: 1px solid var(--tight);
   border-radius: 3px;
-  background: var(--coil-dim);
+  background: var(--tight-dim);
 }
 
-.coil-strip-empty {
+.tight-strip-empty {
   border-color: var(--border);
   background: none;
 }
 
-.coil-strip-label {
+.tight-strip-label {
   font-family: var(--display);
   font-size: 9px;
   font-weight: 500;
   letter-spacing: 1px;
-  color: var(--coil);
+  color: var(--tight);
   flex-shrink: 0;
   padding-top: 3px;
 }
 
-.coil-strip-empty .coil-strip-label {
+.tight-strip-empty .tight-strip-label {
   color: var(--text3);
 }
 
-.coil-pins {
+.tight-pins {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-.coil-pin {
+.tight-pin {
   font-family: var(--mono);
   font-size: 10px;
   color: var(--text);
@@ -1824,17 +1825,17 @@ tbody tr.nav-active {
   white-space: nowrap;
 }
 
-.coil-pin:hover {
-  border-color: var(--coil);
+.tight-pin:hover {
+  border-color: var(--tight);
 }
 
-.coil-pin-n {
+.tight-pin-n {
   color: var(--text3);
   margin-left: 3px;
 }
 
-.coil-pin-pct {
-  color: var(--coil);
+.tight-pin-pct {
+  color: var(--tight);
   font-weight: 600;
   margin-left: 4px;
 }
@@ -1842,8 +1843,8 @@ tbody tr.nav-active {
 /* Landing flash after a pin jump, so the eye finds the block it asked for.
    Outline, not border or padding: the block is a flex/box container whose
    size must not shift, and an outline is drawn outside the box model. */
-.theme-block.coil-jump {
-  outline: 1px solid var(--coil);
+.theme-block.tight-jump {
+  outline: 1px solid var(--tight);
   outline-offset: 2px;
 }
 
@@ -1854,7 +1855,7 @@ tbody tr.nav-active {
   padding: 0 0 8px;
 }
 
-.coil-sort-btn {
+.tight-sort-btn {
   font-family: var(--display);
   font-size: 10px;
   color: var(--text3);
@@ -1866,17 +1867,17 @@ tbody tr.nav-active {
   letter-spacing: 0.3px;
 }
 
-.coil-sort-btn:hover {
+.tight-sort-btn:hover {
   color: var(--text2);
   border-color: var(--text3);
 }
 
-/* On-state carries the coil colour, not amber: amber is the V/A cutoffs', and
+/* On-state carries the tight colour, not amber: amber is the V/A cutoffs', and
    this control re-orders rather than filtering. The distinction matters because
    nothing is hidden when this is on. */
-.coil-sort-btn.on {
-  color: var(--coil);
-  border-color: var(--coil);
+.tight-sort-btn.on {
+  color: var(--tight);
+  border-color: var(--tight);
 }
 
 .radar-scores {
@@ -1949,33 +1950,33 @@ tbody tr.nav-active {
   opacity: 1;
 }
 
-/* Coiled: the last 3 closes sat in a band under 0.30 ADR, and the close holds
-   at least 0.70 of the 50-day high. (No moving-average test — that conjunct was
-   measured out; see compute_tight_base.) A BACKGROUND, never a colour or a border — colour is taken by the green
-   day-pattern flag, yellow by selection, blue by screened and hover, and a
-   border or any layout-affecting property would change chip width, which
-   syncRadarClamps measures to derive the "+N more" count. */
-.radar-chip.coiled {
-  background: var(--coil-dim);
+/* Tight range: 3 to 10 closes barely moved against the stock's own ADR, in a
+   constructive place (see compute_tight_range). A BACKGROUND, never a colour
+   or a border — colour is taken by the green day-pattern flag, yellow by
+   selection, blue by screened and hover, and a border or any layout-affecting
+   property would change chip width, which syncRadarClamps measures to derive
+   the "+N more" count. */
+.radar-chip.tight-range {
+  background: var(--tight-dim);
 }
 
-/* The unscreened dim (0.55) would swallow the tint on MOST coiled chips: a
-   coiling stock has low RS by construction, which is exactly what keeps it out
-   of the screeners. Restore most of the opacity so the marker survives the
-   state it will usually be in. */
-.radar-chip.coiled.chip-quiet {
+/* The unscreened dim (0.55) would swallow the tint on MOST tight chips: a
+   basing stock often has low RS, which is exactly what keeps it out of the
+   screeners. Restore most of the opacity so the marker survives the state it
+   will usually be in. */
+.radar-chip.tight-range.chip-quiet {
   opacity: 0.85;
 }
 
 /* An armed V/A cutoff still wins — it is an explicit request to push the row
-   back, and it outranks our wish to advertise the coil. Three classes to match
+   back, and it outranks our wish to advertise the tight range. Three classes to match
    the specificity of the rule above; source order alone would not do it. */
-.radar-chip.coiled.filtered-out {
+.radar-chip.tight-range.filtered-out {
   opacity: 0.4;
 }
 
 /* ── HIGHLIGHT TIERS ────────────────────────────────────── */
-/* The other three rungs of the ladder the coil rules above open. Same channel,
+/* The other three rungs of the ladder the tight rules above open. Same channel,
    same constraints: a BACKGROUND, never a colour, never a layout-affecting
    property. Colour is taken by the green day-pattern flag, yellow by
    selection, blue by screened and hover; a width change would move the
@@ -1984,12 +1985,12 @@ tbody tr.nav-active {
    Every rung is written TWICE, once for the chip and once for the plain span.
    renderThemes is the only renderer that adds the radar-chip class, so the
    other eight list tabs draw a bare ticker link and a chip-only rule ships the
-   tint invisible there. The coil rung needs the same second rule for the same
+   tint invisible there. The tight rung needs the same second rule for the same
    reason: it reached the eight table tabs with no plain-span rule to draw it. A
    radar chip carries BOTH classes and each pair paints one token, so the two
    rules of a pair cannot disagree. */
-.tn-link.coiled {
-  background: var(--coil-dim);
+.tn-link.tight-range {
+  background: var(--tight-dim);
 }
 
 .radar-chip.hl-short {
@@ -2016,7 +2017,7 @@ tbody tr.nav-active {
   background: var(--hl-ma-split-dim);
 }
 
-/* Same restore the coil rung needs, for the same reason: the unscreened dim
+/* Same restore the tight rung needs, for the same reason: the unscreened dim
    (0.55) multiplies a tint that is already faint, and a stock the screeners
    reject is the common case on this tab. */
 .radar-chip.hl-short.chip-quiet,
@@ -2067,16 +2068,16 @@ tbody tr.nav-active {
   opacity: 1;
 }
 
-/* The coil rules above are THREE classes (0,3,0) where this one is two (0,2,0),
-   and specificity beats source order — so without this pair a selected coiled
-   chip kept the coil opacity instead of the selection's, rendering at 0.85
+/* The tight rules above are THREE classes (0,3,0) where this one is two (0,2,0),
+   and specificity beats source order — so without this pair a selected tight
+   chip kept the tight opacity instead of the selection's, rendering at 0.85
    unscreened and at 0.4 under an armed cutoff, where the same chip without
-   `coiled` renders at 1. The comment above says selection "must sit AFTER every
+   `tight-range` renders at 1. The comment above says selection "must sit AFTER every
    rule above", which was true while every rule was two classes; adding a
    three-class rule broke that assumption silently. Match the specificity rather
-   than reorder, or the coil opacity restore stops working instead. */
-.radar-chip.coiled.active-ticker,
-.radar-chip.coiled.filtered-out.active-ticker {
+   than reorder, or the tight opacity restore stops working instead. */
+.radar-chip.tight-range.active-ticker,
+.radar-chip.tight-range.filtered-out.active-ticker {
   color: var(--yellow);
   border-color: var(--yellow);
   opacity: 1;
@@ -2218,7 +2219,7 @@ tbody tr.nav-active {
 }
 
 /* A control sample keeps its own width; the text beside it wraps instead. */
-.lg-card .coil-sort-btn {
+.lg-card .tight-sort-btn {
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -2229,7 +2230,7 @@ tbody tr.nav-active {
 
 /* Pins and counts are nowrap on the Themes tab; in a phone-width card they
    must wrap. */
-.lg-card .coil-pin,
+.lg-card .tight-pin,
 .lg-card .radar-n {
   white-space: normal;
 }

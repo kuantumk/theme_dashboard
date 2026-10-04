@@ -15,7 +15,7 @@ stays current by construction, not by discipline:
    named in legends.js.
 
 3. **Server rules are mirrored, and the mirror is pinned.** The day-pattern,
-   coil, short and HOT rules are decided in Python and config. The browser
+   tight, short and HOT rules are decided in Python and config. The browser
    copy in `PATTERN_RULES` is compared here against those sources, so a
    retuned server rule fails this module until the legend follows it.
 """
@@ -41,7 +41,7 @@ EXPORT = (ROOT / 'src' / 'reporting' / 'export_dashboard_data.py').read_text(enc
 # --border*, --white) are structure, not signal.
 HUED_VARS = {
     'green', 'gdim', 'red', 'rdim', 'amber', 'adim2', 'accent', 'accent2',
-    'adim', 'yellow', 'ydim', 'coil', 'coil-dim', 'hl-short', 'hl-short-dim',
+    'adim', 'yellow', 'ydim', 'tight', 'tight-dim', 'hl-short', 'hl-short-dim',
     'hl-ma-up', 'hl-ma-up-dim', 'hl-ma-split', 'hl-ma-split-dim', 'l1-bg',
     'l1-bg-hover', 'l1-edge', 'l1-hot-bg', 'l1-hot-bg-hover',
 }
@@ -303,12 +303,23 @@ class ServerRuleMirrorTests(unittest.TestCase):
         self.assertEqual(2, len(near), 'close_to_ma moved; re-point this test')
         self.assertEqual({float(self._rule('closeToMaAtr'))}, {float(x) for x in near})
 
-    def test_coil_rule_matches_the_tightness_config(self):
-        t = CONFIG['tightness']
-        self.assertEqual(t['window'], int(self._rule('coilWindow')))
-        self.assertEqual(t['fraction'], float(self._rule('coilAdrFraction')))
-        self.assertEqual(t['high_lookback'], int(self._rule('coilHighLookback')))
-        self.assertEqual(t['high_frac'], float(self._rule('coilHighFrac')))
+    def test_tight_rule_matches_the_tight_range_config(self):
+        from src.indicators.create_technical_indicators import tight_range_config
+
+        t = tight_range_config()
+        pairs = {
+            'tightMinWindow': 'min_window',
+            'tightMaxWindow': 'max_window',
+            'tightRatioMax': 'ratio_max',
+            'tightPctileMax': 'pctile_max',
+            'tightPctileLookback': 'pctile_lookback',
+            'tightMaHoldAdr': 'ma_hold_adr',
+            'tightEmaRolloverAdr': 'ema_rollover_adr',
+            'tightSupportAdr': 'support_adr',
+        }
+        for js_key, cfg_key in pairs.items():
+            self.assertEqual(float(t[cfg_key]), float(self._rule(js_key)),
+                             f'PATTERN_RULES.{js_key} differs from tight_range.{cfg_key}')
 
     def test_short_floor_matches_the_ladder(self):
         from src.indicators.create_technical_indicators import HIGHLIGHT_SHORT_FLOOR

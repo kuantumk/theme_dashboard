@@ -1,7 +1,7 @@
 """Inside-day definition: candle engulfed OR body engulfed.
 
 The old rule was strict range containment (`high < prev_high and low > prev_low`).
-It rejected two shapes that are exactly the coiled setups the green day-pattern
+It rejected two shapes that are exactly the tight setups the green day-pattern
 colouring exists to surface: a bar that *ties* the prior high or low, and a
 tight-bodied bar whose wicks poke outside the prior range. The rule now reads:
 

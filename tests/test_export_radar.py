@@ -30,9 +30,9 @@ def _master_rows(date_str):
             'rs_sts_pct': 30.0 + i * 4,
             'vars': float(i),
             'rela_perf_1mo_rank': 30 + i * 4,
-            # Every third ticker coils, one carries no figure at all.
+            # Every third ticker is tight, one carries no figure at all.
             'tightness': (float('nan') if i == 1 else 0.10 + 0.05 * i),
-            'tight_base': (i % 3 == 0),
+            'tight_range': (i % 3 == 0),
         })
     return pd.DataFrame(rows)
 
@@ -108,7 +108,7 @@ class ExportRadarTests(unittest.TestCase):
                        for td in lf['tickers'] if td.get('ticker_color') == 'green']
             self.assertEqual({td['ticker'] for td in flagged}, {'CY11'})
 
-    def test_coil_fields_survive_export_and_serialize_as_json(self):
+    def test_tight_fields_survive_export_and_serialize_as_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             root, out_dir = Path(tmp) / 'screening', Path(tmp) / 'docs'
             out_dir.mkdir()
@@ -125,25 +125,25 @@ class ExportRadarTests(unittest.TestCase):
                        for td in lf['tickers']]
             self.assertTrue(tickers)
             for td in tickers:
-                self.assertIn('coiled', td)
-                self.assertIsInstance(td['coiled'], bool)
+                self.assertIn('tight', td)
+                self.assertIsInstance(td['tight'], bool)
                 self.assertTrue(td['tightness'] is None
                                 or isinstance(td['tightness'], float))
 
             # The ticker whose tightness was NaN publishes null, not NaN.
             self.assertTrue(any(td['tightness'] is None for td in tickers))
-            # And it is not counted as coiled — unmeasurable fails closed.
+            # And it is not counted as tight — unmeasurable fails closed.
             unmeasured = [td for td in tickers if td['tightness'] is None]
-            self.assertTrue(all(not td['coiled'] for td in unmeasured))
+            self.assertTrue(all(not td['tight'] for td in unmeasured))
 
             for e in radar['l1s']:
-                self.assertGreaterEqual(e['n_coiled'], 0)
-                self.assertLessEqual(e['n_coiled'], e['n_members'])
+                self.assertGreaterEqual(e['n_tight'], 0)
+                self.assertLessEqual(e['n_tight'], e['n_members'])
                 for lf in e['leaves']:
-                    self.assertLessEqual(lf['n_coiled'], lf['n'])
+                    self.assertLessEqual(lf['n_tight'], lf['n'])
 
             # Capped history entries keep the full count, not the chip count.
-            self.assertTrue(all('n_coiled' in e for h in history for e in h['l1s']))
+            self.assertTrue(all('n_tight' in e for h in history for e in h['l1s']))
 
     def test_no_masters_is_noop(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -118,7 +118,7 @@ def run_morning_scan() -> tuple[list, int]:
             # `calculate_technicals`; placed there it would ship this tab with
             # the moving-average rungs only. `sma50_full` is None below 50 bars,
             # keeping a partial mean out of the ladder while `atr_multiple`
-            # still uses it. EP holds no tightness source, so no coil rung.
+            # still uses it. EP holds no tight-range source, so no tight rung.
             'highlight': compute_highlight_tier(
                 short_interest=fundamentals['short'],
                 ema10=technicals['ema10'],

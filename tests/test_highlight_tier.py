@@ -1,7 +1,7 @@
 """The highlight ladder: one tier per ticker, and the first rung wins.
 
-The order is coil, short interest, stacked moving averages, split stack. It is a
-DISPLAY preference, not a ranking claim — nothing measures whether a coil
+The order is tight, short interest, stacked moving averages, split stack. It is a
+DISPLAY preference, not a ranking claim — nothing measures whether a tight
 predicts better than a crowded short, or either better than a stacked average.
 
 ⛔ A tint names the highest rung whose input the caller HOLDS. It never names
@@ -37,11 +37,11 @@ STACKED = dict(ema10=12.0, ema20=11.0, sma50=10.0)
 SPLIT = dict(ema10=12.0, ema20=11.0, sma50=13.0)
 
 
-def _tier(tight_base=False, short_interest=None,
+def _tier(tight_range=False, short_interest=None,
           ema10=None, ema20=None, sma50=None):
     """Run the ladder with every input defaulting to missing."""
     return compute_highlight_tier(
-        tight_base=tight_base,
+        tight_range=tight_range,
         short_interest=short_interest,
         ema10=ema10,
         ema20=ema20,
@@ -52,10 +52,10 @@ def _tier(tight_base=False, short_interest=None,
 class LadderOrderTests(unittest.TestCase):
     """The first rung a ticker satisfies wins, and the rest never run."""
 
-    def test_a_coil_outranks_a_crowded_short_and_a_stacked_average(self):
+    def test_a_tight_outranks_a_crowded_short_and_a_stacked_average(self):
         # AE1. Every rung fires. Only the top one may come back.
         self.assertEqual(
-            _tier(tight_base=True, short_interest=34.0, **STACKED), 'coil')
+            _tier(tight_range=True, short_interest=34.0, **STACKED), 'tight')
 
     def test_a_crowded_short_outranks_a_stacked_average(self):
         self.assertEqual(
@@ -65,38 +65,38 @@ class LadderOrderTests(unittest.TestCase):
         self.assertEqual(
             _tier(short_interest=34.0, **SPLIT), 'short')
 
-    def test_a_coil_alone_still_reads_coil(self):
-        self.assertEqual(_tier(tight_base=True), 'coil')
+    def test_a_tight_alone_still_reads_tight(self):
+        self.assertEqual(_tier(tight_range=True), 'tight')
 
     def test_no_rung_leaves_the_ticker_plain(self):
         self.assertIsNone(_tier())
 
     def test_the_ladder_returns_one_of_five_values(self):
         cases = [
-            _tier(tight_base=True),
+            _tier(tight_range=True),
             _tier(short_interest=99.0),
             _tier(**STACKED),
             _tier(**SPLIT),
             _tier(),
         ]
-        self.assertEqual(cases, ['coil', 'short', 'ma_up', 'ma_split', None])
+        self.assertEqual(cases, ['tight', 'short', 'ma_up', 'ma_split', None])
 
 
-class CoilRungTests(unittest.TestCase):
-    """The coil rung reads the `tight_base` boolean and fails closed."""
+class TightRungTests(unittest.TestCase):
+    """The tight rung reads the `tight_range` boolean and fails closed."""
 
     def test_a_false_flag_falls_through_to_the_next_rung(self):
         self.assertEqual(
-            _tier(tight_base=False, short_interest=34.0), 'short')
+            _tier(tight_range=False, short_interest=34.0), 'short')
 
     def test_a_missing_flag_falls_through(self):
         self.assertEqual(
-            _tier(tight_base=None, short_interest=34.0), 'short')
+            _tier(tight_range=None, short_interest=34.0), 'short')
 
-    def test_a_nan_flag_is_not_a_coil(self):
+    def test_a_nan_flag_is_not_a_tight(self):
         # bool(float('nan')) is True, so a bare truth test would tint every
         # ticker whose tightness columns are absent.
-        self.assertIsNone(_tier(tight_base=float('nan')))
+        self.assertIsNone(_tier(tight_range=float('nan')))
 
 
 class ShortRungTests(unittest.TestCase):
@@ -173,7 +173,7 @@ class NonFiniteInputTests(unittest.TestCase):
 
     def test_every_input_missing_returns_no_tier(self):
         self.assertIsNone(_tier(
-            tight_base=None, short_interest=None,
+            tight_range=None, short_interest=None,
             ema10=None, ema20=None, sma50=None))
 
 

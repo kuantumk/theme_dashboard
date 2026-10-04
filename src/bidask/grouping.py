@@ -168,7 +168,7 @@ def _breadth(qualifying: int, roster: int, coef: float, minimum: int) -> float:
 
     Share, not count: rosters run from 2 to 214 members, so a count ranks by
     roster size and buries the small, densely participating theme — the same
-    lesson the coil strip and the SI tab already record.
+    lesson the tight strip and the SI tab already record.
 
     Below `minimum` qualifying members the term is zero. Share alone hands a
     one-member group the maximum, which is the opposite of what breadth means.

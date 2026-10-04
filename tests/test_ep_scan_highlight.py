@@ -1,6 +1,6 @@
 """The highlight tier on the two EP tables.
 
-The EP scans hold no tightness source, so the coil rung cannot fire here. That
+The EP scans hold no tightness source, so the tight rung cannot fire here. That
 is the ladder working, not a gap — a rung with no source is absent, never
 wrong. The scans do hold a live Finviz short float and a year of daily closes,
 so the short rung and the two moving-average rungs are reachable.
@@ -158,7 +158,7 @@ class ScanRowHighlightTests(unittest.TestCase):
                 self.assertEqual(len(rows), 1, 'the row must still be exported')
                 self.assertIsNone(rows[0]['highlight'])
 
-    def test_the_coil_rung_never_fires_on_an_ep_table(self):
+    def test_the_tight_rung_never_fires_on_an_ep_table(self):
         # R14. EP holds no tightness source, so the rung is absent by
         # construction. Nothing in either loop may invent one.
         for module, entry_point, price_helper in SCANS:
@@ -168,7 +168,7 @@ class ScanRowHighlightTests(unittest.TestCase):
                         rows = _run_scan(module, entry_point, price_helper,
                                          short=short,
                                          technicals=_technicals(**averages))
-                        self.assertNotEqual(rows[0]['highlight'], 'coil')
+                        self.assertNotEqual(rows[0]['highlight'], 'tight')
 
 
 class ScanLoopAgreementTests(unittest.TestCase):

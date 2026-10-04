@@ -108,47 +108,46 @@ si_tab:
   top_k_si: 3                   # member SI values averaged into an L1 score
   hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
 
-# Tightness — the coiled-range detector behind the Themes tab's coil marker.
+# Tight range (TR) — the detector behind the Themes tab's tight marker and the
+# violet highlight rung. Source: the canonical "Tight Range (TR)" note, v2.1.
 #
-# tightness = (max - min of the last `window` CLOSES) / mean close / ADR%, so
-# 0.30 means the closes sat in a band under a third of one average daily range.
-# A containment measure, not a per-bar one: a stock swinging a full ADR each way
-# and closing flat has a narrow band and large daily moves, and the band is what
-# a trader sees on the chart. Correlates +0.78 with the per-bar form it
-# replaced, so this is a legibility choice, not a performance claim.
+#   tight range = shape AND gate     (the note's third layer, quality, only ranks)
 #
-# ⛔ Two conditions only, and there is deliberately NO moving-average test.
-# EMA distance is not tightness — it is a second location test doing a job the
-# closing range already does, since a stock drifting off its averages has a wide
-# band by construction. It also ejected names on rounding (PANW by $1.33 on a
-# $330 stock), and swept 0.5-1.5 ATR it moved ticker excess 0.08pp and theme IC
-# 0.026, both inside noise. Do not add it back.
+# Shape: for each window of N = min_window..max_window closes,
+#   ratio_N = ((max - min) / mean of the closes) / (ADR% * sqrt(N))
+# passes when ratio_N <= ratio_max OR it sits in the tightest pctile_max percent
+# of this stock's own ratio_N over the last pctile_lookback sessions. The LONGEST
+# passing N is reported. Closes, not bodies or high-low: wicks are allowed.
 #
-# The high gate is a DISQUALIFIER, not a selector: at 0.70 it passes 82% of rows
-# on its own, so it chooses nothing and only throws out wreckage. That removal
-# is the value — forward 10-session excess runs 0.66pp BELOW the universe
-# baseline for bare tightness and above it once the gate applies.
+# Gate (any branch, tested in this order; the first that holds is published):
+#   trend   - EMA10 >= EMA20 and the close >= EMA20
+#   ma_hold - a rising EMA10/EMA20/SMA50 (above its value ma_rising_lag bars ago)
+#             with the window's lowest close within ma_hold_adr ADRs of it, the
+#             close ABOVE it, and EMA10 no more than ema_rollover_adr ADRs below
+#             EMA20. The rising MA must be underfoot, not overhead.
+#   support - the window's lowest close within support_adr ADRs of a major swing
+#             low (lowest low within swing_half_width bars either side, formed
+#             swing_min_age..swing_max_age sessions before the window), or a low
+#             inside the window undercuts it and the close is back above it.
 #
-# ⛔ Know what this flag is NOT. A period-high test carrying no tightness at all
-# scores a theme-level IC of +0.169 against ~+0.03 for this flag, so on pure
-# ranking the location half carries the edge and tightness adds little. The flag
-# IS weighted into the composite (radar.composite_weights.coil) because it marks
-# the setup a breakout entry needs, which no unconditional forward-return
-# measurement here models — not because it out-predicts strength. Do not quote
-# the weight as evidence that it does.
-#
-# high_lookback must exist in min_max_lookback (create_technical_indicators);
-# the code raises rather than silently substituting another window. The high is
-# a rolling max of HIGHS — an earlier calibration used closes, which are
-# strictly lower, and its threshold rejected every name in the motivating case.
-#
-# fraction 0.30 sits near the 22nd percentile of the 2026 liquid tagged
-# universe and flags ~9% of it with the high gate. Not universal.
-tightness:
-  window: 3           # sessions in the closing range
-  fraction: 0.30      # range at or below this many ADRs is "tight"
-  high_lookback: 50   # period high the gate reads (needs a max50 column)
-  high_frac: 0.70     # close must hold at least this share of that high
+# ⛔ Every threshold here was chosen on the note's 12 hand-picked windows. Recall
+# is 5/6 on its winners; PRECISION IS UNTESTED, and nothing in this repo has
+# measured the flag's forward return or its theme-level IC. Do not quote the
+# radar weight on it (radar.composite_weights.tight) as evidence that it predicts.
+tight_range:
+  min_window: 3           # shortest window of closes
+  max_window: 10          # longest; caps chaining a sloppy top into one "range"
+  ratio_max: 0.35         # ratio at or below this passes (<= 0.25 reads very tight)
+  pctile_max: 15          # ...or the ratio is in this own-history percentile
+  pctile_lookback: 120    # sessions of own ratios the percentile reads
+  min_history: 20         # bars before anything can pass (unreliable early ADR)
+  ma_rising_lag: 5        # an MA is rising when above its value this many bars ago
+  ma_hold_adr: 0.6        # MA-hold: lowest close within this many ADRs of the MA
+  ema_rollover_adr: 0.1   # MA-hold: EMA10 at most this many ADRs below EMA20
+  support_adr: 1.0        # support: lowest close within this many ADRs of the swing low
+  swing_half_width: 10    # swing low = lowest low within this many bars either side
+  swing_min_age: 5        # swing low formed at least this many sessions before the window
+  swing_max_age: 60       # ...and at most this many
 
 # L1 Radar — screener-independent theme-basket scoring with L1 roll-up
 # and sibling-confirmation boost (see src/themes/l1_score.py docstring
@@ -174,20 +173,20 @@ radar:
     fast: 0.0                   #   rela_perf_1mo_rank — zero-weighted, backtest 2026-07: rs~fast
                                 #   Spearman +0.81 and no incremental IC anywhere in the grid
                                 #   (tests/RADAR_BACKTEST_FINDINGS.md §3-4)
-    coil: 0.2                   #   BINARY tight_base flag (100 or 0, never graded). At 0.2 of a
-                                #   normalized 1.0 a coiled stock gains exactly 20 composite
-                                #   points over an identical uncoiled one -- a deliberate,
+    tight: 0.2                  #   BINARY tight_range flag (100 or 0, never graded). At 0.2 of a
+                                #   normalized 1.0 a tight stock gains exactly 20 composite
+                                #   points over an identical loose one -- a deliberate,
                                 #   visible lever, not a tiebreak. Set to 0 to rank on strength
                                 #   alone; the marker, the counts and the pinned strip all
                                 #   render at any weight.
-  coil_gamma: 0.5               # theme-level boost: adds gamma * the SHARE of members in a
-                                #   tight base, per leaf on its own share and per L1 on its
+  tight_gamma: 0.5              # theme-level boost: adds gamma * the SHARE of members in a
+                                #   tight range, per leaf on its own share and per L1 on its
                                 #   own. SHARE, not count, or it reranks by roster size (the
-                                #   lesson the tape-pressure board, the SI tab and the coil
+                                #   lesson the tape-pressure board, the SI tab and the tight
                                 #   sort each recorded). Asymmetric unlike beta -- it only
-                                #   adds, because a theme with no coiled members is not worse
+                                #   adds, because a theme with no tight members is not worse
                                 #   for it, merely not basing. Leaf z-scores are ~N(0,1), so
-                                #   gamma 1.0 moves a fully-coiled theme by about one standard
+                                #   gamma 1.0 moves a fully-tight theme by about one standard
                                 #   deviation of leaf score.
   fast_leg_column: rela_perf_1mo_rank
   missing_default: 50           # neutral leg value when a column/value is missing
@@ -339,7 +338,7 @@ bidask:
 
   # Breadth adds `coefficient x the share of the group's members that cleared
   # the gate`, and only ever adds. Share, not count: rosters run from 2 to 214
-  # members, so a count ranks by roster size -- the same reason the coil strip
+  # members, so a count ranks by roster size -- the same reason the tight strip
   # and the SI tab rank on share. The denominator is the group's members in the
   # poll's liquidity-filtered universe BEFORE the volume gate; after it, every
   # surviving row qualifies and the share is 1.0 for everyone.
@@ -353,7 +352,7 @@ bidask:
 
   # Below this many qualifying members the breadth term is zero. Share alone
   # hands a one-member group the maximum, which is the opposite of what the
-  # term is for. 2 mirrors the coil strip's own floor.
+  # term is for. 2 mirrors the tight strip's own floor.
   group_breadth_min_members: 2
 
   # Display

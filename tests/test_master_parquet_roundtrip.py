@@ -23,7 +23,7 @@ def _master_frame(date_str: str) -> pd.DataFrame:
             "adr_pct": [3.1, 4.4],
             "vars": [2.1, 3.3],
             "tightness": [0.19, 0.62],
-            "tight_base": [True, False],
+            "tight_range": [True, False],
         }
     )
 
@@ -56,16 +56,16 @@ class MasterParquetRoundTripTests(unittest.TestCase):
             self.assertEqual(str(master_df["date"].iloc[0]), "2026-07-02")
 
     def test_boolean_column_survives_as_bool(self) -> None:
-        # `tight_base` is consumed as a truth value by the radar. An object or
+        # `tight_range` is consumed as a truth value by the radar. An object or
         # string round-trip would make every row truthy, flagging the whole
-        # universe as coiled with nothing on screen to show it went wrong.
+        # universe as tight with nothing on screen to show it went wrong.
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "master" / "master_2026-07-02.parquet"
             su.save_df_to_parquet(_master_frame("2026-07-02"), path)
             df = su.load_df_from_parquet(path)
-            self.assertEqual(df["tight_base"].dtype, bool)
-            self.assertTrue(bool(df.loc[df["ticker"] == "AAPL", "tight_base"].iloc[0]))
-            self.assertFalse(bool(df.loc[df["ticker"] == "NVDA", "tight_base"].iloc[0]))
+            self.assertEqual(df["tight_range"].dtype, bool)
+            self.assertTrue(bool(df.loc[df["ticker"] == "AAPL", "tight_range"].iloc[0]))
+            self.assertFalse(bool(df.loc[df["ticker"] == "NVDA", "tight_range"].iloc[0]))
 
     def test_missing_tightness_does_not_read_as_tightest_after_fillna(self) -> None:
         # The radar path deliberately skips .fillna(0) because tightness is

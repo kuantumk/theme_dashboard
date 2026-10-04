@@ -68,7 +68,7 @@ def compute_inside_day(open_, high, low, close):
     Both clauses are inclusive. The earlier strict form (`high < prev_high and
     low > prev_low`) rejected a bar that ties the prior high or low, and rejected
     a tight-bodied bar whose wicks poke outside the prior range — both of which
-    are the coiled setups the green day-pattern colouring exists to surface.
+    are the tight setups the green day-pattern colouring exists to surface.
 
     Takes four Series rather than a frame so the caller's column naming is its
     own business: the pipeline passes lowercase OHLC, the dashboard's ETF
@@ -99,85 +99,264 @@ def compute_inside_day(open_, high, low, close):
     return (range_engulf | body_engulf).astype(bool)
 
 
-TIGHTNESS_WINDOW = 3        # sessions in the closing range
-TIGHTNESS_FRACTION = 0.30   # tightness at or below this is "tight"
-TIGHTNESS_HIGH_LOOKBACK = 50  # sessions in the period high the broken-chart gate reads
-TIGHTNESS_HIGH_FRAC = 0.70  # close must hold at least this share of that high
+# Tight range (TR) tunables. Defaults match the canonical note (Tight Range
+# v2.1); config/workflow_config.yaml `tight_range:` overrides them at run time.
+TIGHT_MIN_WINDOW = 3          # shortest window of closes tested
+TIGHT_MAX_WINDOW = 10         # longest; caps chaining (see compute_tight_range)
+TIGHT_RATIO_MAX = 0.35        # tightness ratio at or below this passes
+TIGHT_PCTILE_MAX = 15.0       # ...or today's ratio sits in this own-history percentile
+TIGHT_PCTILE_LOOKBACK = 120   # sessions of own ratios the percentile reads
+TIGHT_MIN_HISTORY = 20        # bars of ADR and of ratio history before anything passes
+TIGHT_MA_RISING_LAG = 5       # an MA is rising when above its value this many sessions ago
+TIGHT_MA_HOLD_ADR = 0.6       # MA-hold: window's lowest close within this many ADRs of the MA
+TIGHT_EMA_ROLLOVER_ADR = 0.1  # MA-hold: EMA10 at most this many ADRs below EMA20
+TIGHT_SUPPORT_ADR = 1.0       # support: window's lowest close within this many ADRs of a swing low
+TIGHT_SWING_HALF_WIDTH = 10   # swing low = lowest low within this many bars either side
+TIGHT_SWING_MIN_AGE = 5       # swing low formed at least this many sessions before the window
+TIGHT_SWING_MAX_AGE = 60      # ...and at most this many
+
+#: The gate branches, in the order `tight_gate` reports them. The first branch
+#: that holds is the one published.
+TIGHT_GATES = ('trend', 'ma_hold', 'support')
 
 
-def compute_tightness(close, adr_pct, window=TIGHTNESS_WINDOW):
-    """How wide a band the last ``window`` closes sat in, measured in ADR units.
+def compute_tight_ratio(close, adr_pct, window):
+    """The tightness ratio of the last ``window`` closes.
 
-        (max(close) - min(close)) / mean(close) / adr_pct
+        close range = (max(close) - min(close)) / mean(close)
+        ratio       = close range / (ADR% * sqrt(window))
 
-    Lower is tighter. A stock whose three closes span half its average daily
-    range reads 0.5; one that barely moves reads near 0.
+    Lower is tighter. Read it as "what fraction of its normal travel did the
+    stock actually move". A 0.25 means the closes covered about a quarter of
+    the distance a stock with this ADR would drift over ``window`` days.
 
-    **This is a containment measure, not a per-bar one, and the distinction is
-    the point.** An earlier version averaged each bar's |close-to-close change|
-    over the window. That answers "were the daily moves small", which is not
-    the same question: a stock oscillating a full ADR up and down and closing
-    where it started has small containment and large per-bar movement. A trader
-    reading a chart sees the band, so the band is what this measures. The two
-    correlate at +0.78, so this is a legibility choice more than a performance
-    one — do not reintroduce the per-bar form on the grounds that it scores
-    about the same.
+    **Closes, not bodies or high-low.** Wicks are allowed: long wicks with tight
+    closes are the equilibrating behaviour a tight range is. Bodies stretch on
+    opens and gaps. Closes are where each day settled.
 
-    A bar with a missing or non-positive ADR% yields NaN rather than dividing
-    to infinity, and ``min_periods=window`` voids a partial window — an
-    incomplete base must not report as a complete one.
+    **Divide by sqrt(window).** Random drift grows with the square root of
+    time, so this puts a 3-day and an 8-day window on one scale.
+
+    ADR% is read at the window's last bar, as the note specifies. The window's
+    own quiet days pull it down a little, which makes the ratio slightly harder
+    to pass. Do not switch to a pre-window ADR without retesting.
+
+    A missing or non-positive ADR% yields NaN rather than dividing to
+    infinity, and ``min_periods=window`` voids a partial window.
     """
     adr = pd.to_numeric(adr_pct, errors='coerce')
     hi = close.rolling(window, min_periods=window).max()
     lo = close.rolling(window, min_periods=window).min()
     mid = close.rolling(window, min_periods=window).mean()
-    rng = (hi - lo) / mid.where(mid > 0) / adr.where(adr > 0)
-    return rng.replace([np.inf, -np.inf], np.nan).astype(float)
+    ratio = (hi - lo) / mid.where(mid > 0) / (adr.where(adr > 0) * np.sqrt(window))
+    return ratio.replace([np.inf, -np.inf], np.nan).astype(float)
 
 
-def compute_tight_base(tightness, close, period_high,
-                       fraction=TIGHTNESS_FRACTION,
-                       high_frac=TIGHTNESS_HIGH_FRAC):
-    """A tight closing range on a chart that has not broken down.
+def _swing_low_support(low, close, adr, rows, lengths,
+                       half_width, min_age, max_age, support_adr):
+    """The support branch of the gate, for the given rows only.
 
-    Two conditions, and deliberately only two:
+    A **major swing low** is a bar whose low is the lowest low within
+    ``half_width`` bars either side, formed ``min_age`` to ``max_age``
+    sessions before the window starts. The branch holds when the window's
+    lowest close is within ``support_adr`` ADRs of such a low, or when a low
+    inside the window undercuts it and the last close is back above it
+    (undercut and rally).
 
-    1. ``tightness <= fraction`` — the closing range is narrow. This is the
-       measure; nothing else here is.
-    2. ``close >= high_frac * period_high`` — the stock is not more than
-       ``1 - high_frac`` off its period high. A **disqualifier, not a
-       selector**: at 0.70 it passes 82% of rows on its own, so it chooses
-       nothing and only throws out wreckage. That removal is what makes the
-       flag worth rendering — measured over 165 sessions of 2026, forward
-       10-session excess runs 0.66pp *below* the universe baseline for bare
-       tightness and above it once this gate applies.
+    ⛔ The right side of the swing test stops at the window's last bar. The
+    note's reference slices ``L[i-10 : i+11]`` against the full series, which
+    on a short window reads up to five bars past the session being scored.
+    That is look-ahead on every back-dated session. Truncating at the last bar
+    gives a back-dated session the answer it would have given live.
 
-    ⛔ **There is no moving-average test, and adding one back is a mistake
-    already made.** An earlier version required the close to sit within
-    0.5 ATR of the EMA10 or EMA20. EMA distance is not tightness — it is a
-    second location test doing a job the closing range already does, since a
-    stock drifting away from its averages has a wide closing range by
-    construction. It also ejected names on rounding: PANW missed by $1.33 on a
-    $330 stock. Swept across 0.5 to 1.5 ATR the threshold moved ticker-level
-    excess by 0.08pp and theme IC by 0.026, both inside noise, so it was never
-    earning its complexity either.
-
-    ``period_high`` is a rolling max of **highs** (the pipeline passes
-    ``max50``), not of closes. An earlier calibration used closes, which are
-    strictly lower, and its 0.90 threshold rejected every name in the case this
-    was built for. Do not re-derive a threshold from a close-based high.
-
-    Both comparisons are inclusive, matching `compute_inside_day`: a bar that
-    exactly ties the threshold is the setup, not a near-miss.
-
-    Any NaN input yields False rather than pandas NA. The flag asserts that a
-    base happened, so it fails closed — a stock with no measurable history has
-    proved nothing, and an NA would read as truthy downstream.
+    A Python loop, but only over rows whose shape passes and whose trend and
+    MA-hold branches both fail, so it runs on a small share of bars.
     """
-    tight = pd.to_numeric(tightness, errors='coerce') <= fraction
-    holding = pd.to_numeric(close, errors='coerce') >= (
-        high_frac * pd.to_numeric(period_high, errors='coerce'))
-    return (tight & holding).fillna(False).astype(bool)
+    n = len(low)
+    out = np.zeros(len(rows), dtype=bool)
+    if not len(rows):
+        return out
+    # Centred min over the full +/- half_width window. Valid for any swing
+    # candidate whose right side ends at or before the scored bar.
+    cmin = pd.Series(low).rolling(2 * half_width + 1, center=True,
+                                  min_periods=1).min().to_numpy()
+    for k, (b, length) in enumerate(zip(rows, lengths)):
+        a_idx = b - length + 1
+        p_hi = a_idx - min_age
+        p_lo = max(0, a_idx - max_age)
+        if p_hi < p_lo:
+            continue
+        ps = np.arange(p_lo, p_hi + 1)
+        full = ps + half_width <= b
+        swing = np.zeros(len(ps), dtype=bool)
+        swing[full] = low[ps[full]] <= cmin[ps[full]]
+        for j in np.flatnonzero(~full):
+            p = ps[j]
+            swing[j] = low[p] <= low[max(0, p - half_width):b + 1].min()
+        levels = low[ps[swing]]
+        if not len(levels):
+            continue
+        lo_close = close[a_idx:b + 1].min()
+        lo_low = low[a_idx:b + 1].min()
+        last = close[b]
+        hold = np.abs(lo_close / levels - 1) <= support_adr * adr[b]
+        reclaim = (lo_low < levels) & (levels < last)
+        out[k] = bool((hold | reclaim).any())
+    return out
+
+
+def compute_tight_range(low, close, adr_pct, ema10, ema20, sma50,
+                        min_window=TIGHT_MIN_WINDOW,
+                        max_window=TIGHT_MAX_WINDOW,
+                        ratio_max=TIGHT_RATIO_MAX,
+                        pctile_max=TIGHT_PCTILE_MAX,
+                        pctile_lookback=TIGHT_PCTILE_LOOKBACK,
+                        min_history=TIGHT_MIN_HISTORY,
+                        ma_rising_lag=TIGHT_MA_RISING_LAG,
+                        ma_hold_adr=TIGHT_MA_HOLD_ADR,
+                        ema_rollover_adr=TIGHT_EMA_ROLLOVER_ADR,
+                        support_adr=TIGHT_SUPPORT_ADR,
+                        swing_half_width=TIGHT_SWING_HALF_WIDTH,
+                        swing_min_age=TIGHT_SWING_MIN_AGE,
+                        swing_max_age=TIGHT_SWING_MAX_AGE):
+    """Tight range (TR): shape + place, evaluated at every bar.
+
+    A tight range is a stretch of 3 to 10 sessions in which the closes barely
+    move relative to how far this stock normally travels, forming somewhere
+    constructive. Two layers, both required:
+
+    1. **Shape.** For each window length N, the tightness ratio
+       (`compute_tight_ratio`) passes when it is at or below ``ratio_max``
+       OR when it sits in the tightest ``pctile_max`` percent of this stock's
+       own ratios for the same N over the last ``pctile_lookback`` sessions.
+       The **longest** passing N is reported — length is information.
+    2. **Gate.** Pass if ANY branch holds, tested in this order:
+       - ``trend``: EMA10 >= EMA20 and the last close >= EMA20.
+       - ``ma_hold``: one of EMA10 / EMA20 / SMA50 is rising (above its value
+         ``ma_rising_lag`` sessions ago), the window's lowest close is within
+         ``ma_hold_adr`` ADRs of it, the last close is ABOVE it, and EMA10 is
+         at most ``ema_rollover_adr`` ADRs below EMA20. The rising MA must be
+         underfoot, not overhead.
+       - ``support``: see `_swing_low_support`.
+
+    The note's third layer (quality: RS in a correction, theme, float, short
+    interest) ranks survivors and never filters, so it is not here. Its
+    context tags (momentum pause, MA hug, ...) are not here either.
+
+    Each bar answers "does a tight window END here". Consecutive passing days
+    are not clustered: a dashboard reads one session at a time, and the note's
+    clustering is for picking one window out of a historical run.
+
+    ``sma50`` must be a FULL 50-bar mean (the pipeline passes `sma50_full`).
+    The first ``min_history`` bars never pass: ADR there is unreliable and the
+    percentile has nothing to compare against.
+
+    Returns a DataFrame aligned to the input with:
+
+    - ``tightness``: the ratio of the reported window; when no window passes,
+      the lowest ratio across all N. NaN when ADR is unavailable.
+    - ``tight_len``: the reported N, or 0 when the shape fails.
+    - ``tight_pctile``: own-history percentile of the reported ratio, or NaN.
+    - ``tight_gate``: the first gate branch that holds, or '' (shape must pass).
+    - ``tight_range``: shape AND gate. Fails closed: missing data is False.
+    """
+    idx = close.index
+    n = len(close)
+    c = pd.to_numeric(close, errors='coerce')
+    adr = pd.to_numeric(adr_pct, errors='coerce')
+    warm = pd.Series(np.arange(n) >= min_history - 1, index=idx)
+
+    lengths = np.arange(int(min_window), int(max_window) + 1)
+    ratios = np.full((n, len(lengths)), np.nan)
+    pctiles = np.full((n, len(lengths)), np.nan)
+    lows = np.full((n, len(lengths)), np.nan)
+    for j, length in enumerate(lengths):
+        r = compute_tight_ratio(c, adr, int(length)).where(warm)
+        ratios[:, j] = r.to_numpy()
+        pctiles[:, j] = (r.rolling(int(pctile_lookback), min_periods=int(min_history))
+                         .rank(method='max', pct=True) * 100).to_numpy()
+        lows[:, j] = c.rolling(int(length), min_periods=int(length)).min().to_numpy()
+
+    with np.errstate(invalid='ignore'):
+        passing = (ratios <= ratio_max) | (pctiles <= pctile_max)
+    shape = passing.any(axis=1)
+    # Longest passing N: the last True column.
+    last_col = len(lengths) - 1 - np.argmax(passing[:, ::-1], axis=1)
+    rows = np.arange(n)
+    chosen_ratio = ratios[rows, last_col]
+    tightest = pd.DataFrame(ratios).min(axis=1).to_numpy()  # skips NaN
+    tightness = np.where(shape, chosen_ratio, tightest)
+    tight_len = np.where(shape, lengths[last_col], 0)
+    tight_pctile = np.where(shape, pctiles[rows, last_col], np.nan)
+    lo_close = pd.Series(np.where(shape, lows[rows, last_col], np.nan), index=idx)
+
+    # ---- gate ----
+    e10 = pd.to_numeric(ema10, errors='coerce')
+    e20 = pd.to_numeric(ema20, errors='coerce')
+    s50 = pd.to_numeric(sma50, errors='coerce')
+    trend = ((e10 >= e20) & (c >= e20)).to_numpy()
+
+    not_rolled = ((e10 / e20 - 1) / adr >= -ema_rollover_adr)
+    held = pd.Series(False, index=idx)
+    for ma in (e10, e20, s50):
+        rising = ma > ma.shift(int(ma_rising_lag))
+        near = (lo_close / ma - 1).abs() <= ma_hold_adr * adr
+        above = c > ma
+        held = held | (rising & near & above)
+    ma_hold = (held & not_rolled).fillna(False).to_numpy(dtype=bool)
+
+    need_support = np.flatnonzero(shape & ~trend & ~ma_hold)
+    support = np.zeros(n, dtype=bool)
+    support[need_support] = _swing_low_support(
+        pd.to_numeric(low, errors='coerce').to_numpy(dtype=float),
+        c.to_numpy(dtype=float), adr.to_numpy(dtype=float),
+        need_support, tight_len[need_support],
+        int(swing_half_width), int(swing_min_age), int(swing_max_age),
+        float(support_adr))
+
+    gate = np.where(trend, 'trend',
+                    np.where(ma_hold, 'ma_hold',
+                             np.where(support, 'support', '')))
+    gate = np.where(shape, gate, '')
+    tight = shape & (gate != '')
+
+    return pd.DataFrame({
+        'tightness': tightness.astype(float),
+        'tight_len': tight_len.astype(int),
+        'tight_pctile': tight_pctile.astype(float),
+        'tight_gate': gate.astype(object),
+        'tight_range': tight.astype(bool),
+    }, index=idx)
+
+
+def tight_range_config(config=None):
+    """The `compute_tight_range` keyword arguments, defaults overlaid by config.
+
+    Reads the `tight_range:` block of config/workflow_config.yaml. An unknown
+    key raises: a misspelled tunable would otherwise be ignored, and the flag
+    would keep its default with nothing on screen to show the edit did nothing.
+    """
+    cfg = {
+        'min_window': TIGHT_MIN_WINDOW,
+        'max_window': TIGHT_MAX_WINDOW,
+        'ratio_max': TIGHT_RATIO_MAX,
+        'pctile_max': TIGHT_PCTILE_MAX,
+        'pctile_lookback': TIGHT_PCTILE_LOOKBACK,
+        'min_history': TIGHT_MIN_HISTORY,
+        'ma_rising_lag': TIGHT_MA_RISING_LAG,
+        'ma_hold_adr': TIGHT_MA_HOLD_ADR,
+        'ema_rollover_adr': TIGHT_EMA_ROLLOVER_ADR,
+        'support_adr': TIGHT_SUPPORT_ADR,
+        'swing_half_width': TIGHT_SWING_HALF_WIDTH,
+        'swing_min_age': TIGHT_SWING_MIN_AGE,
+        'swing_max_age': TIGHT_SWING_MAX_AGE,
+    }
+    block = (CONFIG if config is None else config).get('tight_range', {}) or {}
+    unknown = set(block) - set(cfg)
+    if unknown:
+        raise ValueError(f"tight_range: unknown key(s) {sorted(unknown)}")
+    cfg.update(block)
+    return cfg
 
 
 HIGHLIGHT_SHORT_FLOOR = 20.0  # percent of float; chosen, never measured
@@ -187,14 +366,14 @@ HIGHLIGHT_SHORT_FLOOR = 20.0  # percent of float; chosen, never measured
 #: one here would blank that rung's tint and wording on every tab while both
 #: sides still looked internally consistent.
 #: `tests/test_dashboard_highlight_markup.py` pins the two vocabularies together.
-HIGHLIGHT_TIERS = ('coil', 'short', 'ma_up', 'ma_split')
+HIGHLIGHT_TIERS = ('tight', 'short', 'ma_up', 'ma_split')
 
 
 def _highlight_flag(value):
     """Read a rung's boolean input. Anything that is not plainly true is False.
 
-    `bool(float('nan'))` is True, so a bare truth test would fire the coil rung
-    on every ticker whose tightness columns are absent. A missing flag fails
+    `bool(float('nan'))` is True, so a bare truth test would fire the tight
+    rung on every ticker whose tight-range columns are absent. A missing flag fails
     closed instead.
     """
     try:
@@ -227,21 +406,21 @@ def _highlight_price(value):
     return number if number is not None and number > 0 else None
 
 
-def compute_highlight_tier(tight_base=None, short_interest=None,
+def compute_highlight_tier(tight_range=None, short_interest=None,
                            ema10=None, ema20=None, sma50=None):
-    """Which one highlight a ticker earns: 'coil', 'short', 'ma_up',
+    """Which one highlight a ticker earns: 'tight', 'short', 'ma_up',
     'ma_split', or None.
 
     The ladder runs in that order and stops at the first rung the ticker
     satisfies:
 
-    1. ``tight_base`` is true — the same state the Themes tab tints today.
+    1. ``tight_range`` is true — the same state the Themes tab tints.
     2. ``short_interest >= 20`` percent of float.
     3. ``ema10 > ema20 > sma50``.
     4. ``ema10 > ema20`` and ``ema20`` is not above ``sma50``.
 
     **The order is a display preference, not a ranking claim.** Nothing
-    measures whether a coil predicts better than a crowded short, or either
+    measures whether a tight range predicts better than a crowded short, or either
     better than a stacked average. The 20% floor is chosen as well: the SI tab
     gates its roster at 12% and the EP screener at 10%, so three numbers
     describe one idea and none is calibrated.
@@ -267,8 +446,8 @@ def compute_highlight_tier(tight_base=None, short_interest=None,
     the EP scans hold neither. Shared with every producer for the same reason
     `compute_inside_day` is — one definition cannot drift from itself.
     """
-    if _highlight_flag(tight_base):
-        return 'coil'
+    if _highlight_flag(tight_range):
+        return 'tight'
 
     short = _highlight_number(short_interest)
     if short is not None and short >= HIGHLIGHT_SHORT_FLOOR:
@@ -370,7 +549,6 @@ def calculate_technical_indicators():
     daily_price = su.load_object_from_pickle(PRICE_DATA_FILE)
     daily_tickers = daily_price.keys()
 
-    # 50 is here for the tight-base location gate (config: tightness.high_lookback).
     min_max_lookback = [30, 50, 60, 90, 120, 150, 252]
     dts = [21, 63, 126, 252]
     months = [1, 3, 6, 12]
@@ -383,22 +561,9 @@ def calculate_technical_indicators():
     # SPY ATR14 + cumulative normalized change for VARS calculation (computed once)
     spy_cum_norm_100 = compute_spy_cum_norm_100(daily_price['SPY'])
 
-    # Tightness tunables, read once. The helpers keep module-level defaults so
-    # tests pin behaviour without reaching into config.
-    _tight_cfg = {
-        'window': TIGHTNESS_WINDOW,
-        'fraction': TIGHTNESS_FRACTION,
-        'high_lookback': TIGHTNESS_HIGH_LOOKBACK,
-        'high_frac': TIGHTNESS_HIGH_FRAC,
-    }
-    _tight_cfg.update(CONFIG.get('tightness', {}) or {})
-    _high_col = f"max{int(_tight_cfg['high_lookback'])}"
-    if int(_tight_cfg['high_lookback']) not in min_max_lookback:
-        # Raise rather than fall back: a silently substituted lookback changes
-        # what the flag means with nothing on screen to show it moved.
-        raise ValueError(
-            f"tightness.high_lookback={_tight_cfg['high_lookback']} has no "
-            f"{_high_col} column; add it to min_max_lookback.")
+    # Tight-range tunables, read once. `compute_tight_range` keeps module-level
+    # defaults so tests pin behaviour without reaching into config.
+    _tight_cfg = tight_range_config()
 
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
@@ -488,16 +653,15 @@ def calculate_technical_indicators():
                 ((daily['close'] - daily['ema20']).abs() < 0.5 * daily['atr14'])
             )
 
-            # Tightness + the located tight-base flag. Both ride the master
-            # table, so a back-dated session reports the flag as it stood then
-            # — unlike the day-pattern colouring, which reads only the last bar.
-            # See compute_tight_base for why the location conjuncts are not
-            # optional (bare tightness measures the wrong way round).
-            daily['tightness'] = compute_tightness(
-                daily['close'], daily['adr_pct'], window=_tight_cfg['window'])
-            daily['tight_base'] = compute_tight_base(
-                daily['tightness'], daily['close'], daily[_high_col],
-                fraction=_tight_cfg['fraction'], high_frac=_tight_cfg['high_frac'])
+            # Tight range: shape + gate. The columns ride the master table, so
+            # a back-dated session reports the flag as it stood then — unlike
+            # the day-pattern colouring, which reads only the last bar. The
+            # gate's SMA50 is the full 50-bar mean, never the 25-bar `sma50`.
+            tr = compute_tight_range(
+                daily['low'], daily['close'], daily['adr_pct'],
+                daily['ema10'], daily['ema20'], daily['sma50_full'], **_tight_cfg)
+            for col in tr.columns:
+                daily[col] = tr[col]
 
             # Coiled-theme reusable setup features.
             # Retained so the standalone `coiled_theme` screener (kept but no longer

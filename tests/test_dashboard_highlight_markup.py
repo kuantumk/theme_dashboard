@@ -18,17 +18,17 @@ are pinned here, each one silent on failure:
 2. **Every rung is written twice, once for the chip and once for the plain
    span.** `renderThemes` is the only renderer that adds the `radar-chip` class,
    so a chip-only rule ships the tint invisible on the other eight list tabs.
-   The coil rung needs its second rule for that exact reason: it reached the
+   The tight rung needs its second rule for that exact reason: it reached the
    eight table tabs with no plain-span rule to draw it.
 
 3. **The opacity ladder holds in both directions.** A tier restores opacity
-   under `chip-quiet`, because a coiling stock's low RS is what keeps it out of
+   under `chip-quiet`, because a basing stock's low RS is what keeps it out of
    the screeners and the unscreened dim would swallow an already faint tint. An
    armed V/A cutoff must still win, and that needs equal specificity rather
    than source order alone. So must selection: the tier opacity rules are three
    classes against the plain selection rule's two.
 
-4. **The coil rung reaches the table tabs through the tier field, and the
+4. **The tight rung reaches the table tabs through the tier field, and the
    Themes chip through the radar's own boolean.** Those are two different
    inputs for one class, and only one of them exists per tab.
 
@@ -47,14 +47,14 @@ DOCS = Path(__file__).resolve().parents[1] / 'docs'
 CSS = (DOCS / 'style.css').read_text(encoding='utf-8')
 APP = (DOCS / 'app.js').read_text(encoding='utf-8')
 
-# The same list the coil markup test pins, for the same reason.
+# The same list the tight markup test pins, for the same reason.
 LAYOUT_PROPS = (
     'font-weight', 'font-size', 'padding', 'margin', 'border-width',
     'letter-spacing', 'display', 'width', 'line-height',
 )
 
-# The three rungs the tier field alone carries. Coil is the fourth and is
-# spelled `coiled`, because renaming it would break the coil markup test and
+# The three rungs the tier field alone carries. Tight is the fourth and is
+# spelled `tight-range`, because renaming it would break the tight markup test and
 # the invariants that module pins, for no gain.
 NEW_TIERS = ('hl-short', 'hl-ma-up', 'hl-ma-split')
 
@@ -134,21 +134,21 @@ class HighlightTintStyleTests(unittest.TestCase):
                           f'render on the tabs that use {base}')
                 self.assertIn('background', body)
 
-    def test_the_coil_tint_reaches_the_table_tabs(self):
+    def test_the_tight_tint_reaches_the_table_tabs(self):
         """The one rule without which KD1 ships invisible.
 
-        The stylesheet's only coil background was `.radar-chip.coiled`, and
+        The stylesheet's only tight background was `.radar-chip.tight-range`, and
         `renderThemes` is the sole place that class is applied. So the eight
-        table tabs received the `coiled` class with nothing to paint it.
+        table tabs received the `tight-range` class with nothing to paint it.
         """
-        body = _rule_body('.tn-link.coiled')
+        body = _rule_body('.tn-link.tight-range')
         self.assertIsNotNone(
-            body, 'without this the coil tint renders on the Themes chip only, '
+            body, 'without this the tight tint renders on the Themes chip only, '
                   'and the ladder\'s top rung is invisible on eight of nine tabs')
-        self.assertIn('--coil-dim', body)
+        self.assertIn('--tight-dim', body)
 
     def test_no_tier_rule_sets_a_layout_affecting_property(self):
-        for tier in NEW_TIERS + ('coiled',):
+        for tier in NEW_TIERS + ('tight-range',):
             for base in ('.radar-chip', '.tn-link'):
                 body = _rule_body(f'{base}.{tier}')
                 if body is None:
@@ -168,7 +168,7 @@ class HighlightTintStyleTests(unittest.TestCase):
         a `color` there wins on source order and the green day-pattern marker
         vanishes on every ticker that carries both signals.
         """
-        for tier in NEW_TIERS + ('coiled',):
+        for tier in NEW_TIERS + ('tight-range',):
             for base in ('.radar-chip', '.tn-link'):
                 body = _rule_body(f'{base}.{tier}')
                 if body is None:
@@ -186,7 +186,7 @@ class HighlightTintStyleTests(unittest.TestCase):
         selection there is a colour plus a solid underline; a border declaration
         in a tier rule would silently flatten it.
         """
-        for tier in NEW_TIERS + ('coiled',):
+        for tier in NEW_TIERS + ('tight-range',):
             body = _rule_body(f'.tn-link.{tier}')
             if body is None:
                 continue
@@ -214,7 +214,7 @@ class HighlightTintStyleTests(unittest.TestCase):
     def test_an_unscreened_tinted_chip_keeps_most_of_its_opacity(self):
         """Rule 3. The unscreened dim is the common state for these rungs.
 
-        A coiling stock's low RS is what keeps it out of the screeners, and the
+        A basing stock's low RS is what keeps it out of the screeners, and the
         tints are faint to begin with, so 0.55 would swallow them.
         """
         body = _group_body(*[f'.radar-chip.{t}.chip-quiet' for t in NEW_TIERS])
@@ -280,7 +280,7 @@ class HighlightTintStyleTests(unittest.TestCase):
         yellow = re.search(r'--yellow:\s*#?([0-9a-fA-F]{6})\s*;', CSS)
         self.assertIsNotNone(yellow, '--yellow is gone')
         r, g, b = (int(yellow.group(1)[i:i + 2], 16) for i in (0, 2, 4))
-        for token in ('coil-dim',) + tuple(f'{t}-dim' for t in NEW_TIERS):
+        for token in ('tight-dim',) + tuple(f'{t}-dim' for t in NEW_TIERS):
             m = re.search(r'--' + re.escape(token) + r':\s*([^;]+);', CSS)
             self.assertIsNotNone(m, f'--{token} token is missing')
             channels = re.findall(r'\d+', m.group(1))
@@ -329,7 +329,7 @@ class HighlightTintStyleTests(unittest.TestCase):
         rather than fighting it. The painted `*-dim` values are what must differ.
         """
         painted = {}
-        for token in ('coil-dim', 'hl-short-dim', 'hl-ma-up-dim', 'hl-ma-split-dim'):
+        for token in ('tight-dim', 'hl-short-dim', 'hl-ma-up-dim', 'hl-ma-split-dim'):
             m = re.search(r'--' + re.escape(token) + r':\s*([^;]+);', CSS)
             self.assertIsNotNone(m, f'--{token} token is missing')
             value = m.group(1).strip().lower()
@@ -369,26 +369,26 @@ class HighlightRenderSiteTests(unittest.TestCase):
                       'hl-short', 'hl-ma-up', 'hl-ma-split'):
             self.assertNotIn(token, viz, f'the Viz render path emits {token}')
 
-    def test_the_themes_chip_still_pushes_the_coil_class_from_its_own_boolean(self):
-        """The radar payload carries `coiled` as well as the tier, and the coil
+    def test_the_themes_chip_still_pushes_the_tight_class_from_its_own_boolean(self):
+        """The radar payload carries `tight-range` as well as the tier, and the tight
         strip, the leaf badges and the share sort all read that boolean. The
         chip must keep reading it too, or the tint and the strip could disagree
         about the same chip."""
-        self.assertIn("if (t.coiled) cls.push('coiled');", APP)
+        self.assertIn("if (t.tight) cls.push('tight-range');", APP)
         themes = _fn_body('renderThemes')
-        self.assertIn('t.coiled ?', themes)
+        self.assertIn('t.tight ?', themes)
 
     def test_the_chip_helper_cannot_add_a_second_tint(self):
         """R1, on the one tab that has two inputs for one rung.
 
-        `renderThemes` pushes `coiled` from the boolean. If the chip helper also
-        mapped the tier's `coil` value, that chip would carry the class twice —
+        `renderThemes` pushes `tight-range` from the boolean. If the chip helper also
+        mapped the tier's `tight` value, that chip would carry the class twice —
         harmless to paint, but it would mean the two inputs had silently become
         one, and a later edit dropping the boolean would look safe.
         """
         body = re.search(r'function hlChipClass\(tier\)\s*\{([^}]*)\}', APP)
         self.assertIsNotNone(body, 'hlChipClass is gone')
-        self.assertNotIn('coil', body.group(1))
+        self.assertNotIn('tight', body.group(1))
         table = re.search(r'const HL_TIER_CLASS = \{([^}]*)\}', APP)
         self.assertIsNotNone(table, 'HL_TIER_CLASS is gone')
         keys = re.findall(r'(\w+):', table.group(1))
@@ -398,14 +398,14 @@ class HighlightRenderSiteTests(unittest.TestCase):
         values = re.findall(r":\s*'([^']+)'", table.group(1))
         self.assertEqual(sorted(NEW_TIERS), sorted(values))
 
-    def test_the_span_helper_maps_the_coil_rung(self):
-        """The mirror of the test above. The eight table tabs hold no `coiled`
-        boolean — only the tier — so the span helper is the only route the coil
+    def test_the_span_helper_maps_the_tight_rung(self):
+        """The mirror of the test above. The eight table tabs hold no `tight-range`
+        boolean — only the tier — so the span helper is the only route the tight
         tint has to those tabs."""
         body = re.search(r'function hlClass\(tier\)\s*\{(.*?)\n  \}', APP, re.S)
         self.assertIsNotNone(body, 'hlClass is gone')
-        self.assertIn("'coil'", body.group(1))
-        self.assertIn("'coiled'", body.group(1))
+        self.assertIn("'tight'", body.group(1))
+        self.assertIn("'tight-range'", body.group(1))
 
     def test_an_absent_tier_renders_nothing(self):
         """Code pull requests reset `docs/data/`, so the field is missing until
@@ -438,7 +438,7 @@ class HighlightTooltipTests(unittest.TestCase):
         table = re.search(r'const HL_TIER_TIP = \{(.*?)\n  \};', APP, re.S)
         self.assertIsNotNone(table, 'HL_TIER_TIP is gone')
         keys = re.findall(r'^\s*(\w+):', table.group(1), re.M)
-        self.assertEqual(['coil', 'short', 'ma_up', 'ma_split'], keys,
+        self.assertEqual(['tight', 'short', 'ma_up', 'ma_split'], keys,
                          'every rung the server can return needs a wording')
         for text in re.findall(r":\s*'([^']*)'", table.group(1)):
             self.assertGreater(len(text), 8, f'{text!r} names no rung')
@@ -450,7 +450,7 @@ class HighlightTooltipTests(unittest.TestCase):
         tab, while each side still reads as internally consistent — the ladder
         returns a string nobody looks up, and the tables hold a key nobody sends.
         The asymmetry below is deliberate: the tooltip table names all four rungs,
-        while the class table omits `coil`, because the Themes chip takes that one
+        while the class table omits `tight`, because the Themes chip takes that one
         class from the radar's own boolean.
         """
         from src.indicators.create_technical_indicators import HIGHLIGHT_TIERS
@@ -462,8 +462,8 @@ class HighlightTooltipTests(unittest.TestCase):
 
         self.assertEqual(list(HIGHLIGHT_TIERS), keys_of('HL_TIER_TIP'))
         self.assertEqual(
-            [t for t in HIGHLIGHT_TIERS if t != 'coil'], keys_of('HL_TIER_CLASS'),
-            'the class table must carry every rung except coil')
+            [t for t in HIGHLIGHT_TIERS if t != 'tight'], keys_of('HL_TIER_CLASS'),
+            'the class table must carry every rung except tight')
 
     def test_the_short_column_colour_break_sits_on_the_ladder_floor(self):
         """Five render sites band the Short% figure at the same 20 the rung uses.

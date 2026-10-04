@@ -117,8 +117,8 @@ def run_afternoon_scan() -> tuple[list, int]:
             # short float never reaches that function. Placed there it would
             # ship this tab with the moving-average rungs only. `sma50_full` is
             # None below 50 bars, which keeps a partial mean out of the ladder
-            # while `atr_multiple` above still uses it. EP holds no tightness
-            # source, so the coil rung cannot fire.
+            # while `atr_multiple` above still uses it. EP holds no tight-range
+            # source, so the tight rung cannot fire.
             'highlight': compute_highlight_tier(
                 short_interest=fundamentals['short'],
                 ema10=technicals['ema10'],

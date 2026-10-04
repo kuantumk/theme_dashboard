@@ -6,7 +6,7 @@ reads the session's own master bar, and the short rung reaches the newest
 session only.
 
 ⛔ **Short interest reaches the newest session and no other.** Finviz publishes
-one current figure with no per-session history. The short rung outranks the coil
+one current figure with no per-session history. The short rung outranks the tight
 and moving-average rungs, which *are* computed from that session's own parquet,
 so today's crowding pinned onto an old price bar would erase that session's real
 signal across the whole 180-day window. CLAUDE.md's SI section calls that shape
@@ -17,8 +17,8 @@ signal across the whole 180-day window. CLAUDE.md's SI section calls that shape
 them would be silently absent on every chip. The equality test against the VARS
 snapshot is what proves the lookup found the same row.
 
-⛔ **The tier changes nothing else.** The radar's scores, ordering, `coiled`
-booleans and `n_coiled` counts must be byte-identical with and without the tier
+⛔ **The tier changes nothing else.** The radar's scores, ordering, `tight`
+booleans and `n_tight` counts must be byte-identical with and without the tier
 inputs, or a display marker has moved the board.
 """
 
@@ -38,10 +38,10 @@ from src.reporting import export_dashboard_data as ex
 DATE = '2026-09-23'
 OLDER = '2026-09-22'
 
-# ticker, tight_base, ema10, ema20, sma50 — one row per ladder outcome.
+# ticker, tight_range, ema10, ema20, sma50 — one row per ladder outcome.
 LADDER_ROWS = [
-    # Coil outranks a crowded short and a stacked stack.
-    ('COILER', True, 12.0, 11.0, 10.0),
+    # Tight outranks a crowded short and a stacked stack.
+    ('TIGHTER', True, 12.0, 11.0, 10.0),
     # 34% short interest: 'short' on the newest session, 'ma_up' on older ones.
     ('CROWDED', False, 12.0, 11.0, 10.0),
     # No fundamentals row at all, so the short rung is unanswerable.
@@ -56,9 +56,9 @@ LADDER_ROWS = [
 
 THEMES = {t: ['Cybersecurity / Network'] for t, *_ in LADDER_ROWS}
 
-# Only CROWDED and COILER are crowded. STACKED is deliberately absent.
+# Only CROWDED and TIGHTER are crowded. STACKED is deliberately absent.
 SHORT_ROWS = {
-    'COILER': 34.0,
+    'TIGHTER': 34.0,
     'CROWDED': 34.0,
 }
 
@@ -81,7 +81,7 @@ def _master_frame(date_str=DATE):
             'vars_20ema': 9.0 - i,
             'rela_perf_1mo_rank': 90 - i,
             'tightness': 0.10 + 0.05 * i,
-            'tight_base': tight,
+            'tight_range': tight,
             'ema10': ema10,
             'ema20': ema20,
             # Both columns, because a real master parquet carries both and the
@@ -155,7 +155,7 @@ class RadarHighlightTests(unittest.TestCase):
                 t: {'short_interest': si} for t, si in SHORT_ROWS.items()},
             newest_session=True,
         )
-        self.assertEqual(tiers['COILER'], 'coil')
+        self.assertEqual(tiers['TIGHTER'], 'tight')
         self.assertEqual(tiers['CROWDED'], 'short')
         self.assertEqual(tiers['STACKED'], 'ma_up')
         self.assertEqual(tiers['SPLITTER'], 'ma_split')
@@ -183,7 +183,7 @@ class RadarHighlightTests(unittest.TestCase):
         self.assertIsNone(ex._highlight_from_row({}))
 
     def test_the_tier_changes_nothing_else_in_the_snapshot(self):
-        # Scores, ordering, `coiled` and `n_coiled` must be identical with and
+        # Scores, ordering, `tight` and `n_tight` must be identical with and
         # without the tier inputs. A display marker may not move the board.
         plain, _ = _radar_tiers(self.master)
         tinted, _ = _radar_tiers(
@@ -203,9 +203,9 @@ class RadarHighlightTests(unittest.TestCase):
             ]
 
         self.assertEqual(_strip(plain), _strip(tinted))
-        coiled = sum(1 for t, tight, *_ in LADDER_ROWS if tight)
-        self.assertEqual(tinted['l1s'][0]['n_coiled'], coiled)
-        self.assertEqual(tinted['l1s'][0]['leaves'][0]['n_coiled'], coiled)
+        tight = sum(1 for t, tight, *_ in LADDER_ROWS if tight)
+        self.assertEqual(tinted['l1s'][0]['n_tight'], tight)
+        self.assertEqual(tinted['l1s'][0]['leaves'][0]['n_tight'], tight)
 
 
 class RadarAgainstVarsTests(unittest.TestCase):
@@ -227,7 +227,7 @@ class RadarAgainstVarsTests(unittest.TestCase):
 
             self.assertEqual(set(radar), set(vars_snap))
             self.assertEqual(radar, vars_snap)
-            self.assertEqual(radar['COILER'], 'coil')
+            self.assertEqual(radar['TIGHTER'], 'tight')
 
 
 class FilledZeroTests(unittest.TestCase):
@@ -268,7 +268,7 @@ class NewestSessionOnlyTests(unittest.TestCase):
         self.assertEqual(newest['CROWDED'], 'short')
         self.assertEqual(older['CROWDED'], 'ma_up')
         # The rungs computed from the session's own parquet are untouched.
-        self.assertEqual(older['COILER'], 'coil')
+        self.assertEqual(older['TIGHTER'], 'tight')
         self.assertEqual(older['SPLITTER'], 'ma_split')
         self.assertIsNone(older['QUIET'])
 
@@ -292,7 +292,7 @@ class NewestSessionOnlyTests(unittest.TestCase):
         older = self._screener_tiers(ex._build_vars_snapshot, parquet, False)
         self.assertEqual(newest['CROWDED'], 'short')
         self.assertEqual(older['CROWDED'], 'ma_up')
-        self.assertEqual(older['COILER'], 'coil')
+        self.assertEqual(older['TIGHTER'], 'tight')
 
     def test_the_momentum_builder_drops_the_short_rung_on_an_older_session(self):
         parquet = self.tmp / 'momentum_136_2026-09-22.parquet'
@@ -357,10 +357,10 @@ class PartialWindowTests(unittest.TestCase):
         Narrowing that filter to a plain `master_df[['ticker', *columns]]` would
         turn the same input into a KeyError, and no other test would see it.
         """
-        frame = _master_frame().drop(columns=['sma50_full', 'tight_base'])
+        frame = _master_frame().drop(columns=['sma50_full', 'tight_range'])
         bars = ex._bars_by_ticker(frame, ex.HIGHLIGHT_ROW_COLUMNS)
-        self.assertIn('COILER', bars)
-        self.assertNotIn('sma50_full', bars['COILER'])
+        self.assertIn('TIGHTER', bars)
+        self.assertNotIn('sma50_full', bars['TIGHTER'])
         for ticker in bars:
             self.assertIsNone(
                 ex._highlight_from_row(bars[ticker]),
@@ -399,7 +399,7 @@ class SiHighlightTests(unittest.TestCase):
             r['ticker']: r.get('highlight')
             for l1 in snap['themes'] for leaf in l1['leaves'] for r in leaf['tickers']
         }
-        self.assertEqual(tiers['COILER'], 'coil')
+        self.assertEqual(tiers['TIGHTER'], 'tight')
         self.assertEqual(tiers['CROWDED'], 'short')
         self.assertIsNone(tiers['QUIET'])
 
@@ -429,7 +429,7 @@ class EtfHighlightTests(unittest.TestCase):
         metrics = _etf_metrics(_etf_frame([100.0 + i for i in range(120)]))
         self.assertEqual(metrics['TQQQ']['highlight'], 'ma_up')
         # No short interest and no tight base reach this producer at all.
-        self.assertNotIn(metrics['TQQQ']['highlight'], ('short', 'coil'))
+        self.assertNotIn(metrics['TQQQ']['highlight'], ('short', 'tight'))
 
     def test_a_ticker_whose_only_metric_is_the_tier_still_ships(self):
         # A 120-bar rising series with no SPY baseline: VARS is unanswerable and

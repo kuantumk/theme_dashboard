@@ -182,11 +182,7 @@
       const pc = i ? candles[i - 1].c : k.o;
       return s + Math.max(k.h - k.l, Math.abs(k.h - pc), Math.abs(k.l - pc));
     }, 0) / m;
-    const R = window.MM_COLORS.PATTERN_RULES;
-    const look = R.coilHighLookback;
-    const hiPool = pre.slice(-(Math.max(0, look - m))).concat(candles.map(k => k.h));
-    const hi50 = Math.max(...hiPool);
-    return { candles, e10, e20, s50, adr, atr, hi50 };
+    return { candles, e10, e20, s50, adr, atr };
   }
 
   function dayPatternChecks(s) {
@@ -216,18 +212,36 @@
     };
   }
 
-  function coilChecks(s) {
+  /* The tight-range shape and its trend gate on a drawn series. The figure can
+     show only the fixed ratio rule: the own-history percentile needs 120
+     sessions, and the MA-hold and support branches need a longer chart. The
+     card text states those. `len` is the longest passing window, which the
+     figure boxes. */
+  function tightChecks(s) {
     const R = window.MM_COLORS.PATTERN_RULES;
-    const last = s.candles.slice(-R.coilWindow).map(k => k.c);
-    const mean = last.reduce((a, b) => a + b, 0) / last.length;
-    const band = (Math.max(...last) - Math.min(...last)) / mean * 100 / s.adr;
-    const c = last[last.length - 1];
-    const loc = c / s.hi50;
+    const closes = s.candles.map(k => k.c);
+    const ratioOf = n => {
+      const w = closes.slice(-n);
+      const mean = w.reduce((a, b) => a + b, 0) / n;
+      const span = (Math.max(...w) - Math.min(...w)) / mean * 100;
+      return { n, span, ratio: span / (s.adr * Math.sqrt(n)) };
+    };
+    const top = Math.min(R.tightMaxWindow, closes.length);
+    let best = ratioOf(R.tightMinWindow);
+    for (let n = R.tightMinWindow; n <= top; n++) {
+      const r = ratioOf(n);
+      if (r.ratio <= R.tightRatioMax) best = r;
+    }
+    const shape = best.ratio <= R.tightRatioMax;
+    const e10 = s.e10[s.e10.length - 1], e20 = s.e20[s.e20.length - 1];
+    const c = closes[closes.length - 1];
+    const trend = e10 >= e20 && c >= e20;
     return {
-      pass: band <= R.coilAdrFraction && loc >= R.coilHighFrac,
+      pass: shape && trend,
+      len: best.n,
       rows: [
-        [band <= R.coilAdrFraction, `Last ${R.coilWindow} closes span ${num(band, 2)} ADR (limit ${R.coilAdrFraction})`],
-        [loc >= R.coilHighFrac, `Close is ${num(loc, 2)} of the ${R.coilHighLookback}-day high (floor ${R.coilHighFrac})`],
+        [shape, `Shape: last ${best.n} closes span ${num(best.span, 2)}%; ratio ${num(best.span, 2)} ÷ (ADR ${num(s.adr, 2)}% × √${best.n}) = ${num(best.ratio, 2)} (limit ${R.tightRatioMax})`],
+        [trend, `Gate (trend): EMA10 ${num(e10, 1)} ≥ EMA20 ${num(e20, 1)} and close ${num(c, 1)} ≥ EMA20`],
       ],
     };
   }
@@ -261,7 +275,7 @@
   const CANDLE_DN = '#ef5350';   // figures read like the chart beside every tab
 
   function candleSvg(s, opts) {
-    const o = Object.assign({ lines: ['e10', 'e20', 's50'], box: null, hi: false, marks: {} }, opts || {});
+    const o = Object.assign({ lines: ['e10', 'e20', 's50'], box: null, marks: {} }, opts || {});
     const MA = window.MM_COLORS.CHART_MA_COLORS;
     const LINE = {
       e10: { vals: s.e10, color: MA.ema, dash: '', label: 'EMA10' },
@@ -270,10 +284,8 @@
     };
     const W = 330, H = 170, L = 6, R = 64, T = 16, B = 14;
     const n = s.candles.length;
-    const R_ = window.MM_COLORS.PATTERN_RULES;
     let ys = s.candles.flatMap(k => [k.h, k.l]);
     o.lines.forEach(key => { ys = ys.concat(LINE[key].vals); });
-    if (o.hi) ys.push(s.hi50);
     let lo = Math.min(...ys), hi = Math.max(...ys);
     const pad = (hi - lo) * 0.08;
     lo -= pad; hi += pad;
@@ -285,13 +297,8 @@
       const from = n - o.box.count;
       const cl = s.candles.slice(from).map(k => k.c);
       const y1 = y(Math.max(...cl)), y2 = y(Math.min(...cl));
-      parts.push(`<rect x="${x(from) - slot / 2}" y="${y1 - 2}" width="${slot * o.box.count}" height="${Math.max(4, y2 - y1 + 4)}" style="fill:var(--coil-dim);stroke:var(--coil)" rx="2"/>`);
-      parts.push(`<text x="${x(from) - slot / 2}" y="${Math.max(4, y2 - y1 + 4) + y1 + 8}" class="lg-svg-note" style="fill:var(--coil)">${esc(o.box.label)}</text>`);
-    }
-    if (o.hi) {
-      const yh = y(s.hi50);
-      parts.push(`<line x1="${L}" x2="${W - R}" y1="${yh}" y2="${yh}" style="stroke:var(--text3)" stroke-dasharray="3 3"/>`);
-      parts.push(`<text x="${W - R + 4}" y="${yh + 3}" class="lg-svg-label" style="fill:var(--text2)">${R_.coilHighLookback}d high</text>`);
+      parts.push(`<rect x="${x(from) - slot / 2}" y="${y1 - 2}" width="${slot * o.box.count}" height="${Math.max(4, y2 - y1 + 4)}" style="fill:var(--tight-dim);stroke:var(--tight)" rx="2"/>`);
+      parts.push(`<text x="${x(from) - slot / 2}" y="${Math.max(4, y2 - y1 + 4) + y1 + 8}" class="lg-svg-note" style="fill:var(--tight)">${esc(o.box.label)}</text>`);
     }
     const labels = [];
     o.lines.forEach(key => {
@@ -339,7 +346,7 @@
     inside: { prefix: [80, 95, 50], candles: BASE_RUN.concat([[99.5, 102.6, 98.4, 101.8], [101.6, 102.2, 99.0, 99.6]]) },
     tight: { prefix: [80, 95, 50], candles: BASE_RUN.concat([[99.5, 101.2, 98.8, 100.2], [99.4, 101.6, 98.5, 99.7]]) },
     extended: { prefix: [80, 95, 50], candles: BASE_RUN.concat([[99.5, 102.6, 98.4, 101.8], [102.0, 108.8, 101.6, 108.3]]) },
-    coil: {
+    tightRange: {
       prefix: [78, 92, 50], candles: [
         [92.0, 95.2, 91.4, 94.8], [94.8, 98.6, 94.2, 98.1], [98.1, 102.3, 97.6, 101.7],
         [101.7, 104.9, 100.8, 102.2], [102.2, 103.1, 99.6, 100.3], [100.3, 101.8, 99.0, 101.2],
@@ -503,11 +510,12 @@
     };
 
     const tierIntro = Object.keys(C.HL_TIER_TIP).map((tier, i) => {
-      const cls = tier === 'coil' ? 'coiled' : C.HL_TIER_CLASS[tier];
+      const cls = tier === 'tight' ? 'tight-range' : C.HL_TIER_CLASS[tier];
       return `<li><span class="lg-rung">${i + 1}</span><span class="lg-key">${link(cls, 'TICK')}</span><span class="lg-key-text">${esc(C.HL_TIER_TIP[tier])}</span></li>`;
     }).join('');
 
-    const coil = analyse(SCN.coil);
+    const tightRange = analyse(SCN.tightRange);
+    const tightRes = tightChecks(tightRange);
     const stacked = analyse(SCN.stacked);
     const split = analyse(SCN.split);
 
@@ -544,7 +552,7 @@
                 ${miniRow('', '', 'AVGO', ['84'])}
               </tbody></table>
               <p>Selection always wins over the tints below. A selected chip on the Themes tab gets a yellow outline.</p>
-              <div class="lg-chips">${chip('chip-screened active-ticker', 'AMD')}${chip('chip-quiet coiled active-ticker', 'MU')}</div>`,
+              <div class="lg-chips">${chip('chip-screened active-ticker', 'AMD')}${chip('chip-quiet tight-range active-ticker', 'MU')}</div>`,
           },
           {
             id: 'hover', title: 'Blue text on hover — clickable ticker',
@@ -576,26 +584,30 @@
         cards: [
           {
             id: 'ladder', title: 'The ladder — one tint per ticker',
-            sample: link('coiled day-pattern-green', 'TICK'),
+            sample: link('tight-range day-pattern-green', 'TICK'),
             where: LIST_TABS.concat(['ep']),
             body: `<ol class="lg-ladder">${tierIntro}</ol>
               <p>The order is a display choice, not a ranking claim. A tab skips a rung when it has no data for that rung, and the ladder continues to the next one. So green does not mean "not crowded".</p>
-              <p>The tint is a background, so it combines with green text. The sample above is a coiled ticker with the green day pattern.</p>
+              <p>The tint is a background, so it combines with green text. The sample above is a tight-range ticker with the green day pattern.</p>
               <p>The short rung uses today's short interest only. Past sessions in the date dropdown never show it.</p>`,
           },
           {
-            id: 'coil', title: 'Violet tint — coiled (tight base)',
-            sample: link('coiled', 'CRWD'),
+            id: 'tight', title: 'Violet tint — tight range',
+            sample: link('tight-range', 'CRWD'),
             where: LIST_TABS.concat(['ep']),
-            body: `<p>The stock rests in a tight base near its high. Both conditions are true:</p>
+            body: `<p>For ${R.tightMinWindow} to ${R.tightMaxWindow} sessions, the closes barely moved against how far this stock normally travels, and the range formed in a constructive place. Both parts are true:</p>
               <ul class="lg-rules">
-                <li>The last ${R.coilWindow} closes sit in a band no wider than ${R.coilAdrFraction} × ADR.</li>
-                <li>The close is at least ${R.coilHighFrac} × the ${R.coilHighLookback}-day high.</li>
+                <li><b>Shape:</b> close range ÷ (ADR% × √N) ≤ ${R.tightRatioMax} for some window of N closes, <i>or</i> that ratio is in the tightest ${R.tightPctileMax}% of the stock's own last ${R.tightPctileLookback} sessions. The longest passing window is reported.</li>
+                <li><b>Gate</b>, any one of:
+                  <i>trend</i> — EMA10 ≥ EMA20 and close ≥ EMA20;
+                  <i>rising MA hold</i> — a rising EMA10, EMA20 or SMA50 sits within ${R.tightMaHoldAdr} × ADR under the window's lowest close, the close is above it, and EMA10 is no more than ${R.tightEmaRolloverAdr} × ADR below EMA20;
+                  <i>support</i> — the window's lowest close is within ${R.tightSupportAdr} × ADR of a major swing low, or the window undercuts that low and closes back above it.</li>
               </ul>
-              <p>This is rung 1 of the ladder. On the Themes tab it also drives the COIL badges and the COILED strip.</p>`,
-            fig: figure(candleSvg(coil, { lines: ['e10', 'e20'], box: { count: R.coilWindow, label: `last ${R.coilWindow} closes` }, hi: true }),
-              checkList(coilChecks(coil), { expect: true, yes: 'Result: violet tint', no: 'Result: no coil tint' }),
-              'Tight closes under the recent high'),
+              <p class="lg-formula">tight range = shape AND gate</p>
+              <p>Closes, not highs and lows: long wicks are allowed. The chip tooltip on the Themes tab shows the window length, the ratio, its percentile and the gate. This is rung 1 of the ladder. On the Themes tab it also drives the TIGHT badges and the TIGHT strip.</p>`,
+            fig: figure(candleSvg(tightRange, { lines: ['e10', 'e20'], box: { count: tightRes.len, label: `last ${tightRes.len} closes` } }),
+              checkList(tightRes, { expect: true, yes: 'Result: violet tint', no: 'Result: no tight tint' }),
+              'Tight closes above a rising EMA'),
           },
           {
             id: 'short', title: 'Cyan-blue tint — crowded short',
@@ -621,7 +633,7 @@
         ],
       },
       {
-        id: 'themes-tab', title: 'Themes tab — chips, badges and the coil strip',
+        id: 'themes-tab', title: 'Themes tab — chips, badges and the tight strip',
         intro: 'Each chip is one ticker in a leaf theme. The chip border and weight tell you if the ticker passed a screener today.',
         cards: [
           {
@@ -633,21 +645,21 @@
                 [chip('chip-quiet', 'CHKP'), 'Dimmed: the ticker is in the theme but passed no screener today. Hover it to read it at full strength.'],
               ])}
               <p>Tints and green text combine with both styles:</p>
-              <div class="lg-chips">${chip('chip-screened day-pattern-green', 'PANW')}${chip('chip-quiet coiled', 'FTNT')}${chip('chip-screened hl-short', 'S')}${chip('chip-quiet hl-ma-up', 'ZS')}${chip('chip-quiet hl-ma-split', 'OKTA')}</div>`,
+              <div class="lg-chips">${chip('chip-screened day-pattern-green', 'PANW')}${chip('chip-quiet tight-range', 'FTNT')}${chip('chip-screened hl-short', 'S')}${chip('chip-quiet hl-ma-up', 'ZS')}${chip('chip-quiet hl-ma-split', 'OKTA')}</div>`,
           },
           {
-            id: 'coil-marks', title: 'Violet coil markers',
-            sample: '<span class="coil-badge">COIL 4</span>',
+            id: 'tight-marks', title: 'Violet tight markers',
+            sample: '<span class="tight-badge">TIGHT 4</span>',
             where: ['themes'],
             body: `${keyList([
-                ['<span class="coil-badge">COIL 4</span>', 'On an L1 header: the count of members in a tight base.'],
-                ['<span class="coil-badge">◉ 2</span>', 'On a leaf: the count of members in a tight base.'],
+                ['<span class="tight-badge">TIGHT 4</span>', 'On an L1 header: the count of members in a tight range.'],
+                ['<span class="tight-badge">◉ 2</span>', 'On a leaf: the count of members in a tight range.'],
               ])}
-              <p>The COILED strip above the board names the themes with the largest share of coiled members, at any rank. Click a pin to jump to its theme. The theme block flashes a violet outline.</p>
-              <div class="coil-strip"><span class="coil-strip-label">COILED</span><div class="coil-pins"><button type="button" class="coil-pin" tabindex="-1">Cybersecurity <span class="coil-pin-n">4/31</span><span class="coil-pin-pct">13%</span></button></div></div>
-              <div class="coil-strip coil-strip-empty"><span class="coil-strip-label">COILED</span><span class="radar-n">no theme qualified today</span></div>
-              <div class="radar-controls"><button type="button" class="coil-sort-btn on" tabindex="-1">◉ Coiled first</button><span class="radar-n">violet = sort by coil share is on (order only)</span></div>
-              <div class="theme-block coil-jump lg-jump-demo">Theme block after a pin jump</div>`,
+              <p>The TIGHT strip above the board names the themes with the largest share of members in a tight range, at any rank. Click a pin to jump to its theme. The theme block flashes a violet outline.</p>
+              <div class="tight-strip"><span class="tight-strip-label">TIGHT</span><div class="tight-pins"><button type="button" class="tight-pin" tabindex="-1">Cybersecurity <span class="tight-pin-n">4/31</span><span class="tight-pin-pct">13%</span></button></div></div>
+              <div class="tight-strip tight-strip-empty"><span class="tight-strip-label">TIGHT</span><span class="radar-n">no theme qualified today</span></div>
+              <div class="radar-controls"><button type="button" class="tight-sort-btn on" tabindex="-1">◉ Tight first</button><span class="radar-n">violet = sort by tight share is on (order only)</span></div>
+              <div class="theme-block tight-jump lg-jump-demo">Theme block after a pin jump</div>`,
           },
           {
             id: 'radar-nums', title: 'Amber rank, blue boosted score',

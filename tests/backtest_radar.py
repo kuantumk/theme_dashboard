@@ -51,27 +51,27 @@ MASTER_DIR = SCREENING_OUTPUT_DIR / "master"
 
 HORIZONS = (5, 10, 20)
 BETAS = (0.0, 0.15, 0.3, 0.5)
-WEIGHT_GRID = {                            # rs / vars_pct / fast / coil
+WEIGHT_GRID = {                            # rs / vars_pct / fast / tight
     'current':    (0.4, 0.4, 0.0, 0.2),    # what ships today
     'equal':      (1 / 3, 1 / 3, 1 / 3, 0.0),
     'rs_only':    (1.0, 0.0, 0.0, 0.0),    # corners measure each leg's solo IC
     'vars_only':  (0.0, 1.0, 0.0, 0.0),
     'fast_only':  (0.0, 0.0, 1.0, 0.0),
-    'coil_only':  (0.0, 0.0, 0.0, 1.0),
-    'no_fast':    (0.5, 0.5, 0.0, 0.0),    # the 2026-07 winner, coil off
+    'tight_only':  (0.0, 0.0, 0.0, 1.0),
+    'no_fast':    (0.5, 0.5, 0.0, 0.0),    # the 2026-07 winner, tight off
     'fast_heavy': (0.2, 0.4, 0.4, 0.0),
     'rs_heavy':   (0.6, 0.2, 0.2, 0.0),
-    # Coil ladder, rebased on the shipped 0.4/0.4 so a row here reproduces the
+    # Tight ladder, rebased on the shipped 0.4/0.4 so a row here reproduces the
     # shipped composite rather than a normalized variant of the old one.
     # ⛔ This ladder CANNOT reproduce the shipped scoring path on its own:
-    # `coil_gamma` (the theme-level share boost) is read from cfg inside
+    # `tight_gamma` (the theme-level share boost) is read from cfg inside
     # rollup_l1s and has no grid here, so every row runs at the config value.
     # Sweeping gamma needs a GAMMAS grid that does not yet exist -- see
     # RADAR_BACKTEST_FINDINGS.md 9.6.
-    'coil_00':    (0.4, 0.4, 0.0, 0.0),
-    'coil_10':    (0.4, 0.4, 0.0, 0.10),
-    'coil_20':    (0.4, 0.4, 0.0, 0.20),
-    'coil_30':    (0.4, 0.4, 0.0, 0.30),
+    'tight_00':    (0.4, 0.4, 0.0, 0.0),
+    'tight_10':    (0.4, 0.4, 0.0, 0.10),
+    'tight_20':    (0.4, 0.4, 0.0, 0.20),
+    'tight_30':    (0.4, 0.4, 0.0, 0.30),
 }
 MIN_L1S_FOR_IC = 8      # sessions with fewer scored+returned L1s are skipped
 MIN_COVERAGE = 0.7      # basket needs >= 70% of members with both endpoints
@@ -170,22 +170,22 @@ def apply_weights(universe_df, weights):
     This is a second copy of that formula and the two must move together: a
     leg added in production but not here sweeps to an identical result at every
     weight, which reads as "the leg does nothing" rather than as a broken
-    harness. A 3-tuple is accepted so pre-coil grids still run, with the coil
+    harness. A 3-tuple is accepted so pre-tight grids still run, with the tight
     weight defaulting to 0.
     """
     ws = [float(w) for w in weights]
     if len(ws) == 3:
         ws.append(0.0)
-    w_rs, w_vars, w_fast, w_coil = ws
-    total = w_rs + w_vars + w_fast + w_coil
+    w_rs, w_vars, w_fast, w_tight = ws
+    total = w_rs + w_vars + w_fast + w_tight
     if total <= 0:
-        w_rs = w_vars = w_fast = w_coil = 1.0
+        w_rs = w_vars = w_fast = w_tight = 1.0
         total = 4.0
     df = universe_df.copy()
-    coil_leg = df['coil_leg'] if 'coil_leg' in df.columns else 0.0
+    tight_leg = df['tight_leg'] if 'tight_leg' in df.columns else 0.0
     df['composite'] = (
         w_rs * df['rs_leg'] + w_vars * df['vars_leg']
-        + w_fast * df['fast_leg'] + w_coil * coil_leg
+        + w_fast * df['fast_leg'] + w_tight * tight_leg
     ) / total
     return df
 
@@ -506,7 +506,7 @@ def mode_anchor_diff(dates, pit_tags):
         old['vars_leg'] = (vars_num.rank(pct=True, method='average') * 100) \
             .fillna(float(base_cfg['missing_default']))
         w = base_cfg['composite_weights']
-        weights = (w['rs'], w['vars_pct'], w['fast'], w.get('coil', 0.0))
+        weights = (w['rs'], w['vars_pct'], w['fast'], w.get('tight', 0.0))
         new_snap = l1_snapshots_multi_beta(
             compute_leaf_scores(apply_weights(universe, weights), theme_map, base_cfg),
             base_cfg, [float(base_cfg['beta'])])
@@ -560,7 +560,7 @@ def mode_episodes_scan(dates, horizons, basket_mode, skip_day, pit_tags):
             w = base_cfg['composite_weights']
             leaves = compute_leaf_scores(
                 apply_weights(universe, (w['rs'], w['vars_pct'], w['fast'],
-                                        w.get('coil', 0.0))),
+                                        w.get('tight', 0.0))),
                 theme_map, base_cfg)
             baskets = l1_baskets(leaves, mode='all')
             fwd = forward_excess_return(close_mx, dpos, date_str,

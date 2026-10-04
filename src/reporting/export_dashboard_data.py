@@ -1251,7 +1251,7 @@ def filter_metrics(row):
 #: The only columns `_highlight_from_row` reads. A caller that needs nothing
 #: else passes this to `_bars_by_ticker` so a per-session row dict stays narrow.
 #: `sma50_full`, not `sma50` — see `_highlight_from_row`.
-HIGHLIGHT_ROW_COLUMNS = ('tight_base', 'ema10', 'ema20', 'sma50_full')
+HIGHLIGHT_ROW_COLUMNS = ('tight_range', 'ema10', 'ema20', 'sma50_full')
 
 
 def _bars_by_ticker(master_df, columns=None):
@@ -1275,7 +1275,7 @@ def _bars_by_ticker(master_df, columns=None):
 def _highlight_from_row(row, short_interest=None):
     """Return the one highlight tier a payload row earns, or None.
 
-    Reads `tight_base`, `ema10`, `ema20` and `sma50` off the session's own
+    Reads `tight_range`, `ema10`, `ema20` and `sma50` off the session's own
     master bar and hands them to `compute_highlight_tier` raw. That function
     already maps missing, zero and non-finite inputs to "absent", so a second
     copy of that rule here could only drift from it. Some builders load their
@@ -1285,14 +1285,14 @@ def _highlight_from_row(row, short_interest=None):
     ⛔ **Pass `short_interest` only for the session a tab renders as current.**
     Finviz publishes today's figure with no per-session history, so handing it
     to an older session pins today's crowding onto an old price bar. The short
-    rung outranks the coil and moving-average rungs, which *are* computed from
+    rung outranks the tight and moving-average rungs, which *are* computed from
     that session's own parquet, so today's number would erase that session's
     real signal across the whole retention window. CLAUDE.md's SI section calls
     that shape "a fabricated number, not a stale one". A historical session
     therefore renders only the rungs its own parquet supports.
     """
     return compute_highlight_tier(
-        tight_base=row.get('tight_base'),
+        tight_range=row.get('tight_range'),
         short_interest=short_interest,
         ema10=row.get('ema10'),
         ema20=row.get('ema20'),
@@ -2006,7 +2006,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
         return None
 
     # `compute_radar`'s member dicts carry no moving averages — only ticker,
-    # composite, rs, vars, price, liquidity, tightness, coiled and screened. So
+    # composite, rs, vars, price, liquidity, the tight fields and screened. So
     # the highlight ladder reads the session's own master row through this
     # lookup, the same join `_build_si_snapshot` uses. `l1_score` stays as it is.
     # Only the ladder's own columns: this runs once per retained session, and a
@@ -2027,13 +2027,13 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     if body is None:
         return None
 
-    # A back-dated parquet predating the indicator has no tightness columns, so
-    # every n_coiled would be a truthful 0 — and the dashboard cannot tell that
-    # from "the market has no coiled themes today", which is a claim about the
+    # A back-dated parquet predating the indicator has no tight-range columns,
+    # so every n_tight would be a truthful 0 — and the dashboard cannot tell that
+    # from "the market has no tight themes today", which is a claim about the
     # market made from an absence of data. Publish null instead so the strip
     # hides rather than asserting. Same failure shape as the frozen NAAIM tile
     # and the undated SI roster.
-    has_coil = 'tight_base' in master_df.columns and 'tightness' in master_df.columns
+    has_tight = 'tight_range' in master_df.columns and 'tightness' in master_df.columns
 
     l1s = []
     for l1_entry in body['l1s']:
@@ -2050,7 +2050,10 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 # NaN is not valid JSON and would break the page rather than
                 # degrade it, so an unmeasurable figure serializes as null.
                 'tightness': _round_or_none(m.get('tightness'), 3),
-                'coiled': bool(m.get('coiled', False)),
+                'tight': bool(m.get('tight', False)),
+                'tight_len': m.get('tight_len'),
+                'tight_pctile': _round_or_none(m.get('tight_pctile'), 1),
+                'tight_gate': m.get('tight_gate'),
                 'is_screened': bool(m.get('is_screened', False)),
                 'highlight': _member_highlight(m['ticker']),
             } for m in (leaf['members'] if tickers_per_leaf is None
@@ -2067,8 +2070,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'n': leaf['breadth'],
                 # Count over ALL scored members, not just the chips that
                 # survived tickers_per_leaf — a capped history entry must not
-                # report a smaller coil count than the same session's radar.json.
-                'n_coiled': leaf.get('n_coiled') if has_coil else None,
+                # report a smaller tight count than the same session's radar.json.
+                'n_tight': leaf.get('n_tight') if has_tight else None,
                 'tickers': ticker_dicts,
             })
         l1s.append({
@@ -2080,7 +2083,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
             'n_leaves': l1_entry['n_leaves'],
             'n_members': l1_entry['n_members'],
             'n_screened': l1_entry['n_screened'],
-            'n_coiled': l1_entry.get('n_coiled') if has_coil else None,
+            'n_tight': l1_entry.get('n_tight') if has_tight else None,
             'leaves': leaves,
         })
 

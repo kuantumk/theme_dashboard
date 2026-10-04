@@ -75,13 +75,10 @@ Average daily range as a percentage of price — how much room a stock typically
 A per-stock blend of strength measures into one number, used so that ranking depends on several independent signals rather than any single one. Stocks missing an input receive a neutral value for it rather than being dropped.
 
 ### Tightness
-How narrow a band a stock's recent closes sat in, compared with its own average daily range. A band a third of one daily range wide is tight; the measure is scale-free, so a volatile small cap and a sleepy large cap are directly comparable. Lower is tighter. It measures containment rather than day-to-day movement, which is what separates a genuine base from a quiet drift — small steps taken consistently in one direction still carry price a long way, and only the band notices.
+How little a stock's recent closes moved, compared with how far a stock with its average daily range would normally drift over the same number of days. A reading of 0.25 means the closes covered about a quarter of their normal travel. The measure is scale-free, so a volatile small cap and a sleepy large cap compare directly, and it scales with the square root of the window so a three-day and an eight-day stretch are judged alike. Lower is tighter. It reads closes, not highs and lows: long wicks with tight closes are the equilibrium it looks for.
 
-### Tight base
-A tight stretch on a chart that has not broken down: the closes sat in a narrow band, and the stock is not far enough below its recent high to count as wreckage. That second test disqualifies rather than selects — it admits most of the market and only removes the broken — because quietness alone is a mildly negative signal and only the combination is worth marking.
-
-### Coil
-The marked state of a stock in a tight base, and the count of such stocks within a theme. It describes what a chart looks like now, not a prediction about where it goes; it is displayed so a trader can watch for the breakout themselves.
+### Tight range
+A stretch of three to ten sessions whose closes are tight, forming in a constructive place: in an uptrend, holding above a rising moving average, or at a prior swing low. Both parts are required. The shape alone is not enough, because the same quiet closes under a rising average resolve the other way. The marked state, and the count of such stocks within a theme, describe what a chart looks like now, not a prediction; it is displayed so a trader can watch for the breakout themselves.
 
 ---
 

@@ -81,7 +81,7 @@ class VarsArtifactTests(unittest.TestCase):
                 patch.object(export_dashboard_data, "VARS_ARTIFACT_DIR", artifact_dir),
                 patch.object(export_dashboard_data, "_build_vars_snapshot", fake_build_snapshot),
             ):
-                current = export_dashboard_data.export_vars(day_flags={})
+                current = export_dashboard_data.export_vars(day_flags_by_date={})
 
             self.assertEqual(current, latest)
             self.assertEqual(

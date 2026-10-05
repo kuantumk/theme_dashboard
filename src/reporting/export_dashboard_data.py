@@ -924,31 +924,75 @@ def fetch_industry_etf_data():
     return etf_list
 
 
-def load_ticker_color_flags():
-    """Load tight/inside_day + close_to_ma flags, return {ticker: 'green'}.
+DAY_PATTERN_COLUMNS = ('tight_day', 'inside_day', 'close_to_ma')
 
-    Only green is emitted: a ticker qualifies when its latest bar is a tight or
-    inside day AND price is close to the EMA10/EMA20. Tickers that fail either
-    condition are omitted from the dict (no blue tier).
+
+def _flag_on(value):
+    """True only for a real True. `bool(float('nan'))` is True, so NaN and
+    other missing readings must be tested before the truth test."""
+    import pandas as pd
+    return bool(pd.notna(value)) and bool(value)
+
+
+def day_pattern_green(bar):
+    """The day-pattern rule for one bar: (tight_day OR inside_day) AND close_to_ma.
+
+    A missing column reads as False, so a session without the indicators
+    colours nothing rather than everything.
     """
-    try:
-        daily_price = su.load_object_from_pickle(PRICE_DATA_TA_FILE)
-    except Exception as e:
-        print(f"   Warning: Could not load price data for ticker colors: {e}")
-        return {}
+    return ((_flag_on(bar.get('tight_day')) or _flag_on(bar.get('inside_day')))
+            and _flag_on(bar.get('close_to_ma')))
 
+
+def day_flags_from_master(master_df):
+    """Return {ticker: 'green'} for the master rows that meet the day-pattern rule.
+
+    Only green is emitted; tickers that fail are omitted (no blue tier).
+    """
     flags = {}
-    for ticker, df in daily_price.items():
-        if ticker.startswith('^') or df.empty:
-            continue
-        last = df.iloc[-1]
-        tight_or_inside = bool(last.get('tight_day', False)) or bool(last.get('inside_day', False))
-        if not tight_or_inside:
-            continue
-        if not bool(last.get('close_to_ma', False)):
-            continue
-        flags[ticker] = 'green'
+    if master_df is None or master_df.empty or 'ticker' not in master_df.columns:
+        return flags
+    cols = ['ticker'] + [c for c in DAY_PATTERN_COLUMNS if c in master_df.columns]
+    for bar in master_df[cols].to_dict('records'):
+        if day_pattern_green(bar):
+            flags[str(bar['ticker']).upper()] = 'green'
     return flags
+
+
+def load_day_flags_by_date(root=None):
+    """Return {session_date: {ticker: 'green'}} from each per-day master parquet.
+
+    Each session reads its OWN bar. The flags were once read from the newest
+    bar of `price_daily_ta.pkl` and handed to every session in the time-travel
+    window, so a back-dated session showed today's colouring. For the newest
+    session the master row is the ticker's last bar (`create_master_table`
+    slices `[:run_date].tail(1)`), so that session's result is unchanged.
+
+    Only the ticker and the three flag columns are read: this runs once per
+    retained session (~124), and the radar export reads each file in full
+    anyway. A date with no master file is absent from the result, so its
+    exporter colours nothing for that session.
+    """
+    import pandas as pd
+    import pyarrow.parquet as pq
+
+    root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
+    files = sorted((root / 'master').glob('master_*.parquet'))
+    dates = [f.stem.replace('master_', '') for f in files]
+    cutoff = _history_cutoff(dates)
+
+    by_date = {}
+    for path, date_str in zip(files, dates):
+        if cutoff is not None and date_str < cutoff:
+            continue
+        present = set(pq.read_schema(path).names)
+        if 'ticker' not in present:
+            by_date[date_str] = {}
+            continue
+        cols = ['ticker'] + [c for c in DAY_PATTERN_COLUMNS if c in present]
+        master_df = pd.read_parquet(path, engine='pyarrow', columns=cols)
+        by_date[date_str] = day_flags_from_master(master_df)
+    return by_date
 
 
 def enrich_with_ticker_color(data_list, flags, ticker_key='ticker'):
@@ -1414,7 +1458,7 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     }
 
 
-def export_momentum_136(day_flags):
+def export_momentum_136(day_flags_by_date):
     """Export momentum_136 — rebuilds full N-session history from CSVs every run.
 
     Like `export_parabolic`, this iterates the per-day momentum_136 CSVs within
@@ -1436,12 +1480,14 @@ def export_momentum_136(day_flags):
 
     history = []
     for csv_file in csvs:
-        if cutoff is not None and csv_file.stem.replace('momentum_136_', '') < cutoff:
+        date_str = csv_file.stem.replace('momentum_136_', '')
+        if cutoff is not None and date_str < cutoff:
             continue
         # The first snapshot to land becomes momentum_136.json, so it is the
         # only one allowed the short rung.
         snap = _build_momentum_136_snapshot(
-            csv_file, day_flags, newest_session=not history)
+            csv_file, day_flags_by_date.get(date_str, {}),
+            newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -1632,7 +1678,7 @@ def write_vars_artifact(snapshot, artifact_dir=None):
     return out
 
 
-def export_vars(day_flags):
+def export_vars(day_flags_by_date):
     """Export VARS — rebuilds full N-session history from CSVs every run.
 
     Mirrors `export_momentum_136` / `export_parabolic`: iterates the per-day
@@ -1652,11 +1698,14 @@ def export_vars(day_flags):
 
     history = []
     for csv_file in csvs:
-        if cutoff is not None and csv_file.stem.replace('vars_', '') < cutoff:
+        date_str = csv_file.stem.replace('vars_', '')
+        if cutoff is not None and date_str < cutoff:
             continue
         # The first snapshot to land becomes vars.json, so it is the only one
         # allowed the short rung.
-        snap = _build_vars_snapshot(csv_file, day_flags, newest_session=not history)
+        snap = _build_vars_snapshot(
+            csv_file, day_flags_by_date.get(date_str, {}),
+            newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -1909,7 +1958,7 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
     }
 
 
-def export_si(day_flags, root=None, out_dir=None, si_file=None):
+def export_si(day_flags_by_date, root=None, out_dir=None, si_file=None):
     """Export the SI tab — current snapshot plus a forward-growing history.
 
     ⛔ History only grows forward, unlike every parquet-backed tab. Finviz
@@ -1943,8 +1992,10 @@ def export_si(day_flags, root=None, out_dir=None, si_file=None):
         return None
 
     master_df = su.load_df_from_parquet(master_files[0])
+    master_date = master_files[0].stem.replace('master_', '')
     snapshot = _build_si_snapshot(
-        si_rows, master_df, day_flags, load_ticker_themes(),
+        si_rows, master_df, day_flags_by_date.get(master_date, {}),
+        load_ticker_themes(),
         _load_radar_ranks(out_dir / 'radar.json'), _si_config(),
         si_date=payload.get('date'),
     )
@@ -2096,7 +2147,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     }
 
 
-def export_radar(day_flags, root=None, out_dir=None):
+def export_radar(day_flags_by_date, root=None, out_dir=None):
     """Export the L1 Radar (dashboard Themes tab) — full
     retention-window history every run.
 
@@ -2137,7 +2188,7 @@ def export_radar(day_flags, root=None, out_dir=None):
         # ships every member; older sessions stay capped so radar_history.json
         # does not balloon — it already carries ~124 sessions.
         snap = _build_radar_snapshot(
-            master_file, screened_set, day_flags,
+            master_file, screened_set, day_flags_by_date.get(date_str, {}),
             tickers_per_leaf=None if not history else chip_cap,
             fundamentals=fundamentals,
             newest_session=not history,
@@ -2313,7 +2364,7 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     }
 
 
-def export_volume(day_flags):
+def export_volume(day_flags_by_date):
     """Export the Volume tab — union of the volspike + denvol scans.
 
     Rebuilds the full retention-window history every run (same pattern as
@@ -2339,7 +2390,9 @@ def export_volume(day_flags):
             continue
         # The first snapshot to land becomes volume.json, so it is the only one
         # allowed the short rung.
-        snap = _build_volume_snapshot(date_str, day_flags, newest_session=not history)
+        snap = _build_volume_snapshot(
+            date_str, day_flags_by_date.get(date_str, {}),
+            newest_session=not history)
         if snap is None:
             continue
         history.append(snap)
@@ -2624,20 +2677,25 @@ def export_all():
     else:
         print("\n1. No report found")
 
-    # Ticker color flags (tight/inside + close_to_ma) shared by the tab exports
-    day_flags = load_ticker_color_flags()
+    # Day-pattern colour flags (tight/inside + close_to_ma), one set per
+    # session, each read from that session's own master parquet.
+    day_flags_by_date = load_day_flags_by_date()
+    if day_flags_by_date:
+        newest = max(day_flags_by_date)
+        print(f"   Day-pattern flags: {len(day_flags_by_date)} sessions, "
+              f"{len(day_flags_by_date[newest])} green on {newest}")
 
     # 1b. Export Momentum 1/3/6 screener (independent of daily report)
     print("\n1b. Exporting momentum_136 data")
-    export_momentum_136(day_flags)
+    export_momentum_136(day_flags_by_date)
 
     # 1c. Export Volume tab (union of volspike + denvol scans, independent of daily report)
     print("\n1c. Exporting volume data")
-    volume_data = export_volume(day_flags)
+    volume_data = export_volume(day_flags_by_date)
 
     # 1d. Export VARS screener (independent of daily report)
     print("\n1d. Exporting vars data")
-    export_vars(day_flags)
+    export_vars(day_flags_by_date)
 
     # 1e. Export Parabolic screener data (independent of daily report)
     print("\n1e. Exporting parabolic data")
@@ -2648,13 +2706,13 @@ def export_all():
     radar_data = None
     if CONFIG.get('radar', {}).get('enabled', True):
         print("\n1f. Exporting L1 radar data")
-        radar_data = export_radar(day_flags)
+        radar_data = export_radar(day_flags_by_date)
 
     # 1g. Export SI tab. Must run AFTER the radar export: the HOT badge reads
     # radar.json, and reading it earlier would badge every session against the
     # previous run's ranks.
     print("\n1g. Exporting SI data")
-    export_si(day_flags)
+    export_si(day_flags_by_date)
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")

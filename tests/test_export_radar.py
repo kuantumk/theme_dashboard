@@ -60,7 +60,8 @@ class ExportRadarTests(unittest.TestCase):
             )
 
             with patch('src.themes.l1_score.load_ticker_themes', return_value=THEMES):
-                current = export_radar({'CY11': 'green'}, root=root, out_dir=out_dir)
+                current = export_radar({'2026-07-13': {'CY11': 'green'}},
+                                       root=root, out_dir=out_dir)
 
             self.assertIsNotNone(current)
             radar = json.loads((out_dir / 'radar.json').read_text())

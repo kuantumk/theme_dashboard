@@ -654,9 +654,9 @@ def calculate_technical_indicators():
             )
 
             # Tight range: shape + gate. The columns ride the master table, so
-            # a back-dated session reports the flag as it stood then — unlike
-            # the day-pattern colouring, which reads only the last bar. The
-            # gate's SMA50 is the full 50-bar mean, never the 25-bar `sma50`.
+            # a back-dated session reports the flag as it stood then, the same
+            # as the day-pattern colouring above. The gate's SMA50 is the full
+            # 50-bar mean, never the 25-bar `sma50`.
             tr = compute_tight_range(
                 daily['low'], daily['close'], daily['adr_pct'],
                 daily['ema10'], daily['ema20'], daily['sma50_full'], **_tight_cfg)

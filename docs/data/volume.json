@@ -1,20 +1,20 @@
 {
-  "report_date": "2026-10-06",
+  "report_date": "2026-10-07",
   "themes": [
     {
       "name": "Fintech & Crypto / SPAC",
-      "avg_vars": 14.49,
+      "avg_vars": 16.46,
       "tickers": [
         {
           "ticker": "XRPN",
           "scan": "denvol",
-          "days_since_hv": 4,
-          "vars": 14.49,
-          "vars_20ema": 7.56,
-          "rs": 88.5,
-          "price": 19.2,
-          "dollar_vol": 36297637,
-          "adr_pct": 0.1748,
+          "days_since_hv": 5,
+          "vars": 16.46,
+          "vars_20ema": 8.4,
+          "rs": 92.3,
+          "price": 25.01,
+          "dollar_vol": 40600882,
+          "adr_pct": 0.1981,
           "float": null,
           "eps": null,
           "sales": null,
@@ -29,24 +29,24 @@
     },
     {
       "name": "AI / Drug Discovery",
-      "avg_vars": 13.13,
+      "avg_vars": 13.79,
       "tickers": [
         {
           "ticker": "SDGR",
           "scan": "both",
-          "days_since_hv": 19,
-          "vars": 13.13,
-          "vars_20ema": 10.76,
-          "rs": 50.0,
-          "price": 28.9,
-          "dollar_vol": 90029552,
-          "adr_pct": 0.0891,
+          "days_since_hv": 20,
+          "vars": 13.79,
+          "vars_20ema": 11.05,
+          "rs": 46.2,
+          "price": 27.29,
+          "dollar_vol": 95522052,
+          "adr_pct": 0.0896,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "tight"
+          "highlight": "ma_up"
         }
       ],
       "l1": "AI",
@@ -55,18 +55,18 @@
     },
     {
       "name": "MedTech / Cardiovascular",
-      "avg_vars": 12.49,
+      "avg_vars": 12.4,
       "tickers": [
         {
           "ticker": "ATRC",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 12.49,
-          "vars_20ema": 10.82,
-          "rs": 19.2,
-          "price": 53.68,
-          "dollar_vol": 92427351,
-          "adr_pct": 0.0425,
+          "days_since_hv": 19,
+          "vars": 12.4,
+          "vars_20ema": 10.97,
+          "rs": 15.4,
+          "price": 53.31,
+          "dollar_vol": 90035641,
+          "adr_pct": 0.0426,
           "float": null,
           "eps": null,
           "sales": null,
@@ -81,34 +81,34 @@
     },
     {
       "name": "Oil & Gas / Refining",
-      "avg_vars": 9.28,
+      "avg_vars": 10.51,
       "tickers": [
         {
           "ticker": "MPC",
           "scan": "both",
-          "days_since_hv": 18,
-          "vars": 13.39,
-          "vars_20ema": 11.27,
-          "rs": 92.3,
-          "price": 432.36,
-          "dollar_vol": 1225191794,
+          "days_since_hv": 19,
+          "vars": 15.18,
+          "vars_20ema": 11.64,
+          "rs": 100.0,
+          "price": 442.26,
+          "dollar_vol": 1228322251,
           "adr_pct": 0.0409,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "ma_up"
+          "highlight": "tight"
         },
         {
           "ticker": "PBF",
           "scan": "both",
-          "days_since_hv": 21,
-          "vars": 8.66,
-          "vars_20ema": 5.67,
+          "days_since_hv": 22,
+          "vars": 10.0,
+          "vars_20ema": 6.08,
           "rs": 92.3,
-          "price": 82.88,
-          "dollar_vol": 309341163,
+          "price": 83.68,
+          "dollar_vol": 311235934,
           "adr_pct": 0.0643,
           "float": null,
           "eps": null,
@@ -120,13 +120,13 @@
         {
           "ticker": "DLXY",
           "scan": "both",
-          "days_since_hv": 20,
-          "vars": 8.15,
-          "vars_20ema": 3.0,
-          "rs": 96.2,
-          "price": 2.4,
-          "dollar_vol": 31992429,
-          "adr_pct": 0.5213,
+          "days_since_hv": 21,
+          "vars": 8.75,
+          "vars_20ema": 3.55,
+          "rs": 84.6,
+          "price": 2.26,
+          "dollar_vol": 32031785,
+          "adr_pct": 0.526,
           "float": null,
           "eps": null,
           "sales": null,
@@ -137,19 +137,20 @@
         {
           "ticker": "DK",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 6.92,
-          "vars_20ema": 4.8,
-          "rs": 53.8,
-          "price": 75.67,
-          "dollar_vol": 206374883,
-          "adr_pct": 0.0548,
+          "days_since_hv": 19,
+          "vars": 8.1,
+          "vars_20ema": 5.11,
+          "rs": 50.0,
+          "price": 75.46,
+          "dollar_vol": 203921525,
+          "adr_pct": 0.0543,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "tight"
+          "highlight": "tight",
+          "ticker_color": "green"
         }
       ],
       "l1": "Oil & Gas",
@@ -158,18 +159,35 @@
     },
     {
       "name": "Biotech / Genomics & Diagnostics Platforms",
-      "avg_vars": 8.1,
+      "avg_vars": 10.43,
       "tickers": [
+        {
+          "ticker": "TXG",
+          "scan": "volspike",
+          "days_since_hv": 0,
+          "vars": 17.99,
+          "vars_20ema": 15.43,
+          "rs": 42.3,
+          "price": 76.1,
+          "dollar_vol": 308950009,
+          "adr_pct": 0.0845,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        },
         {
           "ticker": "TWST",
           "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 13.0,
-          "vars_20ema": 10.15,
-          "rs": 61.5,
-          "price": 166.97,
-          "dollar_vol": 467191329,
-          "adr_pct": 0.0884,
+          "days_since_hv": 1,
+          "vars": 13.9,
+          "vars_20ema": 10.51,
+          "rs": 46.2,
+          "price": 155.65,
+          "dollar_vol": 501572161,
+          "adr_pct": 0.0898,
           "float": null,
           "eps": null,
           "sales": null,
@@ -180,13 +198,13 @@
         {
           "ticker": "ILMN",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 12.49,
-          "vars_20ema": 10.67,
-          "rs": 76.9,
-          "price": 273.54,
-          "dollar_vol": 1099204947,
-          "adr_pct": 0.0557,
+          "days_since_hv": 19,
+          "vars": 13.55,
+          "vars_20ema": 10.94,
+          "rs": 65.4,
+          "price": 267.76,
+          "dollar_vol": 1121187989,
+          "adr_pct": 0.0567,
           "float": null,
           "eps": null,
           "sales": null,
@@ -197,30 +215,30 @@
         {
           "ticker": "PACB",
           "scan": "both",
-          "days_since_hv": 6,
-          "vars": 8.64,
-          "vars_20ema": -0.48,
+          "days_since_hv": 7,
+          "vars": 10.37,
+          "vars_20ema": 0.56,
           "rs": 96.2,
-          "price": 2.7,
-          "dollar_vol": 36659256,
-          "adr_pct": 0.1109,
+          "price": 2.72,
+          "dollar_vol": 39161136,
+          "adr_pct": 0.1125,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "ma_up"
+          "highlight": "tight"
         },
         {
           "ticker": "CAI",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 7.77,
-          "vars_20ema": 4.14,
-          "rs": 42.3,
-          "price": 27.45,
-          "dollar_vol": 147914810,
-          "adr_pct": 0.0624,
+          "days_since_hv": 19,
+          "vars": 8.31,
+          "vars_20ema": 4.54,
+          "rs": 38.5,
+          "price": 27.1,
+          "dollar_vol": 150748634,
+          "adr_pct": 0.0631,
           "float": null,
           "eps": null,
           "sales": null,
@@ -231,13 +249,13 @@
         {
           "ticker": "DNA",
           "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 3.51,
-          "vars_20ema": -1.04,
-          "rs": 84.6,
-          "price": 12.41,
-          "dollar_vol": 33770141,
-          "adr_pct": 0.1282,
+          "days_since_hv": 1,
+          "vars": 4.94,
+          "vars_20ema": -0.47,
+          "rs": 76.9,
+          "price": 11.47,
+          "dollar_vol": 37168144,
+          "adr_pct": 0.1319,
           "float": null,
           "eps": null,
           "sales": null,
@@ -248,19 +266,19 @@
         {
           "ticker": "FRNM",
           "scan": "denvol",
-          "days_since_hv": 18,
-          "vars": 3.16,
-          "vars_20ema": 1.4,
-          "rs": 65.4,
-          "price": 16.36,
-          "dollar_vol": 14136524,
-          "adr_pct": 0.0604,
+          "days_since_hv": 19,
+          "vars": 3.96,
+          "vars_20ema": 1.64,
+          "rs": 34.6,
+          "price": 16.03,
+          "dollar_vol": 14340270,
+          "adr_pct": 0.0612,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "tight",
+          "highlight": "ma_up",
           "ticker_color": "green"
         }
       ],
@@ -270,18 +288,18 @@
     },
     {
       "name": "AI / Data Center / Memory",
-      "avg_vars": 7.83,
+      "avg_vars": 9.89,
       "tickers": [
         {
           "ticker": "P",
           "scan": "both",
-          "days_since_hv": 18,
-          "vars": 7.83,
-          "vars_20ema": 5.65,
+          "days_since_hv": 19,
+          "vars": 9.89,
+          "vars_20ema": 6.05,
           "rs": 100.0,
-          "price": 147.2,
-          "dollar_vol": 886123085,
-          "adr_pct": 0.0513,
+          "price": 152.66,
+          "dollar_vol": 912337766,
+          "adr_pct": 0.0509,
           "float": null,
           "eps": null,
           "sales": null,
@@ -295,62 +313,36 @@
       "l3": "Memory"
     },
     {
-      "name": "Corrections & Detention / Private Prisons",
-      "avg_vars": 7.67,
-      "tickers": [
-        {
-          "ticker": "CXW",
-          "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 7.67,
-          "vars_20ema": 7.27,
-          "rs": 3.8,
-          "price": 31.78,
-          "dollar_vol": 80854764,
-          "adr_pct": 0.054,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "Corrections & Detention",
-      "l2": "Private Prisons",
-      "l3": null
-    },
-    {
       "name": "Biotech / Drug Discovery Platform",
-      "avg_vars": 7.64,
+      "avg_vars": 8.54,
       "tickers": [
-        {
-          "ticker": "SDGR",
-          "scan": "both",
-          "days_since_hv": 19,
-          "vars": 13.13,
-          "vars_20ema": 10.76,
-          "rs": 50.0,
-          "price": 28.9,
-          "dollar_vol": 90029552,
-          "adr_pct": 0.0891,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight"
-        },
         {
           "ticker": "TWST",
           "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 13.0,
-          "vars_20ema": 10.15,
-          "rs": 61.5,
-          "price": 166.97,
-          "dollar_vol": 467191329,
-          "adr_pct": 0.0884,
+          "days_since_hv": 1,
+          "vars": 13.9,
+          "vars_20ema": 10.51,
+          "rs": 46.2,
+          "price": 155.65,
+          "dollar_vol": 501572161,
+          "adr_pct": 0.0898,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        },
+        {
+          "ticker": "SDGR",
+          "scan": "both",
+          "days_since_hv": 20,
+          "vars": 13.79,
+          "vars_20ema": 11.05,
+          "rs": 46.2,
+          "price": 27.29,
+          "dollar_vol": 95522052,
+          "adr_pct": 0.0896,
           "float": null,
           "eps": null,
           "sales": null,
@@ -361,13 +353,13 @@
         {
           "ticker": "PBLS",
           "scan": "denvol",
-          "days_since_hv": 18,
-          "vars": -3.22,
-          "vars_20ema": -3.2,
-          "rs": 0.0,
-          "price": 28.86,
-          "dollar_vol": 45693631,
-          "adr_pct": 0.088,
+          "days_since_hv": 19,
+          "vars": -2.08,
+          "vars_20ema": -3.09,
+          "rs": 3.8,
+          "price": 28.82,
+          "dollar_vol": 46154660,
+          "adr_pct": 0.0907,
           "float": null,
           "eps": null,
           "sales": null,
@@ -381,45 +373,46 @@
       "l3": null
     },
     {
-      "name": "Biotech / Drug Delivery",
-      "avg_vars": 6.59,
+      "name": "Corrections & Detention / Private Prisons",
+      "avg_vars": 8.14,
       "tickers": [
         {
-          "ticker": "XERS",
-          "scan": "both",
-          "days_since_hv": 7,
-          "vars": 6.59,
-          "vars_20ema": 4.19,
-          "rs": 92.3,
-          "price": 10.07,
-          "dollar_vol": 31637243,
-          "adr_pct": 0.0675,
+          "ticker": "CXW",
+          "scan": "volspike",
+          "days_since_hv": 1,
+          "vars": 8.14,
+          "vars_20ema": 7.35,
+          "rs": 7.7,
+          "price": 31.82,
+          "dollar_vol": 79848174,
+          "adr_pct": 0.0542,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "ma_up"
+          "highlight": null,
+          "ticker_color": "green"
         }
       ],
-      "l1": "Biotech",
-      "l2": "Drug Delivery",
+      "l1": "Corrections & Detention",
+      "l2": "Private Prisons",
       "l3": null
     },
     {
-      "name": "Biotech / Psychedelic Medicine",
-      "avg_vars": 6.16,
+      "name": "Biotech / Drug Delivery",
+      "avg_vars": 7.98,
       "tickers": [
         {
-          "ticker": "MMED",
-          "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 6.16,
-          "vars_20ema": 4.13,
-          "rs": 0.0,
-          "price": 19.64,
-          "dollar_vol": 87787514,
-          "adr_pct": 0.0425,
+          "ticker": "XERS",
+          "scan": "both",
+          "days_since_hv": 8,
+          "vars": 7.98,
+          "vars_20ema": 4.55,
+          "rs": 92.3,
+          "price": 10.11,
+          "dollar_vol": 31674111,
+          "adr_pct": 0.063,
           "float": null,
           "eps": null,
           "sales": null,
@@ -429,23 +422,23 @@
         }
       ],
       "l1": "Biotech",
-      "l2": "Psychedelic Medicine",
+      "l2": "Drug Delivery",
       "l3": null
     },
     {
-      "name": "Consumer / Restaurants / Casual Dining",
-      "avg_vars": 5.28,
+      "name": "Biotech / Psychedelic Medicine",
+      "avg_vars": 6.76,
       "tickers": [
         {
-          "ticker": "EAT",
+          "ticker": "MMED",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 5.28,
-          "vars_20ema": 3.39,
+          "days_since_hv": 1,
+          "vars": 6.76,
+          "vars_20ema": 4.38,
           "rs": 0.0,
-          "price": 190.44,
-          "dollar_vol": 323225251,
-          "adr_pct": 0.0448,
+          "price": 19.11,
+          "dollar_vol": 95171952,
+          "adr_pct": 0.0423,
           "float": null,
           "eps": null,
           "sales": null,
@@ -454,24 +447,24 @@
           "highlight": null
         }
       ],
-      "l1": "Consumer",
-      "l2": "Restaurants",
-      "l3": "Casual Dining"
+      "l1": "Biotech",
+      "l2": "Psychedelic Medicine",
+      "l3": null
     },
     {
       "name": "Software & Internet / SaaS & Vertical",
-      "avg_vars": 4.96,
+      "avg_vars": 6.27,
       "tickers": [
         {
           "ticker": "RSKD",
           "scan": "both",
-          "days_since_hv": 12,
-          "vars": 8.5,
-          "vars_20ema": 6.52,
-          "rs": 69.2,
-          "price": 7.79,
-          "dollar_vol": 16705261,
-          "adr_pct": 0.0456,
+          "days_since_hv": 13,
+          "vars": 11.24,
+          "vars_20ema": 6.97,
+          "rs": 92.3,
+          "price": 8.05,
+          "dollar_vol": 17775048,
+          "adr_pct": 0.0468,
           "float": null,
           "eps": null,
           "sales": null,
@@ -482,30 +475,31 @@
         {
           "ticker": "WK",
           "scan": "both",
-          "days_since_hv": 1,
-          "vars": 4.66,
-          "vars_20ema": 0.6,
-          "rs": 11.5,
-          "price": 70.16,
-          "dollar_vol": 112115733,
-          "adr_pct": 0.0426,
+          "days_since_hv": 2,
+          "vars": 5.87,
+          "vars_20ema": 1.1,
+          "rs": 26.9,
+          "price": 71.53,
+          "dollar_vol": 113650235,
+          "adr_pct": 0.0431,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": null
+          "highlight": null,
+          "ticker_color": "green"
         },
         {
           "ticker": "IPDN",
           "scan": "volspike",
-          "days_since_hv": 26,
-          "vars": 1.72,
-          "vars_20ema": -5.0,
-          "rs": 96.2,
-          "price": 4.61,
-          "dollar_vol": 30192064,
-          "adr_pct": 0.2574,
+          "days_since_hv": 27,
+          "vars": 1.71,
+          "vars_20ema": -4.36,
+          "rs": 88.5,
+          "price": 4.31,
+          "dollar_vol": 30295751,
+          "adr_pct": 0.2643,
           "float": null,
           "eps": null,
           "sales": null,
@@ -519,159 +513,19 @@
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Wealth & Asset Management",
-      "avg_vars": 3.07,
-      "tickers": [
-        {
-          "ticker": "XP",
-          "scan": "both",
-          "days_since_hv": 1,
-          "vars": 8.6,
-          "vars_20ema": -1.94,
-          "rs": 100.0,
-          "price": 29.73,
-          "dollar_vol": 257845485,
-          "adr_pct": 0.0434,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        },
-        {
-          "ticker": "WLTH",
-          "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": -2.45,
-          "vars_20ema": -4.33,
-          "rs": 73.1,
-          "price": 10.55,
-          "dollar_vol": 39749767,
-          "adr_pct": 0.0577,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight"
-        }
-      ],
-      "l1": "Fintech & Crypto",
-      "l2": "Wealth & Asset Management",
-      "l3": null
-    },
-    {
-      "name": "Software & Internet / Data & Analytics",
-      "avg_vars": 3.04,
-      "tickers": [
-        {
-          "ticker": "TWLO",
-          "scan": "both",
-          "days_since_hv": 1,
-          "vars": 5.23,
-          "vars_20ema": 5.43,
-          "rs": 65.4,
-          "price": 280.41,
-          "dollar_vol": 1269267690,
-          "adr_pct": 0.0581,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight"
-        },
-        {
-          "ticker": "MDB",
-          "scan": "volspike",
-          "days_since_hv": 8,
-          "vars": 0.85,
-          "vars_20ema": 1.86,
-          "rs": 15.4,
-          "price": 360.71,
-          "dollar_vol": 1118428742,
-          "adr_pct": 0.0605,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight",
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Software & Internet",
-      "l2": "Data & Analytics",
-      "l3": null
-    },
-    {
-      "name": "Retail (Multi-Category) / Specialty Apparel",
-      "avg_vars": 2.43,
-      "tickers": [
-        {
-          "ticker": "SIG",
-          "scan": "denvol",
-          "days_since_hv": 27,
-          "vars": 2.43,
-          "vars_20ema": -1.58,
-          "rs": 53.8,
-          "price": 102.1,
-          "dollar_vol": 115893697,
-          "adr_pct": 0.0414,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight",
-          "ticker_color": "green"
-        }
-      ],
-      "l1": "Retail (Multi-Category)",
-      "l2": "Specialty Apparel",
-      "l3": null
-    },
-    {
-      "name": "Telecom / RF Filters",
-      "avg_vars": 2.16,
-      "tickers": [
-        {
-          "ticker": "SWKS",
-          "scan": "volspike",
-          "days_since_hv": 1,
-          "vars": 2.16,
-          "vars_20ema": 2.49,
-          "rs": 34.6,
-          "price": 82.79,
-          "dollar_vol": 773100388,
-          "adr_pct": 0.0641,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        }
-      ],
-      "l1": "Telecom",
-      "l2": "RF Filters",
-      "l3": null
-    },
-    {
       "name": "AI / Data Center / Chips & Processors",
-      "avg_vars": 2.03,
+      "avg_vars": 4.96,
       "tickers": [
         {
           "ticker": "PENG",
-          "scan": "volspike",
+          "scan": "both",
           "days_since_hv": 0,
-          "vars": 2.03,
-          "vars_20ema": 3.77,
+          "vars": 4.96,
+          "vars_20ema": 3.88,
           "rs": 100.0,
-          "price": 64.21,
-          "dollar_vol": 131899827,
-          "adr_pct": 0.0537,
+          "price": 72.61,
+          "dollar_vol": 205814756,
+          "adr_pct": 0.059,
           "float": null,
           "eps": null,
           "sales": null,
@@ -686,18 +540,18 @@
     },
     {
       "name": "AI / Data Center / Components",
-      "avg_vars": 2.03,
+      "avg_vars": 4.96,
       "tickers": [
         {
           "ticker": "PENG",
-          "scan": "volspike",
+          "scan": "both",
           "days_since_hv": 0,
-          "vars": 2.03,
-          "vars_20ema": 3.77,
+          "vars": 4.96,
+          "vars_20ema": 3.88,
           "rs": 100.0,
-          "price": 64.21,
-          "dollar_vol": 131899827,
-          "adr_pct": 0.0537,
+          "price": 72.61,
+          "dollar_vol": 205814756,
+          "adr_pct": 0.059,
           "float": null,
           "eps": null,
           "sales": null,
@@ -711,36 +565,157 @@
       "l3": "Components"
     },
     {
-      "name": "Biotech / Oncology / Antibodies",
-      "avg_vars": 1.6,
+      "name": "Consumer / Restaurants / Casual Dining",
+      "avg_vars": 4.65,
       "tickers": [
         {
-          "ticker": "XNCR",
-          "scan": "both",
-          "days_since_hv": 18,
-          "vars": 8.27,
-          "vars_20ema": 6.95,
-          "rs": 7.7,
-          "price": 24.36,
-          "dollar_vol": 35588729,
-          "adr_pct": 0.0464,
+          "ticker": "EAT",
+          "scan": "volspike",
+          "days_since_hv": 19,
+          "vars": 4.65,
+          "vars_20ema": 3.51,
+          "rs": 0.0,
+          "price": 185.31,
+          "dollar_vol": 320404527,
+          "adr_pct": 0.0445,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
           "highlight": null
+        }
+      ],
+      "l1": "Consumer",
+      "l2": "Restaurants",
+      "l3": "Casual Dining"
+    },
+    {
+      "name": "Fintech & Crypto / Wealth & Asset Management",
+      "avg_vars": 4.2,
+      "tickers": [
+        {
+          "ticker": "XP",
+          "scan": "both",
+          "days_since_hv": 2,
+          "vars": 9.18,
+          "vars_20ema": -0.88,
+          "rs": 96.2,
+          "price": 29.53,
+          "dollar_vol": 256579744,
+          "adr_pct": 0.0424,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
         },
         {
-          "ticker": "SMMT",
+          "ticker": "WLTH",
+          "scan": "volspike",
+          "days_since_hv": 19,
+          "vars": -0.78,
+          "vars_20ema": -4.0,
+          "rs": 88.5,
+          "price": 10.9,
+          "dollar_vol": 38831162,
+          "adr_pct": 0.0578,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
+        }
+      ],
+      "l1": "Fintech & Crypto",
+      "l2": "Wealth & Asset Management",
+      "l3": null
+    },
+    {
+      "name": "Logistics / Freight Brokerage & Trucking",
+      "avg_vars": 4.01,
+      "tickers": [
+        {
+          "ticker": "RXO",
           "scan": "both",
-          "days_since_hv": 7,
-          "vars": -5.06,
-          "vars_20ema": -7.05,
+          "days_since_hv": 2,
+          "vars": 4.01,
+          "vars_20ema": -3.39,
+          "rs": 92.3,
+          "price": 28.36,
+          "dollar_vol": 81585248,
+          "adr_pct": 0.05,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
+        }
+      ],
+      "l1": "Logistics",
+      "l2": "Freight Brokerage & Trucking",
+      "l3": null
+    },
+    {
+      "name": "Telecom / RF Filters",
+      "avg_vars": 3.75,
+      "tickers": [
+        {
+          "ticker": "SWKS",
+          "scan": "volspike",
+          "days_since_hv": 2,
+          "vars": 3.75,
+          "vars_20ema": 2.61,
+          "rs": 34.6,
+          "price": 83.43,
+          "dollar_vol": 793360326,
+          "adr_pct": 0.0655,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        }
+      ],
+      "l1": "Telecom",
+      "l2": "RF Filters",
+      "l3": null
+    },
+    {
+      "name": "Software & Internet / Data & Analytics",
+      "avg_vars": 3.74,
+      "tickers": [
+        {
+          "ticker": "TWLO",
+          "scan": "both",
+          "days_since_hv": 2,
+          "vars": 5.39,
+          "vars_20ema": 5.43,
           "rs": 57.7,
-          "price": 17.31,
-          "dollar_vol": 123368985,
-          "adr_pct": 0.063,
+          "price": 273.0,
+          "dollar_vol": 1300258217,
+          "adr_pct": 0.0578,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        },
+        {
+          "ticker": "MDB",
+          "scan": "volspike",
+          "days_since_hv": 9,
+          "vars": 2.09,
+          "vars_20ema": 1.88,
+          "rs": 30.8,
+          "price": 363.03,
+          "dollar_vol": 1099547071,
+          "adr_pct": 0.0603,
           "float": null,
           "eps": null,
           "sales": null,
@@ -750,93 +725,68 @@
           "ticker_color": "green"
         }
       ],
+      "l1": "Software & Internet",
+      "l2": "Data & Analytics",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Oncology / Antibodies",
+      "avg_vars": 3.51,
+      "tickers": [
+        {
+          "ticker": "XNCR",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": 9.95,
+          "vars_20ema": 7.24,
+          "rs": 7.7,
+          "price": 24.26,
+          "dollar_vol": 36177364,
+          "adr_pct": 0.0457,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": null,
+          "ticker_color": "green"
+        },
+        {
+          "ticker": "SMMT",
+          "scan": "both",
+          "days_since_hv": 8,
+          "vars": -2.93,
+          "vars_20ema": -6.65,
+          "rs": 88.5,
+          "price": 17.95,
+          "dollar_vol": 126488058,
+          "adr_pct": 0.0638,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        }
+      ],
       "l1": "Biotech",
       "l2": "Oncology",
       "l3": "Antibodies"
     },
     {
-      "name": "Logistics / Freight Brokerage & Trucking",
-      "avg_vars": 1.42,
-      "tickers": [
-        {
-          "ticker": "RXO",
-          "scan": "both",
-          "days_since_hv": 1,
-          "vars": 1.42,
-          "vars_20ema": -4.17,
-          "rs": 96.2,
-          "price": 28.54,
-          "dollar_vol": 77102460,
-          "adr_pct": 0.0529,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        }
-      ],
-      "l1": "Logistics",
-      "l2": "Freight Brokerage & Trucking",
-      "l3": null
-    },
-    {
-      "name": "Fintech & Crypto / Crypto / Bitcoin Proxy",
-      "avg_vars": 1.39,
-      "tickers": [
-        {
-          "ticker": "BNC",
-          "scan": "both",
-          "days_since_hv": 28,
-          "vars": 2.87,
-          "vars_20ema": 0.39,
-          "rs": 57.7,
-          "price": 5.85,
-          "dollar_vol": 11654501,
-          "adr_pct": 0.0841,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "tight"
-        },
-        {
-          "ticker": "DFDV",
-          "scan": "both",
-          "days_since_hv": 18,
-          "vars": -0.09,
-          "vars_20ema": -0.52,
-          "rs": 7.7,
-          "price": 4.98,
-          "dollar_vol": 14178022,
-          "adr_pct": 0.0981,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        }
-      ],
-      "l1": "Fintech & Crypto",
-      "l2": "Crypto",
-      "l3": "Bitcoin Proxy"
-    },
-    {
       "name": "AI / Software & Analytics",
-      "avg_vars": 0.85,
+      "avg_vars": 2.09,
       "tickers": [
         {
           "ticker": "MDB",
           "scan": "volspike",
-          "days_since_hv": 8,
-          "vars": 0.85,
-          "vars_20ema": 1.86,
-          "rs": 15.4,
-          "price": 360.71,
-          "dollar_vol": 1118428742,
-          "adr_pct": 0.0605,
+          "days_since_hv": 9,
+          "vars": 2.09,
+          "vars_20ema": 1.88,
+          "rs": 30.8,
+          "price": 363.03,
+          "dollar_vol": 1099547071,
+          "adr_pct": 0.0603,
           "float": null,
           "eps": null,
           "sales": null,
@@ -851,19 +801,131 @@
       "l3": null
     },
     {
-      "name": "Fintech & Crypto / Crypto / Infrastructure",
-      "avg_vars": 0.85,
+      "name": "Biotech / Oncology / General",
+      "avg_vars": 1.43,
       "tickers": [
         {
-          "ticker": "SECZ",
+          "ticker": "DNA",
+          "scan": "volspike",
+          "days_since_hv": 1,
+          "vars": 4.94,
+          "vars_20ema": -0.47,
+          "rs": 76.9,
+          "price": 11.47,
+          "dollar_vol": 37168144,
+          "adr_pct": 0.1319,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        },
+        {
+          "ticker": "PBLS",
+          "scan": "denvol",
+          "days_since_hv": 19,
+          "vars": -2.08,
+          "vars_20ema": -3.09,
+          "rs": 3.8,
+          "price": 28.82,
+          "dollar_vol": 46154660,
+          "adr_pct": 0.0907,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": null
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Oncology",
+      "l3": "General"
+    },
+    {
+      "name": "Fintech & Crypto / Crypto / Bitcoin Proxy",
+      "avg_vars": 1.42,
+      "tickers": [
+        {
+          "ticker": "BNC",
           "scan": "both",
-          "days_since_hv": 18,
-          "vars": 1.79,
-          "vars_20ema": -1.09,
-          "rs": 61.5,
-          "price": 12.7,
-          "dollar_vol": 66200109,
-          "adr_pct": 0.1265,
+          "days_since_hv": 29,
+          "vars": 3.24,
+          "vars_20ema": 0.66,
+          "rs": 50.0,
+          "price": 5.55,
+          "dollar_vol": 10668487,
+          "adr_pct": 0.0753,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "ma_up"
+        },
+        {
+          "ticker": "DFDV",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": -0.4,
+          "vars_20ema": -0.51,
+          "rs": 3.8,
+          "price": 4.71,
+          "dollar_vol": 14367329,
+          "adr_pct": 0.0956,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": null
+        }
+      ],
+      "l1": "Fintech & Crypto",
+      "l2": "Crypto",
+      "l3": "Bitcoin Proxy"
+    },
+    {
+      "name": "Defense & Aerospace / Regional & Electric Aviation",
+      "avg_vars": 1.39,
+      "tickers": [
+        {
+          "ticker": "BETA",
+          "scan": "volspike",
+          "days_since_hv": 19,
+          "vars": 1.39,
+          "vars_20ema": -0.33,
+          "rs": 3.8,
+          "price": 20.26,
+          "dollar_vol": 82344229,
+          "adr_pct": 0.0705,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
+        }
+      ],
+      "l1": "Defense & Aerospace",
+      "l2": "Regional & Electric Aviation",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Infectious Disease & Vaccines",
+      "avg_vars": 1.38,
+      "tickers": [
+        {
+          "ticker": "NVAX",
+          "scan": "both",
+          "days_since_hv": 2,
+          "vars": 1.42,
+          "vars_20ema": -0.72,
+          "rs": 92.3,
+          "price": 11.22,
+          "dollar_vol": 79452528,
+          "adr_pct": 0.0768,
           "float": null,
           "eps": null,
           "sales": null,
@@ -873,15 +935,15 @@
           "ticker_color": "green"
         },
         {
-          "ticker": "DFDV",
+          "ticker": "PCVX",
           "scan": "both",
-          "days_since_hv": 18,
-          "vars": -0.09,
-          "vars_20ema": -0.52,
-          "rs": 7.7,
-          "price": 4.98,
-          "dollar_vol": 14178022,
-          "adr_pct": 0.0981,
+          "days_since_hv": 2,
+          "vars": 1.34,
+          "vars_20ema": -3.32,
+          "rs": 96.2,
+          "price": 66.96,
+          "dollar_vol": 205096090,
+          "adr_pct": 0.0549,
           "float": null,
           "eps": null,
           "sales": null,
@@ -890,50 +952,50 @@
           "highlight": "ma_up"
         }
       ],
-      "l1": "Fintech & Crypto",
-      "l2": "Crypto",
-      "l3": "Infrastructure"
+      "l1": "Biotech",
+      "l2": "Infectious Disease & Vaccines",
+      "l3": null
     },
     {
-      "name": "Metals & Mining / Silver",
-      "avg_vars": 0.26,
+      "name": "Agriculture / Crop Protection",
+      "avg_vars": 1.21,
       "tickers": [
         {
-          "ticker": "AYA",
-          "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": 0.26,
-          "vars_20ema": 1.62,
-          "rs": 23.1,
-          "price": 27.51,
-          "dollar_vol": 36335106,
-          "adr_pct": 0.0467,
+          "ticker": "CTVA",
+          "scan": "both",
+          "days_since_hv": 2,
+          "vars": 1.21,
+          "vars_20ema": -2.98,
+          "rs": 100.0,
+          "price": 14.45,
+          "dollar_vol": 551879065,
+          "adr_pct": 0.0481,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "tight"
+          "highlight": "ma_up"
         }
       ],
-      "l1": "Metals & Mining",
-      "l2": "Silver",
+      "l1": "Agriculture",
+      "l2": "Crop Protection",
       "l3": null
     },
     {
       "name": "Defense & Aerospace / Defense Components",
-      "avg_vars": 0.23,
+      "avg_vars": 1.13,
       "tickers": [
         {
           "ticker": "ELMT",
           "scan": "denvol",
-          "days_since_hv": 22,
-          "vars": 0.23,
-          "vars_20ema": -2.36,
-          "rs": 96.2,
-          "price": 23.16,
-          "dollar_vol": 30275498,
-          "adr_pct": 0.1055,
+          "days_since_hv": 23,
+          "vars": 1.13,
+          "vars_20ema": -2.03,
+          "rs": 76.9,
+          "price": 21.62,
+          "dollar_vol": 30760238,
+          "adr_pct": 0.1062,
           "float": null,
           "eps": null,
           "sales": null,
@@ -948,18 +1010,18 @@
     },
     {
       "name": "Semiconductors / Manufacturing & Equipment",
-      "avg_vars": 0.23,
+      "avg_vars": 1.13,
       "tickers": [
         {
           "ticker": "ELMT",
           "scan": "denvol",
-          "days_since_hv": 22,
-          "vars": 0.23,
-          "vars_20ema": -2.36,
-          "rs": 96.2,
-          "price": 23.16,
-          "dollar_vol": 30275498,
-          "adr_pct": 0.1055,
+          "days_since_hv": 23,
+          "vars": 1.13,
+          "vars_20ema": -2.03,
+          "rs": 76.9,
+          "price": 21.62,
+          "dollar_vol": 30760238,
+          "adr_pct": 0.1062,
           "float": null,
           "eps": null,
           "sales": null,
@@ -973,63 +1035,19 @@
       "l3": null
     },
     {
-      "name": "Biotech / Infectious Disease & Vaccines",
-      "avg_vars": 0.21,
+      "name": "Fintech & Crypto / Crypto / Infrastructure",
+      "avg_vars": 0.92,
       "tickers": [
         {
-          "ticker": "NVAX",
+          "ticker": "SECZ",
           "scan": "both",
-          "days_since_hv": 1,
-          "vars": 0.55,
-          "vars_20ema": -0.95,
-          "rs": 96.2,
-          "price": 11.32,
-          "dollar_vol": 76936143,
-          "adr_pct": 0.0756,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up",
-          "ticker_color": "green"
-        },
-        {
-          "ticker": "PCVX",
-          "scan": "both",
-          "days_since_hv": 1,
-          "vars": -0.13,
-          "vars_20ema": -3.81,
-          "rs": 96.2,
-          "price": 66.7,
-          "dollar_vol": 169945845,
-          "adr_pct": 0.0537,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        }
-      ],
-      "l1": "Biotech",
-      "l2": "Infectious Disease & Vaccines",
-      "l3": null
-    },
-    {
-      "name": "Biotech / Oncology / General",
-      "avg_vars": 0.14,
-      "tickers": [
-        {
-          "ticker": "DNA",
-          "scan": "volspike",
-          "days_since_hv": 0,
-          "vars": 3.51,
-          "vars_20ema": -1.04,
-          "rs": 84.6,
-          "price": 12.41,
-          "dollar_vol": 33770141,
-          "adr_pct": 0.1282,
+          "days_since_hv": 19,
+          "vars": 2.24,
+          "vars_20ema": -0.77,
+          "rs": 53.8,
+          "price": 11.4,
+          "dollar_vol": 66765928,
+          "adr_pct": 0.126,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1038,15 +1056,15 @@
           "highlight": "ma_up"
         },
         {
-          "ticker": "PBLS",
-          "scan": "denvol",
-          "days_since_hv": 18,
-          "vars": -3.22,
-          "vars_20ema": -3.2,
-          "rs": 0.0,
-          "price": 28.86,
-          "dollar_vol": 45693631,
-          "adr_pct": 0.088,
+          "ticker": "DFDV",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": -0.4,
+          "vars_20ema": -0.51,
+          "rs": 3.8,
+          "price": 4.71,
+          "dollar_vol": 14367329,
+          "adr_pct": 0.0956,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1055,24 +1073,24 @@
           "highlight": null
         }
       ],
-      "l1": "Biotech",
-      "l2": "Oncology",
-      "l3": "General"
+      "l1": "Fintech & Crypto",
+      "l2": "Crypto",
+      "l3": "Infrastructure"
     },
     {
       "name": "AI / Semiconductor Equipment",
-      "avg_vars": -0.19,
+      "avg_vars": 0.86,
       "tickers": [
         {
           "ticker": "FORM",
           "scan": "volspike",
-          "days_since_hv": 1,
-          "vars": -0.19,
-          "vars_20ema": -3.49,
-          "rs": 84.6,
-          "price": 141.3,
-          "dollar_vol": 264973413,
-          "adr_pct": 0.0493,
+          "days_since_hv": 2,
+          "vars": 0.86,
+          "vars_20ema": -3.07,
+          "rs": 80.8,
+          "price": 139.8,
+          "dollar_vol": 265325570,
+          "adr_pct": 0.0483,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1086,71 +1104,19 @@
       "l3": null
     },
     {
-      "name": "Defense & Aerospace / Regional & Electric Aviation",
-      "avg_vars": -0.76,
+      "name": "Metals & Mining / Silver",
+      "avg_vars": 0.37,
       "tickers": [
         {
-          "ticker": "BETA",
+          "ticker": "AYA",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": -0.76,
-          "vars_20ema": -0.51,
-          "rs": 26.9,
-          "price": 20.9,
-          "dollar_vol": 82743574,
-          "adr_pct": 0.0716,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "Defense & Aerospace",
-      "l2": "Regional & Electric Aviation",
-      "l3": null
-    },
-    {
-      "name": "Retail (Multi-Category) / Sporting Goods",
-      "avg_vars": -0.96,
-      "tickers": [
-        {
-          "ticker": "ASO",
-          "scan": "both",
-          "days_since_hv": 27,
-          "vars": -0.96,
-          "vars_20ema": -6.26,
-          "rs": 88.5,
-          "price": 52.31,
-          "dollar_vol": 105019702,
-          "adr_pct": 0.0431,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": "ma_up"
-        }
-      ],
-      "l1": "Retail (Multi-Category)",
-      "l2": "Sporting Goods",
-      "l3": null
-    },
-    {
-      "name": "Clean Energy / Fuel Cell & Hydrogen",
-      "avg_vars": -0.97,
-      "tickers": [
-        {
-          "ticker": "BE",
-          "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": -0.97,
-          "vars_20ema": -1.88,
-          "rs": 96.2,
-          "price": 295.78,
-          "dollar_vol": 4535371434,
-          "adr_pct": 0.0627,
+          "days_since_hv": 19,
+          "vars": 0.37,
+          "vars_20ema": 1.5,
+          "rs": 0.0,
+          "price": 26.14,
+          "dollar_vol": 36360235,
+          "adr_pct": 0.0471,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1159,24 +1125,24 @@
           "highlight": "tight"
         }
       ],
-      "l1": "Clean Energy",
-      "l2": "Fuel Cell & Hydrogen",
+      "l1": "Metals & Mining",
+      "l2": "Silver",
       "l3": null
     },
     {
       "name": "Fintech & Crypto / Consumer Finance",
-      "avg_vars": -1.49,
+      "avg_vars": 0.29,
       "tickers": [
         {
           "ticker": "INTR",
           "scan": "both",
-          "days_since_hv": 1,
-          "vars": -1.49,
-          "vars_20ema": -10.48,
+          "days_since_hv": 2,
+          "vars": 0.29,
+          "vars_20ema": -9.46,
           "rs": 100.0,
-          "price": 7.03,
-          "dollar_vol": 35879598,
-          "adr_pct": 0.043,
+          "price": 7.18,
+          "dollar_vol": 40878249,
+          "adr_pct": 0.0442,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1191,18 +1157,18 @@
     },
     {
       "name": "Geographic / Latin America",
-      "avg_vars": -1.49,
+      "avg_vars": 0.29,
       "tickers": [
         {
           "ticker": "INTR",
           "scan": "both",
-          "days_since_hv": 1,
-          "vars": -1.49,
-          "vars_20ema": -10.48,
+          "days_since_hv": 2,
+          "vars": 0.29,
+          "vars_20ema": -9.46,
           "rs": 100.0,
-          "price": 7.03,
-          "dollar_vol": 35879598,
-          "adr_pct": 0.043,
+          "price": 7.18,
+          "dollar_vol": 40878249,
+          "adr_pct": 0.0442,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1216,19 +1182,19 @@
       "l3": null
     },
     {
-      "name": "Industrials / Modular Space",
-      "avg_vars": -2.09,
+      "name": "Clean Energy / Fuel Cell & Hydrogen",
+      "avg_vars": -0.55,
       "tickers": [
         {
-          "ticker": "TH",
+          "ticker": "BE",
           "scan": "volspike",
-          "days_since_hv": 27,
-          "vars": -2.09,
-          "vars_20ema": 0.34,
-          "rs": 3.8,
-          "price": 18.54,
-          "dollar_vol": 57305901,
-          "adr_pct": 0.0427,
+          "days_since_hv": 19,
+          "vars": -0.55,
+          "vars_20ema": -1.75,
+          "rs": 88.5,
+          "price": 291.29,
+          "dollar_vol": 4531228509,
+          "adr_pct": 0.0626,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1237,24 +1203,50 @@
           "highlight": "tight"
         }
       ],
-      "l1": "Industrials",
-      "l2": "Modular Space",
+      "l1": "Clean Energy",
+      "l2": "Fuel Cell & Hydrogen",
+      "l3": null
+    },
+    {
+      "name": "Biotech / Rare Disease",
+      "avg_vars": -0.79,
+      "tickers": [
+        {
+          "ticker": "PHVS",
+          "scan": "denvol",
+          "days_since_hv": 29,
+          "vars": -0.79,
+          "vars_20ema": -2.03,
+          "rs": 15.4,
+          "price": 31.68,
+          "dollar_vol": 29295042,
+          "adr_pct": 0.0478,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
+        }
+      ],
+      "l1": "Biotech",
+      "l2": "Rare Disease",
       "l3": null
     },
     {
       "name": "Software & Internet / Social & Communication",
-      "avg_vars": -2.14,
+      "avg_vars": -1.02,
       "tickers": [
         {
           "ticker": "RUM",
           "scan": "both",
-          "days_since_hv": 22,
-          "vars": -2.14,
-          "vars_20ema": -0.93,
-          "rs": 11.5,
-          "price": 7.65,
-          "dollar_vol": 50852957,
-          "adr_pct": 0.0715,
+          "days_since_hv": 23,
+          "vars": -1.02,
+          "vars_20ema": -0.94,
+          "rs": 7.7,
+          "price": 7.52,
+          "dollar_vol": 50255944,
+          "adr_pct": 0.0667,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1270,18 +1262,18 @@
     },
     {
       "name": "Software & Internet / Streaming",
-      "avg_vars": -2.14,
+      "avg_vars": -1.02,
       "tickers": [
         {
           "ticker": "RUM",
           "scan": "both",
-          "days_since_hv": 22,
-          "vars": -2.14,
-          "vars_20ema": -0.93,
-          "rs": 11.5,
-          "price": 7.65,
-          "dollar_vol": 50852957,
-          "adr_pct": 0.0715,
+          "days_since_hv": 23,
+          "vars": -1.02,
+          "vars_20ema": -0.94,
+          "rs": 7.7,
+          "price": 7.52,
+          "dollar_vol": 50255944,
+          "adr_pct": 0.0667,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1296,71 +1288,19 @@
       "l3": null
     },
     {
-      "name": "Metals & Mining / Gold",
-      "avg_vars": -2.59,
-      "tickers": [
-        {
-          "ticker": "UROY",
-          "scan": "both",
-          "days_since_hv": 18,
-          "vars": -2.59,
-          "vars_20ema": -3.7,
-          "rs": 26.9,
-          "price": 4.24,
-          "dollar_vol": 19645693,
-          "adr_pct": 0.0508,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Gold",
-      "l3": null
-    },
-    {
-      "name": "Metals & Mining / Gold Royalty",
-      "avg_vars": -2.59,
-      "tickers": [
-        {
-          "ticker": "UROY",
-          "scan": "both",
-          "days_since_hv": 18,
-          "vars": -2.59,
-          "vars_20ema": -3.7,
-          "rs": 26.9,
-          "price": 4.24,
-          "dollar_vol": 19645693,
-          "adr_pct": 0.0508,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "Metals & Mining",
-      "l2": "Gold Royalty",
-      "l3": null
-    },
-    {
       "name": "Biotech / Gene Editing",
-      "avg_vars": -2.73,
+      "avg_vars": -1.23,
       "tickers": [
         {
           "ticker": "EDIT",
           "scan": "volspike",
-          "days_since_hv": 18,
-          "vars": -2.15,
-          "vars_20ema": -4.12,
-          "rs": 30.8,
-          "price": 2.73,
-          "dollar_vol": 8777715,
-          "adr_pct": 0.068,
+          "days_since_hv": 19,
+          "vars": -0.65,
+          "vars_20ema": -3.79,
+          "rs": 38.5,
+          "price": 2.75,
+          "dollar_vol": 8678736,
+          "adr_pct": 0.0663,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1371,13 +1311,13 @@
         {
           "ticker": "SCTX",
           "scan": "denvol",
-          "days_since_hv": 18,
-          "vars": -3.32,
-          "vars_20ema": -3.04,
-          "rs": 3.8,
-          "price": 16.33,
-          "dollar_vol": 13591696,
-          "adr_pct": 0.1467,
+          "days_since_hv": 19,
+          "vars": -1.81,
+          "vars_20ema": -2.92,
+          "rs": 15.4,
+          "price": 17.57,
+          "dollar_vol": 13735825,
+          "adr_pct": 0.1492,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1391,45 +1331,73 @@
       "l3": null
     },
     {
-      "name": "Semiconductors / Specialty Foundry",
-      "avg_vars": -2.87,
+      "name": "Metals & Mining / Gold",
+      "avg_vars": -1.5,
       "tickers": [
         {
-          "ticker": "TSEM",
+          "ticker": "UROY",
           "scan": "both",
-          "days_since_hv": 18,
-          "vars": -2.87,
-          "vars_20ema": -3.29,
-          "rs": 100.0,
-          "price": 258.41,
-          "dollar_vol": 462043714,
-          "adr_pct": 0.0468,
+          "days_since_hv": 19,
+          "vars": -1.5,
+          "vars_20ema": -3.5,
+          "rs": 26.9,
+          "price": 4.19,
+          "dollar_vol": 19533513,
+          "adr_pct": 0.0505,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "ma_up"
+          "highlight": null,
+          "ticker_color": "green"
         }
       ],
-      "l1": "Semiconductors",
-      "l2": "Specialty Foundry",
+      "l1": "Metals & Mining",
+      "l2": "Gold",
+      "l3": null
+    },
+    {
+      "name": "Metals & Mining / Gold Royalty",
+      "avg_vars": -1.5,
+      "tickers": [
+        {
+          "ticker": "UROY",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": -1.5,
+          "vars_20ema": -3.5,
+          "rs": 26.9,
+          "price": 4.19,
+          "dollar_vol": 19533513,
+          "adr_pct": 0.0505,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": null,
+          "ticker_color": "green"
+        }
+      ],
+      "l1": "Metals & Mining",
+      "l2": "Gold Royalty",
       "l3": null
     },
     {
       "name": "Biotech / Ophthalmology",
-      "avg_vars": -3.52,
+      "avg_vars": -2.3,
       "tickers": [
         {
           "ticker": "KOD",
           "scan": "both",
-          "days_since_hv": 8,
-          "vars": 2.28,
-          "vars_20ema": -4.11,
-          "rs": 80.8,
-          "price": 92.34,
-          "dollar_vol": 298538773,
-          "adr_pct": 0.0989,
+          "days_since_hv": 9,
+          "vars": 3.59,
+          "vars_20ema": -3.38,
+          "rs": 73.1,
+          "price": 91.08,
+          "dollar_vol": 303395327,
+          "adr_pct": 0.0981,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1440,13 +1408,13 @@
         {
           "ticker": "IRD",
           "scan": "both",
-          "days_since_hv": 27,
-          "vars": -5.12,
-          "vars_20ema": -5.92,
-          "rs": 11.5,
-          "price": 4.38,
-          "dollar_vol": 28271083,
-          "adr_pct": 0.0938,
+          "days_since_hv": 28,
+          "vars": -3.69,
+          "vars_20ema": -5.71,
+          "rs": 15.4,
+          "price": 4.41,
+          "dollar_vol": 13114164,
+          "adr_pct": 0.082,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1457,13 +1425,13 @@
         {
           "ticker": "SRZN",
           "scan": "denvol",
-          "days_since_hv": 12,
-          "vars": -7.73,
-          "vars_20ema": -9.65,
-          "rs": 69.2,
-          "price": 26.37,
-          "dollar_vol": 31150205,
-          "adr_pct": 0.0976,
+          "days_since_hv": 13,
+          "vars": -6.8,
+          "vars_20ema": -9.38,
+          "rs": 65.4,
+          "price": 25.15,
+          "dollar_vol": 31418465,
+          "adr_pct": 0.094,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1477,45 +1445,45 @@
       "l3": null
     },
     {
-      "name": "Biotech / Rare Disease",
-      "avg_vars": -3.6,
+      "name": "Industrials / Modular Space",
+      "avg_vars": -2.38,
       "tickers": [
         {
-          "ticker": "PHVS",
-          "scan": "denvol",
+          "ticker": "TH",
+          "scan": "volspike",
           "days_since_hv": 28,
-          "vars": -3.6,
-          "vars_20ema": -2.17,
-          "rs": 3.8,
-          "price": 31.12,
-          "dollar_vol": 31446946,
-          "adr_pct": 0.0478,
+          "vars": -2.38,
+          "vars_20ema": 0.09,
+          "rs": 0.0,
+          "price": 18.26,
+          "dollar_vol": 49281712,
+          "adr_pct": 0.0428,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": "tight"
+          "highlight": null
         }
       ],
-      "l1": "Biotech",
-      "l2": "Rare Disease",
+      "l1": "Industrials",
+      "l2": "Modular Space",
       "l3": null
     },
     {
-      "name": "AI / Data Center / Power & Cooling",
-      "avg_vars": -4.52,
+      "name": "Semiconductors / Specialty Foundry",
+      "avg_vars": -3.0,
       "tickers": [
         {
-          "ticker": "FPS",
-          "scan": "volspike",
-          "days_since_hv": 21,
-          "vars": -4.52,
-          "vars_20ema": -4.76,
-          "rs": 100.0,
-          "price": 41.35,
-          "dollar_vol": 412301449,
-          "adr_pct": 0.0622,
+          "ticker": "TSEM",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": -3.0,
+          "vars_20ema": -3.26,
+          "rs": 92.3,
+          "price": 248.25,
+          "dollar_vol": 469772278,
+          "adr_pct": 0.0464,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1524,24 +1492,41 @@
           "highlight": "ma_up"
         }
       ],
-      "l1": "AI",
-      "l2": "Data Center",
-      "l3": "Power & Cooling"
+      "l1": "Semiconductors",
+      "l2": "Specialty Foundry",
+      "l3": null
     },
     {
       "name": "Biotech / Cell & Gene Therapy",
-      "avg_vars": -5.12,
+      "avg_vars": -3.4,
       "tickers": [
+        {
+          "ticker": "OBX",
+          "scan": "denvol",
+          "days_since_hv": 19,
+          "vars": -3.1,
+          "vars_20ema": -4.41,
+          "rs": 7.7,
+          "price": 13.2,
+          "dollar_vol": 11814412,
+          "adr_pct": 0.1021,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
+        },
         {
           "ticker": "IRD",
           "scan": "both",
-          "days_since_hv": 27,
-          "vars": -5.12,
-          "vars_20ema": -5.92,
-          "rs": 11.5,
-          "price": 4.38,
-          "dollar_vol": 28271083,
-          "adr_pct": 0.0938,
+          "days_since_hv": 28,
+          "vars": -3.69,
+          "vars_20ema": -5.71,
+          "rs": 15.4,
+          "price": 4.41,
+          "dollar_vol": 13114164,
+          "adr_pct": 0.082,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1555,25 +1540,51 @@
       "l3": null
     },
     {
-      "name": "AI / Data Center / Cloud & Hyperscalers",
-      "avg_vars": -6.02,
+      "name": "AI / Data Center / Power & Cooling",
+      "avg_vars": -5.18,
       "tickers": [
         {
-          "ticker": "CSQR",
-          "scan": "both",
-          "days_since_hv": 18,
-          "vars": -6.02,
-          "vars_20ema": -8.03,
-          "rs": 42.3,
-          "price": 18.04,
-          "dollar_vol": 34372330,
-          "adr_pct": 0.055,
+          "ticker": "FPS",
+          "scan": "volspike",
+          "days_since_hv": 22,
+          "vars": -5.18,
+          "vars_20ema": -4.8,
+          "rs": 92.3,
+          "price": 40.65,
+          "dollar_vol": 419966888,
+          "adr_pct": 0.0624,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": null
+          "highlight": "ma_up"
+        }
+      ],
+      "l1": "AI",
+      "l2": "Data Center",
+      "l3": "Power & Cooling"
+    },
+    {
+      "name": "AI / Data Center / Cloud & Hyperscalers",
+      "avg_vars": -5.32,
+      "tickers": [
+        {
+          "ticker": "CSQR",
+          "scan": "both",
+          "days_since_hv": 19,
+          "vars": -5.32,
+          "vars_20ema": -7.77,
+          "rs": 30.8,
+          "price": 17.65,
+          "dollar_vol": 35402609,
+          "adr_pct": 0.0538,
+          "float": null,
+          "eps": null,
+          "sales": null,
+          "inst": null,
+          "short": null,
+          "highlight": "tight"
         }
       ],
       "l1": "AI",
@@ -1581,71 +1592,19 @@
       "l3": "Cloud & Hyperscalers"
     },
     {
-      "name": "AI / Data Center / Networking & Connectivity",
-      "avg_vars": -6.05,
-      "tickers": [
-        {
-          "ticker": "JBL",
-          "scan": "volspike",
-          "days_since_hv": 6,
-          "vars": -6.05,
-          "vars_20ema": -6.33,
-          "rs": 53.8,
-          "price": 309.19,
-          "dollar_vol": 457559457,
-          "adr_pct": 0.0401,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "AI",
-      "l2": "Data Center",
-      "l3": "Networking & Connectivity"
-    },
-    {
-      "name": "Industrials / Electronic Manufacturing",
-      "avg_vars": -6.05,
-      "tickers": [
-        {
-          "ticker": "JBL",
-          "scan": "volspike",
-          "days_since_hv": 6,
-          "vars": -6.05,
-          "vars_20ema": -6.33,
-          "rs": 53.8,
-          "price": 309.19,
-          "dollar_vol": 457559457,
-          "adr_pct": 0.0401,
-          "float": null,
-          "eps": null,
-          "sales": null,
-          "inst": null,
-          "short": null,
-          "highlight": null
-        }
-      ],
-      "l1": "Industrials",
-      "l2": "Electronic Manufacturing",
-      "l3": null
-    },
-    {
       "name": "Industrials / Heavy Machinery & Components",
-      "avg_vars": -6.56,
+      "avg_vars": -6.7,
       "tickers": [
         {
           "ticker": "FPS",
           "scan": "volspike",
-          "days_since_hv": 21,
-          "vars": -4.52,
-          "vars_20ema": -4.76,
-          "rs": 100.0,
-          "price": 41.35,
-          "dollar_vol": 412301449,
-          "adr_pct": 0.0622,
+          "days_since_hv": 22,
+          "vars": -5.18,
+          "vars_20ema": -4.8,
+          "rs": 92.3,
+          "price": 40.65,
+          "dollar_vol": 419966888,
+          "adr_pct": 0.0624,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1656,19 +1615,20 @@
         {
           "ticker": "INIO",
           "scan": "volspike",
-          "days_since_hv": 19,
-          "vars": -8.61,
-          "vars_20ema": -11.18,
-          "rs": 88.5,
-          "price": 21.35,
-          "dollar_vol": 118965121,
-          "adr_pct": 0.0688,
+          "days_since_hv": 20,
+          "vars": -8.21,
+          "vars_20ema": -10.89,
+          "rs": 57.7,
+          "price": 20.34,
+          "dollar_vol": 118863877,
+          "adr_pct": 0.0681,
           "float": null,
           "eps": null,
           "sales": null,
           "inst": null,
           "short": null,
-          "highlight": null
+          "highlight": null,
+          "ticker_color": "green"
         }
       ],
       "l1": "Industrials",
@@ -1677,18 +1637,18 @@
     },
     {
       "name": "Clean Energy / Grid Infrastructure",
-      "avg_vars": -7.49,
+      "avg_vars": -7.41,
       "tickers": [
         {
           "ticker": "GNRC",
           "scan": "both",
-          "days_since_hv": 19,
-          "vars": -7.49,
-          "vars_20ema": -8.38,
-          "rs": 100.0,
-          "price": 223.62,
-          "dollar_vol": 301923442,
-          "adr_pct": 0.0424,
+          "days_since_hv": 20,
+          "vars": -7.41,
+          "vars_20ema": -8.29,
+          "rs": 96.2,
+          "price": 221.34,
+          "dollar_vol": 306311724,
+          "adr_pct": 0.0425,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1703,18 +1663,18 @@
     },
     {
       "name": "Power & Utilities / Power Generation",
-      "avg_vars": -7.49,
+      "avg_vars": -7.41,
       "tickers": [
         {
           "ticker": "GNRC",
           "scan": "both",
-          "days_since_hv": 19,
-          "vars": -7.49,
-          "vars_20ema": -8.38,
-          "rs": 100.0,
-          "price": 223.62,
-          "dollar_vol": 301923442,
-          "adr_pct": 0.0424,
+          "days_since_hv": 20,
+          "vars": -7.41,
+          "vars_20ema": -8.29,
+          "rs": 96.2,
+          "price": 221.34,
+          "dollar_vol": 306311724,
+          "adr_pct": 0.0425,
           "float": null,
           "eps": null,
           "sales": null,
@@ -1778,13 +1738,19 @@
         "id": "Biotech / Genomics & Diagnostics Platforms",
         "kind": "leaf",
         "parent": "Biotech",
-        "ticker_count": 6
+        "ticker_count": 7
       },
       {
         "id": "AI / Data Center / Memory",
         "kind": "leaf",
         "parent": "AI",
         "ticker_count": 1
+      },
+      {
+        "id": "Biotech / Drug Discovery Platform",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 3
       },
       {
         "id": "Corrections & Detention",
@@ -1795,12 +1761,6 @@
         "kind": "leaf",
         "parent": "Corrections & Detention",
         "ticker_count": 1
-      },
-      {
-        "id": "Biotech / Drug Discovery Platform",
-        "kind": "leaf",
-        "parent": "Biotech",
-        "ticker_count": 3
       },
       {
         "id": "Biotech / Drug Delivery",
@@ -1815,16 +1775,6 @@
         "ticker_count": 1
       },
       {
-        "id": "Consumer",
-        "kind": "l1"
-      },
-      {
-        "id": "Consumer / Restaurants / Casual Dining",
-        "kind": "leaf",
-        "parent": "Consumer",
-        "ticker_count": 1
-      },
-      {
         "id": "Software & Internet",
         "kind": "l1"
       },
@@ -1833,38 +1783,6 @@
         "kind": "leaf",
         "parent": "Software & Internet",
         "ticker_count": 3
-      },
-      {
-        "id": "Fintech & Crypto / Wealth & Asset Management",
-        "kind": "leaf",
-        "parent": "Fintech & Crypto",
-        "ticker_count": 2
-      },
-      {
-        "id": "Software & Internet / Data & Analytics",
-        "kind": "leaf",
-        "parent": "Software & Internet",
-        "ticker_count": 2
-      },
-      {
-        "id": "Retail (Multi-Category)",
-        "kind": "l1"
-      },
-      {
-        "id": "Retail (Multi-Category) / Specialty Apparel",
-        "kind": "leaf",
-        "parent": "Retail (Multi-Category)",
-        "ticker_count": 1
-      },
-      {
-        "id": "Telecom",
-        "kind": "l1"
-      },
-      {
-        "id": "Telecom / RF Filters",
-        "kind": "leaf",
-        "parent": "Telecom",
-        "ticker_count": 1
       },
       {
         "id": "AI / Data Center / Chips & Processors",
@@ -1879,9 +1797,19 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Oncology / Antibodies",
+        "id": "Consumer",
+        "kind": "l1"
+      },
+      {
+        "id": "Consumer / Restaurants / Casual Dining",
         "kind": "leaf",
-        "parent": "Biotech",
+        "parent": "Consumer",
+        "ticker_count": 1
+      },
+      {
+        "id": "Fintech & Crypto / Wealth & Asset Management",
+        "kind": "leaf",
+        "parent": "Fintech & Crypto",
         "ticker_count": 2
       },
       {
@@ -1895,9 +1823,25 @@
         "ticker_count": 1
       },
       {
-        "id": "Fintech & Crypto / Crypto / Bitcoin Proxy",
+        "id": "Telecom",
+        "kind": "l1"
+      },
+      {
+        "id": "Telecom / RF Filters",
         "kind": "leaf",
-        "parent": "Fintech & Crypto",
+        "parent": "Telecom",
+        "ticker_count": 1
+      },
+      {
+        "id": "Software & Internet / Data & Analytics",
+        "kind": "leaf",
+        "parent": "Software & Internet",
+        "ticker_count": 2
+      },
+      {
+        "id": "Biotech / Oncology / Antibodies",
+        "kind": "leaf",
+        "parent": "Biotech",
         "ticker_count": 2
       },
       {
@@ -1907,24 +1851,42 @@
         "ticker_count": 1
       },
       {
-        "id": "Fintech & Crypto / Crypto / Infrastructure",
+        "id": "Biotech / Oncology / General",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 2
+      },
+      {
+        "id": "Fintech & Crypto / Crypto / Bitcoin Proxy",
         "kind": "leaf",
         "parent": "Fintech & Crypto",
         "ticker_count": 2
       },
       {
-        "id": "Metals & Mining",
+        "id": "Defense & Aerospace",
         "kind": "l1"
       },
       {
-        "id": "Metals & Mining / Silver",
+        "id": "Defense & Aerospace / Regional & Electric Aviation",
         "kind": "leaf",
-        "parent": "Metals & Mining",
+        "parent": "Defense & Aerospace",
         "ticker_count": 1
       },
       {
-        "id": "Defense & Aerospace",
+        "id": "Biotech / Infectious Disease & Vaccines",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 2
+      },
+      {
+        "id": "Agriculture",
         "kind": "l1"
+      },
+      {
+        "id": "Agriculture / Crop Protection",
+        "kind": "leaf",
+        "parent": "Agriculture",
+        "ticker_count": 1
       },
       {
         "id": "Defense & Aerospace / Defense Components",
@@ -1943,15 +1905,9 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Infectious Disease & Vaccines",
+        "id": "Fintech & Crypto / Crypto / Infrastructure",
         "kind": "leaf",
-        "parent": "Biotech",
-        "ticker_count": 2
-      },
-      {
-        "id": "Biotech / Oncology / General",
-        "kind": "leaf",
-        "parent": "Biotech",
+        "parent": "Fintech & Crypto",
         "ticker_count": 2
       },
       {
@@ -1961,25 +1917,13 @@
         "ticker_count": 1
       },
       {
-        "id": "Defense & Aerospace / Regional & Electric Aviation",
-        "kind": "leaf",
-        "parent": "Defense & Aerospace",
-        "ticker_count": 1
-      },
-      {
-        "id": "Retail (Multi-Category) / Sporting Goods",
-        "kind": "leaf",
-        "parent": "Retail (Multi-Category)",
-        "ticker_count": 1
-      },
-      {
-        "id": "Clean Energy",
+        "id": "Metals & Mining",
         "kind": "l1"
       },
       {
-        "id": "Clean Energy / Fuel Cell & Hydrogen",
+        "id": "Metals & Mining / Silver",
         "kind": "leaf",
-        "parent": "Clean Energy",
+        "parent": "Metals & Mining",
         "ticker_count": 1
       },
       {
@@ -1999,13 +1943,19 @@
         "ticker_count": 1
       },
       {
-        "id": "Industrials",
+        "id": "Clean Energy",
         "kind": "l1"
       },
       {
-        "id": "Industrials / Modular Space",
+        "id": "Clean Energy / Fuel Cell & Hydrogen",
         "kind": "leaf",
-        "parent": "Industrials",
+        "parent": "Clean Energy",
+        "ticker_count": 1
+      },
+      {
+        "id": "Biotech / Rare Disease",
+        "kind": "leaf",
+        "parent": "Biotech",
         "ticker_count": 1
       },
       {
@@ -2021,6 +1971,12 @@
         "ticker_count": 1
       },
       {
+        "id": "Biotech / Gene Editing",
+        "kind": "leaf",
+        "parent": "Biotech",
+        "ticker_count": 2
+      },
+      {
         "id": "Metals & Mining / Gold",
         "kind": "leaf",
         "parent": "Metals & Mining",
@@ -2033,10 +1989,20 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Gene Editing",
+        "id": "Biotech / Ophthalmology",
         "kind": "leaf",
         "parent": "Biotech",
-        "ticker_count": 2
+        "ticker_count": 3
+      },
+      {
+        "id": "Industrials",
+        "kind": "l1"
+      },
+      {
+        "id": "Industrials / Modular Space",
+        "kind": "leaf",
+        "parent": "Industrials",
+        "ticker_count": 1
       },
       {
         "id": "Semiconductors / Specialty Foundry",
@@ -2045,16 +2011,10 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Ophthalmology",
+        "id": "Biotech / Cell & Gene Therapy",
         "kind": "leaf",
         "parent": "Biotech",
-        "ticker_count": 3
-      },
-      {
-        "id": "Biotech / Rare Disease",
-        "kind": "leaf",
-        "parent": "Biotech",
-        "ticker_count": 1
+        "ticker_count": 2
       },
       {
         "id": "AI / Data Center / Power & Cooling",
@@ -2063,27 +2023,9 @@
         "ticker_count": 1
       },
       {
-        "id": "Biotech / Cell & Gene Therapy",
-        "kind": "leaf",
-        "parent": "Biotech",
-        "ticker_count": 1
-      },
-      {
         "id": "AI / Data Center / Cloud & Hyperscalers",
         "kind": "leaf",
         "parent": "AI",
-        "ticker_count": 1
-      },
-      {
-        "id": "AI / Data Center / Networking & Connectivity",
-        "kind": "leaf",
-        "parent": "AI",
-        "ticker_count": 1
-      },
-      {
-        "id": "Industrials / Electronic Manufacturing",
-        "kind": "leaf",
-        "parent": "Industrials",
         "ticker_count": 1
       },
       {
@@ -2141,13 +2083,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Corrections & Detention / Private Prisons",
-        "target": "Corrections & Detention",
+        "source": "Biotech / Drug Discovery Platform",
+        "target": "Biotech",
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Drug Discovery Platform",
-        "target": "Biotech",
+        "source": "Corrections & Detention / Private Prisons",
+        "target": "Corrections & Detention",
         "kind": "is_a"
       },
       {
@@ -2161,33 +2103,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Consumer / Restaurants / Casual Dining",
-        "target": "Consumer",
-        "kind": "is_a"
-      },
-      {
         "source": "Software & Internet / SaaS & Vertical",
         "target": "Software & Internet",
-        "kind": "is_a"
-      },
-      {
-        "source": "Fintech & Crypto / Wealth & Asset Management",
-        "target": "Fintech & Crypto",
-        "kind": "is_a"
-      },
-      {
-        "source": "Software & Internet / Data & Analytics",
-        "target": "Software & Internet",
-        "kind": "is_a"
-      },
-      {
-        "source": "Retail (Multi-Category) / Specialty Apparel",
-        "target": "Retail (Multi-Category)",
-        "kind": "is_a"
-      },
-      {
-        "source": "Telecom / RF Filters",
-        "target": "Telecom",
         "kind": "is_a"
       },
       {
@@ -2201,8 +2118,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Oncology / Antibodies",
-        "target": "Biotech",
+        "source": "Consumer / Restaurants / Casual Dining",
+        "target": "Consumer",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Wealth & Asset Management",
+        "target": "Fintech & Crypto",
         "kind": "is_a"
       },
       {
@@ -2211,8 +2133,18 @@
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Crypto / Bitcoin Proxy",
-        "target": "Fintech & Crypto",
+        "source": "Telecom / RF Filters",
+        "target": "Telecom",
+        "kind": "is_a"
+      },
+      {
+        "source": "Software & Internet / Data & Analytics",
+        "target": "Software & Internet",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Oncology / Antibodies",
+        "target": "Biotech",
         "kind": "is_a"
       },
       {
@@ -2221,13 +2153,28 @@
         "kind": "is_a"
       },
       {
-        "source": "Fintech & Crypto / Crypto / Infrastructure",
+        "source": "Biotech / Oncology / General",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Fintech & Crypto / Crypto / Bitcoin Proxy",
         "target": "Fintech & Crypto",
         "kind": "is_a"
       },
       {
-        "source": "Metals & Mining / Silver",
-        "target": "Metals & Mining",
+        "source": "Defense & Aerospace / Regional & Electric Aviation",
+        "target": "Defense & Aerospace",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Infectious Disease & Vaccines",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Agriculture / Crop Protection",
+        "target": "Agriculture",
         "kind": "is_a"
       },
       {
@@ -2241,13 +2188,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Infectious Disease & Vaccines",
-        "target": "Biotech",
-        "kind": "is_a"
-      },
-      {
-        "source": "Biotech / Oncology / General",
-        "target": "Biotech",
+        "source": "Fintech & Crypto / Crypto / Infrastructure",
+        "target": "Fintech & Crypto",
         "kind": "is_a"
       },
       {
@@ -2256,18 +2198,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Defense & Aerospace / Regional & Electric Aviation",
-        "target": "Defense & Aerospace",
-        "kind": "is_a"
-      },
-      {
-        "source": "Retail (Multi-Category) / Sporting Goods",
-        "target": "Retail (Multi-Category)",
-        "kind": "is_a"
-      },
-      {
-        "source": "Clean Energy / Fuel Cell & Hydrogen",
-        "target": "Clean Energy",
+        "source": "Metals & Mining / Silver",
+        "target": "Metals & Mining",
         "kind": "is_a"
       },
       {
@@ -2281,8 +2213,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Industrials / Modular Space",
-        "target": "Industrials",
+        "source": "Clean Energy / Fuel Cell & Hydrogen",
+        "target": "Clean Energy",
+        "kind": "is_a"
+      },
+      {
+        "source": "Biotech / Rare Disease",
+        "target": "Biotech",
         "kind": "is_a"
       },
       {
@@ -2296,6 +2233,11 @@
         "kind": "is_a"
       },
       {
+        "source": "Biotech / Gene Editing",
+        "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
         "source": "Metals & Mining / Gold",
         "target": "Metals & Mining",
         "kind": "is_a"
@@ -2306,8 +2248,13 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Gene Editing",
+        "source": "Biotech / Ophthalmology",
         "target": "Biotech",
+        "kind": "is_a"
+      },
+      {
+        "source": "Industrials / Modular Space",
+        "target": "Industrials",
         "kind": "is_a"
       },
       {
@@ -2316,12 +2263,7 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Ophthalmology",
-        "target": "Biotech",
-        "kind": "is_a"
-      },
-      {
-        "source": "Biotech / Rare Disease",
+        "source": "Biotech / Cell & Gene Therapy",
         "target": "Biotech",
         "kind": "is_a"
       },
@@ -2331,23 +2273,8 @@
         "kind": "is_a"
       },
       {
-        "source": "Biotech / Cell & Gene Therapy",
-        "target": "Biotech",
-        "kind": "is_a"
-      },
-      {
         "source": "AI / Data Center / Cloud & Hyperscalers",
         "target": "AI",
-        "kind": "is_a"
-      },
-      {
-        "source": "AI / Data Center / Networking & Connectivity",
-        "target": "AI",
-        "kind": "is_a"
-      },
-      {
-        "source": "Industrials / Electronic Manufacturing",
-        "target": "Industrials",
         "kind": "is_a"
       },
       {

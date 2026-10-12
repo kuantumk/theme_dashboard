@@ -133,15 +133,6 @@ class VarsL1GroupingTests(unittest.TestCase):
         members = [t['ticker'] for lf in cyber['leaves'] for t in lf['tickers']]
         self.assertEqual(members.count('NET'), 2)  # still shown in both leaf tables
 
-    def test_network_stays_leaf_level_for_rendered_l1s_only(self):
-        nodes = {(n['id'], n['kind']) for n in self.snap['network']['nodes']}
-        self.assertIn(('Cybersecurity', 'l1'), nodes)
-        self.assertIn(('Cybersecurity / Endpoint', 'leaf'), nodes)
-        self.assertIn(('AI / Data Center / Chips & Processors', 'leaf'), nodes)
-        self.assertNotIn(('Space / Launch', 'leaf'), nodes)
-        edges = {(e['source'], e['target']) for e in self.snap['network']['edges']}
-        self.assertIn(('Cybersecurity / Endpoint', 'Cybersecurity'), edges)
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -52,47 +52,6 @@ def _attach_hierarchy(themes_list):
     return themes_list
 
 
-def _build_network(themes_list):
-    """Build {nodes, edges} for the Cytoscape network visualization.
-
-    - One ``l1`` node per distinct L1 narrative (hub).
-    - One ``leaf`` node per theme path (the existing theme nodes).
-    - One ``is_a`` edge from each leaf to its L1 hub.
-
-    L1 attribution uses the defensive :func:`resolve_l1` resolver so that
-    legacy or partially-corrupted theme labels still connect to the correct
-    hub. Shared-ticker edges between leaves are still computed in the frontend.
-
-    Degenerate bare-L1 entries — a theme named just ``"Space"`` while proper
-    L2 children like ``"Space / Launch"`` also exist in the list — are
-    collapsed into the hub instead of being emitted as a duplicate leaf next
-    to the L1 hexagon. Matching guard in ``docs/app.js``.
-    """
-    l1s_with_children = {
-        split_path(e.get('name') or '')[0]
-        for e in themes_list
-        if PATH_SEP in (e.get('name') or '')
-    }
-    l1_seen = set()
-    nodes = []
-    edges = []
-    for entry in themes_list:
-        name = entry.get('name')
-        l1 = entry.get('l1') or resolve_l1(name) or split_path(name)[0]
-        if l1 not in l1_seen:
-            l1_seen.add(l1)
-            nodes.append({'id': l1, 'kind': 'l1'})
-        if name == l1 and l1 in l1s_with_children:
-            continue
-        nodes.append({
-            'id': name,
-            'kind': 'leaf',
-            'parent': l1,
-            'ticker_count': len(entry.get('tickers', [])),
-        })
-        if name != l1:
-            edges.append({'source': name, 'target': l1, 'kind': 'is_a'})
-    return {'nodes': nodes, 'edges': edges}
 VARS_ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "vars"
 
 # Google Sheets
@@ -1622,7 +1581,8 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     return {
         'report_date': csv_date,
         'themes': themes_list,
-        'network': _build_network(themes_list),
+        'zone_map': build_zone_map(
+            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
     }
 
 
@@ -1695,8 +1655,8 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
     then L1-avg (vars - vars_20ema) acceleration desc. Leaves within an
     L1 sort by avg VARS desc; tickers within a leaf by VARS desc. An
     L1 is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
-    has >= 3 members. The `network` payload stays leaf-level so the viz is
-    unchanged. Returns the JSON dict or None if the CSV is empty. Pure function.
+    has >= 3 members. `zone_map` covers the tickers the tab renders.
+    Returns the JSON dict or None if the CSV is empty. Pure function.
 
     `newest_session` gates the highlight ladder's short rung, as in
     `_build_momentum_136_snapshot`.
@@ -1820,13 +1780,13 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
 
     l1_list.sort(key=lambda grp: (-grp['score'], -grp['accel'], grp['name']))
 
-    # Network stays leaf-level (leaves of rendered L1 sections only) — viz unchanged.
-    shown_leaves = [leaf for grp in l1_list for leaf in grp['leaves']]
+    # The zone map covers exactly the tickers this tab renders.
+    rendered = [td for grp in l1_list for leaf in grp['leaves'] for td in leaf['tickers']]
 
     return {
         'report_date': csv_date,
         'themes': l1_list,
-        'network': _build_network(shown_leaves),
+        'zone_map': build_zone_map(rendered, _load_zone_master(csv_date), ticker_themes),
     }
 
 
@@ -2528,7 +2488,8 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     return {
         'report_date': csv_date,
         'themes': themes_list,
-        'network': _build_network(themes_list),
+        'zone_map': build_zone_map(
+            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
     }
 
 

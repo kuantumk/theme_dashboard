@@ -1350,6 +1350,174 @@ def _highlight_from_row(row, short_interest=None):
     )
 
 
+# ── Zone map (the four Viz tabs) ────────────────────────────────────────────
+#
+# Each ticker sits at (distance from the daily EMA20, distance from the weekly
+# EMA20), both in daily ATR14. The server decides every zone and state; the
+# browser only draws (`renderZoneMap` in docs/app.js, whose ZONE_RULES mirror
+# is pinned to the `zone_map:` config block).
+#
+# ⛔ The distances read the session's MASTER parquet, unfilled. The screener
+# parquets are saved from a frame that run_screener.py loads with
+# `.fillna(0)`, so a screener row holds `ema20_w = 0` where the master holds
+# NaN. A zero-filled weekly EMA gives `close / atr14`, a large positive
+# number, and the name plots far up the extended zone with nothing on screen
+# to show it.
+
+ZONE_MAP_DEFAULTS = {
+    'min_avg_dollar_vol': 100_000_000,
+    'min_adr_pct': 0.04,
+    'top_leaves': 20,
+    'band_low': -0.5,
+    'band_high': 1.0,
+    'weekly_low': 0.0,
+    'weekly_high': 4.0,
+    'x_range': [-2.0, 5.0],
+    'y_range': [-4.0, 8.0],
+}
+
+#: The seven states, best first. docs/app.js ZONE_STATES lists the same ids in
+#: the same order (pinned by tests/test_dashboard_zone_map_markup.py).
+ZONE_STATES = ('buy_area', 'buy_stretched', 'above', 'extended',
+               'under_daily', 'weekly_broken', 'under_both')
+
+#: Every (daily, weekly) cell maps to exactly one state.
+_ZONE_STATE_BY_CELL = {
+    ('band', 'normal'): 'buy_area',
+    ('band', 'extended'): 'buy_stretched',
+    ('above', 'normal'): 'above',
+    ('above', 'extended'): 'extended',
+    ('under', 'normal'): 'under_daily',
+    ('under', 'extended'): 'under_daily',
+    ('band', 'below'): 'weekly_broken',
+    ('above', 'below'): 'weekly_broken',
+    ('under', 'below'): 'under_both',
+}
+
+ZONE_MASTER_COLUMNS = ('close', 'ema20', 'ema20_w', 'atr14', 'tight_range', 'tight_len')
+ZONE_HIDDEN_LEAVES = {'Uncategorized', 'Singleton'}
+
+
+def zone_map_config():
+    """The `zone_map:` config block, with the defaults filling any gap."""
+    cfg = CONFIG.get('zone_map') or {}
+    return {key: cfg.get(key, default) for key, default in ZONE_MAP_DEFAULTS.items()}
+
+
+def zone_distance(close, ma, atr):
+    """``(close - ma) / atr`` to 2 decimals, or None.
+
+    A missing, non-finite or non-positive input returns None. A zero ATR
+    must not become an infinite distance, and a zero average is a filled
+    absence, not a price.
+    """
+    close, ma, atr = _finite(close), _finite(ma), _finite(atr)
+    if close is None or ma is None or atr is None:
+        return None
+    if close <= 0 or ma <= 0 or atr <= 0:
+        return None
+    return round((close - ma) / atr, 2)
+
+
+def classify_zone(d_daily, d_weekly, cfg):
+    """Return ``(zone_daily, zone_weekly, state)``. All four limits are inclusive."""
+    if d_daily < cfg['band_low']:
+        daily = 'under'
+    elif d_daily > cfg['band_high']:
+        daily = 'above'
+    else:
+        daily = 'band'
+    if d_weekly < cfg['weekly_low']:
+        weekly = 'below'
+    elif d_weekly > cfg['weekly_high']:
+        weekly = 'extended'
+    else:
+        weekly = 'normal'
+    return daily, weekly, _ZONE_STATE_BY_CELL[(daily, weekly)]
+
+
+def _zone_flag(value):
+    """True only for a real set flag. `bool(float('nan'))` is True."""
+    number = _finite(value)
+    return number is not None and number != 0
+
+
+def _load_zone_master(date_str):
+    """The session's master parquet, UNFILLED, or None when it is absent."""
+    if not date_str:
+        return None
+    path = SCREENING_OUTPUT_DIR / 'master' / f'master_{date_str}.parquet'
+    if not path.exists():
+        return None
+    return su.load_df_from_parquet(path)
+
+
+def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
+    """Build one tab's `zone_map` block from its ticker rows.
+
+    `rows` are the tab's payload ticker dicts. The floors read their
+    `dollar_vol` and `adr_pct`; the display reads `vars`, `rs`,
+    `highlight` and `ticker_color`. The distances and the tight flag read
+    `master_df`, which must be the session's unfilled master frame.
+
+    A missing liquidity metric FAILS the floor. The floor is a universe gate,
+    like `si_gate`, not a view lens like the V/A cutoffs, so an unknown must
+    not pass it.
+
+    Returns None when the frame is absent or predates `ema20_w`: an empty map
+    would read as a quiet market. Every name left off is counted.
+    """
+    cfg = cfg or zone_map_config()
+    if master_df is None or 'ema20_w' not in master_df.columns:
+        return None
+    bars = _bars_by_ticker(master_df, ZONE_MASTER_COLUMNS)
+    counts = {'n_candidates': 0, 'n_floor_dropped': 0, 'n_no_weekly': 0, 'n_no_daily': 0}
+    seen = set()
+    out = []
+    for row in rows:
+        ticker = str(row.get('ticker') or '').upper()
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        counts['n_candidates'] += 1
+        dollar_vol = _finite(row.get('dollar_vol'))
+        adr = _finite(row.get('adr_pct'))
+        if (dollar_vol is None or adr is None
+                or dollar_vol < cfg['min_avg_dollar_vol'] or adr < cfg['min_adr_pct']):
+            counts['n_floor_dropped'] += 1
+            continue
+        bar = bars.get(ticker) or {}
+        if _finite(bar.get('ema20_w')) is None:
+            counts['n_no_weekly'] += 1
+            continue
+        d_daily = zone_distance(bar.get('close'), bar.get('ema20'), bar.get('atr14'))
+        d_weekly = zone_distance(bar.get('close'), bar.get('ema20_w'), bar.get('atr14'))
+        if d_daily is None or d_weekly is None:
+            counts['n_no_daily'] += 1
+            continue
+        zone_daily, zone_weekly, state = classify_zone(d_daily, d_weekly, cfg)
+        tight = _zone_flag(bar.get('tight_range'))
+        out.append({
+            'ticker': ticker,
+            'd_daily': d_daily,
+            'd_weekly': d_weekly,
+            'zone_daily': zone_daily,
+            'zone_weekly': zone_weekly,
+            'state': state,
+            'vars': _round_or_none(row.get('vars'), 2),
+            'rs': _round_or_none(row.get('rs'), 1),
+            'tight': tight,
+            'tight_len': _int_or_none(bar.get('tight_len')) if tight else None,
+            'highlight': row.get('highlight'),
+            'ticker_color': row.get('ticker_color'),
+            'leaves': [p for p in (leaves_by_ticker.get(ticker) or [])
+                       if p not in ZONE_HIDDEN_LEAVES],
+        })
+    out.sort(key=lambda t: t['ticker'])
+    params = {key: cfg[key] for key in ZONE_MAP_DEFAULTS}
+    return {'params': params, **counts, 'tickers': out}
+
+
 def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     """Build a single momentum_136 snapshot dict from one screener CSV.
 

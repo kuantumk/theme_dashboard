@@ -96,6 +96,24 @@ vars_tab:
   top_k_vars: 5                 # L1 score = mean of top-K pooled member VARS
   hot_rs_threshold: 70.0        # L1 hot flag: avg member RS >= this and n >= 3
 
+# Zone map — the four Viz tabs (Theme, VARS, Momentum, Volume). Each ticker is
+# plotted by (close - daily EMA20) / ATR14 across and (close - weekly EMA20) /
+# ATR14 up. The server assigns every zone and state; docs/app.js ZONE_RULES
+# mirrors the limits (pinned by tests/test_dashboard_zone_map_markup.py).
+# The limits come from a reference chart. No forward return has been measured.
+zone_map:
+  min_avg_dollar_vol: 100000000   # 20-day avg dollar volume floor
+  min_adr_pct: 0.04               # 20-day ADR floor, as a fraction (0.04 == 4%)
+  top_leaves: 20                  # Theme Viz universe: members of the top N radar leaves
+  weekly_ema_span: 20
+  weekly_min_weeks: 20            # completed weeks before ema20_w has a value
+  band_low: -0.5                  # daily band, in ATR14
+  band_high: 1.0
+  weekly_low: 0.0                 # weekly zones, in ATR14
+  weekly_high: 4.0
+  x_range: [-2.0, 5.0]            # fixed plot window, in ATR14
+  y_range: [-4.0, 8.0]
+
 # SI dashboard tab — heavily shorted stocks that have already sold off,
 # clustered under taxonomy L1 sections. One Finviz Ownership screener call
 # supplies short interest (src/data_collection/fetch_short_interest.py); the

@@ -56,6 +56,40 @@ def compute_sma50_full(close):
     return close.rolling(window=50, min_periods=50).mean()
 
 
+def compute_weekly_ema(close, span=20, min_weeks=20):
+    """Weekly EMA with a live weekly bar, as a daily series.
+
+    Each bar groups into its week (`W-FRI`). The EMA runs over the last close
+    of each COMPLETED week, then the bar's own close stands in for the
+    current week: ``a * close + (1 - a) * ema[previous week]``. That is the
+    value a TradingView weekly chart shows mid-week, and on the last bar of a
+    week it equals that week's EMA.
+
+    No look-ahead: a bar reads only completed weeks and its own close.
+
+    Before `min_weeks` completed weeks exist the value is NaN. A listing
+    younger than that has no weekly EMA, and the zone map leaves it off.
+    """
+    close = pd.to_numeric(close, errors='coerce')
+    week = close.index.to_period('W-FRI')
+    weekly_close = close.groupby(week).last()
+    ema = weekly_close.ewm(span=span, adjust=False).mean()
+    completed = pd.Series(np.arange(len(weekly_close)), index=weekly_close.index)
+    prev = ema.shift(1).where(completed >= min_weeks)
+    a = 2.0 / (span + 1)
+    prev_daily = prev.reindex(week).to_numpy()
+    return pd.Series(a * close.to_numpy() + (1 - a) * prev_daily, index=close.index)
+
+
+def weekly_ema_config():
+    """The weekly-EMA tunables from the `zone_map:` config block."""
+    cfg = CONFIG.get('zone_map') or {}
+    return {
+        'span': int(cfg.get('weekly_ema_span', 20)),
+        'min_weeks': int(cfg.get('weekly_min_weeks', 20)),
+    }
+
+
 def compute_inside_day(open_, high, low, close):
     """Return the inside-day flag: candle engulfed OR body engulfed.
 
@@ -565,6 +599,9 @@ def calculate_technical_indicators():
     # defaults so tests pin behaviour without reaching into config.
     _tight_cfg = tight_range_config()
 
+    # Weekly-EMA tunables for the zone map, read once.
+    _weekly_cfg = weekly_ema_config()
+
     for ticker in tqdm(daily_tickers, desc="Calculating indicators"):
         daily = daily_price[ticker].dropna()
 
@@ -574,6 +611,10 @@ def calculate_technical_indicators():
 
             # EMA10, EMA20
             daily['ema10'], daily['ema20'] = compute_ema_pair(daily['close'])
+
+            # Weekly EMA20 for the zone map. See compute_weekly_ema for the
+            # live-bar rule that keeps it free of look-ahead.
+            daily['ema20_w'] = compute_weekly_ema(daily['close'], **_weekly_cfg)
 
             # SMAs — require half the window to avoid spurious values for new listings
             daily['sma25'] = daily['close'].rolling(window=25, min_periods=13).mean()

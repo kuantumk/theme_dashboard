@@ -419,36 +419,6 @@
     </svg>`;
   }
 
-  function ringsSvg() {
-    const V = window.MM_COLORS.VIZ_COLORS;
-    return `<svg class="lg-candles" viewBox="0 0 330 96" role="img" aria-label="Network node key">
-      <polygon points="42,20 62,31 62,53 42,64 22,53 22,31" style="fill:${V.l1Fill};stroke:${V.l1Accent}" stroke-width="2.5" opacity="0.9"/>
-      <text x="42" y="80" text-anchor="middle" class="lg-svg-label" style="fill:${V.l1Accent}">L1 hub</text>
-      <circle cx="108" cy="42" r="17" style="fill:hsl(35,88%,53%);stroke:${V.l1Accent}" stroke-width="4"/>
-      <text x="108" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--text2)">#1 theme</text>
-      <circle cx="170" cy="42" r="10" style="fill:${window.MM_COLORS.rsFill(95)};stroke:${V.bridge}" stroke-width="2"/>
-      <text x="170" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--text2)">bridge</text>
-      <circle cx="226" cy="42" r="10" style="fill:${window.MM_COLORS.rsFill(95)};stroke:${V.selected}" stroke-width="3"/>
-      <text x="226" y="80" text-anchor="middle" class="lg-svg-label" style="fill:${V.selected}">selected</text>
-      <circle cx="286" cy="42" r="9" style="fill:${window.MM_COLORS.rsFill(85)}"/>
-      <circle cx="286" cy="42" r="15" fill="none" style="stroke:var(--green)" stroke-width="2"/>
-      <text x="286" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--green)">tight</text>
-    </svg>`;
-  }
-
-  function edgesSvg() {
-    const V = window.MM_COLORS.VIZ_COLORS;
-    const row = (y, color, dash, width, opacity, label) =>
-      `<line x1="10" x2="120" y1="${y}" y2="${y}" style="stroke:${color}" stroke-width="${width}" opacity="${opacity}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>
-       <text x="132" y="${y + 3}" class="lg-svg-label" style="fill:var(--text2)">${label}</text>`;
-    return `<svg class="lg-candles" viewBox="0 0 330 74" role="img" aria-label="Network edge key">
-      ${row(14, V.edge, '', 2.5, 0.55, 'theme to member')}
-      ${row(36, V.leaderEdge, '', 3, 0.85, 'theme to its leader')}
-      ${row(58, V.l1Accent, '6 4', 2, 0.35, 'theme to its L1 hub')}
-    </svg>`;
-  }
-
-  // ── SAMPLE MARKUP ─────────────────────────────────────
   function zoneDot(cls) {
     return `<svg class="lg-zm" viewBox="0 0 12 12"><circle class="zm-dot ${cls}" cx="6" cy="6" r="4"/></svg>`;
   }
@@ -547,7 +517,6 @@
     const stacked = analyse(SCN.stacked);
     const split = analyse(SCN.split);
 
-    const VIZ_TABS = ['themeviz', 'momentumviz', 'volumeviz', 'varsviz'];
     const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz'];
     const Z = C.ZONE_RULES;
     const zs = v => (v > 0 ? '+' : '') + v;
@@ -883,55 +852,6 @@
         ],
       },
       {
-        id: 'viz', title: 'Network viz tabs',
-        intro: 'The four Viz tabs draw themes and their tickers as a network. They use node colour, rings and glows, not tints.',
-        cards: [
-          {
-            id: 'viz-theme', title: 'Theme node colour — theme strength',
-            sample: `<span class="lg-swatch" style="background:${esc(C.themeFill(80, 1))}"></span>`,
-            where: VIZ_TABS,
-            body: `${themeStrengthTable(C)}
-              <p>A paler node is a less actionable theme: saturation falls as fewer members are leaders or tight. The node grows with strength.</p>
-              <p>A theme appears only when it is hot: average RS ≥ ${C.VIZ_HOT.rs} with ${C.VIZ_HOT.breadth}+ tickers, or on VARS Viz and Volume Viz, average VARS ≥ ${C.VIZ_HOT.vars}.</p>`,
-          },
-          {
-            id: 'viz-rs', title: 'Ticker node colour — RS',
-            sample: `<span class="lg-swatch lg-round" style="background:${esc(C.rsFill(95))}"></span>`,
-            where: ['themeviz', 'momentumviz'],
-            body: `${bandTable(Object.assign({ range: [0, 100] }, B.vizRs), f0, { swatch: true })}<p>A bigger node has a higher RS.</p>`,
-          },
-          {
-            id: 'viz-vars', title: 'Ticker node colour — VARS',
-            sample: `<span class="lg-swatch lg-round" style="background:${esc(C.varsFill(7))}"></span>`,
-            where: ['varsviz', 'volumeviz'],
-            body: bandTable(B.vizVars, f1, { swatch: true }),
-          },
-          {
-            id: 'viz-rings', title: 'Rings, glows and hubs',
-            sample: '<span class="lg-pulse-demo"><span class="tight-pulse-ring"></span></span>',
-            where: VIZ_TABS,
-            body: `${keyList([
-                ['<span class="lg-ring lg-tight"></span>', 'Pulsing green ring: the green day pattern (see the first card).'],
-                ['<span class="lg-ring lg-bridge"></span>', 'White ring: a bridge ticker, tagged into two or more themes.'],
-                ['<span class="lg-leader-dot"></span>', 'Glow: the leader of its theme. Its edge to the theme is lighter.'],
-                [`<span class="lg-ring" style="border:2px solid ${esc(C.VIZ_COLORS.selected)}"></span>`, 'Yellow ring and glow: the selected ticker.'],
-                [`<svg class="lg-hex" viewBox="0 0 12 12"><polygon points="6,0.5 11,3.2 11,8.8 6,11.5 1,8.8 1,3.2" style="fill:${esc(C.VIZ_COLORS.l1Fill)};stroke:${esc(C.VIZ_COLORS.l1Accent)}"/></svg>`,
-                  'Pale-yellow hexagon: an L1 hub. The #1 theme gets a pale-yellow ring and glow.'],
-              ])}
-              <p>Hover a node for its tooltip. Tags there repeat the rings:</p>
-              <div class="themeviz-tooltip lg-static-tip"><div class="tip-title">NVDA <span class="tip-tag tag-leader">LEADER</span> <span class="tip-tag tag-bridge">BRIDGE</span> <span class="tip-tag tag-tight">TIGHT</span></div><div class="tip-sub">RS 96.0%</div></div>`,
-            fig: figure(ringsSvg(), '', ''),
-          },
-          {
-            id: 'viz-edges', title: 'Edges',
-            sample: `<span class="lg-edge-demo" style="border-color:${esc(C.VIZ_COLORS.l1Accent)}"></span>`,
-            where: VIZ_TABS,
-            body: '<p>Lines join each theme to its members and to its L1 hub. A thicker member line is a stronger member.</p>',
-            fig: figure(edgesSvg(), '', ''),
-          },
-        ],
-      },
-      {
         id: 'chart', title: 'Chart',
         intro: 'Every tab opens the same TradingView daily chart.',
         cards: [
@@ -960,7 +880,7 @@
           {
             id: 'dates', title: 'Blue date button — the session on screen',
             sample: '<span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span>',
-            where: LIST_TABS.concat(['ep', 'themeviz', 'momentumviz', 'volumeviz', 'varsviz']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<div class="lg-inline"><span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span><span class="tt-date-select active lg-static">09-26 Fri</span><span class="tt-date-btn lg-static">09-25<span class="tt-weekday">Thu</span></span></div>
               <p>The blue button or dropdown is the session you see. Choose another date to go back in time, up to 180 days.</p>`,
           },
@@ -987,19 +907,6 @@
     ];
   }
 
-  function themeStrengthTable(C) {
-    const t = C.COLOR_BANDS.vizThemeStrength;
-    const rows = t.bands.map((b, i) => {
-      const cond = bandCondition(t, i, v => num(v, 0));
-      return [b.out.label, b.at, cond];
-    });
-    rows.push([t.otherwise.label, -Infinity, 'any other value']);
-    return `<table class="lg-band-table"><tbody>${rows.map(([label, at, cond]) => {
-      const v = Number.isFinite(at) ? at : 0;
-      return `<tr><td class="lg-bt-sample"><span class="lg-swatch" style="background:${esc(C.themeFill(v, 1))}"></span><span class="lg-swatch lg-pale" style="background:${esc(C.themeFill(v, 0))}"></span></td><td class="lg-bt-cond">${esc(label)}: strength ${esc(cond)}</td></tr>`;
-    }).join('')}</tbody></table>`;
-  }
-
   // ── RENDER ────────────────────────────────────────────
   function render() {
     const page = document.getElementById('legend-page');
@@ -1020,35 +927,6 @@
       ${body}`;
   }
 
-  /* The Viz tabs carry their own short key under the network. It is drawn
-     from the same bands as the nodes, so it cannot drift from them. */
-  function renderVizLegends() {
-    const C = window.MM_COLORS;
-    if (!C) return;
-    const strength = C.COLOR_BANDS.vizThemeStrength;
-    const themeItems = strength.bands.map(b =>
-      `<span class="lg-item"><span class="lg-dot" style="background:${esc(C.themeFill(b.at, 1))}"></span>${esc(b.out.label)} (≥ ${b.at})</span>`)
-      .concat(`<span class="lg-item"><span class="lg-dot" style="background:${esc(C.themeFill(0, 1))}"></span>${esc(strength.otherwise.label)}</span>`)
-      .join('');
-    const tickerItems = (table, name) => {
-      const rows = bandRows(table, v => num(v, 0));
-      return rows.filter(r => r.cond !== 'no data').map(r => {
-        const cond = r.cond === 'any other value' ? `${name} lower` : `${name} ${r.cond}`;
-        return `<span class="lg-item"><span class="lg-dot" style="background:${esc(r.out)}"></span>${esc(cond)}</span>`;
-      }).join('');
-    };
-    const rings = '<span class="lg-item"><span class="lg-ring lg-tight"></span>Tight / inside day on MA</span>' +
-      '<span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>' +
-      '<span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>';
-    const sep = '<span class="lg-sep">|</span>';
-    document.querySelectorAll('[data-viz-legend="rs"], [data-viz-legend="vars"]').forEach(el => {
-      const kind = el.dataset.vizLegend;
-      const ticks = kind === 'vars' ? tickerItems(C.COLOR_BANDS.vizVars, 'VARS') : tickerItems(C.COLOR_BANDS.vizRs, 'RS');
-      el.innerHTML = themeItems + sep + ticks + sep + rings +
-        '<a class="lg-item lg-more" href="#" data-open-legends>All colours →</a>';
-    });
-  }
-
   function openLegends(anchor) {
     const btn = document.getElementById('tab-legends');
     if (btn) btn.click();
@@ -1059,7 +937,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    renderVizLegends();
     renderZoneKeys();
     render();
     const page = document.getElementById('legend-page');

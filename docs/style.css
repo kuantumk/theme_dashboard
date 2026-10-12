@@ -1500,7 +1500,7 @@ tbody tr.nav-active {
 }
 
 /* ═══════════════════════════════════════════════════════
-   THEME VIZ + MOMENTUM VIZ — Force-directed network tabs
+   VIZ TABS — panel
    ═══════════════════════════════════════════════════════ */
 
 .viz-left {
@@ -1514,125 +1514,6 @@ tbody tr.nav-active {
 .viz-left .time-travel-bar {
   flex: 0 0 auto;
 }
-
-.themeviz-card {
-  margin: 12px 0 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.theme-network-wrap {
-  position: relative;
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 360px;
-  display: flex;
-}
-
-.theme-network {
-  width: 100%;
-  height: 100%;
-  min-height: 360px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-  flex: 1 1 auto;
-}
-
-.themeviz-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-@keyframes tight-pulse {
-  0%, 100% { opacity: 0.30; transform: scale(1.00); }
-  50%      { opacity: 0.85; transform: scale(1.18); }
-}
-
-.tight-pulse-ring {
-  position: absolute;
-  pointer-events: none;
-  border: 2px solid var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 12px rgba(0, 230, 118, 0.55);
-  animation: tight-pulse 1.6s ease-in-out infinite;
-  transform-origin: center;
-  will-change: transform, opacity;
-}
-
-.themeviz-tooltip {
-  position: absolute;
-  z-index: 10;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.97);
-  color: var(--text);
-  border: 1px solid var(--border2);
-  padding: 10px 14px;
-  font-family: var(--mono);
-  font-size: 11px;
-  min-width: 180px;
-  max-width: 260px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8);
-  line-height: 1.45;
-}
-
-.themeviz-tooltip .tip-title {
-  font-family: var(--display);
-  font-weight: 400;
-  color: var(--white);
-  font-size: 14px;
-  margin-bottom: 2px;
-  letter-spacing: 0;
-}
-
-.themeviz-tooltip .tip-sub {
-  color: var(--text2);
-  font-size: 10px;
-  margin-bottom: 6px;
-  border-bottom: 1px dashed var(--border);
-  padding-bottom: 4px;
-}
-
-.themeviz-tooltip .tip-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 12px;
-}
-
-.themeviz-tooltip .tip-k {
-  font-family: var(--display);
-  color: var(--text3);
-  font-size: 9px;
-  font-weight: 300;
-  letter-spacing: 0;
-  align-self: center;
-}
-
-.themeviz-tooltip .tip-v {
-  color: var(--text);
-  text-align: right;
-}
-
-.themeviz-tooltip .tip-tag {
-  display: inline-block;
-  font-family: var(--display);
-  font-size: 8px;
-  padding: 1px 5px;
-  letter-spacing: 0;
-  margin-left: 4px;
-  vertical-align: middle;
-  font-weight: 400;
-}
-
-.themeviz-tooltip .tag-leader { background: rgba(0, 230, 118, 0.20); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.4); }
-.themeviz-tooltip .tag-bridge { background: rgba(255, 255, 255, 0.10); color: var(--white); border: 1px solid rgba(255, 255, 255, 0.4); }
-.themeviz-tooltip .tag-tight  { background: var(--adim); color: var(--accent); border: 1px solid rgba(85, 102, 255, 0.4); }
 
 .themeviz-legend {
   display: flex;
@@ -1654,11 +1535,6 @@ tbody tr.nav-active {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-}
-
-.themeviz-legend .lg-sep {
-  color: var(--text3);
-  padding: 0 4px;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1727,37 +1603,6 @@ tbody tr.nav-active {
 .zm-foot { margin: 8px 0 0; font-size: 11px; color: var(--text3); }
 
 .lg-zm { width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; }
-
-.lg-dot, .lg-ring, .lg-leader-dot {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-  margin-right: 6px;
-  vertical-align: middle;
-}
-
-.lg-dot { border-radius: 50%; }
-
-/* Swatch colours are set inline by legends.js from COLOR_BANDS, the tables
-   the nodes are painted from. The former hard-coded swatch classes had
-   drifted from the nodes (a blue swatch for a cyan node, "score >= 100" for a
-   band that starts at 65), which is why they are gone. */
-
-.lg-ring { border-radius: 50%; background: transparent; }
-.lg-tight  { border: 2px solid var(--green); box-shadow: 0 0 6px rgba(0, 230, 118, 0.7); }
-.lg-bridge { border: 2px solid var(--white); }
-
-.lg-leader-dot {
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 10px var(--green), 0 0 4px var(--green);
-}
-
-/* Cytoscape canvas should fill its container */
-.theme-network > div {
-  width: 100% !important;
-  height: 100% !important;
-}
 
 /* ── L1 RADAR TAB ──────────────────────────────────────── */
 /* Each leaf renders as a metadata line + a full-width chip block rather than
@@ -2411,11 +2256,6 @@ tbody tr.nav-active {
   grid-template-columns: 148px 1fr;
 }
 
-.lg-hex {
-  width: 13px;
-  height: 13px;
-}
-
 .lg-formula {
   font-family: var(--mono);
   font-size: 11px;
@@ -2490,20 +2330,11 @@ tbody tr.nav-active {
   vertical-align: middle;
 }
 
-.lg-round { border-radius: 50%; }
-
 .lg-line {
   display: inline-block;
   width: 22px;
   height: 2px;
   margin-right: 6px;
-  vertical-align: middle;
-}
-
-.lg-edge-demo {
-  display: inline-block;
-  width: 40px;
-  border-top: 2px dashed;
   vertical-align: middle;
 }
 
@@ -2566,28 +2397,11 @@ tbody tr.nav-active {
   height: 18px;
 }
 
-.themeviz-tooltip.lg-static-tip {
-  position: static;
-  display: inline-block;
-  margin: 4px 0;
-}
-
 .lg-jump-demo {
   padding: 6px 10px;
   margin: 10px 3px 4px;
   border: 1px solid var(--border);
   font-size: 11px;
-}
-
-.lg-pulse-demo {
-  position: relative;
-  display: inline-block;
-  width: 26px;
-  height: 26px;
-}
-
-.lg-pulse-demo .tight-pulse-ring {
-  inset: 0;
 }
 
 /* Side-by-side figures share one width, and each ends its checks with the

@@ -356,19 +356,15 @@ class HighlightRenderSiteTests(unittest.TestCase):
             names = 'hlTitle(' in body or 'HL_TIER_TIP[' in body
             self.assertTrue(names, f'{name} names no rung in a tooltip')
 
-    def test_no_viz_render_path_emits_a_tier(self):
-        """KD2. Node colour in those graphs already carries theme strength and
-        selection, so a fifth meaning on the same channel would read as noise.
-
-        All four Viz tabs render through `renderNetwork`, so one slice covers
-        them.
-        """
-        start = APP.index('\n  function renderNetwork(')
-        end = APP.index('\n  // ── THEMES TAB', start)
-        viz = APP[start:end]
+    def test_the_zone_scatter_emits_no_tier(self):
+        """KD2. On the zone map a dot's colour already means its daily zone, so
+        a tier on the dot would be a second meaning on the same channel. The
+        list links under the map are ordinary .tn-link spans and DO carry the
+        tier, like every other tab (zoneTickerLink is in RENDER_SITES)."""
+        body = _strip_js_comments(_fn_body('zoneScatterCard'))
         for token in ('hlClass(', 'hlChipClass(', 'hlTitle(', 'HL_TIER_',
                       'hl-short', 'hl-ma-up', 'hl-ma-split'):
-            self.assertNotIn(token, viz, f'the Viz render path emits {token}')
+            self.assertNotIn(token, body, f'the zone scatter emits {token}')
 
     def test_the_themes_chip_still_pushes_the_tight_class_from_its_own_boolean(self):
         """The radar payload carries `tight-range` as well as the tier, and the tight

@@ -1267,34 +1267,6 @@
       ],
       otherwise: '', missing: '',
     },
-    // Network viz ticker nodes. These return a fill colour, not a class.
-    vizRs: {
-      bands: [
-        { op: '>=', at: 90, out: '#00e676' },
-        { op: '>=', at: 80, out: '#00c8ff' },
-        { op: '>=', at: 50, out: '#ffb300' },
-      ],
-      otherwise: '#ff3355', missing: '#ff3355',
-    },
-    vizVars: {
-      bands: [
-        { op: '>=', at: 6, out: '#00e676' },
-        { op: '>=', at: 4, out: '#00c8ff' },
-        { op: '>=', at: 2, out: '#ffb300' },
-      ],
-      otherwise: '#ff3355', missing: '#ff3355',
-    },
-    // Network viz theme nodes: warm scale by strength. `themeFill` then pales
-    // the saturation by actionability, so a pale node is a less actionable one.
-    vizThemeStrength: {
-      bands: [
-        { op: '>=', at: 65, out: { hue: 14, sat: 92, light: 56, label: 'Blazing' } },
-        { op: '>=', at: 55, out: { hue: 35, sat: 88, light: 53, label: 'Strong' } },
-        { op: '>=', at: 45, out: { hue: 50, sat: 70, light: 48, label: 'Solid' } },
-      ],
-      otherwise: { hue: 215, sat: 14, light: 40, label: 'Faded' },
-      missing: { hue: 215, sat: 14, light: 40, label: 'Faded' },
-    },
   };
 
   const BAND_TESTS = {
@@ -1350,27 +1322,6 @@
   ];
   const MARKET_CLOSED = { cls: 'closed', text: 'MARKET CLOSED' };
 
-  /* Network viz paint that is not a band. The cytoscape style reads every
-     colour from here — tests/test_dashboard_legends.py fails on a raw hex
-     literal inside that style array — so the Legends tab stays in step. */
-  const VIZ_COLORS = {
-    l1Fill: '#1a2434',        // L1 hub hexagon body
-    l1Accent: '#fde68a',      // L1 hub label and border; rank-1 theme ring; is_a edge
-    themeLabel: '#ffffff',
-    themeRing: '#0c0f15',     // theme node outline (width grows with actionability)
-    tickerLabel: '#c8d8ea',
-    bridge: '#ffffff',        // ticker tagged into two or more themes
-    selected: '#ffd700',      // selected ticker, matches --yellow
-    edge: '#243044',          // theme -> member
-    leaderEdge: '#7292b0',    // theme -> its leader
-    labelOutline: '#000000',
-    themeLabelOutline: '#07090d',
-  };
-
-  /* Hot-theme filters for the network tabs. A theme node is drawn only when it
-     clears these. */
-  const VIZ_HOT = { rs: 70, breadth: 3, vars: 2, varsBreadth: 1 };
-
   /* Moving-average line colours on the TradingView chart. The free embed
      applies one colour per study TYPE, so both EMAs share one colour and both
      SMAs share the other. */
@@ -1419,10 +1370,9 @@
      reachable from here — never copied into legends.js as a literal. */
   window.MM_COLORS = Object.freeze({
     COLOR_BANDS, pickBand, PATTERN_RULES, MARKET_SESSIONS, MARKET_CLOSED,
-    VIZ_COLORS, VIZ_HOT, CHART_MA_COLORS, ZONE_RULES, ZONE_STATES, ZONE_FAMILY_CLASS,
+    CHART_MA_COLORS, ZONE_RULES, ZONE_STATES, ZONE_FAMILY_CLASS,
     HL_TIER_CLASS, HL_TIER_TIP,
     NASI: { oversold: NASI_OVERSOLD, watch: NASI_WATCH, overbought: NASI_OVERBOUGHT },
-    rsFill, varsFill, themeFill,
     cutoffs: () => ({ vol: tickerFilters.vol, adr: tickerFilters.adr }),
   });
 
@@ -1448,14 +1398,14 @@
         }
         renderAllTimeTravelBars();
         renderThemes(current);
-        renderThemeNetwork(radarVizSnap(current));
+        renderZoneMap(current, 'themes');
       })
       .catch(err => {
         console.warn('Theme data not available:', err);
         document.getElementById('themes-container').innerHTML =
           '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
-        const tnContainer = document.getElementById('theme-network');
-        if (tnContainer) tnContainer.innerHTML = '<div class="no-data">Theme data not available.</div>';
+        const tz = document.getElementById('themeviz-zone');
+        if (tz) tz.innerHTML = '<div class="no-data">Theme data not available.</div>';
       });
   }
 
@@ -1474,14 +1424,14 @@
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
         renderAllTimeTravelBars();
         renderMomentum(current);
-        renderMomentumNetwork(current);
+        renderZoneMap(current, 'momentum');
       })
       .catch(err => {
         console.warn('Momentum data not available:', err);
         document.getElementById('momentum-container').innerHTML =
           '<div class="no-data">Momentum data not available.<br>Run the daily workflow to generate data.</div>';
-        const mnContainer = document.getElementById('momentum-network');
-        if (mnContainer) mnContainer.innerHTML = '<div class="no-data">Momentum data not available.</div>';
+        const mz = document.getElementById('momentumviz-zone');
+        if (mz) mz.innerHTML = '<div class="no-data">Momentum data not available.</div>';
       });
   }
 
@@ -1500,14 +1450,14 @@
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
         renderAllTimeTravelBars();
         renderVolume(current);
-        renderVolumeNetwork(current);
+        renderZoneMap(current, 'volume');
       })
       .catch(err => {
         console.warn('Volume data not available:', err);
         const c = document.getElementById('volume-container');
         if (c) c.innerHTML = '<div class="no-data">Volume data not available.<br>Run the daily workflow to generate data.</div>';
-        const cn = document.getElementById('volume-network');
-        if (cn) cn.innerHTML = '<div class="no-data">Volume data not available.</div>';
+        const vz = document.getElementById('volumeviz-zone');
+        if (vz) vz.innerHTML = '<div class="no-data">Volume data not available.</div>';
       });
   }
 
@@ -1610,15 +1560,15 @@
     // Themes (L1 Radar)
     const themeSnap = themesHistory.find(h => h.report_date === date);
     renderThemes(themeSnap, date);
-    renderThemeNetwork(radarVizSnap(themeSnap), date);
+    renderZoneMap(themeSnap, 'themes', date);
     // Momentum 1/3/6
     const momSnap = momentumHistory.find(h => h.report_date === date);
     renderMomentum(momSnap, date);
-    renderMomentumNetwork(momSnap, date);
+    renderZoneMap(momSnap, 'momentum', date);
     // Volume scans
     const volumeSnap = volumeHistory.find(h => h.report_date === date);
     renderVolume(volumeSnap, date);
-    renderVolumeNetwork(volumeSnap, date);
+    renderZoneMap(volumeSnap, 'volume', date);
     // VARS
     const varsSnap = varsHistory.find(h => h.report_date === date);
     renderVARS(varsSnap, date);
@@ -2051,645 +2001,6 @@
   }
   // ── END ZONE MAP ───────────────────────────────────────────────────
 
-  // ── NETWORK VIZ — Theme, Momentum, Volume, and VARS Viz ─────────────
-  // Both tabs share one Cytoscape force-directed renderer. They differ only
-  // in (a) where strength comes from — server-computed theme/setup scores,
-  // client-derived momentum strength, or avg VARS — and (b) which DOM
-  // containers they target.
-
-  const VIZ_MODES = {
-    themes: {
-      containerId: 'theme-network',
-      tooltipId: 'themeviz-tooltip',
-      overlayId: 'themeviz-overlay',
-      tabBtnId: 'tab-themeviz',
-    },
-    momentum: {
-      containerId: 'momentum-network',
-      tooltipId: 'momentumviz-tooltip',
-      overlayId: 'momentumviz-overlay',
-      tabBtnId: 'tab-momentumviz',
-    },
-    volume: {
-      containerId: 'volume-network',
-      tooltipId: 'volumeviz-tooltip',
-      overlayId: 'volumeviz-overlay',
-      tabBtnId: 'tab-volumeviz',
-    },
-    vars: {
-      containerId: 'vars-network',
-      tooltipId: 'varsviz-tooltip',
-      overlayId: 'varsviz-overlay',
-      tabBtnId: 'tab-varsviz',
-    },
-  };
-
-  // Per-mode runtime state — cytoscape instance, tab handler flag, pending render
-  const vizState = {
-    themes:   { cy: null, pending: null, tabHandlerInstalled: false },
-    momentum: { cy: null, pending: null, tabHandlerInstalled: false },
-    volume:   { cy: null, pending: null, tabHandlerInstalled: false },
-    vars:     { cy: null, pending: null, tabHandlerInstalled: false },
-  };
-
-  function isVizVisible(mode) {
-    const c = document.getElementById(VIZ_MODES[mode].containerId);
-    return !!(c && c.offsetHeight > 0 && c.offsetWidth > 0);
-  }
-
-  function installVizTabHandler(mode) {
-    const state = vizState[mode];
-    if (state.tabHandlerInstalled) return;
-    const cfg = VIZ_MODES[mode];
-    const tabBtn = document.getElementById(cfg.tabBtnId);
-    if (!tabBtn) return;
-    tabBtn.addEventListener('click', () => {
-      // Defer one tick so the tab content's display has switched on
-      setTimeout(() => {
-        if (state.pending) {
-          const { snap, date } = state.pending;
-          state.pending = null;
-          actuallyRenderNetwork(snap, mode, date);
-          return;
-        }
-        if (state.cy) {
-          state.cy.resize();
-          state.cy.fit(undefined, 40);
-          syncTightPulses(state.cy, mode);
-        }
-      }, 60);
-    });
-    state.tabHandlerInstalled = true;
-  }
-
-  function computeAvgRs(theme) {
-    const tk = theme.tickers || [];
-    if (tk.length === 0) return 0;
-    return tk.reduce((s, t) => s + (t.rs ?? 0), 0) / tk.length;
-  }
-
-  function computeAvgVars(theme) {
-    if (typeof theme.avg_vars === 'number') return theme.avg_vars;
-    const tk = theme.tickers || [];
-    if (tk.length === 0) return 0;
-    return tk.reduce((s, t) => s + (t.vars ?? 0), 0) / tk.length;
-  }
-
-  function computeAvgSetup(theme) {
-    if (typeof theme.avg_setup_score === 'number') return theme.avg_setup_score;
-    const tk = theme.tickers || [];
-    if (tk.length === 0) return 0;
-    return tk.reduce((s, t) => s + (t.score ?? 0), 0) / tk.length;
-  }
-
-  // Theme strength signal — server `score` for themes, derived for momentum/vars.
-  function computeStrength(theme, mode) {
-    if (mode === 'themes') return theme.score ?? 0;
-    const tk = theme.tickers || [];
-    if (tk.length === 0) return 0;
-    const breadthFactor = Math.min(tk.length / 8, 1.5); // saturates around 8-12 tickers
-    if (mode === 'vars' || mode === 'volume') {
-      // Scale avg_vars (typical 2-10 range) into strength bands aligned with momentum (60/80/100)
-      const avgVars = computeAvgVars(theme);
-      return Math.round(avgVars * 15 * (0.6 + 0.4 * breadthFactor) * 10) / 10;
-    }
-    return Math.round(computeAvgRs(theme) * (0.6 + 0.4 * breadthFactor) * 10) / 10;
-  }
-
-  function actionabilityScore(theme, mode) {
-    const tk = theme.tickers || [];
-    if (tk.length === 0) return 0;
-    if (mode === 'vars' || mode === 'volume') {
-      const leaderDensity = tk.filter(t => (t.vars ?? 0) >= 6).length / tk.length;
-      const scoreQuality = Math.min(computeAvgVars(theme) / 6, 1.2);
-      return scoreQuality * (0.55 + 0.45 * leaderDensity);
-    }
-    if (mode === 'themes') {
-      // Theme mode uses per-ticker composite (with RS fallback for entries
-      // that lack a server-emitted score). Leader threshold sits on the new
-      // composite scale (typical 30-80) rather than the RS scale (0-100).
-      const leaderDensity = tk.filter(t => (t.score ?? t.rs ?? 0) >= 60).length / tk.length;
-      const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
-      const scoreQuality = Math.min((theme.score ?? 0) / 70, 1.2);
-      return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
-    }
-    const leaderDensity = tk.filter(t => (t.rs ?? 0) >= 90).length / tk.length;
-    const tightDensity  = tk.filter(t => t.ticker_color === 'green').length / tk.length;
-    const scoreQuality = Math.min(computeAvgRs(theme) / 90, 1.2);
-    return scoreQuality * (0.45 + 0.30 * leaderDensity + 0.25 * tightDensity);
-  }
-
-  function themeFill(strength, action) {
-    // Warm scale by strength (COLOR_BANDS.vizThemeStrength, tuned for the
-    // theme-score range of ~30-80); saturation paled by actionability.
-    const { hue, sat: baseSat, light } = pickBand(COLOR_BANDS.vizThemeStrength, strength);
-    const sat = Math.round(baseSat * Math.max(0.45, Math.min(1.0, action)));
-    return `hsl(${hue}, ${sat}%, ${light}%)`;
-  }
-
-  function rsFill(rs) {
-    return pickBand(COLOR_BANDS.vizRs, rs);
-  }
-
-  function varsFill(v) {
-    // >2 is the screener gate; >6 is exceptional.
-    return pickBand(COLOR_BANDS.vizVars, v);
-  }
-
-  function actionabilityLabel(a) {
-    if (a >= 0.95) return 'Highly actionable';
-    if (a >= 0.75) return 'Actionable';
-    if (a >= 0.55) return 'Mixed';
-    return 'Late / extended';
-  }
-
-  function buildVizTooltip(node, mode) {
-    const d = node.data();
-    if (d.kind === 'l1') {
-      return (
-        `<div class="tip-title">${d.label}</div>` +
-        `<div class="tip-sub">Narrative hub · ${d.themes} sub-themes</div>`
-      );
-    }
-    if (d.kind === 'theme') {
-      const strengthLabel = mode === 'themes' ? 'Score' : 'Strength';
-      const avgLabel = (mode === 'vars' || mode === 'volume') ? 'Avg VARS' : 'Avg RS';
-      const avgFmt = (mode === 'vars' || mode === 'volume')
-        ? (d.avg_rs?.toFixed?.(2) ?? '—')
-        : ((d.avg_rs?.toFixed?.(1) ?? '—') + '%');
-      return (
-        `<div class="tip-title">${d.label}</div>` +
-        `<div class="tip-sub">Rank #${d.rank} · ${actionabilityLabel(d.action)}</div>` +
-        `<div class="tip-grid">` +
-        `<span class="tip-k">${strengthLabel}</span><span class="tip-v">${d.strength?.toFixed?.(1) ?? '—'}</span>` +
-        `<span class="tip-k">${avgLabel}</span><span class="tip-v">${avgFmt}</span>` +
-        `<span class="tip-k">Breadth</span><span class="tip-v">${d.breadth} tickers</span>` +
-        `<span class="tip-k">Action</span><span class="tip-v">${(d.action * 100).toFixed(0)}%</span>` +
-        `</div>`
-      );
-    }
-    const tags = [];
-    if (d.isLeader) tags.push('<span class="tip-tag tag-leader">LEADER</span>');
-    if (d.isBridge) tags.push('<span class="tip-tag tag-bridge">BRIDGE</span>');
-    if (d.isTight)  tags.push('<span class="tip-tag tag-tight">TIGHT</span>');
-    const headLine = (mode === 'vars' || mode === 'volume')
-      ? `VARS ${d.vars?.toFixed?.(2) ?? '—'} · 20EMA ${d.vars_20ema?.toFixed?.(2) ?? '—'}`
-      : `RS ${d.rs?.toFixed?.(1) ?? '—'}%`;
-    return (
-      `<div class="tip-title">${d.label} ${tags.join(' ')}</div>` +
-      `<div class="tip-sub">${headLine}</div>` +
-      `<div class="tip-grid">` +
-      `<span class="tip-k">Price</span><span class="tip-v">$${d.price ?? '—'}</span>` +
-      `<span class="tip-k">Float</span><span class="tip-v">${d.float ?? '—'}M</span>` +
-      `<span class="tip-k">EPS</span><span class="tip-v">${d.eps ?? '—'}</span>` +
-      `<span class="tip-k">Sales</span><span class="tip-v">${d.sales ?? '—'}</span>` +
-      `<span class="tip-k">Short</span><span class="tip-v">${d.short ?? '—'}%</span>` +
-      `</div>`
-    );
-  }
-
-  function syncTightPulses(cy, mode) {
-    const overlay = document.getElementById(VIZ_MODES[mode].overlayId);
-    if (!overlay) return;
-    overlay.innerHTML = '';
-    cy.nodes('.tight').forEach(node => {
-      const pos = node.renderedPosition();
-      const r = (node.renderedWidth() / 2) + 7;
-      const ring = document.createElement('div');
-      ring.className = 'tight-pulse-ring';
-      ring.style.left = `${pos.x - r}px`;
-      ring.style.top  = `${pos.y - r}px`;
-      ring.style.width  = `${r * 2}px`;
-      ring.style.height = `${r * 2}px`;
-      overlay.appendChild(ring);
-    });
-  }
-
-  function filterAndRankThemes(snap, mode) {
-    const HOT_RS = VIZ_HOT.rs, HOT_BREADTH = VIZ_HOT.breadth;
-    const HOT_VARS = VIZ_HOT.vars, HOT_VARS_BREADTH = VIZ_HOT.varsBreadth;
-    if (mode === 'vars' || mode === 'volume') {
-      // VARS/Volume export — keep singletons so a lone leader still shows its theme
-      let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_VARS_BREADTH);
-      hot = hot.filter(t => computeAvgVars(t) >= HOT_VARS);
-      return hot
-        .map(t => Object.assign({}, t, {
-          _strength: computeStrength(t, mode),
-          _avg_rs:   computeAvgVars(t),  // reused as primary metric in tooltip/meta
-        }))
-        .sort((a, b) => b._strength - a._strength)
-        .map((t, i) => Object.assign(t, { _rank: i + 1 }));
-    }
-    let hot = (snap.themes || []).filter(t => (t.tickers || []).length >= HOT_BREADTH);
-    if (mode === 'themes') {
-      hot = hot.filter(t => (t.avg_rs ?? 0) >= HOT_RS);
-    } else {
-      hot = hot.filter(t => computeAvgRs(t) >= HOT_RS);
-    }
-    return hot
-      .map(t => Object.assign({}, t, {
-        _strength: computeStrength(t, mode),
-        _avg_rs:   mode === 'themes' ? (t.avg_rs ?? 0) : computeAvgRs(t),
-      }))
-      .sort((a, b) => b._strength - a._strength)
-      .map((t, i) => Object.assign(t, { _rank: i + 1 }));
-  }
-
-  // Public entry — defers heavy work until the target tab is visible so that
-  // cose layout and fit() see real container dimensions.
-  function renderNetwork(snap, mode, date) {
-    installVizTabHandler(mode);
-    if (isVizVisible(mode)) {
-      actuallyRenderNetwork(snap, mode, date);
-    } else {
-      vizState[mode].pending = { snap, date };
-    }
-  }
-
-  function renderThemeNetwork(snap, date)    { renderNetwork(snap, 'themes', date); }
-  function renderMomentumNetwork(snap, date) { renderNetwork(snap, 'momentum', date); }
-  function renderVolumeNetwork(snap, date)   { renderNetwork(snap, 'volume', date); }
-  function renderVARSNetwork(snap, date)     { renderNetwork(varsVizSnap(snap), 'vars', date); }
-
-  function actuallyRenderNetwork(snap, mode, date) {
-    const cfg = VIZ_MODES[mode];
-    const state = vizState[mode];
-    const container = document.getElementById(cfg.containerId);
-    const tooltip = document.getElementById(cfg.tooltipId);
-    const overlay = document.getElementById(cfg.overlayId);
-    if (!container) return;
-    if (typeof cytoscape === 'undefined') {
-      container.innerHTML = '<div class="no-data">Cytoscape library failed to load.</div>';
-      return;
-    }
-
-    // Always tear down the previous render so a date-switch never leaves a
-    // stale graph on screen — even when the new date has no snapshot.
-    if (state.cy) { try { state.cy.destroy(); } catch (e) {} state.cy = null; }
-    if (overlay) overlay.innerHTML = '';
-    if (tooltip) tooltip.style.display = 'none';
-
-    if (!snap) {
-      const dateLabel = date ? ` for ${date}` : ' for this session';
-      container.innerHTML = `<div class="no-data" style="margin:60px auto;text-align:center">No data${dateLabel}.</div>`;
-      return;
-    }
-
-    const hot = filterAndRankThemes(snap, mode);
-
-    if (hot.length === 0) {
-      container.innerHTML = '<div class="no-data" style="margin:60px auto;text-align:center">No qualifying themes for this date.</div>';
-      return;
-    }
-    container.innerHTML = '';
-
-    // Index ticker → list of themes (bridge detection)
-    const tickerThemes = {};
-    for (const theme of hot) {
-      for (const tk of (theme.tickers || [])) {
-        (tickerThemes[tk.ticker] = tickerThemes[tk.ticker] || []).push(theme.name);
-      }
-    }
-    // Per-theme leader (highest RS within theme; highest VARS/setup score for specialized modes)
-    const leaderByTheme = {};
-    for (const theme of hot) {
-      const sortKey = (mode === 'vars' || mode === 'volume') ? 'vars' : 'rs';
-      const top = [...(theme.tickers || [])].sort((a, b) => (b[sortKey] ?? 0) - (a[sortKey] ?? 0))[0];
-      if (top) leaderByTheme[theme.name] = top.ticker;
-    }
-
-    const elements = [];
-    const seen = new Set();
-    const l1Seen = new Set();
-    // L1 narratives we know about — used to recognise legacy "AI - Memory"
-    // labels whose prefix is still a real hub. Populated from any theme's
-    // server-side `l1` field, plus what's discovered while parsing names.
-    const knownL1s = new Set();
-    for (const theme of hot) {
-      if (theme.l1) knownL1s.add(theme.l1);
-    }
-    // L1s with proper L2/L3 children present in this view. A theme named
-    // just "Space" (bare L1) while "Space / Launch" etc. also exist would
-    // otherwise render as an orphan circle next to the L1 hexagon hub —
-    // skip the bare entry so future tagging regressions don't reintroduce
-    // the duplicate-node bug.
-    const l1sWithChildren = new Set();
-    for (const theme of hot) {
-      if (theme.name && theme.name.includes(' / ')) {
-        l1sWithChildren.add(theme.name.split(' / ', 1)[0].trim());
-      }
-    }
-    const l1Of = (name) => {
-      if (!name) return '';
-      // 1. Canonical " / " path.
-      if (name.includes(' / ')) {
-        return name.split(' / ', 1)[0].trim();
-      }
-      // 2. Legacy " - " labels (e.g. "AI - Memory & Storage") — only when the
-      //    prefix matches an L1 we already know about, so we don't accidentally
-      //    bucket "Metals - Gold, Silver, Copper" under "Metals".
-      if (name.includes(' - ')) {
-        const prefix = name.split(' - ', 1)[0].trim();
-        if (knownL1s.has(prefix)) return prefix;
-      }
-      return name;
-    };
-    // Strength aggregates per L1 — used to size the hub bubbles
-    const l1Stats = {};
-    for (const theme of hot) {
-      const l1 = theme.l1 || l1Of(theme.name);
-      const s = l1Stats[l1] = l1Stats[l1] || { strength: 0, themes: 0 };
-      s.strength += theme._strength || 0;
-      s.themes += 1;
-    }
-    for (const theme of hot) {
-      const themeId = `theme::${theme.name}`;
-      const action = actionabilityScore(theme, mode);
-      const l1 = theme.l1 || l1Of(theme.name);
-      const l1Id = `l1::${l1}`;
-      // Defensive: skip a degenerate bare-L1 entry when proper L2 children
-      // for the same L1 are present in this view. The hub will still be
-      // emitted from one of those child iterations.
-      if (theme.name === l1 && l1sWithChildren.has(l1)) {
-        continue;
-      }
-      // Emit L1 hub node once
-      if (!l1Seen.has(l1) && l1 !== theme.name) {
-        l1Seen.add(l1);
-        const stats = l1Stats[l1] || { strength: 0, themes: 1 };
-        elements.push({
-          data: {
-            id: l1Id, kind: 'l1',
-            label: l1,
-            strength: Math.min(140, stats.strength / Math.max(1, stats.themes) + 10 * stats.themes),
-            themes: stats.themes,
-          },
-        });
-      }
-      // is-a edge: theme -> L1 hub (only when there's a real hierarchy)
-      if (l1 !== theme.name) {
-        elements.push({
-          data: {
-            id: `is_a::${themeId}::${l1Id}`,
-            source: themeId, target: l1Id,
-            kind: 'is_a',
-          },
-        });
-      }
-      elements.push({
-        data: {
-          id: themeId, kind: 'theme',
-          label: theme.name,
-          l1,
-          strength: theme._strength,
-          avg_rs:   theme._avg_rs,
-          breadth: (theme.tickers || []).length,
-          rank: theme._rank,
-          action,
-          fill: themeFill(theme._strength, action),
-          ringWidth: 2 + Math.round(action * 4),
-        },
-      });
-      for (const tk of (theme.tickers || [])) {
-        if (!seen.has(tk.ticker)) {
-          seen.add(tk.ticker);
-          const isLeader = leaderByTheme[theme.name] === tk.ticker;
-          const isBridge = (tickerThemes[tk.ticker] || []).length >= 2;
-          const isTight  = tk.ticker_color === 'green';
-          const cls = [
-            isLeader ? 'leader' : '',
-            isBridge ? 'bridge' : '',
-            isTight  ? 'tight'  : '',
-          ].filter(Boolean).join(' ');
-          elements.push({
-            data: {
-              id: tk.ticker, kind: 'ticker',
-              label: tk.ticker,
-              rs: tk.rs ?? 0, price: tk.price, float: tk.float,
-              eps: tk.eps, sales: tk.sales, short: tk.short,
-              vars: tk.vars ?? 0, vars_20ema: tk.vars_20ema ?? 0,
-              setup_score: tk.score ?? 0, flags: tk.flags || '',
-              fill: (mode === 'vars' || mode === 'volume') ? varsFill(tk.vars ?? 0) : rsFill(tk.rs ?? 0),
-              isLeader, isBridge, isTight,
-            },
-            classes: cls,
-          });
-        }
-        elements.push({
-          data: {
-            source: themeId, target: tk.ticker,
-            weight: (mode === 'vars' || mode === 'volume') ? (tk.vars ?? 0) * 10 : (tk.rs ?? 0),
-            isLeader: leaderByTheme[theme.name] === tk.ticker,
-          },
-        });
-      }
-    }
-
-    // Pre-position top-3 themes near canvas center
-    const seed = {};
-    if (hot[0]) seed[`theme::${hot[0].name}`] = { x: 0,    y: 0    };
-    if (hot[1]) seed[`theme::${hot[1].name}`] = { x: -260, y: -150 };
-    if (hot[2]) seed[`theme::${hot[2].name}`] = { x: 260,  y: -150 };
-    for (const el of elements) {
-      if (el.data && el.data.kind === 'theme' && seed[el.data.id]) {
-        el.position = seed[el.data.id];
-      }
-    }
-
-    state.cy = cytoscape({
-      container,
-      elements,
-      layout: {
-        name: 'cose',
-        animate: false,
-        randomize: false,
-        nodeRepulsion: function (n) {
-          const k = n.data('kind');
-          if (k === 'l1')    return 55000;
-          if (k === 'theme') return 22000;
-          return 4500;
-        },
-        idealEdgeLength: function (e) {
-          return e.data('kind') === 'is_a' ? 90 : 130;
-        },
-        gravity: 0.18,
-        numIter: 1500,
-        padding: 30,
-        fit: true,
-      },
-      style: [
-        { selector: 'node[kind = "l1"]', style: {
-            'background-color': VIZ_COLORS.l1Fill,
-            'background-opacity': 0.65,
-            'label': 'data(label)',
-            'color': VIZ_COLORS.l1Accent,
-            'font-size': 18,
-            'font-weight': 'bold',
-            'font-family': 'DM Sans, system-ui, sans-serif',
-            'width':  'mapData(strength, 30, 160, 70, 160)',
-            'height': 'mapData(strength, 30, 160, 70, 160)',
-            'shape': 'round-hexagon',
-            'border-width': 3,
-            'border-color': VIZ_COLORS.l1Accent,
-            'border-opacity': 0.75,
-            'text-valign': 'center', 'text-halign': 'center',
-            'text-outline-color': VIZ_COLORS.labelOutline, 'text-outline-width': 3,
-            'text-wrap': 'wrap', 'text-max-width': 140,
-            'z-index': 1,
-        }},
-        { selector: 'node[kind = "theme"]', style: {
-            'background-color': 'data(fill)',
-            'label': 'data(label)',
-            'color': VIZ_COLORS.themeLabel,
-            'font-size': 13,
-            'font-weight': 'bold',
-            'font-family': 'DM Sans, system-ui, sans-serif',
-            'width':  'mapData(strength, 30, 80, 32, 110)',
-            'height': 'mapData(strength, 30, 80, 32, 110)',
-            'border-width': 'data(ringWidth)',
-            'border-color': VIZ_COLORS.themeRing,
-            'border-opacity': 0.95,
-            'text-valign': 'center', 'text-halign': 'center',
-            'text-outline-color': VIZ_COLORS.themeLabelOutline, 'text-outline-width': 2,
-            'text-wrap': 'wrap', 'text-max-width': 110,
-        }},
-        { selector: 'node[kind = "theme"][rank = 1]', style: {
-            'border-color': VIZ_COLORS.l1Accent,
-            'border-width': 6,
-            'shadow-blur': 30,
-            'shadow-color': VIZ_COLORS.l1Accent,
-            'shadow-opacity': 0.55,
-        }},
-        { selector: 'node[kind = "ticker"]', style: {
-            'background-color': 'data(fill)',
-            'label': 'data(label)',
-            'color': VIZ_COLORS.tickerLabel,
-            'font-size': 10,
-            'font-family': 'IBM Plex Mono, monospace',
-            'width':  'mapData(rs, 0, 100, 14, 32)',
-            'height': 'mapData(rs, 0, 100, 14, 32)',
-            'text-valign': 'bottom',
-            'text-margin-y': 4,
-            'border-width': 0,
-        }},
-        { selector: 'node.leader', style: {
-            'font-size': 12,
-            'font-weight': 'bold',
-            'shadow-blur': 22,
-            'shadow-color': 'data(fill)',
-            'shadow-opacity': 0.9,
-            'shadow-offset-x': 0,
-            'shadow-offset-y': 0,
-        }},
-        { selector: 'node.bridge', style: {
-            'border-width': 2,
-            'border-color': VIZ_COLORS.bridge,
-            'border-opacity': 0.85,
-        }},
-        { selector: 'node.leader.bridge', style: {
-            'border-width': 2,
-            'border-color': VIZ_COLORS.bridge,
-        }},
-        { selector: 'node.active-ticker', style: {
-            'border-width': 4,
-            'border-color': VIZ_COLORS.selected,
-            'border-opacity': 1.0,
-            'shadow-blur': 28,
-            'shadow-color': VIZ_COLORS.selected,
-            'shadow-opacity': 0.95,
-            'shadow-offset-x': 0,
-            'shadow-offset-y': 0,
-            'z-index': 50,
-        }},
-        { selector: 'edge', style: {
-            'width': 'mapData(weight, 0, 100, 1, 4.5)',
-            'line-color': VIZ_COLORS.edge,
-            'opacity': 0.55,
-            'curve-style': 'bezier',
-        }},
-        { selector: 'edge[?isLeader]', style: {
-            'line-color': VIZ_COLORS.leaderEdge,
-            'opacity': 0.85,
-        }},
-        { selector: 'edge[kind = "is_a"]', style: {
-            'width': 2,
-            'line-color': VIZ_COLORS.l1Accent,
-            'line-style': 'dashed',
-            'line-dash-pattern': [6, 4],
-            'opacity': 0.35,
-            'curve-style': 'straight',
-            'target-arrow-shape': 'none',
-        }},
-      ],
-      wheelSensitivity: 0.25,
-      minZoom: 0.3,
-      maxZoom: 3.0,
-    });
-
-    // Tight-pulse rings — repositioned on pan/zoom/render. The closures
-    // null-check state.cy because cytoscape's internal ResizeObserver can
-    // fire one more 'resize' event after destroy() has nulled state.cy
-    // (e.g. on date-switch with no snapshot for the new date).
-    syncTightPulses(state.cy, mode);
-    state.cy.on('pan zoom resize', () => { if (state.cy) syncTightPulses(state.cy, mode); });
-    state.cy.on('layoutstop', () => { if (state.cy) syncTightPulses(state.cy, mode); });
-    state.cy.on('position', 'node', () => { if (state.cy) syncTightPulses(state.cy, mode); });
-
-    // ResizeObserver — keeps the canvas filling the container when the user
-    // drags the resize-handle between left/right panels.
-    if (state.resizeObs) { try { state.resizeObs.disconnect(); } catch (e) {} }
-    if (typeof ResizeObserver !== 'undefined') {
-      let resizeTimer;
-      state.resizeObs = new ResizeObserver(() => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          if (!state.cy) return;
-          state.cy.resize();
-          syncTightPulses(state.cy, mode);
-        }, 80);
-      });
-      state.resizeObs.observe(container);
-    }
-
-    installVizTabHandler(mode);
-    if (container.offsetHeight > 0) {
-      setTimeout(() => {
-        if (!state.cy) return;  // user may have switched dates inside the 30ms window
-        state.cy.resize();
-        state.cy.fit(undefined, 40);
-        syncTightPulses(state.cy, mode);
-      }, 30);
-    }
-
-    // Hover tooltip
-    if (tooltip) {
-      state.cy.on('mouseover', 'node', (evt) => {
-        tooltip.innerHTML = buildVizTooltip(evt.target, mode);
-        tooltip.style.display = 'block';
-      });
-      state.cy.on('mousemove', 'node', (evt) => {
-        const pos = evt.target.renderedPosition();
-        tooltip.style.left = `${pos.x + 18}px`;
-        tooltip.style.top  = `${pos.y + 18}px`;
-      });
-      state.cy.on('mouseout', 'node', () => {
-        tooltip.style.display = 'none';
-      });
-    }
-
-    // Click ticker node → open TradingView chart in the right panel
-    state.cy.on('tap', 'node[kind = "ticker"]', (evt) => {
-      const ticker = evt.target.data('label');
-      if (!ticker) return;
-      // Highlight selected ticker
-      state.cy.nodes('node[kind = "ticker"]').removeClass('active-ticker');
-      evt.target.addClass('active-ticker');
-      const tabIdMap = { themes: 'themeviz', momentum: 'momentumviz', volume: 'volumeviz', vars: 'varsviz' };
-      const tabId = tabIdMap[mode] || 'momentumviz';
-      if (typeof openChart === 'function') openChart(tabId, ticker);
-    });
-  }
-
   // ── THEMES TAB (L1 Radar) ─────────────────────────
   // Screener-independent lens: every tagged liquid ticker scores, leaves roll
   // up into their taxonomy L1, and co-firing L1s carry a boost. Layout
@@ -2701,48 +2012,6 @@
   // daily workflow has rewritten radar.json + radar_history.json with `l1s`.
   function radarL1s(data) {
     return (data && (data.l1s || data.ecosystems)) || null;
-  }
-
-  // Members averaged into a viz leaf's score. radar.json ships every member
-  // while radar_history.json stays capped at `radar.tickers_per_leaf` (10), so
-  // the viz takes the same leading slice from both — otherwise today's leaves
-  // would be diluted by their long tail and read cooler than the same leaf one
-  // session back in the time-travel bar.
-  const RADAR_VIZ_MEMBERS = 10;
-
-  // Adapter: flatten a radar snapshot's L1 groups into the {themes:[...]}
-  // shape the shared Cytoscape network renderer consumes (Theme Viz tab).
-  // Per-leaf `score` is the mean member composite (0-100 scale, matching the
-  // viz strength bands) and `avg_rs` the mean member RS (hot filter ≥ 70).
-  function radarVizSnap(data) {
-    const l1s = radarL1s(data);
-    if (!l1s) return data;
-    const themes = [];
-    l1s.forEach(grp => {
-      (grp.leaves || []).forEach(leaf => {
-        const tickers = (leaf.tickers || []).slice(0, RADAR_VIZ_MEMBERS);
-        const n = tickers.length;
-        const avgRs = n ? tickers.reduce((s, t) => s + (t.rs ?? 0), 0) / n : 0;
-        const avgScore = n ? tickers.reduce((s, t) => s + (t.score ?? 0), 0) / n : 0;
-        themes.push({
-          name: leaf.name,
-          l1: grp.name,
-          score: avgScore,
-          avg_rs: avgRs,
-          tickers,
-        });
-      });
-    });
-    return { report_date: data.report_date, themes };
-  }
-
-  // Flatten the L1-clustered VARS snapshot (themes = L1 sections carrying
-  // `leaves`) back to leaf-level entries for the shared network viz. Legacy
-  // flat snapshots (pre-clustering history) pass through unchanged.
-  function varsVizSnap(data) {
-    if (!data || !data.themes) return data;
-    const themes = data.themes.flatMap(t => t.leaves || [t]);
-    return { report_date: data.report_date, themes };
   }
 
   // Tight sort state. Off by default and reset on reload, like tickerFilters —

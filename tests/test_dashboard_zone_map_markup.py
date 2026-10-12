@@ -18,8 +18,8 @@ APP = (ROOT / 'docs' / 'app.js').read_text(encoding='utf-8')
 HTML = (ROOT / 'docs' / 'index.html').read_text(encoding='utf-8')
 CONFIG = yaml.safe_load((ROOT / 'config' / 'workflow_config.yaml').read_text(encoding='utf-8'))
 
-#: Tabs already moved onto the zone map. Task 6 adds the other three.
-ZONE_TABS = ('varsviz',)
+#: Every Viz tab draws a zone map.
+ZONE_TABS = ('themeviz', 'varsviz', 'momentumviz', 'volumeviz')
 
 
 def _zone_section():
@@ -112,6 +112,16 @@ class ZoneMarkupTests(unittest.TestCase):
         body = _fn('initTickerClicks')
         for tab in ZONE_TABS:
             self.assertIn(f"'{tab}'", body, tab)
+
+    def test_no_network_code_remains(self):
+        LEGENDS = (ROOT / 'docs' / 'legends.js').read_text(encoding='utf-8')
+        CSS = (ROOT / 'docs' / 'style.css').read_text(encoding='utf-8')
+        for token in ('cytoscape', 'renderNetwork', 'radarVizSnap', 'varsVizSnap',
+                      'VIZ_COLORS', 'VIZ_HOT', 'vizRs', 'vizVars', 'vizThemeStrength',
+                      'theme-network', 'tight-pulse-ring'):
+            for name, text in (('app.js', APP), ('index.html', HTML),
+                               ('legends.js', LEGENDS), ('style.css', CSS)):
+                self.assertNotIn(token, text, f'{token} still in {name}')
 
 
 if __name__ == '__main__':

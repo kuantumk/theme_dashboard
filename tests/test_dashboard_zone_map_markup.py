@@ -1,0 +1,118 @@
+"""Zone map: the browser mirror, the renderer and the markup.
+
+The server decides every zone (export_dashboard_data.build_zone_map). The
+browser mirrors the limits in ZONE_RULES only to draw rails, the box and the
+Legends tab, so the mirror is pinned to the config here.
+"""
+
+import re
+import unittest
+from pathlib import Path
+
+import yaml
+
+from src.reporting import export_dashboard_data as ex
+
+ROOT = Path(__file__).resolve().parents[1]
+APP = (ROOT / 'docs' / 'app.js').read_text(encoding='utf-8')
+HTML = (ROOT / 'docs' / 'index.html').read_text(encoding='utf-8')
+CONFIG = yaml.safe_load((ROOT / 'config' / 'workflow_config.yaml').read_text(encoding='utf-8'))
+
+#: Tabs already moved onto the zone map. Task 6 adds the other three.
+ZONE_TABS = ('varsviz',)
+
+
+def _zone_section():
+    start = APP.index('  // ── ZONE MAP')
+    end = APP.index('  // ── END ZONE MAP', start)
+    return APP[start:end]
+
+
+def _fn(name):
+    start = APP.index(f'\n  function {name}(')
+    end = APP.index('\n  function ', start + 10)
+    return APP[start:end]
+
+
+class ZoneRulesMirrorTests(unittest.TestCase):
+    def _rules(self):
+        m = re.search(r'const ZONE_RULES = \{(.*?)\n  \};', APP, re.S)
+        self.assertIsNotNone(m, 'ZONE_RULES is gone from docs/app.js')
+        return m.group(1)
+
+    def test_every_limit_matches_the_config(self):
+        rules, cfg = self._rules(), CONFIG['zone_map']
+        for js, py in (('bandLow', 'band_low'), ('bandHigh', 'band_high'),
+                       ('weeklyLow', 'weekly_low'), ('weeklyHigh', 'weekly_high')):
+            m = re.search(r'\b' + js + r':\s*(-?[\d.]+)', rules)
+            self.assertIsNotNone(m, js)
+            self.assertEqual(float(cfg[py]), float(m.group(1)), js)
+        for js, py in (('xRange', 'x_range'), ('yRange', 'y_range')):
+            m = re.search(r'\b' + js + r':\s*\[\s*(-?[\d.]+),\s*(-?[\d.]+)\s*\]', rules)
+            self.assertIsNotNone(m, js)
+            self.assertEqual([float(v) for v in cfg[py]], [float(m.group(1)), float(m.group(2))], js)
+
+    def test_the_states_match_the_server_in_order(self):
+        m = re.search(r'const ZONE_STATES = \[(.*?)\n  \];', APP, re.S)
+        self.assertIsNotNone(m, 'ZONE_STATES is gone from docs/app.js')
+        self.assertEqual(list(ex.ZONE_STATES), re.findall(r"\bid: '(\w+)'", m.group(1)))
+
+    def test_the_config_matches_the_server_defaults(self):
+        for key, default in ex.ZONE_MAP_DEFAULTS.items():
+            self.assertEqual(default, CONFIG['zone_map'][key], key)
+
+
+class ZoneRendererTests(unittest.TestCase):
+    def test_the_section_paints_with_classes_never_literals(self):
+        self.assertNotRegex(_zone_section(), r"#[0-9a-fA-F]{3,6}\b",
+                            'a raw colour in the zone map; paint it with a CSS class')
+
+    def test_an_absent_block_says_when_data_arrives(self):
+        self.assertIn('Zone map data arrives with the next daily run.', _zone_section())
+
+    def test_momentum_prints_rs_and_the_rest_print_vars(self):
+        modes = re.search(r'const ZONE_MODES = \{(.*?)\n  \};', APP, re.S).group(1)
+        self.assertRegex(modes, r"momentum:\s*\{[^}]*metric:\s*'rs'")
+        for mode in ('themes', 'vars', 'volume'):
+            self.assertRegex(modes, mode + r":\s*\{[^}]*metric:\s*'vars'")
+
+    def test_the_row_number_reads_the_shared_bands(self):
+        body = _fn('zoneNum')
+        self.assertIn('pickBand(COLOR_BANDS.rs', body)
+        self.assertIn('pickBand(COLOR_BANDS.vars', body)
+
+    def test_list_tickers_are_real_links_with_the_tier_tint(self):
+        body = _fn('zoneTickerLink')
+        for token in ('tn-link', 'hlClass(', 'hlTitle(', 'day-pattern-green', 'data-sym='):
+            self.assertIn(token, body)
+
+    def test_the_scatter_emits_no_tier(self):
+        """Dot colour already means the daily zone; a tier on it would be noise."""
+        body = _fn('zoneScatterCard')
+        for token in ('hlClass(', 'hlTitle(', 'hl-short', 'hl-ma-up', 'hl-ma-split'):
+            self.assertNotIn(token, body)
+
+    def test_an_off_scale_name_is_clamped_and_titled_with_its_real_value(self):
+        body = _fn('zoneScatterCard')
+        self.assertIn('zmClamp(', body)
+        self.assertIn('zoneTriangle(', body)
+        self.assertIn('t.d_daily', body)
+        self.assertIn('<title>', body)
+
+
+class ZoneMarkupTests(unittest.TestCase):
+    def test_each_zone_tab_has_its_container_and_key(self):
+        for tab in ZONE_TABS:
+            block = HTML.split(f'id="content-{tab}"')[1].split('class="tab-content"')[0]
+            self.assertIn(f'id="{tab}-zone"', block, tab)
+            self.assertIn('data-viz-legend="zone"', block, tab)
+            self.assertNotIn('theme-network', block, tab)
+
+    def test_a_list_click_on_a_zone_tab_opens_the_chart(self):
+        body = _fn('initTickerClicks')
+        for tab in ZONE_TABS:
+            self.assertIn(f"'{tab}'", body, tab)
+
+
+if __name__ == '__main__':
+    unittest.main()

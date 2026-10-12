@@ -121,6 +121,7 @@
     initMarketStatus();
     initTabs();
     initTickerClicks();
+    initZoneMaps();
     initTickerFilters();
     initResizablePanels();
     initRadarClamps();
@@ -252,19 +253,11 @@
       const tabContent = link.closest('.tab-content');
       if (!tabContent) return;
 
-      let tabId;
-      if (tabContent.id === 'content-macro') tabId = 'macro';
-      else if (tabContent.id === 'content-themes') tabId = 'themes';
-      else if (tabContent.id === 'content-momentum') tabId = 'momentum';
-      else if (tabContent.id === 'content-volume') tabId = 'volume';
-      else if (tabContent.id === 'content-volumeviz') tabId = 'volumeviz';
-      else if (tabContent.id === 'content-vars') tabId = 'vars';
-      else if (tabContent.id === 'content-industry') tabId = 'industry';
-      else if (tabContent.id === 'content-etf') tabId = 'etf';
-      else if (tabContent.id === 'content-ep') tabId = 'ep';
-      else if (tabContent.id === 'content-parabolic') tabId = 'parabolic';
-      else if (tabContent.id === 'content-si') tabId = 'si';
-      else return;
+      // Every tab whose ticker links open the chart beside them.
+      const CHART_TABS = ['macro', 'themes', 'themeviz', 'momentum', 'momentumviz',
+        'volume', 'volumeviz', 'vars', 'varsviz', 'industry', 'etf', 'ep', 'parabolic', 'si'];
+      const tabId = tabContent.id.replace('content-', '');
+      if (!CHART_TABS.includes(tabId)) return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
       link.classList.add('active-ticker');
@@ -1383,12 +1376,51 @@
      SMAs share the other. */
   const CHART_MA_COLORS = { ema: '#4CAF50', sma: '#FFD700' };
 
+  /* Zone map limits, in daily ATR14. A MIRROR of the `zone_map:` block in
+     config/workflow_config.yaml. The server decides every zone and state
+     (export_dashboard_data.build_zone_map); the browser reads these only to
+     draw the rails, the buy-area box and the Legends tab.
+     tests/test_dashboard_zone_map_markup.py pins each value to the config. */
+  const ZONE_RULES = {
+    bandLow: -0.5,
+    bandHigh: 1.0,
+    weeklyLow: 0.0,
+    weeklyHigh: 4.0,
+    xRange: [-2.0, 5.0],
+    yRange: [-4.0, 8.0],
+  };
+
+  /* The colour class of each daily zone. Dots, zone backgrounds, cluster bar
+     segments and state rows all paint from these three classes in style.css. */
+  const ZONE_FAMILY_CLASS = { under: 'zm-under', band: 'zm-band', above: 'zm-above' };
+
+  /* The seven states, best first. `id` matches export_dashboard_data.ZONE_STATES
+     in the same order (pinned by the same test). `family` picks the row colour.
+     A note says where a name sits. It never says what the name will do next. */
+  const ZONE_STATES = [
+    { id: 'buy_area', family: 'band', label: 'In the buy area',
+      note: 'In the daily band, and the weekly is not stretched.' },
+    { id: 'buy_stretched', family: 'band', label: 'Buy area, weekly stretched',
+      note: 'In the daily band, but extended above the weekly EMA20.' },
+    { id: 'above', family: 'above', label: 'Above the buy area',
+      note: 'Above the daily band. The weekly is not stretched.' },
+    { id: 'extended', family: 'above', label: 'Extended on both',
+      note: 'Above the daily band and extended above the weekly EMA20.' },
+    { id: 'under_daily', family: 'under', label: 'Under the daily band',
+      note: 'Below the daily band. The close is at or above the weekly EMA20.' },
+    { id: 'weekly_broken', family: 'under', label: 'Weekly broken',
+      note: 'Below the weekly EMA20. The daily is in or above its band.' },
+    { id: 'under_both', family: 'under', label: 'Under both',
+      note: 'Below the daily band and below the weekly EMA20.' },
+  ];
+
   /* A read-only view for docs/legends.js, which renders outside this closure.
      The Legends tab reads ONLY this object, so anything it describes must be
      reachable from here — never copied into legends.js as a literal. */
   window.MM_COLORS = Object.freeze({
     COLOR_BANDS, pickBand, PATTERN_RULES, MARKET_SESSIONS, MARKET_CLOSED,
-    VIZ_COLORS, VIZ_HOT, CHART_MA_COLORS, HL_TIER_CLASS, HL_TIER_TIP,
+    VIZ_COLORS, VIZ_HOT, CHART_MA_COLORS, ZONE_RULES, ZONE_STATES, ZONE_FAMILY_CLASS,
+    HL_TIER_CLASS, HL_TIER_TIP,
     NASI: { oversold: NASI_OVERSOLD, watch: NASI_WATCH, overbought: NASI_OVERBOUGHT },
     rsFill, varsFill, themeFill,
     cutoffs: () => ({ vol: tickerFilters.vol, adr: tickerFilters.adr }),
@@ -1494,14 +1526,14 @@
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
         renderAllTimeTravelBars();
         renderVARS(current);
-        renderVARSNetwork(current);
+        renderZoneMap(current, 'vars');
       })
       .catch(err => {
         console.warn('VARS data not available:', err);
         const c = document.getElementById('vars-container');
         if (c) c.innerHTML = '<div class="no-data">VARS data not available.<br>Run the daily workflow to generate data.</div>';
-        const vn = document.getElementById('vars-network');
-        if (vn) vn.innerHTML = '<div class="no-data">VARS data not available.</div>';
+        const vz = document.getElementById('varsviz-zone');
+        if (vz) vz.innerHTML = '<div class="no-data">VARS data not available.</div>';
       });
   }
 
@@ -1590,7 +1622,7 @@
     // VARS
     const varsSnap = varsHistory.find(h => h.report_date === date);
     renderVARS(varsSnap, date);
-    renderVARSNetwork(varsSnap, date);
+    renderZoneMap(varsSnap, 'vars', date);
     // Parabolic
     const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
     parabolicData = parabolicSnap ? (parabolicSnap.tickers || []) : [];
@@ -1729,6 +1761,295 @@
     renderAllTimeTravelBars();
     onSelect(date);
   }
+
+  // ── ZONE MAP — the four Viz tabs ───────────────────────────────────
+  // Each ticker sits at (close vs the daily EMA20, close vs the weekly
+  // EMA20), both in daily ATR14. The server decides every zone and state
+  // (export_dashboard_data.build_zone_map); this code only draws. It paints
+  // with CSS classes, never with colour literals. The SVG scales through its
+  // viewBox, so it draws correctly on a hidden tab.
+
+  const ZONE_MODES = {
+    themes: { containerId: 'themeviz-zone', tabId: 'themeviz', metric: 'vars',
+      source: p => `members of the top ${p.top_leaves} radar leaves` },
+    vars: { containerId: 'varsviz-zone', tabId: 'varsviz', metric: 'vars',
+      source: () => 'VARS tab survivors' },
+    momentum: { containerId: 'momentumviz-zone', tabId: 'momentumviz', metric: 'rs',
+      source: () => 'Momentum tab survivors' },
+    volume: { containerId: 'volumeviz-zone', tabId: 'volumeviz', metric: 'vars',
+      source: () => 'Volume tab survivors' },
+  };
+
+  const ZONE_METRIC = {
+    vars: { key: 'vars', label: 'VARS', digits: 1 },
+    rs: { key: 'rs', label: 'RS', digits: 0 },
+  };
+
+  // Leaf rows shown in the clusters card before the "N other themes" line.
+  const ZONE_CLUSTER_ROWS = 8;
+
+  // SVG geometry, in viewBox units.
+  const ZM = { w: 760, h: 470, l: 46, r: 14, t: 40, b: 34 };
+
+  function zmX(v) {
+    const [a, b] = ZONE_RULES.xRange;
+    return ZM.l + (v - a) / (b - a) * (ZM.w - ZM.l - ZM.r);
+  }
+
+  function zmY(v) {
+    const [a, b] = ZONE_RULES.yRange;
+    return ZM.h - ZM.b - (v - a) / (b - a) * (ZM.h - ZM.t - ZM.b);
+  }
+
+  function zmClamp(v, range) {
+    return Math.min(range[1], Math.max(range[0], v));
+  }
+
+  function zmSigned(v) {
+    return (v > 0 ? '+' : '') + Number(v).toFixed(2);
+  }
+
+  function zmF(v) {
+    return Number(v).toFixed(1);
+  }
+
+  function zoneStateLabel(id) {
+    const s = ZONE_STATES.find(x => x.id === id);
+    return s ? s.label : id;
+  }
+
+  function zoneMetricText(t, metric) {
+    const v = t[metric.key];
+    return v == null ? '—' : Number(v).toFixed(metric.digits);
+  }
+
+  function zoneNum(t, metric) {
+    const v = t[metric.key];
+    if (v == null) return '';
+    const cls = metric.key === 'rs' ? pickBand(COLOR_BANDS.rs, v) : pickBand(COLOR_BANDS.vars, v);
+    return ` <span class="zm-num ${cls}">${Number(v).toFixed(metric.digits)}</span>`;
+  }
+
+  function zoneSortByMetric(list, metric) {
+    const val = t => (t[metric.key] == null ? -Infinity : t[metric.key]);
+    return list.slice().sort((a, b) => val(b) - val(a) || a.ticker.localeCompare(b.ticker));
+  }
+
+  /** A ticker in the states or clusters card: a real .tn-link, so it wears
+   *  the day-pattern text, the tier tint and the selection like every tab. */
+  function zoneTickerLink(t, metric, bold) {
+    return `<span class="zm-tk${bold ? ' zm-buy' : ''}"><span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(t.ticker + ' · Zone map')}">${escHtml(t.ticker)}</span>${metric ? zoneNum(t, metric) : ''}</span>`;
+  }
+
+  /** An off-scale name: a triangle on the nearest edge, pointing outward. */
+  function zoneTriangle(p, t) {
+    const R = ZONE_RULES;
+    const s = 5;
+    let pts;
+    if (t.d_weekly > R.yRange[1]) pts = [[0, -s], [s, s], [-s, s]];
+    else if (t.d_weekly < R.yRange[0]) pts = [[0, s], [s, -s], [-s, -s]];
+    else if (t.d_daily > R.xRange[1]) pts = [[s, 0], [-s, s], [-s, -s]];
+    else pts = [[-s, 0], [s, s], [s, -s]];
+    const points = pts.map(([dx, dy]) => `${zmF(p.x + dx)},${zmF(p.y + dy)}`).join(' ');
+    return `<polygon class="zm-dot ${ZONE_FAMILY_CLASS[t.zone_daily]}" points="${points}"/>`;
+  }
+
+  function zoneScatterCard(zm, cfg, metric) {
+    const R = ZONE_RULES;
+    const tickers = zm.tickers;
+    const p = zm.params || {};
+    const xs = [R.xRange[0], R.bandLow, R.bandHigh, R.xRange[1]].map(zmX);
+    const yTop = zmY(R.yRange[1]);
+    const yBot = zmY(R.yRange[0]);
+    const families = ['under', 'band', 'above'];
+    const heads = { under: 'Under the daily band', band: 'In the daily band', above: 'Above the daily band' };
+    const counts = { under: 0, band: 0, above: 0 };
+    tickers.forEach(t => { counts[t.zone_daily] += 1; });
+    const nBuy = tickers.filter(t => t.state === 'buy_area').length;
+
+    let svg = '';
+    families.forEach((f, i) => {
+      const mid = (xs[i] + xs[i + 1]) / 2;
+      svg += `<rect class="zm-bg ${ZONE_FAMILY_CLASS[f]}" x="${zmF(xs[i])}" y="${zmF(yTop)}" width="${zmF(xs[i + 1] - xs[i])}" height="${zmF(yBot - yTop)}"/>`;
+      svg += `<text class="zm-head" x="${zmF(mid)}" y="${zmF(yTop - 20)}">${heads[f]}</text>`;
+      svg += `<text class="zm-axis" x="${zmF(mid)}" y="${zmF(yTop - 8)}">${counts[f]} of ${tickers.length}</text>`;
+    });
+
+    const rail = (x1, y1, x2, y2, extra) =>
+      `<line class="zm-rail${extra ? ' ' + extra : ''}" x1="${zmF(x1)}" y1="${zmF(y1)}" x2="${zmF(x2)}" y2="${zmF(y2)}"/>`;
+    const yLow = zmY(R.weeklyLow);
+    const yHigh = zmY(R.weeklyHigh);
+    svg += rail(xs[1], yTop, xs[1], yBot) + rail(xs[2], yTop, xs[2], yBot);
+    svg += rail(xs[0], yLow, xs[3], yLow);
+    svg += rail(xs[0], yHigh, xs[3], yHigh, 'zm-rail-dash');
+    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yLow - 4)}">weekly EMA20</text>`;
+    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yHigh - 4)}">weekly extended · &gt; +${R.weeklyHigh} ATR</text>`;
+
+    svg += `<rect class="zm-box" x="${zmF(xs[1])}" y="${zmF(yHigh)}" width="${zmF(xs[2] - xs[1])}" height="${zmF(yLow - yHigh)}"/>`;
+    svg += `<text class="zm-box-tag" x="${zmF((xs[1] + xs[2]) / 2)}" y="${zmF(yHigh + 13)}">Buy area · ${nBuy}</text>`;
+
+    for (let v = Math.ceil(R.xRange[0]); v <= R.xRange[1]; v += 1) {
+      svg += `<text class="zm-axis" x="${zmF(zmX(v))}" y="${zmF(yBot + 13)}">${v > 0 ? '+' + v : v}</text>`;
+    }
+    for (let v = Math.ceil(R.yRange[0] / 2) * 2; v <= R.yRange[1]; v += 2) {
+      svg += `<text class="zm-axis zm-right" x="${zmF(xs[0] - 5)}" y="${zmF(zmY(v) + 3)}">${v > 0 ? '+' + v : v}</text>`;
+    }
+    svg += `<text class="zm-axis" x="${zmF((xs[0] + xs[3]) / 2)}" y="${ZM.h - 4}">daily: close vs EMA20, in ATR →</text>`;
+    svg += `<text class="zm-axis" transform="translate(11 ${zmF((yTop + yBot) / 2)}) rotate(-90)">weekly: close vs EMA20, in ATR →</text>`;
+
+    // Positions, then labels: buy-area names first, then tight names, then
+    // the rest by the row number. A label that would overlap one already
+    // placed is skipped; the <title> still names every dot on hover.
+    const pts = tickers.map(t => {
+      const cx = zmClamp(t.d_daily, R.xRange);
+      const cy = zmClamp(t.d_weekly, R.yRange);
+      return { t, x: zmX(cx), y: zmY(cy), off: cx !== t.d_daily || cy !== t.d_weekly, box: null };
+    });
+    const prio = q => (q.t.state === 'buy_area' ? 0 : q.t.tight ? 1 : 2);
+    const val = q => (q.t[metric.key] == null ? -Infinity : q.t[metric.key]);
+    const placed = [];
+    pts.slice().sort((a, b) => prio(a) - prio(b) || val(b) - val(a)).forEach(q => {
+      const w = q.t.ticker.length * 6.2 + 2;
+      const h = 10;
+      const box = { x: q.x + 6, y: q.y - h / 2, w, h };
+      if (box.x + w > ZM.w - ZM.r) box.x = q.x - 6 - w;
+      const hit = placed.some(o => box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h);
+      if (hit) return;
+      placed.push(box);
+      q.box = box;
+    });
+
+    pts.forEach(q => {
+      const t = q.t;
+      const title = `${t.ticker} · ${zoneStateLabel(t.state)}\n`
+        + `Daily ${zmSigned(t.d_daily)} ATR · Weekly ${zmSigned(t.d_weekly)} ATR\n`
+        + `${metric.label} ${zoneMetricText(t, metric)}`
+        + (t.tight ? `\nTight range${t.tight_len ? ' ' + t.tight_len + 'd' : ''}` : '');
+      const shape = q.off
+        ? zoneTriangle(q, t)
+        : `<circle class="zm-dot ${ZONE_FAMILY_CLASS[t.zone_daily]}" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="4"/>`;
+      const ring = t.tight ? `<circle class="zm-ring" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="7"/>` : '';
+      const label = q.box
+        ? `<text class="zm-label${t.state === 'buy_area' ? ' zm-label-buy' : ''}" x="${zmF(q.box.x)}" y="${zmF(q.y + 3.5)}">${escHtml(t.ticker)}</text>`
+        : '';
+      svg += `<g class="zm-pt" data-zm-sym="${escAttr(t.ticker)}"><title>${escHtml(title)}</title>${ring}${shape}${label}</g>`;
+    });
+
+    const left = [];
+    if (zm.n_floor_dropped) left.push(`${zm.n_floor_dropped} under the floors`);
+    if (zm.n_no_weekly) left.push(`${zm.n_no_weekly} without a weekly EMA20`);
+    if (zm.n_no_daily) left.push(`${zm.n_no_daily} without a daily reading`);
+    const adr = ((p.min_adr_pct || 0) * 100).toFixed(1).replace(/\.0$/, '');
+    const caption = `${tickers.length} names: ${cfg.source(p)}, average dollar volume $${Math.round((p.min_avg_dollar_vol || 0) / 1e6)}M or more, ADR ${adr}% or more.`
+      + (left.length ? ` Left off: ${left.join(', ')}.` : '');
+    return `<div class="card zm-card"><div class="card-lbl">Where is each name?</div>`
+      + `<p class="zm-caption">${escHtml(caption)}</p>`
+      + `<svg class="zm-svg" viewBox="0 0 ${ZM.w} ${ZM.h}" role="img" aria-label="Zone map">${svg}</svg></div>`;
+  }
+
+  function zoneStatesCard(tickers, metric) {
+    const rows = ZONE_STATES.map(s => {
+      const members = zoneSortByMetric(tickers.filter(t => t.state === s.id), metric);
+      const list = members.length ? members.map(t => zoneTickerLink(t, null, false)).join(' ') : '—';
+      return `<div class="zm-state ${ZONE_FAMILY_CLASS[s.family]}">`
+        + `<div class="zm-state-head"><span>${escHtml(s.label)}</span><span class="zm-state-n">${members.length}</span></div>`
+        + `<div class="zm-state-note">${escHtml(s.note)}</div>`
+        + `<div class="zm-state-list">${list}</div></div>`;
+    }).join('');
+    return `<div class="card zm-card"><div class="card-lbl">Seven states, best first</div>${rows}</div>`;
+  }
+
+  function zoneClustersCard(tickers, metric) {
+    const byLeaf = new Map();
+    tickers.forEach(t => (t.leaves || []).forEach(leaf => {
+      if (!byLeaf.has(leaf)) byLeaf.set(leaf, []);
+      byLeaf.get(leaf).push(t);
+    }));
+    const leaves = [...byLeaf.entries()].map(([name, members]) => ({
+      name,
+      members: zoneSortByMetric(members, metric),
+      nBuy: members.filter(t => t.state === 'buy_area').length,
+    })).sort((a, b) => b.nBuy - a.nBuy || b.members.length - a.members.length || a.name.localeCompare(b.name));
+    const shown = leaves.slice(0, ZONE_CLUSTER_ROWS);
+    const shownNames = new Set(shown.map(l => l.name));
+    const remaining = tickers.filter(t => !(t.leaves || []).some(l => shownNames.has(l)));
+
+    const rows = shown.map(l => {
+      const n = l.members.length;
+      const bar = ['band', 'above', 'under'].map(f => {
+        const k = l.members.filter(t => t.zone_daily === f).length;
+        return k ? `<span class="zm-seg ${ZONE_FAMILY_CLASS[f]}" style="width:${(100 * k / n).toFixed(1)}%"></span>` : '';
+      }).join('');
+      const list = l.members.map(t => zoneTickerLink(t, metric, t.state === 'buy_area')).join('<span class="zm-sep"> · </span>');
+      return `<div class="zm-leaf"><div class="zm-leaf-head">`
+        + `<span class="zm-leaf-name" title="${escAttr(l.name)}">${escHtml(l.name)}</span>`
+        + `<span class="zm-bar">${bar}</span><span class="zm-leaf-n">${l.nBuy}/${n}</span></div>`
+        + `<div class="zm-leaf-list">${list}</div></div>`;
+    }).join('');
+    const rest = leaves.length - shown.length;
+    const foot = (remaining.length
+      ? `${remaining.length} more ${remaining.length === 1 ? 'name sits' : 'names sit'} in ${rest} other ${rest === 1 ? 'theme' : 'themes'} or carry no theme tag. `
+      : '')
+      + `Buy area / total. Names in the buy area are bold. The number after each ticker is its ${metric.label}.`;
+    return `<div class="card zm-card"><div class="card-lbl">Where they cluster</div>${rows || '<div class="no-data">No theme tags.</div>'}`
+      + `<p class="zm-foot">${escHtml(foot)}</p></div>`;
+  }
+
+  function renderZoneMap(snap, mode, date) {
+    const cfg = ZONE_MODES[mode];
+    const el = cfg && document.getElementById(cfg.containerId);
+    if (!el) return;
+    if (!snap) {
+      el.innerHTML = `<div class="no-data">No data for ${escHtml(date || 'this session')}.</div>`;
+      return;
+    }
+    const zm = snap.zone_map;
+    if (!zm) {
+      el.innerHTML = '<div class="no-data">Zone map data arrives with the next daily run.</div>';
+      return;
+    }
+    const tickers = zm.tickers || [];
+    if (!tickers.length) {
+      el.innerHTML = `<div class="no-data">No ticker passed the zone-map floors for ${escHtml(snap.report_date || date || 'this session')}: `
+        + `${zm.n_candidates} candidates, ${zm.n_floor_dropped} under the floors, `
+        + `${zm.n_no_weekly} without a weekly EMA20, ${zm.n_no_daily} without a daily reading.</div>`;
+      return;
+    }
+    const metric = ZONE_METRIC[cfg.metric];
+    el.innerHTML = zoneScatterCard(zm, cfg, metric)
+      + zoneStatesCard(tickers, metric)
+      + zoneClustersCard(tickers, metric);
+  }
+
+  /** Mark one ticker selected on the dot and on every list link of the tab. */
+  function selectZoneTicker(mode, sym) {
+    const el = document.getElementById(ZONE_MODES[mode].containerId);
+    if (!el) return;
+    const q = CSS.escape(sym);
+    el.querySelectorAll('.zm-pt.zm-sel').forEach(g => g.classList.remove('zm-sel'));
+    el.querySelectorAll(`.zm-pt[data-zm-sym="${q}"]`).forEach(g => g.classList.add('zm-sel'));
+    el.querySelectorAll('.tn-link.active-ticker').forEach(l => l.classList.remove('active-ticker'));
+    el.querySelectorAll(`.tn-link[data-sym="${q}"]`).forEach(l => l.classList.add('active-ticker'));
+  }
+
+  function initZoneMaps() {
+    Object.entries(ZONE_MODES).forEach(([mode, cfg]) => {
+      const el = document.getElementById(cfg.containerId);
+      if (!el) return;
+      el.addEventListener('click', e => {
+        const pt = e.target.closest('.zm-pt');
+        const link = e.target.closest('.tn-link');
+        const sym = pt ? pt.dataset.zmSym : link ? link.dataset.sym : null;
+        if (!sym) return;
+        // A list link is a .tn-link, so initTickerClicks opens its chart.
+        // A dot is not, so this handler opens the chart for it.
+        if (pt) openChart(cfg.tabId, sym);
+        // After initTickerClicks has cleared and set its single link.
+        setTimeout(() => selectZoneTicker(mode, sym), 0);
+      });
+    });
+  }
+  // ── END ZONE MAP ───────────────────────────────────────────────────
 
   // ── NETWORK VIZ — Theme, Momentum, Volume, and VARS Viz ─────────────
   // Both tabs share one Cytoscape force-directed renderer. They differ only

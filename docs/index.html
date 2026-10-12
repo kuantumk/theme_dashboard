@@ -827,24 +827,16 @@
       <div class="time-travel-bar">
         <div class="time-travel-dates" id="varsviz-tt-dates"></div>
       </div>
-      <div class="card themeviz-card">
-        <div class="card-lbl">VARS Network — Volatility-Adjusted Relative Strength leaders</div>
-        <div class="theme-network-wrap">
-          <div id="vars-network" class="theme-network"></div>
-          <div id="varsviz-overlay" class="themeviz-overlay"></div>
-          <div id="varsviz-tooltip" class="themeviz-tooltip" style="display:none"></div>
-        </div>
-        <!-- Drawn by legends.js from COLOR_BANDS, the tables the nodes are
-             painted from, so this key cannot drift from the network. -->
-        <div class="themeviz-legend" data-viz-legend="vars"></div>
-      </div>
+      <div class="zone-map" id="varsviz-zone"></div>
+      <!-- Drawn by legends.js from ZONE_RULES, the same limits the map uses. -->
+      <div class="themeviz-legend" data-viz-legend="zone"></div>
     </div>
     <div class="resize-handle" data-panel="varsviz"></div>
     <div class="right-panel" id="varsviz-right">
       <div class="chart-area" id="varsviz-chart-area">
         <div class="chart-placeholder">
           <div class="placeholder-icon">📈</div>
-          <div>Click any ticker node to open chart</div>
+          <div>Click any ticker to open chart</div>
           <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
         </div>
       </div>

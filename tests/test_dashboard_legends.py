@@ -280,11 +280,13 @@ class SingleSourceTests(unittest.TestCase):
         """The hand-written keys had drifted: a blue swatch for a cyan node,
         "score >= 100" for a band that starts at 65, and RS swatches on the
         Volume Viz tab, whose nodes are coloured by VARS."""
-        self.assertEqual(4, len(re.findall(r'data-viz-legend="(?:rs|vars)"', HTML)))
+        self.assertEqual(3, len(re.findall(r'data-viz-legend="(?:rs|vars)"', HTML)))
+        self.assertEqual(1, len(re.findall(r'data-viz-legend="zone"', HTML)))
         for stale in ('lg-rs90', 'lg-vars6', 'lg-blazing'):
             self.assertNotIn(stale, HTML)
             self.assertNotIn(stale, CSS)
         self.assertIn('data-viz-legend="vars"></div>', HTML.split('volume-network')[1][:1500])
+        self.assertIn('[data-viz-legend="zone"]', LEGENDS)
 
 
 class ServerRuleMirrorTests(unittest.TestCase):

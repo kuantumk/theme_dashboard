@@ -449,6 +449,34 @@
   }
 
   // ── SAMPLE MARKUP ─────────────────────────────────────
+  function zoneDot(cls) {
+    return `<svg class="lg-zm" viewBox="0 0 12 12"><circle class="zm-dot ${cls}" cx="6" cy="6" r="4"/></svg>`;
+  }
+
+  function zoneBgFigure() {
+    return '<svg class="lg-zm" style="width:120px;height:24px" viewBox="0 0 120 24">'
+      + '<rect class="zm-bg zm-under" x="0" y="0" width="30" height="24"/>'
+      + '<rect class="zm-bg zm-band" x="30" y="0" width="40" height="24"/>'
+      + '<rect class="zm-bg zm-above" x="70" y="0" width="50" height="24"/>'
+      + '<circle class="zm-dot zm-under" cx="15" cy="12" r="4"/>'
+      + '<circle class="zm-dot zm-band" cx="50" cy="12" r="4"/>'
+      + '<circle class="zm-dot zm-above" cx="95" cy="12" r="4"/></svg>';
+  }
+
+  /* The short key under each zone map, drawn from the same classes. */
+  function renderZoneKeys() {
+    const items = [
+      [zoneDot('zm-under'), 'Under the daily band'],
+      [zoneDot('zm-band'), 'In the band'],
+      [zoneDot('zm-above'), 'Above the band'],
+      ['<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>', 'Buy area'],
+      ['<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/></svg>', 'Tight range'],
+    ].map(([s, t]) => `<span class="lg-item">${s}${esc(t)}</span>`).join('');
+    document.querySelectorAll('[data-viz-legend="zone"]').forEach(el => {
+      el.innerHTML = items + '<a class="lg-item lg-more" href="#" data-open-legends>All colours →</a>';
+    });
+  }
+
   function chip(cls, text) {
     return `<span class="tn-link radar-chip ${cls}">${esc(text)}</span>`;
   }
@@ -520,6 +548,9 @@
     const split = analyse(SCN.split);
 
     const VIZ_TABS = ['themeviz', 'momentumviz', 'volumeviz', 'varsviz'];
+    const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz'];
+    const Z = C.ZONE_RULES;
+    const zs = v => (v > 0 ? '+' : '') + v;
 
     return [
       {
@@ -530,7 +561,7 @@
             id: 'green', title: 'Green text — entry-ready day pattern',
             wide: true,
             sample: link('day-pattern-green', 'NVDA'),
-            where: LIST_TABS,
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<p>The latest bar is a tight day or an inside day, and it closes near a short-term average. All of the conditions are true on the latest bar:</p>
               <ul class="lg-rules">
                 <li><b>Tight day:</b> |close − open| ÷ close &lt; ${R.tightDayBodyAdr} × ADR%.</li>
@@ -544,7 +575,7 @@
           {
             id: 'selected', title: 'Yellow text, solid underline — selected ticker',
             sample: link('active-ticker', 'AMD'),
-            where: LIST_TABS.concat(['macro', 'ep']),
+            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
             body: `<p>This ticker is on the chart now. Click a ticker or use the ↑/↓ keys to select one. In a table, the row also gets a yellow tint and outline.</p>
               <table class="lg-mini"><tbody>
                 ${miniRow('', '', 'NVDA', ['91'])}
@@ -557,7 +588,7 @@
           {
             id: 'hover', title: 'Blue text on hover — clickable ticker',
             sample: `<span class="tn-link lg-live">hover me</span>`,
-            where: LIST_TABS.concat(['macro', 'ep']),
+            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
             body: '<p>The pointer is on a ticker. Click it to open its chart. The dotted underline marks every clickable ticker.</p>',
           },
           {
@@ -585,7 +616,7 @@
           {
             id: 'ladder', title: 'The ladder — one tint per ticker',
             sample: link('tight-range day-pattern-green', 'TICK'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<ol class="lg-ladder">${tierIntro}</ol>
               <p>The order is a display choice, not a ranking claim. A tab skips a rung when it has no data for that rung, and the ladder continues to the next one. So green does not mean "not crowded".</p>
               <p>The tint is a background, so it combines with green text. The sample above is a tight-range ticker with the green day pattern.</p>
@@ -594,7 +625,7 @@
           {
             id: 'tight', title: 'Violet tint — tight range',
             sample: link('tight-range', 'CRWD'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<p>For ${R.tightMinWindow} to ${R.tightMaxWindow} sessions, the closes barely moved against how far this stock normally travels, and the range formed in a constructive place. Both parts are true:</p>
               <ul class="lg-rules">
                 <li><b>Shape:</b> close range ÷ (ADR% × √N) ≤ ${R.tightRatioMax} for some window of N closes, <i>or</i> that ratio is in the tightest ${R.tightPctileMax}% of the stock's own last ${R.tightPctileLookback} sessions. The longest passing window is reported.</li>
@@ -612,21 +643,21 @@
           {
             id: 'short', title: 'Cyan-blue tint — crowded short',
             sample: link('hl-short', 'BYND'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<p>Short interest is ${R.shortFloorPct}% of float or more. The Short% number in the same row turns green at the same level.</p>`,
             fig: figure(floatBarSvg(), '', `Short interest at or above ${R.shortFloorPct}% of float`),
           },
           {
             id: 'ma-up', title: 'Green tint — averages stacked',
             sample: link('hl-ma-up', 'PLTR'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is above SMA50. The SMA50 needs a full 50 sessions of data.</p>',
             fig: figure(candleSvg(stacked), checkList(stackChecks(stacked, false), { expect: true, yes: 'Result: green tint', no: 'Result: no green tint' }), 'EMA10 > EMA20 > SMA50'),
           },
           {
             id: 'ma-split', title: 'Orange tint — split stack',
             sample: link('hl-ma-split', 'SNOW'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is not above SMA50. This rung states where the averages sit. It does not state a direction.</p>',
             fig: figure(candleSvg(split), checkList(stackChecks(split, true), { expect: true, yes: 'Result: orange tint', no: 'Result: no orange tint' }), 'EMA10 > EMA20, EMA20 ≤ SMA50'),
           },
@@ -815,6 +846,43 @@
         ],
       },
       {
+        id: 'zone', title: 'Zone map (Viz tabs)',
+        intro: 'The four Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20.',
+        cards: [
+          {
+            id: 'zone-dots', title: 'Dot colour — the daily zone',
+            sample: zoneDot('zm-band'),
+            where: ZONE_TABS,
+            body: `${keyList([
+                [zoneDot('zm-under'), `Red: under the daily band, below ${zs(Z.bandLow)} ATR.`],
+                [zoneDot('zm-band'), `Green: in the daily band, from ${zs(Z.bandLow)} to ${zs(Z.bandHigh)} ATR.`],
+                [zoneDot('zm-above'), `Amber: above the daily band, above ${zs(Z.bandHigh)} ATR.`],
+              ])}
+              <p>Height is the weekly zone. Below ${zs(Z.weeklyLow)} ATR the close is under the weekly EMA20. Above ${zs(Z.weeklyHigh)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
+              ${zoneBgFigure()}
+              <div class="zm-state zm-band"><div class="zm-state-head"><span>In the buy area</span><span class="zm-state-n">3</span></div></div>
+              <p><span class="zm-bar" style="display:inline-flex;width:80px"><span class="zm-seg zm-band" style="width:50%"></span><span class="zm-seg zm-above" style="width:30%"></span><span class="zm-seg zm-under" style="width:20%"></span></span> A cluster bar: the leaf's names by daily zone.</p>`,
+          },
+          {
+            id: 'zone-box', title: 'Green outline — the buy area',
+            sample: '<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>',
+            where: ZONE_TABS,
+            body: `<p>The buy area is the daily band with the weekly between ${zs(Z.weeklyLow)} and ${zs(Z.weeklyHigh)} ATR. Its tag (<svg class="lg-zm" style="width:70px" viewBox="0 0 70 14"><text class="zm-box-tag" x="35" y="11">Buy area · 3</text></svg>) counts the names inside. In the cluster rows, names in the buy area are bold.</p>
+              <p>No forward return has been measured for the buy area. The limits are a display choice.</p>`,
+          },
+          {
+            id: 'zone-marks', title: 'Rings and markers',
+            sample: '<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/></svg>',
+            where: ZONE_TABS,
+            body: keyList([
+              ['<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/></svg>', 'Violet ring: the ticker is in a tight range (see the violet tint card).'],
+              ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><g class="zm-pt zm-sel"><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/><text class="zm-label" x="15" y="11" font-size="10">MU</text></g></svg>', 'Yellow outline and label: the selected ticker.'],
+              ['<svg class="lg-zm" viewBox="0 0 12 12"><polygon class="zm-dot zm-above" points="6,1 11,11 1,11"/></svg>', 'Triangle on an edge: the ticker is off the scale. Hover it for the real distances.'],
+            ]),
+          },
+        ],
+      },
+      {
         id: 'viz', title: 'Network viz tabs',
         intro: 'The four Viz tabs draw themes and their tickers as a network. They use node colour, rings and glows, not tints.',
         cards: [
@@ -973,7 +1041,7 @@
       '<span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>' +
       '<span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>';
     const sep = '<span class="lg-sep">|</span>';
-    document.querySelectorAll('[data-viz-legend]').forEach(el => {
+    document.querySelectorAll('[data-viz-legend="rs"], [data-viz-legend="vars"]').forEach(el => {
       const kind = el.dataset.vizLegend;
       const ticks = kind === 'vars' ? tickerItems(C.COLOR_BANDS.vizVars, 'VARS') : tickerItems(C.COLOR_BANDS.vizRs, 'RS');
       el.innerHTML = themeItems + sep + ticks + sep + rings +
@@ -992,6 +1060,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     renderVizLegends();
+    renderZoneKeys();
     render();
     const page = document.getElementById('legend-page');
     if (page) {

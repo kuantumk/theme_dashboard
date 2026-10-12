@@ -69,6 +69,7 @@ RENDER_SITES = (
     'renderIndustryTable',   # Industry ETFs
     'renderETFTable',        # Lev ETFs
     'epRow',                 # shared by both EP tables
+    'zoneTickerLink',        # Viz tabs — the lists under each zone map
 )
 
 

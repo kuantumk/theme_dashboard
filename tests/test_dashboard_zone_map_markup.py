@@ -92,6 +92,20 @@ class ZoneRendererTests(unittest.TestCase):
         for token in ('hlClass(', 'hlTitle(', 'hl-short', 'hl-ma-up', 'hl-ma-split'):
             self.assertNotIn(token, body)
 
+    def test_arrow_keys_skip_the_zone_map_lists(self):
+        """Review finding: `.viz-left` is a `.left-panel`, so arrow keys walked
+        the states and clusters lists — each ticker came up twice, and the dot
+        ring stayed on the old name. Arrow keys on the map are out of scope."""
+        body = _fn('getTickerLinksForTab')
+        self.assertIn("closest('.zone-map')", body)
+
+    def test_the_footer_counts_only_themes_that_hold_a_remaining_name(self):
+        """Review finding: the footer counted every hidden leaf, including
+        leaves whose names already sit in a shown row."""
+        body = _fn('zoneClustersCard')
+        self.assertIn('remainingSet.has(', body)
+        self.assertNotIn('const rest = leaves.length - shown.length', body)
+
     def test_fixed_text_reserves_its_space_before_any_label(self):
         """Seen in the browser: the buy-area tag drew on top of a ticker label.
         The tag and both rail labels must be in `placed` before the label pass."""

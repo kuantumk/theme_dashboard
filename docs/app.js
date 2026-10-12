@@ -369,7 +369,10 @@
     if (!container) return [];
     const leftPanel = container.querySelector('.left-panel');
     if (!leftPanel) return [];
-    return Array.from(leftPanel.querySelectorAll('.tn-link'));
+    // The zone-map lists repeat each ticker across the states and clusters
+    // cards, and arrow keys there would move the chart without the dot ring.
+    // Arrow keys on the map are out of scope, so its links are skipped.
+    return Array.from(leftPanel.querySelectorAll('.tn-link')).filter(l => !l.closest('.zone-map'));
   }
 
   /**
@@ -1946,7 +1949,10 @@
         + `<span class="zm-bar">${bar}</span><span class="zm-leaf-n">${l.nBuy}/${n}</span></div>`
         + `<div class="zm-leaf-list">${list}</div></div>`;
     }).join('');
-    const rest = leaves.length - shown.length;
+    // Count only the hidden leaves that hold a name no shown row lists.
+    const remainingSet = new Set(remaining.map(t => t.ticker));
+    const rest = leaves.filter(l => !shownNames.has(l.name)
+      && l.members.some(t => remainingSet.has(t.ticker))).length;
     const foot = (remaining.length
       ? `${remaining.length} more ${remaining.length === 1 ? 'name sits' : 'names sit'} in ${rest} other ${rest === 1 ? 'theme' : 'themes'} or carry no theme tag. `
       : '')

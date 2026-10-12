@@ -1857,7 +1857,17 @@
     });
     const prio = q => (q.t.state === 'buy_area' ? 0 : q.t.tight ? 1 : 2);
     const val = q => (q.t[metric.key] == null ? -Infinity : q.t[metric.key]);
+    // The box tag and the two rail labels are fixed text. Reserve their
+    // space first, or a ticker label can draw on top of them.
+    const tagText = `Buy area · ${nBuy}`;
+    const tagW = tagText.length * 6.2;
+    const fixedText = [
+      { x: (xs[1] + xs[2]) / 2 - tagW / 2, y: yHigh + 4, w: tagW, h: 11 },
+      { x: xs[0] + 4, y: yLow - 12, w: 'weekly EMA20'.length * 5.6, h: 10 },
+      { x: xs[0] + 4, y: yHigh - 12, w: `weekly extended · > +${R.weeklyHigh} ATR`.length * 5.6, h: 10 },
+    ];
     const placed = [];
+    placed.push(...fixedText);
     pts.slice().sort((a, b) => prio(a) - prio(b) || val(b) - val(a)).forEach(q => {
       const w = q.t.ticker.length * 6.2 + 2;
       const h = 10;

@@ -92,6 +92,16 @@ class ZoneRendererTests(unittest.TestCase):
         for token in ('hlClass(', 'hlTitle(', 'hl-short', 'hl-ma-up', 'hl-ma-split'):
             self.assertNotIn(token, body)
 
+    def test_fixed_text_reserves_its_space_before_any_label(self):
+        """Seen in the browser: the buy-area tag drew on top of a ticker label.
+        The tag and both rail labels must be in `placed` before the label pass."""
+        body = _fn('zoneScatterCard')
+        reserve = body.index('placed.push(...fixedText)')
+        first_label = body.index('placed.push(box)')
+        self.assertLess(reserve, first_label)
+        for text in ('Buy area · ', 'weekly EMA20', 'weekly extended'):
+            self.assertIn(text, body)
+
     def test_an_off_scale_name_is_clamped_and_titled_with_its_real_value(self):
         body = _fn('zoneScatterCard')
         self.assertIn('zmClamp(', body)

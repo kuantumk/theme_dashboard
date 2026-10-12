@@ -2214,11 +2214,20 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     # and the undated SI roster.
     has_tight = 'tight_range' in master_df.columns and 'tightness' in master_df.columns
 
+    # Theme Viz: the members of the top `top_leaves` leaves, UNCAPPED. The
+    # history file caps chips at `tickers_per_leaf`, and a map built from the
+    # capped chips would show fewer names on a back-dated session than on
+    # the newest one.
+    zone_cfg = zone_map_config()
+    top_leaves = int(zone_cfg['top_leaves'])
+    zone_rows = []
+    leaves_by_ticker = {}
+
     l1s = []
     for l1_entry in body['l1s']:
         leaves = []
         for leaf in l1_entry['leaves']:
-            ticker_dicts = [{
+            members = [{
                 'ticker': m['ticker'],
                 'score': round(m['composite'], 1),
                 'rs': round(m['rs'], 1),
@@ -2235,10 +2244,14 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'tight_gate': m.get('tight_gate'),
                 'is_screened': bool(m.get('is_screened', False)),
                 'highlight': _member_highlight(m['ticker']),
-            } for m in (leaf['members'] if tickers_per_leaf is None
-                        else leaf['members'][:tickers_per_leaf])]
+            } for m in leaf['members']]
             if day_flags:
-                enrich_with_ticker_color(ticker_dicts, day_flags)
+                enrich_with_ticker_color(members, day_flags)
+            for td in members:
+                leaves_by_ticker.setdefault(str(td['ticker']).upper(), []).append(leaf['theme'])
+            if leaf['global_rank'] <= top_leaves:
+                zone_rows.extend(members)
+            ticker_dicts = members if tickers_per_leaf is None else members[:tickers_per_leaf]
             leaves.append({
                 'global_rank': leaf['global_rank'],
                 'name': leaf['theme'],
@@ -2272,8 +2285,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
         'universe_size': body['universe_size'],
         'n_leaves_scored': body['n_leaves_scored'],
         'l1s': l1s,
+        'zone_map': build_zone_map(zone_rows, master_df, leaves_by_ticker, zone_cfg),
     }
-
 
 def export_radar(day_flags_by_date, root=None, out_dir=None):
     """Export the L1 Radar (dashboard Themes tab) — full

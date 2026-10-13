@@ -128,19 +128,13 @@
   }
 
   /* A two-column table: the sample painted with the live class | the rule. */
-  function bandTable(table, fmt, opts) {
-    const o = Object.assign({ tag: 'td', swatch: false }, opts || {});
+  function bandTable(table, fmt) {
     const rows = bandRows(table, fmt).map(r => {
-      let sample;
-      if (o.swatch) {
-        sample = `<span class="lg-swatch" style="background:${esc(r.out)}"></span>`;
-      } else {
-        const text = r.value == null ? '—' : fmt(r.value);
-        // With no sample value the row's own output is the class; with one,
-        // the live rule decides, so a drifted row paints what the tab paints.
-        const cls = r.value == null ? r.out : window.MM_COLORS.pickBand(table, r.value);
-        sample = `<span class="lg-num ${esc(cls)}">${esc(text)}</span>`;
-      }
+      const text = r.value == null ? '—' : fmt(r.value);
+      // With no sample value the row's own output is the class; with one,
+      // the live rule decides, so a drifted row paints what the tab paints.
+      const cls = r.value == null ? r.out : window.MM_COLORS.pickBand(table, r.value);
+      const sample = `<span class="lg-num ${esc(cls)}">${esc(text)}</span>`;
       return `<tr><td class="lg-bt-sample">${sample}</td><td class="lg-bt-cond">${esc(r.cond)}</td></tr>`;
     }).join('');
     return `<table class="lg-band-table"><tbody>${rows}</tbody></table>`;
@@ -423,6 +417,15 @@
     return `<svg class="lg-zm" viewBox="0 0 12 12"><circle class="zm-dot ${cls}" cx="6" cy="6" r="4"/></svg>`;
   }
 
+  function zoneBox() {
+    return '<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>';
+  }
+
+  function zoneRing(withDot) {
+    return '<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/>'
+      + (withDot ? '<circle class="zm-dot zm-band" cx="8" cy="8" r="4"/>' : '') + '</svg>';
+  }
+
   function zoneBgFigure() {
     return '<svg class="lg-zm" style="width:120px;height:24px" viewBox="0 0 120 24">'
       + '<rect class="zm-bg zm-under" x="0" y="0" width="30" height="24"/>'
@@ -439,8 +442,8 @@
       [zoneDot('zm-under'), 'Under the daily band'],
       [zoneDot('zm-band'), 'In the band'],
       [zoneDot('zm-above'), 'Above the band'],
-      ['<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>', 'Buy area'],
-      ['<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/></svg>', 'Tight range'],
+      [zoneBox(), 'Buy area'],
+      [zoneRing(false), 'Tight range'],
     ].map(([s, t]) => `<span class="lg-item">${s}${esc(t)}</span>`).join('');
     document.querySelectorAll('[data-viz-legend="zone"]').forEach(el => {
       el.innerHTML = items + '<a class="lg-item lg-more" href="#" data-open-legends>All colours →</a>';
@@ -519,7 +522,6 @@
 
     const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz'];
     const Z = C.ZONE_RULES;
-    const zs = v => (v > 0 ? '+' : '') + v;
 
     return [
       {
@@ -823,28 +825,28 @@
             sample: zoneDot('zm-band'),
             where: ZONE_TABS,
             body: `${keyList([
-                [zoneDot('zm-under'), `Red: under the daily band, below ${zs(Z.bandLow)} ATR.`],
-                [zoneDot('zm-band'), `Green: in the daily band, from ${zs(Z.bandLow)} to ${zs(Z.bandHigh)} ATR.`],
-                [zoneDot('zm-above'), `Amber: above the daily band, above ${zs(Z.bandHigh)} ATR.`],
+                [zoneDot('zm-under'), `Red: under the daily band, below ${signed(Z.bandLow, 1)} ATR.`],
+                [zoneDot('zm-band'), `Green: in the daily band, from ${signed(Z.bandLow, 1)} to ${signed(Z.bandHigh, 1)} ATR.`],
+                [zoneDot('zm-above'), `Amber: above the daily band, above ${signed(Z.bandHigh, 1)} ATR.`],
               ])}
-              <p>Height is the weekly zone. Below ${zs(Z.weeklyLow)} ATR the close is under the weekly EMA20. Above ${zs(Z.weeklyHigh)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
+              <p>Height is the weekly zone. Below ${signed(Z.weeklyLow, 1)} ATR the close is under the weekly EMA20. Above ${signed(Z.weeklyHigh, 1)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
               ${zoneBgFigure()}
               <div class="zm-state zm-band"><div class="zm-state-head"><span>In the buy area</span><span class="zm-state-n">3</span></div></div>
               <p><span class="zm-bar" style="display:inline-flex;width:80px"><span class="zm-seg zm-band" style="width:50%"></span><span class="zm-seg zm-above" style="width:30%"></span><span class="zm-seg zm-under" style="width:20%"></span></span> A cluster bar: the leaf's names by daily zone.</p>`,
           },
           {
             id: 'zone-box', title: 'Green outline — the buy area',
-            sample: '<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>',
+            sample: zoneBox(),
             where: ZONE_TABS,
-            body: `<p>The buy area is the daily band with the weekly between ${zs(Z.weeklyLow)} and ${zs(Z.weeklyHigh)} ATR. Its tag (<svg class="lg-zm" style="width:70px" viewBox="0 0 70 14"><text class="zm-box-tag" x="35" y="11">Buy area · 3</text></svg>) counts the names inside. In the cluster rows, names in the buy area are bold.</p>
+            body: `<p>The buy area is the daily band with the weekly between ${signed(Z.weeklyLow, 1)} and ${signed(Z.weeklyHigh, 1)} ATR. Its tag (<svg class="lg-zm" style="width:70px" viewBox="0 0 70 14"><text class="zm-box-tag" x="35" y="11">Buy area · 3</text></svg>) counts the names inside. In the cluster rows, names in the buy area are bold.</p>
               <p>No forward return has been measured for the buy area. The limits are a display choice.</p>`,
           },
           {
             id: 'zone-marks', title: 'Rings and markers',
-            sample: '<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/></svg>',
+            sample: zoneRing(true),
             where: ZONE_TABS,
             body: keyList([
-              ['<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/></svg>', 'Violet ring: the ticker is in a tight range (see the violet tint card).'],
+              [zoneRing(true), 'Violet ring: the ticker is in a tight range (see the violet tint card).'],
               ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><g class="zm-pt zm-sel"><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/><text class="zm-label" x="15" y="11" font-size="10">MU</text></g></svg>', 'Yellow outline and label: the selected ticker.'],
               ['<svg class="lg-zm" viewBox="0 0 12 12"><polygon class="zm-dot zm-above" points="6,1 11,11 1,11"/></svg>', 'Triangle on an edge: the ticker is off the scale. Hover it for the real distances.'],
             ]),

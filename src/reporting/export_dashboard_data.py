@@ -29,7 +29,7 @@ from src.indicators.create_technical_indicators import (
     compute_spy_cum_norm_100,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
-from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
+from src.themes.theme_taxonomy import resolve_l1, split_path
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
@@ -1395,20 +1395,26 @@ def classify_zone(d_daily, d_weekly, cfg):
     return daily, weekly, _ZONE_STATE_BY_CELL[(daily, weekly)]
 
 
-def _zone_flag(value):
-    """True only for a real set flag. `bool(float('nan'))` is True."""
-    number = _finite(value)
-    return number is not None and number != 0
-
-
 def _load_zone_master(date_str):
-    """The session's master parquet, UNFILLED, or None when it is absent."""
+    """The session's master parquet, UNFILLED, or None when it is absent.
+
+    Only `ticker` and ZONE_MASTER_COLUMNS are read, the same narrow read as
+    `load_day_flags_by_date`: three exporters call this once per retained
+    session. A file that predates `ema20_w` returns None without a read.
+    """
+    import pandas as pd
+    import pyarrow.parquet as pq
+
     if not date_str:
         return None
     path = SCREENING_OUTPUT_DIR / 'master' / f'master_{date_str}.parquet'
     if not path.exists():
         return None
-    return su.load_df_from_parquet(path)
+    present = set(pq.read_schema(path).names)
+    if 'ticker' not in present or 'ema20_w' not in present:
+        return None
+    cols = ['ticker'] + [c for c in ZONE_MASTER_COLUMNS if c in present]
+    return pd.read_parquet(path, engine='pyarrow', columns=cols)
 
 
 def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
@@ -1429,7 +1435,10 @@ def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
     cfg = cfg or zone_map_config()
     if master_df is None or 'ema20_w' not in master_df.columns:
         return None
-    bars = _bars_by_ticker(master_df, ZONE_MASTER_COLUMNS)
+    rows = list(rows)
+    wanted = {str(row.get('ticker') or '').upper() for row in rows}
+    in_rows = master_df['ticker'].astype(str).str.upper().isin(wanted)
+    bars = _bars_by_ticker(master_df[in_rows], ZONE_MASTER_COLUMNS)
     counts = {'n_candidates': 0, 'n_floor_dropped': 0, 'n_no_weekly': 0, 'n_no_daily': 0}
     seen = set()
     out = []
@@ -1455,7 +1464,7 @@ def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
             counts['n_no_daily'] += 1
             continue
         zone_daily, zone_weekly, state = classify_zone(d_daily, d_weekly, cfg)
-        tight = _zone_flag(bar.get('tight_range'))
+        tight = _flag_on(bar.get('tight_range'))
         out.append({
             'ticker': ticker,
             'd_daily': d_daily,
@@ -2251,7 +2260,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 leaves_by_ticker.setdefault(str(td['ticker']).upper(), []).append(leaf['theme'])
             if leaf['global_rank'] <= top_leaves:
                 zone_rows.extend(members)
-            ticker_dicts = members if tickers_per_leaf is None else members[:tickers_per_leaf]
+            ticker_dicts = members[:tickers_per_leaf]
             leaves.append({
                 'global_rank': leaf['global_rank'],
                 'name': leaf['theme'],

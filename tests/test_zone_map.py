@@ -23,6 +23,10 @@ def _master(rows):
     } for t, c, e, w, a, tr in rows])
 
 
+#: One clean bar: d_daily +0.5, d_weekly +2.5, the buy area.
+ONE = _master([('A', 100, 99, 95, 2, False)])
+
+
 def _row(ticker, dollar_vol=150e6, adr=0.05, vars_=5.0, rs=80.0, highlight=None):
     return {'ticker': ticker, 'dollar_vol': dollar_vol, 'adr_pct': adr,
             'vars': vars_, 'rs': rs, 'highlight': highlight}
@@ -86,23 +90,23 @@ class BuildZoneMapTests(unittest.TestCase):
         self.assertEqual(1, zm['n_no_daily'])
 
     def test_a_ticker_with_no_master_row_counts_as_no_weekly(self):
-        master = _master([('A', 100, 99, 95, 2, False)])
+        master = ONE
         zm = ex.build_zone_map([_row('ZZZ')], master, {}, CFG)
         self.assertEqual(1, zm['n_no_weekly'])
 
     def test_a_master_without_the_column_publishes_none(self):
-        master = _master([('A', 100, 99, 95, 2, False)]).drop(columns=['ema20_w'])
+        master = ONE.drop(columns=['ema20_w'])
         self.assertIsNone(ex.build_zone_map([_row('A')], master, {}, CFG))
         self.assertIsNone(ex.build_zone_map([_row('A')], None, {}, CFG))
 
     def test_a_duplicate_row_makes_one_dot(self):
-        master = _master([('A', 100, 99, 95, 2, False)])
+        master = ONE
         zm = ex.build_zone_map([_row('A'), _row('a')], master, {}, CFG)
         self.assertEqual(1, zm['n_candidates'])
         self.assertEqual(1, len(zm['tickers']))
 
     def test_leaves_keep_every_real_leaf_and_drop_catch_alls(self):
-        master = _master([('A', 100, 99, 95, 2, False)])
+        master = ONE
         leaves = {'A': ['AI / Data Center / Optics', 'Cybersecurity / Network', 'Singleton']}
         zm = ex.build_zone_map([_row('A')], master, leaves, CFG)
         self.assertEqual(['AI / Data Center / Optics', 'Cybersecurity / Network'],
@@ -118,7 +122,7 @@ class BuildZoneMapTests(unittest.TestCase):
         self.assertEqual(5, by['B']['tight_len'])
 
     def test_the_payload_shape(self):
-        master = _master([('A', 100, 99, 95, 2, False)])
+        master = ONE
         row = dict(_row('A', highlight='ma_up'), ticker_color='green')
         zm = ex.build_zone_map([row], master, {}, CFG)
         self.assertEqual({'params', 'n_candidates', 'n_floor_dropped', 'n_no_weekly',

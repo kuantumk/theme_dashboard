@@ -253,11 +253,9 @@
       const tabContent = link.closest('.tab-content');
       if (!tabContent) return;
 
-      // Every tab whose ticker links open the chart beside them.
-      const CHART_TABS = ['macro', 'themes', 'themeviz', 'momentum', 'momentumviz',
-        'volume', 'volumeviz', 'vars', 'varsviz', 'industry', 'etf', 'ep', 'parabolic', 'si'];
+      // A tab opens the chart only when it has a chart pane to open it in.
       const tabId = tabContent.id.replace('content-', '');
-      if (!CHART_TABS.includes(tabId)) return;
+      if (!document.getElementById(tabId + '-chart-area')) return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
       link.classList.add('active-ticker');
@@ -369,9 +367,8 @@
     if (!container) return [];
     const leftPanel = container.querySelector('.left-panel');
     if (!leftPanel) return [];
-    // The zone-map lists repeat each ticker across the states and clusters
-    // cards, and arrow keys there would move the chart without the dot ring.
-    // Arrow keys on the map are out of scope, so its links are skipped.
+    // Arrow-key travel is out of scope on the zone map, so its list links
+    // are skipped (each ticker also repeats across its states and clusters).
     return Array.from(leftPanel.querySelectorAll('.tn-link')).filter(l => !l.closest('.zone-map'));
   }
 
@@ -1744,6 +1741,10 @@
   // SVG geometry, in viewBox units.
   const ZM = { w: 760, h: 470, l: 46, r: 14, t: 40, b: 34 };
 
+  // Character widths at the 9px axis and 10px label sizes in style.css. The
+  // map draws on a hidden tab too, where SVG text cannot be measured.
+  const ZM_CHAR_W = { axis: 5.6, label: 6.2 };
+
   function zmX(v) {
     const [a, b] = ZONE_RULES.xRange;
     return ZM.l + (v - a) / (b - a) * (ZM.w - ZM.l - ZM.r);
@@ -1771,6 +1772,11 @@
     return s ? s.label : id;
   }
 
+  /** The tab's row number for sorting; a missing one sorts last. */
+  function zoneMetricValue(t, metric) {
+    return t[metric.key] == null ? -Infinity : t[metric.key];
+  }
+
   function zoneMetricText(t, metric) {
     const v = t[metric.key];
     return v == null ? '—' : Number(v).toFixed(metric.digits);
@@ -1779,13 +1785,14 @@
   function zoneNum(t, metric) {
     const v = t[metric.key];
     if (v == null) return '';
-    const cls = metric.key === 'rs' ? pickBand(COLOR_BANDS.rs, v) : pickBand(COLOR_BANDS.vars, v);
-    return ` <span class="zm-num ${cls}">${Number(v).toFixed(metric.digits)}</span>`;
+    // `neu` is the grey the band tables fall back to elsewhere.
+    const cls = (metric.key === 'rs' ? pickBand(COLOR_BANDS.rs, v) : pickBand(COLOR_BANDS.vars, v)) || 'neu';
+    return ` <span class="zm-num ${cls}">${zoneMetricText(t, metric)}</span>`;
   }
 
   function zoneSortByMetric(list, metric) {
-    const val = t => (t[metric.key] == null ? -Infinity : t[metric.key]);
-    return list.slice().sort((a, b) => val(b) - val(a) || a.ticker.localeCompare(b.ticker));
+    return list.slice().sort((a, b) =>
+      zoneMetricValue(b, metric) - zoneMetricValue(a, metric) || a.ticker.localeCompare(b.ticker));
   }
 
   /** A ticker in the states or clusters card: a real .tn-link, so it wears
@@ -1795,7 +1802,8 @@
   }
 
   /** An off-scale name: a triangle on the nearest edge, pointing outward. */
-  function zoneTriangle(p, t) {
+  function zoneTriangle(p) {
+    const t = p.t;
     const R = ZONE_RULES;
     const s = 5;
     let pts;
@@ -1814,9 +1822,9 @@
     const xs = [R.xRange[0], R.bandLow, R.bandHigh, R.xRange[1]].map(zmX);
     const yTop = zmY(R.yRange[1]);
     const yBot = zmY(R.yRange[0]);
-    const families = ['under', 'band', 'above'];
+    const families = Object.keys(ZONE_FAMILY_CLASS);
     const heads = { under: 'Under the daily band', band: 'In the daily band', above: 'Above the daily band' };
-    const counts = { under: 0, band: 0, above: 0 };
+    const counts = Object.fromEntries(families.map(f => [f, 0]));
     tickers.forEach(t => { counts[t.zone_daily] += 1; });
     const nBuy = tickers.filter(t => t.state === 'buy_area').length;
 
@@ -1832,14 +1840,17 @@
       `<line class="zm-rail${extra ? ' ' + extra : ''}" x1="${zmF(x1)}" y1="${zmF(y1)}" x2="${zmF(x2)}" y2="${zmF(y2)}"/>`;
     const yLow = zmY(R.weeklyLow);
     const yHigh = zmY(R.weeklyHigh);
+    const lowText = 'weekly EMA20';
+    const highText = `weekly extended · > +${R.weeklyHigh} ATR`;
+    const tagText = `Buy area · ${nBuy}`;
     svg += rail(xs[1], yTop, xs[1], yBot) + rail(xs[2], yTop, xs[2], yBot);
     svg += rail(xs[0], yLow, xs[3], yLow);
     svg += rail(xs[0], yHigh, xs[3], yHigh, 'zm-rail-dash');
-    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yLow - 4)}">weekly EMA20</text>`;
-    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yHigh - 4)}">weekly extended · &gt; +${R.weeklyHigh} ATR</text>`;
+    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yLow - 4)}">${escHtml(lowText)}</text>`;
+    svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yHigh - 4)}">${escHtml(highText)}</text>`;
 
     svg += `<rect class="zm-box" x="${zmF(xs[1])}" y="${zmF(yHigh)}" width="${zmF(xs[2] - xs[1])}" height="${zmF(yLow - yHigh)}"/>`;
-    svg += `<text class="zm-box-tag" x="${zmF((xs[1] + xs[2]) / 2)}" y="${zmF(yHigh + 13)}">Buy area · ${nBuy}</text>`;
+    svg += `<text class="zm-box-tag" x="${zmF((xs[1] + xs[2]) / 2)}" y="${zmF(yHigh + 13)}">${escHtml(tagText)}</text>`;
 
     for (let v = Math.ceil(R.xRange[0]); v <= R.xRange[1]; v += 1) {
       svg += `<text class="zm-axis" x="${zmF(zmX(v))}" y="${zmF(yBot + 13)}">${v > 0 ? '+' + v : v}</text>`;
@@ -1859,20 +1870,19 @@
       return { t, x: zmX(cx), y: zmY(cy), off: cx !== t.d_daily || cy !== t.d_weekly, box: null };
     });
     const prio = q => (q.t.state === 'buy_area' ? 0 : q.t.tight ? 1 : 2);
-    const val = q => (q.t[metric.key] == null ? -Infinity : q.t[metric.key]);
     // The box tag and the two rail labels are fixed text. Reserve their
     // space first, or a ticker label can draw on top of them.
-    const tagText = `Buy area · ${nBuy}`;
-    const tagW = tagText.length * 6.2;
+    const tagW = tagText.length * ZM_CHAR_W.label;
     const fixedText = [
       { x: (xs[1] + xs[2]) / 2 - tagW / 2, y: yHigh + 4, w: tagW, h: 11 },
-      { x: xs[0] + 4, y: yLow - 12, w: 'weekly EMA20'.length * 5.6, h: 10 },
-      { x: xs[0] + 4, y: yHigh - 12, w: `weekly extended · > +${R.weeklyHigh} ATR`.length * 5.6, h: 10 },
+      { x: xs[0] + 4, y: yLow - 12, w: lowText.length * ZM_CHAR_W.axis, h: 10 },
+      { x: xs[0] + 4, y: yHigh - 12, w: highText.length * ZM_CHAR_W.axis, h: 10 },
     ];
     const placed = [];
     placed.push(...fixedText);
-    pts.slice().sort((a, b) => prio(a) - prio(b) || val(b) - val(a)).forEach(q => {
-      const w = q.t.ticker.length * 6.2 + 2;
+    pts.slice().sort((a, b) => prio(a) - prio(b)
+      || zoneMetricValue(b.t, metric) - zoneMetricValue(a.t, metric)).forEach(q => {
+      const w = q.t.ticker.length * ZM_CHAR_W.label + 2;
       const h = 10;
       const box = { x: q.x + 6, y: q.y - h / 2, w, h };
       if (box.x + w > ZM.w - ZM.r) box.x = q.x - 6 - w;
@@ -1889,7 +1899,7 @@
         + `${metric.label} ${zoneMetricText(t, metric)}`
         + (t.tight ? `\nTight range${t.tight_len ? ' ' + t.tight_len + 'd' : ''}` : '');
       const shape = q.off
-        ? zoneTriangle(q, t)
+        ? zoneTriangle(q)
         : `<circle class="zm-dot ${ZONE_FAMILY_CLASS[t.zone_daily]}" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="4"/>`;
       const ring = t.tight ? `<circle class="zm-ring" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="7"/>` : '';
       const label = q.box

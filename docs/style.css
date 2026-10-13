@@ -1595,10 +1595,8 @@ tbody tr.nav-active {
 .zm-seg.zm-band { background: var(--green); }
 .zm-seg.zm-above { background: var(--amber); }
 .zm-leaf-n { font-family: var(--mono); color: var(--text2); }
-/* Grey only when no band claims the number: `.up` / `.dn` sit earlier in
-   this file at equal specificity, so a plain colour here would hide them. */
+/* No colour here: zoneNum always emits a band class (up / dn / neu). */
 .zm-num { font-size: 10px; }
-.zm-num:not(.up):not(.dn) { color: var(--text3); }
 .zm-sep { color: var(--text3); }
 .zm-foot { margin: 8px 0 0; font-size: 11px; color: var(--text3); }
 
@@ -2320,14 +2318,6 @@ tbody tr.nav-active {
 .lg-num {
   font-family: var(--mono);
   font-size: 13px;
-}
-
-.lg-swatch {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 4px;
-  vertical-align: middle;
 }
 
 .lg-line {

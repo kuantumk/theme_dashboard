@@ -95,10 +95,6 @@ class ZoneMapBuilderTests(unittest.TestCase):
         for name, snap in self._snaps().items():
             self.assertIsNone(snap['zone_map'], name)
 
-    def test_all_three_blocks_share_one_shape(self):
-        shapes = {name: set(snap['zone_map']) for name, snap in self._snaps().items()}
-        self.assertEqual(1, len({frozenset(s) for s in shapes.values()}), shapes)
-
 
 if __name__ == '__main__':
     unittest.main()

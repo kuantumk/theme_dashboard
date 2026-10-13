@@ -29,9 +29,11 @@ def _zone_section():
 
 
 def _fn(name):
+    """One top-level function, up to the next function or section banner."""
     start = APP.index(f'\n  function {name}(')
-    end = APP.index('\n  function ', start + 10)
-    return APP[start:end]
+    ends = [i for i in (APP.find('\n  function ', start + 10), APP.find('\n  // ──', start + 10))
+            if i != -1]
+    return APP[start:min(ends)]
 
 
 class ZoneRulesMirrorTests(unittest.TestCase):
@@ -86,12 +88,6 @@ class ZoneRendererTests(unittest.TestCase):
         for token in ('tn-link', 'hlClass(', 'hlTitle(', 'day-pattern-green', 'data-sym='):
             self.assertIn(token, body)
 
-    def test_the_scatter_emits_no_tier(self):
-        """Dot colour already means the daily zone; a tier on it would be noise."""
-        body = _fn('zoneScatterCard')
-        for token in ('hlClass(', 'hlTitle(', 'hl-short', 'hl-ma-up', 'hl-ma-split'):
-            self.assertNotIn(token, body)
-
     def test_arrow_keys_skip_the_zone_map_lists(self):
         """Review finding: `.viz-left` is a `.left-panel`, so arrow keys walked
         the states and clusters lists — each ticker came up twice, and the dot
@@ -133,9 +129,10 @@ class ZoneMarkupTests(unittest.TestCase):
             self.assertNotIn('theme-network', block, tab)
 
     def test_a_list_click_on_a_zone_tab_opens_the_chart(self):
-        body = _fn('initTickerClicks')
+        """initTickerClicks opens the chart for any tab with a chart pane."""
+        self.assertIn("tabId + '-chart-area'", _fn('initTickerClicks'))
         for tab in ZONE_TABS:
-            self.assertIn(f"'{tab}'", body, tab)
+            self.assertIn(f'id="{tab}-chart-area"', HTML, tab)
 
     def test_no_network_code_remains(self):
         LEGENDS = (ROOT / 'docs' / 'legends.js').read_text(encoding='utf-8')

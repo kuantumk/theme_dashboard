@@ -128,19 +128,13 @@
   }
 
   /* A two-column table: the sample painted with the live class | the rule. */
-  function bandTable(table, fmt, opts) {
-    const o = Object.assign({ tag: 'td', swatch: false }, opts || {});
+  function bandTable(table, fmt) {
     const rows = bandRows(table, fmt).map(r => {
-      let sample;
-      if (o.swatch) {
-        sample = `<span class="lg-swatch" style="background:${esc(r.out)}"></span>`;
-      } else {
-        const text = r.value == null ? '—' : fmt(r.value);
-        // With no sample value the row's own output is the class; with one,
-        // the live rule decides, so a drifted row paints what the tab paints.
-        const cls = r.value == null ? r.out : window.MM_COLORS.pickBand(table, r.value);
-        sample = `<span class="lg-num ${esc(cls)}">${esc(text)}</span>`;
-      }
+      const text = r.value == null ? '—' : fmt(r.value);
+      // With no sample value the row's own output is the class; with one,
+      // the live rule decides, so a drifted row paints what the tab paints.
+      const cls = r.value == null ? r.out : window.MM_COLORS.pickBand(table, r.value);
+      const sample = `<span class="lg-num ${esc(cls)}">${esc(text)}</span>`;
       return `<tr><td class="lg-bt-sample">${sample}</td><td class="lg-bt-cond">${esc(r.cond)}</td></tr>`;
     }).join('');
     return `<table class="lg-band-table"><tbody>${rows}</tbody></table>`;
@@ -419,36 +413,43 @@
     </svg>`;
   }
 
-  function ringsSvg() {
-    const V = window.MM_COLORS.VIZ_COLORS;
-    return `<svg class="lg-candles" viewBox="0 0 330 96" role="img" aria-label="Network node key">
-      <polygon points="42,20 62,31 62,53 42,64 22,53 22,31" style="fill:${V.l1Fill};stroke:${V.l1Accent}" stroke-width="2.5" opacity="0.9"/>
-      <text x="42" y="80" text-anchor="middle" class="lg-svg-label" style="fill:${V.l1Accent}">L1 hub</text>
-      <circle cx="108" cy="42" r="17" style="fill:hsl(35,88%,53%);stroke:${V.l1Accent}" stroke-width="4"/>
-      <text x="108" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--text2)">#1 theme</text>
-      <circle cx="170" cy="42" r="10" style="fill:${window.MM_COLORS.rsFill(95)};stroke:${V.bridge}" stroke-width="2"/>
-      <text x="170" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--text2)">bridge</text>
-      <circle cx="226" cy="42" r="10" style="fill:${window.MM_COLORS.rsFill(95)};stroke:${V.selected}" stroke-width="3"/>
-      <text x="226" y="80" text-anchor="middle" class="lg-svg-label" style="fill:${V.selected}">selected</text>
-      <circle cx="286" cy="42" r="9" style="fill:${window.MM_COLORS.rsFill(85)}"/>
-      <circle cx="286" cy="42" r="15" fill="none" style="stroke:var(--green)" stroke-width="2"/>
-      <text x="286" y="80" text-anchor="middle" class="lg-svg-label" style="fill:var(--green)">tight</text>
-    </svg>`;
+  function zoneDot(cls) {
+    return `<svg class="lg-zm" viewBox="0 0 12 12"><circle class="zm-dot ${cls}" cx="6" cy="6" r="4"/></svg>`;
   }
 
-  function edgesSvg() {
-    const V = window.MM_COLORS.VIZ_COLORS;
-    const row = (y, color, dash, width, opacity, label) =>
-      `<line x1="10" x2="120" y1="${y}" y2="${y}" style="stroke:${color}" stroke-width="${width}" opacity="${opacity}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>
-       <text x="132" y="${y + 3}" class="lg-svg-label" style="fill:var(--text2)">${label}</text>`;
-    return `<svg class="lg-candles" viewBox="0 0 330 74" role="img" aria-label="Network edge key">
-      ${row(14, V.edge, '', 2.5, 0.55, 'theme to member')}
-      ${row(36, V.leaderEdge, '', 3, 0.85, 'theme to its leader')}
-      ${row(58, V.l1Accent, '6 4', 2, 0.35, 'theme to its L1 hub')}
-    </svg>`;
+  function zoneBox() {
+    return '<svg class="lg-zm" viewBox="0 0 24 14"><rect class="zm-box" x="1" y="1" width="22" height="12"/></svg>';
   }
 
-  // ── SAMPLE MARKUP ─────────────────────────────────────
+  function zoneRing(withDot) {
+    return '<svg class="lg-zm" viewBox="0 0 16 16"><circle class="zm-ring" cx="8" cy="8" r="7"/>'
+      + (withDot ? '<circle class="zm-dot zm-band" cx="8" cy="8" r="4"/>' : '') + '</svg>';
+  }
+
+  function zoneBgFigure() {
+    return '<svg class="lg-zm" style="width:120px;height:24px" viewBox="0 0 120 24">'
+      + '<rect class="zm-bg zm-under" x="0" y="0" width="30" height="24"/>'
+      + '<rect class="zm-bg zm-band" x="30" y="0" width="40" height="24"/>'
+      + '<rect class="zm-bg zm-above" x="70" y="0" width="50" height="24"/>'
+      + '<circle class="zm-dot zm-under" cx="15" cy="12" r="4"/>'
+      + '<circle class="zm-dot zm-band" cx="50" cy="12" r="4"/>'
+      + '<circle class="zm-dot zm-above" cx="95" cy="12" r="4"/></svg>';
+  }
+
+  /* The short key under each zone map, drawn from the same classes. */
+  function renderZoneKeys() {
+    const items = [
+      [zoneDot('zm-under'), 'Under the daily band'],
+      [zoneDot('zm-band'), 'In the band'],
+      [zoneDot('zm-above'), 'Above the band'],
+      [zoneBox(), 'Buy area'],
+      [zoneRing(false), 'Tight range'],
+    ].map(([s, t]) => `<span class="lg-item">${s}${esc(t)}</span>`).join('');
+    document.querySelectorAll('[data-viz-legend="zone"]').forEach(el => {
+      el.innerHTML = items + '<a class="lg-item lg-more" href="#" data-open-legends>All colours →</a>';
+    });
+  }
+
   function chip(cls, text) {
     return `<span class="tn-link radar-chip ${cls}">${esc(text)}</span>`;
   }
@@ -519,7 +520,8 @@
     const stacked = analyse(SCN.stacked);
     const split = analyse(SCN.split);
 
-    const VIZ_TABS = ['themeviz', 'momentumviz', 'volumeviz', 'varsviz'];
+    const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz'];
+    const Z = C.ZONE_RULES;
 
     return [
       {
@@ -530,7 +532,7 @@
             id: 'green', title: 'Green text — entry-ready day pattern',
             wide: true,
             sample: link('day-pattern-green', 'NVDA'),
-            where: LIST_TABS,
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<p>The latest bar is a tight day or an inside day, and it closes near a short-term average. All of the conditions are true on the latest bar:</p>
               <ul class="lg-rules">
                 <li><b>Tight day:</b> |close − open| ÷ close &lt; ${R.tightDayBodyAdr} × ADR%.</li>
@@ -544,7 +546,7 @@
           {
             id: 'selected', title: 'Yellow text, solid underline — selected ticker',
             sample: link('active-ticker', 'AMD'),
-            where: LIST_TABS.concat(['macro', 'ep']),
+            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
             body: `<p>This ticker is on the chart now. Click a ticker or use the ↑/↓ keys to select one. In a table, the row also gets a yellow tint and outline.</p>
               <table class="lg-mini"><tbody>
                 ${miniRow('', '', 'NVDA', ['91'])}
@@ -557,7 +559,7 @@
           {
             id: 'hover', title: 'Blue text on hover — clickable ticker',
             sample: `<span class="tn-link lg-live">hover me</span>`,
-            where: LIST_TABS.concat(['macro', 'ep']),
+            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
             body: '<p>The pointer is on a ticker. Click it to open its chart. The dotted underline marks every clickable ticker.</p>',
           },
           {
@@ -585,7 +587,7 @@
           {
             id: 'ladder', title: 'The ladder — one tint per ticker',
             sample: link('tight-range day-pattern-green', 'TICK'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<ol class="lg-ladder">${tierIntro}</ol>
               <p>The order is a display choice, not a ranking claim. A tab skips a rung when it has no data for that rung, and the ladder continues to the next one. So green does not mean "not crowded".</p>
               <p>The tint is a background, so it combines with green text. The sample above is a tight-range ticker with the green day pattern.</p>
@@ -594,7 +596,7 @@
           {
             id: 'tight', title: 'Violet tint — tight range',
             sample: link('tight-range', 'CRWD'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<p>For ${R.tightMinWindow} to ${R.tightMaxWindow} sessions, the closes barely moved against how far this stock normally travels, and the range formed in a constructive place. Both parts are true:</p>
               <ul class="lg-rules">
                 <li><b>Shape:</b> close range ÷ (ADR% × √N) ≤ ${R.tightRatioMax} for some window of N closes, <i>or</i> that ratio is in the tightest ${R.tightPctileMax}% of the stock's own last ${R.tightPctileLookback} sessions. The longest passing window is reported.</li>
@@ -612,21 +614,21 @@
           {
             id: 'short', title: 'Cyan-blue tint — crowded short',
             sample: link('hl-short', 'BYND'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<p>Short interest is ${R.shortFloorPct}% of float or more. The Short% number in the same row turns green at the same level.</p>`,
             fig: figure(floatBarSvg(), '', `Short interest at or above ${R.shortFloorPct}% of float`),
           },
           {
             id: 'ma-up', title: 'Green tint — averages stacked',
             sample: link('hl-ma-up', 'PLTR'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is above SMA50. The SMA50 needs a full 50 sessions of data.</p>',
             fig: figure(candleSvg(stacked), checkList(stackChecks(stacked, false), { expect: true, yes: 'Result: green tint', no: 'Result: no green tint' }), 'EMA10 > EMA20 > SMA50'),
           },
           {
             id: 'ma-split', title: 'Orange tint — split stack',
             sample: link('hl-ma-split', 'SNOW'),
-            where: LIST_TABS.concat(['ep']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is not above SMA50. This rung states where the averages sit. It does not state a direction.</p>',
             fig: figure(candleSvg(split), checkList(stackChecks(split, true), { expect: true, yes: 'Result: orange tint', no: 'Result: no orange tint' }), 'EMA10 > EMA20, EMA20 ≤ SMA50'),
           },
@@ -815,51 +817,39 @@
         ],
       },
       {
-        id: 'viz', title: 'Network viz tabs',
-        intro: 'The four Viz tabs draw themes and their tickers as a network. They use node colour, rings and glows, not tints.',
+        id: 'zone', title: 'Zone map (Viz tabs)',
+        intro: 'The four Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20.',
         cards: [
           {
-            id: 'viz-theme', title: 'Theme node colour — theme strength',
-            sample: `<span class="lg-swatch" style="background:${esc(C.themeFill(80, 1))}"></span>`,
-            where: VIZ_TABS,
-            body: `${themeStrengthTable(C)}
-              <p>A paler node is a less actionable theme: saturation falls as fewer members are leaders or tight. The node grows with strength.</p>
-              <p>A theme appears only when it is hot: average RS ≥ ${C.VIZ_HOT.rs} with ${C.VIZ_HOT.breadth}+ tickers, or on VARS Viz and Volume Viz, average VARS ≥ ${C.VIZ_HOT.vars}.</p>`,
-          },
-          {
-            id: 'viz-rs', title: 'Ticker node colour — RS',
-            sample: `<span class="lg-swatch lg-round" style="background:${esc(C.rsFill(95))}"></span>`,
-            where: ['themeviz', 'momentumviz'],
-            body: `${bandTable(Object.assign({ range: [0, 100] }, B.vizRs), f0, { swatch: true })}<p>A bigger node has a higher RS.</p>`,
-          },
-          {
-            id: 'viz-vars', title: 'Ticker node colour — VARS',
-            sample: `<span class="lg-swatch lg-round" style="background:${esc(C.varsFill(7))}"></span>`,
-            where: ['varsviz', 'volumeviz'],
-            body: bandTable(B.vizVars, f1, { swatch: true }),
-          },
-          {
-            id: 'viz-rings', title: 'Rings, glows and hubs',
-            sample: '<span class="lg-pulse-demo"><span class="tight-pulse-ring"></span></span>',
-            where: VIZ_TABS,
+            id: 'zone-dots', title: 'Dot colour — the daily zone',
+            sample: zoneDot('zm-band'),
+            where: ZONE_TABS,
             body: `${keyList([
-                ['<span class="lg-ring lg-tight"></span>', 'Pulsing green ring: the green day pattern (see the first card).'],
-                ['<span class="lg-ring lg-bridge"></span>', 'White ring: a bridge ticker, tagged into two or more themes.'],
-                ['<span class="lg-leader-dot"></span>', 'Glow: the leader of its theme. Its edge to the theme is lighter.'],
-                [`<span class="lg-ring" style="border:2px solid ${esc(C.VIZ_COLORS.selected)}"></span>`, 'Yellow ring and glow: the selected ticker.'],
-                [`<svg class="lg-hex" viewBox="0 0 12 12"><polygon points="6,0.5 11,3.2 11,8.8 6,11.5 1,8.8 1,3.2" style="fill:${esc(C.VIZ_COLORS.l1Fill)};stroke:${esc(C.VIZ_COLORS.l1Accent)}"/></svg>`,
-                  'Pale-yellow hexagon: an L1 hub. The #1 theme gets a pale-yellow ring and glow.'],
+                [zoneDot('zm-under'), `Red: under the daily band, below ${signed(Z.bandLow, 1)} ATR.`],
+                [zoneDot('zm-band'), `Green: in the daily band, from ${signed(Z.bandLow, 1)} to ${signed(Z.bandHigh, 1)} ATR.`],
+                [zoneDot('zm-above'), `Amber: above the daily band, above ${signed(Z.bandHigh, 1)} ATR.`],
               ])}
-              <p>Hover a node for its tooltip. Tags there repeat the rings:</p>
-              <div class="themeviz-tooltip lg-static-tip"><div class="tip-title">NVDA <span class="tip-tag tag-leader">LEADER</span> <span class="tip-tag tag-bridge">BRIDGE</span> <span class="tip-tag tag-tight">TIGHT</span></div><div class="tip-sub">RS 96.0%</div></div>`,
-            fig: figure(ringsSvg(), '', ''),
+              <p>Height is the weekly zone. Below ${signed(Z.weeklyLow, 1)} ATR the close is under the weekly EMA20. Above ${signed(Z.weeklyHigh, 1)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
+              ${zoneBgFigure()}
+              <div class="zm-state zm-band"><div class="zm-state-head"><span>In the buy area</span><span class="zm-state-n">3</span></div></div>
+              <p><span class="zm-bar" style="display:inline-flex;width:80px"><span class="zm-seg zm-band" style="width:50%"></span><span class="zm-seg zm-above" style="width:30%"></span><span class="zm-seg zm-under" style="width:20%"></span></span> A cluster bar: the leaf's names by daily zone.</p>`,
           },
           {
-            id: 'viz-edges', title: 'Edges',
-            sample: `<span class="lg-edge-demo" style="border-color:${esc(C.VIZ_COLORS.l1Accent)}"></span>`,
-            where: VIZ_TABS,
-            body: '<p>Lines join each theme to its members and to its L1 hub. A thicker member line is a stronger member.</p>',
-            fig: figure(edgesSvg(), '', ''),
+            id: 'zone-box', title: 'Green outline — the buy area',
+            sample: zoneBox(),
+            where: ZONE_TABS,
+            body: `<p>The buy area is the daily band with the weekly between ${signed(Z.weeklyLow, 1)} and ${signed(Z.weeklyHigh, 1)} ATR. Its tag (<svg class="lg-zm" style="width:70px" viewBox="0 0 70 14"><text class="zm-box-tag" x="35" y="11">Buy area · 3</text></svg>) counts the names inside. In the cluster rows, names in the buy area are bold.</p>
+              <p>No forward return has been measured for the buy area. The limits are a display choice.</p>`,
+          },
+          {
+            id: 'zone-marks', title: 'Rings and markers',
+            sample: zoneRing(true),
+            where: ZONE_TABS,
+            body: keyList([
+              [zoneRing(true), 'Violet ring: the ticker is in a tight range (see the violet tint card).'],
+              ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><g class="zm-pt zm-sel"><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/><text class="zm-label" x="15" y="11" font-size="10">MU</text></g></svg>', 'Yellow outline and label: the selected ticker.'],
+              ['<svg class="lg-zm" viewBox="0 0 12 12"><polygon class="zm-dot zm-above" points="6,1 11,11 1,11"/></svg>', 'Triangle on an edge: the ticker is off the scale. Hover it for the real distances.'],
+            ]),
           },
         ],
       },
@@ -892,7 +882,7 @@
           {
             id: 'dates', title: 'Blue date button — the session on screen',
             sample: '<span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span>',
-            where: LIST_TABS.concat(['ep', 'themeviz', 'momentumviz', 'volumeviz', 'varsviz']),
+            where: LIST_TABS.concat(['ep'], ZONE_TABS),
             body: `<div class="lg-inline"><span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span><span class="tt-date-select active lg-static">09-26 Fri</span><span class="tt-date-btn lg-static">09-25<span class="tt-weekday">Thu</span></span></div>
               <p>The blue button or dropdown is the session you see. Choose another date to go back in time, up to 180 days.</p>`,
           },
@@ -919,19 +909,6 @@
     ];
   }
 
-  function themeStrengthTable(C) {
-    const t = C.COLOR_BANDS.vizThemeStrength;
-    const rows = t.bands.map((b, i) => {
-      const cond = bandCondition(t, i, v => num(v, 0));
-      return [b.out.label, b.at, cond];
-    });
-    rows.push([t.otherwise.label, -Infinity, 'any other value']);
-    return `<table class="lg-band-table"><tbody>${rows.map(([label, at, cond]) => {
-      const v = Number.isFinite(at) ? at : 0;
-      return `<tr><td class="lg-bt-sample"><span class="lg-swatch" style="background:${esc(C.themeFill(v, 1))}"></span><span class="lg-swatch lg-pale" style="background:${esc(C.themeFill(v, 0))}"></span></td><td class="lg-bt-cond">${esc(label)}: strength ${esc(cond)}</td></tr>`;
-    }).join('')}</tbody></table>`;
-  }
-
   // ── RENDER ────────────────────────────────────────────
   function render() {
     const page = document.getElementById('legend-page');
@@ -952,35 +929,6 @@
       ${body}`;
   }
 
-  /* The Viz tabs carry their own short key under the network. It is drawn
-     from the same bands as the nodes, so it cannot drift from them. */
-  function renderVizLegends() {
-    const C = window.MM_COLORS;
-    if (!C) return;
-    const strength = C.COLOR_BANDS.vizThemeStrength;
-    const themeItems = strength.bands.map(b =>
-      `<span class="lg-item"><span class="lg-dot" style="background:${esc(C.themeFill(b.at, 1))}"></span>${esc(b.out.label)} (≥ ${b.at})</span>`)
-      .concat(`<span class="lg-item"><span class="lg-dot" style="background:${esc(C.themeFill(0, 1))}"></span>${esc(strength.otherwise.label)}</span>`)
-      .join('');
-    const tickerItems = (table, name) => {
-      const rows = bandRows(table, v => num(v, 0));
-      return rows.filter(r => r.cond !== 'no data').map(r => {
-        const cond = r.cond === 'any other value' ? `${name} lower` : `${name} ${r.cond}`;
-        return `<span class="lg-item"><span class="lg-dot" style="background:${esc(r.out)}"></span>${esc(cond)}</span>`;
-      }).join('');
-    };
-    const rings = '<span class="lg-item"><span class="lg-ring lg-tight"></span>Tight / inside day on MA</span>' +
-      '<span class="lg-item"><span class="lg-ring lg-bridge"></span>Bridge (multi-theme)</span>' +
-      '<span class="lg-item"><span class="lg-leader-dot"></span>Theme leader (glow)</span>';
-    const sep = '<span class="lg-sep">|</span>';
-    document.querySelectorAll('[data-viz-legend]').forEach(el => {
-      const kind = el.dataset.vizLegend;
-      const ticks = kind === 'vars' ? tickerItems(C.COLOR_BANDS.vizVars, 'VARS') : tickerItems(C.COLOR_BANDS.vizRs, 'RS');
-      el.innerHTML = themeItems + sep + ticks + sep + rings +
-        '<a class="lg-item lg-more" href="#" data-open-legends>All colours →</a>';
-    });
-  }
-
   function openLegends(anchor) {
     const btn = document.getElementById('tab-legends');
     if (btn) btn.click();
@@ -991,7 +939,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    renderVizLegends();
+    renderZoneKeys();
     render();
     const page = document.getElementById('legend-page');
     if (page) {

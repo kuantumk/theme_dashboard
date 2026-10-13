@@ -163,8 +163,8 @@ class LegendsTabPlacementTests(unittest.TestCase):
         m = re.search(r'window\.MM_COLORS = Object\.freeze\(\{(.*?)\}\);', APP, re.S)
         self.assertIsNotNone(m, 'app.js no longer exports window.MM_COLORS')
         for key in ('COLOR_BANDS', 'pickBand', 'PATTERN_RULES', 'HL_TIER_CLASS',
-                    'HL_TIER_TIP', 'VIZ_COLORS', 'CHART_MA_COLORS', 'MARKET_SESSIONS',
-                    'rsFill', 'varsFill', 'themeFill'):
+                    'HL_TIER_TIP', 'CHART_MA_COLORS', 'MARKET_SESSIONS',
+                    'ZONE_RULES', 'ZONE_STATES', 'ZONE_FAMILY_CLASS'):
             self.assertIn(key, m.group(1), f'MM_COLORS no longer carries {key}')
 
 
@@ -246,17 +246,6 @@ class SingleSourceTests(unittest.TestCase):
                          'a render site picks a colour from an inline threshold; '
                          'add the rule to COLOR_BANDS and call pickBand')
 
-    def test_no_fill_function_returns_a_literal_colour(self):
-        code = self._code_outside_registry()
-        self.assertNotRegex(code, r"return\s+'#[0-9a-fA-F]{6}'",
-                            'a node fill returns a literal; use COLOR_BANDS.viz*')
-
-    def test_the_cytoscape_style_reads_every_colour_from_the_registry(self):
-        start = APP.index('      style: [')
-        end = APP.index('      wheelSensitivity', start)
-        self.assertNotRegex(APP[start:end], r"'#[0-9a-fA-F]{3,6}'",
-                            'a raw hex in the network style; add it to VIZ_COLORS')
-
     def test_the_chart_ma_colours_come_from_the_registry(self):
         self.assertIn('"moving average exponential.ma.color": CHART_MA_COLORS.ema', APP)
         self.assertIn('"moving average.ma.color": CHART_MA_COLORS.sma', APP)
@@ -267,8 +256,7 @@ class SingleSourceTests(unittest.TestCase):
             'rs': 3, 'vars': 4, 'inst': 5, 'short': 5, 'pct': 1,
             'parabolicAtr': 1, 'epFloat': 1, 'epShort': 1, 'epDist52w': 1,
             'epAtr': 1, 'epRvol': 1, 'macroChange': 2, 'fearGreed': 1,
-            'nasiOsc': 1, 'nasiRsi': 1, 'vizRs': 1, 'vizVars': 1,
-            'vizThemeStrength': 1,
+            'nasiOsc': 1, 'nasiRsi': 1,
         }
         for table, n in expected.items():
             found = len(re.findall(r'pickBand\(COLOR_BANDS\.' + table + r'\b', code))
@@ -277,14 +265,11 @@ class SingleSourceTests(unittest.TestCase):
         self.assertGreaterEqual(code.count('pickBand(COLOR_BANDS[key], val)'), 2)
 
     def test_the_viz_keys_are_generated_not_hand_written(self):
-        """The hand-written keys had drifted: a blue swatch for a cyan node,
-        "score >= 100" for a band that starts at 65, and RS swatches on the
-        Volume Viz tab, whose nodes are coloured by VARS."""
-        self.assertEqual(4, len(re.findall(r'data-viz-legend="(?:rs|vars)"', HTML)))
-        for stale in ('lg-rs90', 'lg-vars6', 'lg-blazing'):
-            self.assertNotIn(stale, HTML)
-            self.assertNotIn(stale, CSS)
-        self.assertIn('data-viz-legend="vars"></div>', HTML.split('volume-network')[1][:1500])
+        """Each zone map's key is drawn by legends.js from the same classes the
+        map paints with. The hand-written network keys had drifted."""
+        self.assertEqual(4, len(re.findall(r'data-viz-legend="zone"', HTML)))
+        self.assertEqual(0, len(re.findall(r'data-viz-legend="(?:rs|vars)"', HTML)))
+        self.assertIn('[data-viz-legend="zone"]', LEGENDS)
 
 
 class ServerRuleMirrorTests(unittest.TestCase):

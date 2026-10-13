@@ -29,7 +29,7 @@ from src.indicators.create_technical_indicators import (
     compute_spy_cum_norm_100,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
-from src.themes.theme_taxonomy import PATH_SEP, resolve_l1, split_path
+from src.themes.theme_taxonomy import resolve_l1, split_path
 
 OUTPUT_DIR = DOCS_DATA_DIR
 
@@ -52,47 +52,6 @@ def _attach_hierarchy(themes_list):
     return themes_list
 
 
-def _build_network(themes_list):
-    """Build {nodes, edges} for the Cytoscape network visualization.
-
-    - One ``l1`` node per distinct L1 narrative (hub).
-    - One ``leaf`` node per theme path (the existing theme nodes).
-    - One ``is_a`` edge from each leaf to its L1 hub.
-
-    L1 attribution uses the defensive :func:`resolve_l1` resolver so that
-    legacy or partially-corrupted theme labels still connect to the correct
-    hub. Shared-ticker edges between leaves are still computed in the frontend.
-
-    Degenerate bare-L1 entries — a theme named just ``"Space"`` while proper
-    L2 children like ``"Space / Launch"`` also exist in the list — are
-    collapsed into the hub instead of being emitted as a duplicate leaf next
-    to the L1 hexagon. Matching guard in ``docs/app.js``.
-    """
-    l1s_with_children = {
-        split_path(e.get('name') or '')[0]
-        for e in themes_list
-        if PATH_SEP in (e.get('name') or '')
-    }
-    l1_seen = set()
-    nodes = []
-    edges = []
-    for entry in themes_list:
-        name = entry.get('name')
-        l1 = entry.get('l1') or resolve_l1(name) or split_path(name)[0]
-        if l1 not in l1_seen:
-            l1_seen.add(l1)
-            nodes.append({'id': l1, 'kind': 'l1'})
-        if name == l1 and l1 in l1s_with_children:
-            continue
-        nodes.append({
-            'id': name,
-            'kind': 'leaf',
-            'parent': l1,
-            'ticker_count': len(entry.get('tickers', [])),
-        })
-        if name != l1:
-            edges.append({'source': name, 'target': l1, 'kind': 'is_a'})
-    return {'nodes': nodes, 'edges': edges}
 VARS_ARTIFACT_DIR = PROJECT_ROOT / "artifacts" / "vars"
 
 # Google Sheets
@@ -1350,6 +1309,183 @@ def _highlight_from_row(row, short_interest=None):
     )
 
 
+# ── Zone map (the four Viz tabs) ────────────────────────────────────────────
+#
+# Each ticker sits at (distance from the daily EMA20, distance from the weekly
+# EMA20), both in daily ATR14. The server decides every zone and state; the
+# browser only draws (`renderZoneMap` in docs/app.js, whose ZONE_RULES mirror
+# is pinned to the `zone_map:` config block).
+#
+# ⛔ The distances read the session's MASTER parquet, unfilled. The screener
+# parquets are saved from a frame that run_screener.py loads with
+# `.fillna(0)`, so a screener row holds `ema20_w = 0` where the master holds
+# NaN. A zero-filled weekly EMA gives `close / atr14`, a large positive
+# number, and the name plots far up the extended zone with nothing on screen
+# to show it.
+
+ZONE_MAP_DEFAULTS = {
+    'min_avg_dollar_vol': 100_000_000,
+    'min_adr_pct': 0.04,
+    'top_leaves': 20,
+    'band_low': -0.5,
+    'band_high': 1.0,
+    'weekly_low': 0.0,
+    'weekly_high': 4.0,
+    'x_range': [-2.0, 5.0],
+    'y_range': [-4.0, 8.0],
+}
+
+#: The seven states, best first. docs/app.js ZONE_STATES lists the same ids in
+#: the same order (pinned by tests/test_dashboard_zone_map_markup.py).
+ZONE_STATES = ('buy_area', 'buy_stretched', 'above', 'extended',
+               'under_daily', 'weekly_broken', 'under_both')
+
+#: Every (daily, weekly) cell maps to exactly one state.
+_ZONE_STATE_BY_CELL = {
+    ('band', 'normal'): 'buy_area',
+    ('band', 'extended'): 'buy_stretched',
+    ('above', 'normal'): 'above',
+    ('above', 'extended'): 'extended',
+    ('under', 'normal'): 'under_daily',
+    ('under', 'extended'): 'under_daily',
+    ('band', 'below'): 'weekly_broken',
+    ('above', 'below'): 'weekly_broken',
+    ('under', 'below'): 'under_both',
+}
+
+ZONE_MASTER_COLUMNS = ('close', 'ema20', 'ema20_w', 'atr14', 'tight_range', 'tight_len')
+ZONE_HIDDEN_LEAVES = {'Uncategorized', 'Singleton'}
+
+
+def zone_map_config():
+    """The `zone_map:` config block, with the defaults filling any gap."""
+    cfg = CONFIG.get('zone_map') or {}
+    return {key: cfg.get(key, default) for key, default in ZONE_MAP_DEFAULTS.items()}
+
+
+def zone_distance(close, ma, atr):
+    """``(close - ma) / atr`` to 2 decimals, or None.
+
+    A missing, non-finite or non-positive input returns None. A zero ATR
+    must not become an infinite distance, and a zero average is a filled
+    absence, not a price.
+    """
+    close, ma, atr = _finite(close), _finite(ma), _finite(atr)
+    if close is None or ma is None or atr is None:
+        return None
+    if close <= 0 or ma <= 0 or atr <= 0:
+        return None
+    return round((close - ma) / atr, 2)
+
+
+def classify_zone(d_daily, d_weekly, cfg):
+    """Return ``(zone_daily, zone_weekly, state)``. All four limits are inclusive."""
+    if d_daily < cfg['band_low']:
+        daily = 'under'
+    elif d_daily > cfg['band_high']:
+        daily = 'above'
+    else:
+        daily = 'band'
+    if d_weekly < cfg['weekly_low']:
+        weekly = 'below'
+    elif d_weekly > cfg['weekly_high']:
+        weekly = 'extended'
+    else:
+        weekly = 'normal'
+    return daily, weekly, _ZONE_STATE_BY_CELL[(daily, weekly)]
+
+
+def _load_zone_master(date_str):
+    """The session's master parquet, UNFILLED, or None when it is absent.
+
+    Only `ticker` and ZONE_MASTER_COLUMNS are read, the same narrow read as
+    `load_day_flags_by_date`: three exporters call this once per retained
+    session. A file that predates `ema20_w` returns None without a read.
+    """
+    import pandas as pd
+    import pyarrow.parquet as pq
+
+    if not date_str:
+        return None
+    path = SCREENING_OUTPUT_DIR / 'master' / f'master_{date_str}.parquet'
+    if not path.exists():
+        return None
+    present = set(pq.read_schema(path).names)
+    if 'ticker' not in present or 'ema20_w' not in present:
+        return None
+    cols = ['ticker'] + [c for c in ZONE_MASTER_COLUMNS if c in present]
+    return pd.read_parquet(path, engine='pyarrow', columns=cols)
+
+
+def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
+    """Build one tab's `zone_map` block from its ticker rows.
+
+    `rows` are the tab's payload ticker dicts. The floors read their
+    `dollar_vol` and `adr_pct`; the display reads `vars`, `rs`,
+    `highlight` and `ticker_color`. The distances and the tight flag read
+    `master_df`, which must be the session's unfilled master frame.
+
+    A missing liquidity metric FAILS the floor. The floor is a universe gate,
+    like `si_gate`, not a view lens like the V/A cutoffs, so an unknown must
+    not pass it.
+
+    Returns None when the frame is absent or predates `ema20_w`: an empty map
+    would read as a quiet market. Every name left off is counted.
+    """
+    cfg = cfg or zone_map_config()
+    if master_df is None or 'ema20_w' not in master_df.columns:
+        return None
+    rows = list(rows)
+    wanted = {str(row.get('ticker') or '').upper() for row in rows}
+    in_rows = master_df['ticker'].astype(str).str.upper().isin(wanted)
+    bars = _bars_by_ticker(master_df[in_rows], ZONE_MASTER_COLUMNS)
+    counts = {'n_candidates': 0, 'n_floor_dropped': 0, 'n_no_weekly': 0, 'n_no_daily': 0}
+    seen = set()
+    out = []
+    for row in rows:
+        ticker = str(row.get('ticker') or '').upper()
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        counts['n_candidates'] += 1
+        dollar_vol = _finite(row.get('dollar_vol'))
+        adr = _finite(row.get('adr_pct'))
+        if (dollar_vol is None or adr is None
+                or dollar_vol < cfg['min_avg_dollar_vol'] or adr < cfg['min_adr_pct']):
+            counts['n_floor_dropped'] += 1
+            continue
+        bar = bars.get(ticker) or {}
+        if _finite(bar.get('ema20_w')) is None:
+            counts['n_no_weekly'] += 1
+            continue
+        d_daily = zone_distance(bar.get('close'), bar.get('ema20'), bar.get('atr14'))
+        d_weekly = zone_distance(bar.get('close'), bar.get('ema20_w'), bar.get('atr14'))
+        if d_daily is None or d_weekly is None:
+            counts['n_no_daily'] += 1
+            continue
+        zone_daily, zone_weekly, state = classify_zone(d_daily, d_weekly, cfg)
+        tight = _flag_on(bar.get('tight_range'))
+        out.append({
+            'ticker': ticker,
+            'd_daily': d_daily,
+            'd_weekly': d_weekly,
+            'zone_daily': zone_daily,
+            'zone_weekly': zone_weekly,
+            'state': state,
+            'vars': _round_or_none(row.get('vars'), 2),
+            'rs': _round_or_none(row.get('rs'), 1),
+            'tight': tight,
+            'tight_len': _int_or_none(bar.get('tight_len')) if tight else None,
+            'highlight': row.get('highlight'),
+            'ticker_color': row.get('ticker_color'),
+            'leaves': [p for p in (leaves_by_ticker.get(ticker) or [])
+                       if p not in ZONE_HIDDEN_LEAVES],
+        })
+    out.sort(key=lambda t: t['ticker'])
+    params = {key: cfg[key] for key in ZONE_MAP_DEFAULTS}
+    return {'params': params, **counts, 'tickers': out}
+
+
 def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     """Build a single momentum_136 snapshot dict from one screener CSV.
 
@@ -1454,7 +1590,8 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     return {
         'report_date': csv_date,
         'themes': themes_list,
-        'network': _build_network(themes_list),
+        'zone_map': build_zone_map(
+            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
     }
 
 
@@ -1527,8 +1664,8 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
     then L1-avg (vars - vars_20ema) acceleration desc. Leaves within an
     L1 sort by avg VARS desc; tickers within a leaf by VARS desc. An
     L1 is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
-    has >= 3 members. The `network` payload stays leaf-level so the viz is
-    unchanged. Returns the JSON dict or None if the CSV is empty. Pure function.
+    has >= 3 members. `zone_map` covers the tickers the tab renders.
+    Returns the JSON dict or None if the CSV is empty. Pure function.
 
     `newest_session` gates the highlight ladder's short rung, as in
     `_build_momentum_136_snapshot`.
@@ -1652,13 +1789,13 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
 
     l1_list.sort(key=lambda grp: (-grp['score'], -grp['accel'], grp['name']))
 
-    # Network stays leaf-level (leaves of rendered L1 sections only) — viz unchanged.
-    shown_leaves = [leaf for grp in l1_list for leaf in grp['leaves']]
+    # The zone map covers exactly the tickers this tab renders.
+    rendered = [td for grp in l1_list for leaf in grp['leaves'] for td in leaf['tickers']]
 
     return {
         'report_date': csv_date,
         'themes': l1_list,
-        'network': _build_network(shown_leaves),
+        'zone_map': build_zone_map(rendered, _load_zone_master(csv_date), ticker_themes),
     }
 
 
@@ -2086,11 +2223,20 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     # and the undated SI roster.
     has_tight = 'tight_range' in master_df.columns and 'tightness' in master_df.columns
 
+    # Theme Viz: the members of the top `top_leaves` leaves, UNCAPPED. The
+    # history file caps chips at `tickers_per_leaf`, and a map built from the
+    # capped chips would show fewer names on a back-dated session than on
+    # the newest one.
+    zone_cfg = zone_map_config()
+    top_leaves = int(zone_cfg['top_leaves'])
+    zone_rows = []
+    leaves_by_ticker = {}
+
     l1s = []
     for l1_entry in body['l1s']:
         leaves = []
         for leaf in l1_entry['leaves']:
-            ticker_dicts = [{
+            members = [{
                 'ticker': m['ticker'],
                 'score': round(m['composite'], 1),
                 'rs': round(m['rs'], 1),
@@ -2107,10 +2253,14 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
                 'tight_gate': m.get('tight_gate'),
                 'is_screened': bool(m.get('is_screened', False)),
                 'highlight': _member_highlight(m['ticker']),
-            } for m in (leaf['members'] if tickers_per_leaf is None
-                        else leaf['members'][:tickers_per_leaf])]
+            } for m in leaf['members']]
             if day_flags:
-                enrich_with_ticker_color(ticker_dicts, day_flags)
+                enrich_with_ticker_color(members, day_flags)
+            for td in members:
+                leaves_by_ticker.setdefault(str(td['ticker']).upper(), []).append(leaf['theme'])
+            if leaf['global_rank'] <= top_leaves:
+                zone_rows.extend(members)
+            ticker_dicts = members[:tickers_per_leaf]
             leaves.append({
                 'global_rank': leaf['global_rank'],
                 'name': leaf['theme'],
@@ -2144,8 +2294,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
         'universe_size': body['universe_size'],
         'n_leaves_scored': body['n_leaves_scored'],
         'l1s': l1s,
+        'zone_map': build_zone_map(zone_rows, master_df, leaves_by_ticker, zone_cfg),
     }
-
 
 def export_radar(day_flags_by_date, root=None, out_dir=None):
     """Export the L1 Radar (dashboard Themes tab) — full
@@ -2360,7 +2510,8 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     return {
         'report_date': csv_date,
         'themes': themes_list,
-        'network': _build_network(themes_list),
+        'zone_map': build_zone_map(
+            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
     }
 
 

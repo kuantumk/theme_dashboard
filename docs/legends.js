@@ -847,7 +847,8 @@
             where: ZONE_TABS,
             body: keyList([
               [zoneRing(true), 'Violet ring: the ticker is in a tight range (see the violet tint card).'],
-              ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><g class="zm-pt zm-sel"><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/><text class="zm-label" x="15" y="11" font-size="10">MU</text></g></svg>', 'Yellow outline and label: the selected ticker.'],
+              ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><g class="zm-pt zm-sel"><circle class="zm-dot zm-band" cx="8" cy="8" r="4"/><text class="zm-label" x="15" y="11" font-size="10">MU</text></g></svg>', 'Yellow outline, label and leader line: the selected ticker.'],
+              ['<svg class="lg-zm" style="width:44px" viewBox="0 0 44 16"><circle class="zm-dot zm-band" cx="5" cy="11" r="4"/><line class="zm-leader" x1="9" y1="9" x2="21" y2="5"/><text class="zm-label" x="22" y="9" font-size="10">MU</text></svg>', 'Thin grey line: the dots are crowded, so the label sits away from its dot. The line points back to the dot.'],
               ['<svg class="lg-zm" viewBox="0 0 12 12"><polygon class="zm-dot zm-above" points="6,1 11,11 1,11"/></svg>', 'Triangle on an edge: the ticker is off the scale. Hover it for the real distances.'],
             ]),
           },

@@ -1547,8 +1547,11 @@ tbody tr.nav-active {
 
 .zone-map { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .zm-card { margin: 0; }
-.zm-caption { margin: 0 0 8px; font-size: 11px; color: var(--text2); }
-.zm-svg { display: block; width: 100%; height: auto; font-family: var(--mono); }
+/* No viewBox scaling: drawZoneScatter gives the SVG a fixed pixel size and
+   a matching viewBox, so the font sizes below are real px at any panel
+   width. Between a resize and the redraw the card clips the SVG. */
+.zm-plot { overflow: hidden; }
+.zm-svg { display: block; font-family: var(--mono); }
 
 .zm-bg { stroke: none; }
 .zm-bg.zm-under { fill: var(--rdim); }
@@ -1567,13 +1570,20 @@ tbody tr.nav-active {
 .zm-rail { stroke: var(--border2); stroke-width: 1; }
 .zm-rail.zm-rail-dash { stroke-dasharray: 5 4; }
 .zm-box { fill: none; stroke: var(--green); stroke-width: 1.2; }
-.zm-box-tag { fill: var(--green); font-size: 10px; text-anchor: middle; }
+.zm-box-tag { fill: var(--green); font-size: 10px; text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .zm-head { fill: var(--text2); font-family: var(--display); font-size: 10px; text-anchor: middle; }
 .zm-axis { fill: var(--text3); font-size: 9px; text-anchor: middle; }
 .zm-axis.zm-left { text-anchor: start; }
 .zm-axis.zm-right { text-anchor: end; }
-.zm-label { fill: var(--text2); font-size: 10px; }
+/* The outline in the page colour keeps a label readable where it sits on a
+   dot or a leader line. paint-order puts the outline under the glyphs. */
+.zm-label { fill: var(--text2); font-size: 10px; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
 .zm-label.zm-label-buy { fill: var(--text); }
+/* A label moved off a crowded dot hangs on a thin line back to it. */
+.zm-leader { stroke: var(--text3); stroke-width: 0.75; }
+.zm-pt:hover .zm-label { fill: var(--text); }
+.zm-pt:hover .zm-leader { stroke: var(--text2); }
+.zm-pt.zm-sel .zm-leader { stroke: var(--yellow); }
 
 .zm-state { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--border2); background: var(--bg3); }
 .zm-state.zm-under { border-left-color: var(--red); background: var(--rdim); }

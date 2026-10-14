@@ -196,6 +196,8 @@
         applyTickerFilters();
         // Radar chips can only be measured once the tab has a box.
         if (btn.dataset.tab === 'themes') syncRadarClampsNow();
+        // A zone map rendered on a hidden tab draws once the tab has a width.
+        redrawZoneMapsNow();
       });
     });
   }
@@ -226,8 +228,10 @@
           leftPanel.style.width = newWidth + 'px';
           syncRadarClampsNow();
           redrawNasiNow();
+          redrawZoneMapsSoon();
         }
         function onUp() {
+          redrawZoneMapsNow();
           handle.classList.remove('dragging');
           document.body.style.cursor = '';
           document.body.style.userSelect = '';
@@ -1716,18 +1720,14 @@
   // Each ticker sits at (close vs the daily EMA20, close vs the weekly
   // EMA20), both in daily ATR14. The server decides every zone and state
   // (export_dashboard_data.build_zone_map); this code only draws. It paints
-  // with CSS classes, never with colour literals. The SVG scales through its
-  // viewBox, so it draws correctly on a hidden tab.
+  // with CSS classes, never with colour literals. The SVG draws at its own
+  // pixel width, so it waits for a visible tab and redraws on a resize.
 
   const ZONE_MODES = {
-    themes: { containerId: 'themeviz-zone', tabId: 'themeviz', metric: 'vars',
-      source: p => `members of the top ${p.top_leaves} radar leaves` },
-    vars: { containerId: 'varsviz-zone', tabId: 'varsviz', metric: 'vars',
-      source: () => 'VARS tab survivors' },
-    momentum: { containerId: 'momentumviz-zone', tabId: 'momentumviz', metric: 'rs',
-      source: () => 'Momentum tab survivors' },
-    volume: { containerId: 'volumeviz-zone', tabId: 'volumeviz', metric: 'vars',
-      source: () => 'Volume tab survivors' },
+    themes: { containerId: 'themeviz-zone', tabId: 'themeviz', metric: 'vars' },
+    vars: { containerId: 'varsviz-zone', tabId: 'varsviz', metric: 'vars' },
+    momentum: { containerId: 'momentumviz-zone', tabId: 'momentumviz', metric: 'rs' },
+    volume: { containerId: 'volumeviz-zone', tabId: 'volumeviz', metric: 'vars' },
   };
 
   const ZONE_METRIC = {
@@ -1738,21 +1738,135 @@
   // Leaf rows shown in the clusters card before the "N other themes" line.
   const ZONE_CLUSTER_ROWS = 8;
 
-  // SVG geometry, in viewBox units.
-  const ZM = { w: 760, h: 470, l: 46, r: 14, t: 40, b: 34 };
+  // The SVG draws at its real pixel width, one viewBox unit per CSS pixel,
+  // so text keeps its size when the panel divider moves. A width change
+  // redraws the map. Margins are in pixels; the height follows the width
+  // between two limits.
+  const ZM_PAD = { l: 46, r: 14, t: 40, b: 34 };
+  const ZM_ASPECT = 0.62;
+  const ZM_HEIGHT = [360, 640];
 
-  // Character widths at the 9px axis and 10px label sizes in style.css. The
-  // map draws on a hidden tab too, where SVG text cannot be measured.
-  const ZM_CHAR_W = { axis: 5.6, label: 6.2 };
+  // Font sizes in px. They match .zm-axis, .zm-label and .zm-head in
+  // style.css, and they feed the text measurement of the label placer.
+  const ZM_FONT = { axis: 9, label: 10, head: 10 };
 
-  function zmX(v) {
-    const [a, b] = ZONE_RULES.xRange;
-    return ZM.l + (v - a) / (b - a) * (ZM.w - ZM.l - ZM.r);
+  // Label placer: the label row height, and how far a label may move from
+  // its dot on a leader line.
+  const ZM_LABEL = { h: 11, reach: 150, step: 6, angles: 24 };
+
+  // The placer's passes, strictest first. `dots`: a label may not cover a
+  // dot. `far`: the rings run to the edge of the plot, not to `reach`.
+  // `cross`: a leader may cross another leader. `under`: a leader may pass
+  // under a label. A name ringed by its neighbours' labels, such as an
+  // off-scale name in a crowded corner, finds room only in the last pass.
+  // Two labels never overlap in any pass.
+  const ZM_LABEL_PASSES = [
+    { dots: true, far: false, cross: false, under: false },
+    { dots: false, far: false, cross: false, under: false },
+    { dots: true, far: true, cross: false, under: false },
+    { dots: false, far: true, cross: true, under: false },
+    { dots: false, far: true, cross: true, under: true },
+  ];
+
+  function zmGeom(w) {
+    const h = Math.round(Math.min(ZM_HEIGHT[1], Math.max(ZM_HEIGHT[0], w * ZM_ASPECT)));
+    return { w, h, ...ZM_PAD };
   }
 
-  function zmY(v) {
+  function zmX(g, v) {
+    const [a, b] = ZONE_RULES.xRange;
+    return g.l + (v - a) / (b - a) * (g.w - g.l - g.r);
+  }
+
+  function zmY(g, v) {
     const [a, b] = ZONE_RULES.yRange;
-    return ZM.h - ZM.b - (v - a) / (b - a) * (ZM.h - ZM.t - ZM.b);
+    return g.h - g.b - (v - a) / (b - a) * (g.h - g.t - g.b);
+  }
+
+  /** Text width in px at the SVG's own font. The map draws only on a
+   *  visible tab, so the font is resolved. */
+  let zmCanvas = null;
+  function zmMeasurer(svg) {
+    const family = getComputedStyle(svg).fontFamily || 'monospace';
+    zmCanvas = zmCanvas || document.createElement('canvas');
+    const ctx = zmCanvas.getContext('2d');
+    if (!ctx) return (text, px) => text.length * px * 0.62;
+    return (text, px) => {
+      ctx.font = `${px}px ${family}`;
+      return ctx.measureText(text).width;
+    };
+  }
+
+  function zmBoxesOverlap(a, b) {
+    return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  }
+
+  /** True when segment s (x1,y1 → x2,y2) touches box b (Liang–Barsky). */
+  function zmSegHitsBox(s, b) {
+    const dx = s.x2 - s.x1;
+    const dy = s.y2 - s.y1;
+    const p = [-dx, dx, -dy, dy];
+    const q = [s.x1 - b.x, b.x + b.w - s.x1, s.y1 - b.y, b.y + b.h - s.y1];
+    let t0 = 0;
+    let t1 = 1;
+    for (let i = 0; i < 4; i++) {
+      if (p[i] === 0) {
+        if (q[i] < 0) return false;
+        continue;
+      }
+      const r = q[i] / p[i];
+      if (p[i] < 0) {
+        if (r > t1) return false;
+        if (r > t0) t0 = r;
+      } else {
+        if (r < t0) return false;
+        if (r < t1) t1 = r;
+      }
+    }
+    return true;
+  }
+
+  /** True when two segments cross at a point inside both. */
+  function zmSegsCross(a, b) {
+    const side = (x1, y1, x2, y2, x, y) => Math.sign((x2 - x1) * (y - y1) - (y2 - y1) * (x - x1));
+    return side(a.x1, a.y1, a.x2, a.y2, b.x1, b.y1) * side(a.x1, a.y1, a.x2, a.y2, b.x2, b.y2) < 0
+      && side(b.x1, b.y1, b.x2, b.y2, a.x1, a.y1) * side(b.x1, b.y1, b.x2, b.y2, a.x2, a.y2) < 0;
+  }
+
+  /** The label spots for one dot, nearest first. The first eight sit beside
+   *  the dot. The rest walk outward in rings and need a leader line. */
+  function zmLabelSpots(q, w, h, reach) {
+    const spots = [];
+    const gap = q.r + 2;
+    const d = gap * 0.75;
+    [
+      [q.x + gap, q.y - h / 2], [q.x - gap - w, q.y - h / 2],
+      [q.x - w / 2, q.y - gap - h], [q.x - w / 2, q.y + gap],
+      [q.x + d, q.y - d - h], [q.x - d - w, q.y - d - h],
+      [q.x + d, q.y + d], [q.x - d - w, q.y + d],
+    ].forEach(([x, y]) => spots.push({ x, y, lead: false }));
+    for (let rad = gap + 10; rad <= reach; rad += ZM_LABEL.step) {
+      for (let k = 0; k < ZM_LABEL.angles; k++) {
+        const a = 2 * Math.PI * k / ZM_LABEL.angles;
+        const c = Math.cos(a);
+        const s = Math.sin(a);
+        const px = q.x + rad * c;
+        const py = q.y + rad * s;
+        // Put the near edge of the box on the ring, so the leader stays short.
+        const x = c > 0.3 ? px : c < -0.3 ? px - w : px - w / 2;
+        const y = s > 0.3 ? py : s < -0.3 ? py - h : py - h / 2;
+        spots.push({ x, y, lead: true });
+      }
+    }
+    return spots;
+  }
+
+  /** The leader from the edge of the dot to the nearest point of the box. */
+  function zmLeader(q, box) {
+    const tx = Math.min(box.x + box.w, Math.max(box.x, q.x));
+    const ty = Math.min(box.y + box.h, Math.max(box.y, q.y));
+    const len = Math.hypot(tx - q.x, ty - q.y) || 1;
+    return { x1: q.x + (tx - q.x) / len * q.r, y1: q.y + (ty - q.y) / len * q.r, x2: tx, y2: ty };
   }
 
   function zmClamp(v, range) {
@@ -1815,15 +1929,23 @@
     return `<polygon class="zm-dot ${ZONE_FAMILY_CLASS[t.zone_daily]}" points="${points}"/>`;
   }
 
-  function zoneScatterCard(zm, cfg, metric) {
+  /** The inside of the scatter SVG, drawn at geometry g (pixels). `measure`
+   *  gives text widths; `sel` is the selected ticker, kept across redraws. */
+  function zoneScatterSvg(zm, metric, g, measure, sel) {
     const R = ZONE_RULES;
     const tickers = zm.tickers;
-    const p = zm.params || {};
-    const xs = [R.xRange[0], R.bandLow, R.bandHigh, R.xRange[1]].map(zmX);
-    const yTop = zmY(R.yRange[1]);
-    const yBot = zmY(R.yRange[0]);
+    const X = v => zmX(g, v);
+    const Y = v => zmY(g, v);
+    const xs = [R.xRange[0], R.bandLow, R.bandHigh, R.xRange[1]].map(X);
+    const yTop = Y(R.yRange[1]);
+    const yBot = Y(R.yRange[0]);
     const families = Object.keys(ZONE_FAMILY_CLASS);
-    const heads = { under: 'Under the daily band', band: 'In the daily band', above: 'Above the daily band' };
+    // Long head first; the short one when the column is too narrow for it.
+    const heads = {
+      under: ['Under the daily band', 'Under'],
+      band: ['In the daily band', 'In band'],
+      above: ['Above the daily band', 'Above'],
+    };
     const counts = Object.fromEntries(families.map(f => [f, 0]));
     tickers.forEach(t => { counts[t.zone_daily] += 1; });
     const nBuy = tickers.filter(t => t.state === 'buy_area').length;
@@ -1831,15 +1953,17 @@
     let svg = '';
     families.forEach((f, i) => {
       const mid = (xs[i] + xs[i + 1]) / 2;
-      svg += `<rect class="zm-bg ${ZONE_FAMILY_CLASS[f]}" x="${zmF(xs[i])}" y="${zmF(yTop)}" width="${zmF(xs[i + 1] - xs[i])}" height="${zmF(yBot - yTop)}"/>`;
-      svg += `<text class="zm-head" x="${zmF(mid)}" y="${zmF(yTop - 20)}">${heads[f]}</text>`;
+      const colW = xs[i + 1] - xs[i];
+      const head = heads[f].find(h => measure(h, ZM_FONT.head) <= colW - 4) || '';
+      svg += `<rect class="zm-bg ${ZONE_FAMILY_CLASS[f]}" x="${zmF(xs[i])}" y="${zmF(yTop)}" width="${zmF(colW)}" height="${zmF(yBot - yTop)}"/>`;
+      svg += `<text class="zm-head" x="${zmF(mid)}" y="${zmF(yTop - 20)}">${escHtml(head)}</text>`;
       svg += `<text class="zm-axis" x="${zmF(mid)}" y="${zmF(yTop - 8)}">${counts[f]} of ${tickers.length}</text>`;
     });
 
     const rail = (x1, y1, x2, y2, extra) =>
       `<line class="zm-rail${extra ? ' ' + extra : ''}" x1="${zmF(x1)}" y1="${zmF(y1)}" x2="${zmF(x2)}" y2="${zmF(y2)}"/>`;
-    const yLow = zmY(R.weeklyLow);
-    const yHigh = zmY(R.weeklyHigh);
+    const yLow = Y(R.weeklyLow);
+    const yHigh = Y(R.weeklyHigh);
     const lowText = 'weekly EMA20';
     const highText = `weekly extended · > +${R.weeklyHigh} ATR`;
     const tagText = `Buy area · ${nBuy}`;
@@ -1850,74 +1974,142 @@
     svg += `<text class="zm-axis zm-left" x="${zmF(xs[0] + 4)}" y="${zmF(yHigh - 4)}">${escHtml(highText)}</text>`;
 
     svg += `<rect class="zm-box" x="${zmF(xs[1])}" y="${zmF(yHigh)}" width="${zmF(xs[2] - xs[1])}" height="${zmF(yLow - yHigh)}"/>`;
-    svg += `<text class="zm-box-tag" x="${zmF((xs[1] + xs[2]) / 2)}" y="${zmF(yHigh + 13)}">${escHtml(tagText)}</text>`;
+    // Drawn above the dots (see the return), so no dot hides it.
+    const tag = `<text class="zm-box-tag" x="${zmF((xs[1] + xs[2]) / 2)}" y="${zmF(yHigh + 13)}">${escHtml(tagText)}</text>`;
 
     for (let v = Math.ceil(R.xRange[0]); v <= R.xRange[1]; v += 1) {
-      svg += `<text class="zm-axis" x="${zmF(zmX(v))}" y="${zmF(yBot + 13)}">${v > 0 ? '+' + v : v}</text>`;
+      svg += `<text class="zm-axis" x="${zmF(X(v))}" y="${zmF(yBot + 13)}">${v > 0 ? '+' + v : v}</text>`;
     }
     for (let v = Math.ceil(R.yRange[0] / 2) * 2; v <= R.yRange[1]; v += 2) {
-      svg += `<text class="zm-axis zm-right" x="${zmF(xs[0] - 5)}" y="${zmF(zmY(v) + 3)}">${v > 0 ? '+' + v : v}</text>`;
+      svg += `<text class="zm-axis zm-right" x="${zmF(xs[0] - 5)}" y="${zmF(Y(v) + 3)}">${v > 0 ? '+' + v : v}</text>`;
     }
-    svg += `<text class="zm-axis" x="${zmF((xs[0] + xs[3]) / 2)}" y="${ZM.h - 4}">daily: close vs EMA20, in ATR →</text>`;
+    svg += `<text class="zm-axis" x="${zmF((xs[0] + xs[3]) / 2)}" y="${g.h - 4}">daily: close vs EMA20, in ATR →</text>`;
     svg += `<text class="zm-axis" transform="translate(11 ${zmF((yTop + yBot) / 2)}) rotate(-90)">weekly: close vs EMA20, in ATR →</text>`;
 
-    // Positions, then labels: buy-area names first, then tight names, then
-    // the rest by the row number. A label that would overlap one already
-    // placed is skipped; the <title> still names every dot on hover.
+    // Positions. `r` is the space the dot (and its tight ring) takes.
     const pts = tickers.map(t => {
       const cx = zmClamp(t.d_daily, R.xRange);
       const cy = zmClamp(t.d_weekly, R.yRange);
-      return { t, x: zmX(cx), y: zmY(cy), off: cx !== t.d_daily || cy !== t.d_weekly, box: null };
+      return { t, x: X(cx), y: Y(cy), r: t.tight ? 7 : 5,
+        off: cx !== t.d_daily || cy !== t.d_weekly, box: null, lead: null };
     });
-    const prio = q => (q.t.state === 'buy_area' ? 0 : q.t.tight ? 1 : 2);
-    // The box tag and the two rail labels are fixed text. Reserve their
-    // space first, or a ticker label can draw on top of them.
-    const tagW = tagText.length * ZM_CHAR_W.label;
+
+    // Labels: every name gets one. A name tries the eight spots beside its
+    // dot, then rings farther out on a leader line. A spot must stay in the
+    // plot, and must never cover another label or the fixed text. The
+    // ZM_LABEL_PASSES rules relax step by step; if no pass finds a spot, the
+    // label goes beside its dot. Buy-area names place first, then tight
+    // names, then the rest by the row number, so the names that matter most
+    // sit closest to their dots.
+    const tagW = measure(tagText, ZM_FONT.label);
     const fixedText = [
       { x: (xs[1] + xs[2]) / 2 - tagW / 2, y: yHigh + 4, w: tagW, h: 11 },
-      { x: xs[0] + 4, y: yLow - 12, w: lowText.length * ZM_CHAR_W.axis, h: 10 },
-      { x: xs[0] + 4, y: yHigh - 12, w: highText.length * ZM_CHAR_W.axis, h: 10 },
+      { x: xs[0] + 4, y: yLow - 12, w: measure(lowText, ZM_FONT.axis), h: 10 },
+      { x: xs[0] + 4, y: yHigh - 12, w: measure(highText, ZM_FONT.axis), h: 10 },
     ];
     const placed = [];
     placed.push(...fixedText);
-    pts.slice().sort((a, b) => prio(a) - prio(b)
-      || zoneMetricValue(b.t, metric) - zoneMetricValue(a.t, metric)).forEach(q => {
-      const w = q.t.ticker.length * ZM_CHAR_W.label + 2;
-      const h = 10;
-      const box = { x: q.x + 6, y: q.y - h / 2, w, h };
-      if (box.x + w > ZM.w - ZM.r) box.x = q.x - 6 - w;
-      const hit = placed.some(o => box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h);
-      if (hit) return;
+    const leaders = [];
+    const dots = pts.map(q => ({ x: q.x - q.r, y: q.y - q.r, w: 2 * q.r, h: 2 * q.r, q }));
+    const plot = { x0: xs[0] + 1, x1: xs[3] - 1, y0: yTop + 1, y1: yBot - 1 };
+    const prio = q => (q.t.state === 'buy_area' ? 0 : q.t.tight ? 1 : 2);
+    const order = pts.slice().sort((a, b) => prio(a) - prio(b)
+      || zoneMetricValue(b.t, metric) - zoneMetricValue(a.t, metric));
+    order.forEach(q => {
+      const w = measure(q.t.ticker, ZM_FONT.label) + 2;
+      const h = ZM_LABEL.h;
+      const fits = (spot, pass) => {
+        const box = { x: spot.x, y: spot.y, w, h };
+        if (box.x < plot.x0 || box.x + w > plot.x1 || box.y < plot.y0 || box.y + h > plot.y1) return null;
+        if (placed.some(o => zmBoxesOverlap(box, o))) return null;
+        if (pass.dots && dots.some(d => d.q !== q && zmBoxesOverlap(box, d))) return null;
+        if (!pass.under && leaders.some(s => zmSegHitsBox(s, box))) return null;
+        const lead = spot.lead ? zmLeader(q, box) : null;
+        if (lead && ((!pass.under && placed.some(o => zmSegHitsBox(lead, o)))
+          || (!pass.cross && leaders.some(s => zmSegsCross(lead, s))))) return null;
+        return { box, lead };
+      };
+      let hit = null;
+      for (const pass of ZM_LABEL_PASSES) {
+        const reach = pass.far ? Math.max(g.w, g.h) : ZM_LABEL.reach;
+        for (const spot of zmLabelSpots(q, w, h, reach)) {
+          hit = fits(spot, pass);
+          if (hit) break;
+        }
+        if (hit) break;
+      }
+      if (!hit) {
+        const x = q.x + q.r + 2 + w > plot.x1 ? q.x - q.r - 2 - w : q.x + q.r + 2;
+        hit = { box: { x, y: q.y - h / 2, w, h }, lead: null };
+      }
+      const box = hit.box;
       placed.push(box);
       q.box = box;
+      if (hit.lead) {
+        leaders.push(hit.lead);
+        q.lead = hit.lead;
+      }
     });
 
+    // Two layers: dots and leaders first, then every label above them, so no
+    // dot or leader hides a label. Both groups of a name carry its symbol,
+    // so a click or the selection reaches either one.
+    let marks = '';
+    let labels = '';
     pts.forEach(q => {
       const t = q.t;
-      const title = `${t.ticker} · ${zoneStateLabel(t.state)}\n`
+      const title = `<title>${escHtml(`${t.ticker} · ${zoneStateLabel(t.state)}\n`
         + `Daily ${zmSigned(t.d_daily)} ATR · Weekly ${zmSigned(t.d_weekly)} ATR\n`
         + `${metric.label} ${zoneMetricText(t, metric)}`
-        + (t.tight ? `\nTight range${t.tight_len ? ' ' + t.tight_len + 'd' : ''}` : '');
+        + (t.tight ? `\nTight range${t.tight_len ? ' ' + t.tight_len + 'd' : ''}` : ''))}</title>`;
       const shape = q.off
         ? zoneTriangle(q)
         : `<circle class="zm-dot ${ZONE_FAMILY_CLASS[t.zone_daily]}" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="4"/>`;
       const ring = t.tight ? `<circle class="zm-ring" cx="${zmF(q.x)}" cy="${zmF(q.y)}" r="7"/>` : '';
-      const label = q.box
-        ? `<text class="zm-label${t.state === 'buy_area' ? ' zm-label-buy' : ''}" x="${zmF(q.box.x)}" y="${zmF(q.y + 3.5)}">${escHtml(t.ticker)}</text>`
+      const lead = q.lead
+        ? `<line class="zm-leader" x1="${zmF(q.lead.x1)}" y1="${zmF(q.lead.y1)}" x2="${zmF(q.lead.x2)}" y2="${zmF(q.lead.y2)}"/>`
         : '';
-      svg += `<g class="zm-pt" data-zm-sym="${escAttr(t.ticker)}"><title>${escHtml(title)}</title>${ring}${shape}${label}</g>`;
+      const label = `<text class="zm-label${t.state === 'buy_area' ? ' zm-label-buy' : ''}" x="${zmF(q.box.x + 1)}" y="${zmF(q.box.y + q.box.h / 2 + 3.5)}">${escHtml(t.ticker)}</text>`;
+      const open = `<g class="zm-pt${t.ticker === sel ? ' zm-sel' : ''}" data-zm-sym="${escAttr(t.ticker)}">`;
+      marks += `${open}${title}${lead}${ring}${shape}</g>`;
+      labels += `${open}${title}${label}</g>`;
     });
+    return svg + marks + tag + labels;
+  }
 
-    const left = [];
-    if (zm.n_floor_dropped) left.push(`${zm.n_floor_dropped} under the floors`);
-    if (zm.n_no_weekly) left.push(`${zm.n_no_weekly} without a weekly EMA20`);
-    if (zm.n_no_daily) left.push(`${zm.n_no_daily} without a daily reading`);
-    const adr = ((p.min_adr_pct || 0) * 100).toFixed(1).replace(/\.0$/, '');
-    const caption = `${tickers.length} names: ${cfg.source(p)}, average dollar volume $${Math.round((p.min_avg_dollar_vol || 0) / 1e6)}M or more, ADR ${adr}% or more.`
-      + (left.length ? ` Left off: ${left.join(', ')}.` : '');
-    return `<div class="card zm-card"><div class="card-lbl">Where is each name?</div>`
-      + `<p class="zm-caption">${escHtml(caption)}</p>`
-      + `<svg class="zm-svg" viewBox="0 0 ${ZM.w} ${ZM.h}" role="img" aria-label="Zone map">${svg}</svg></div>`;
+  /** Draw one tab's scatter to fill its card, in pixels. The SVG carries a
+   *  fixed pixel size, so between a resize and the redraw it is clipped or
+   *  short, never scaled. A hidden tab has no width, so it draws when shown. */
+  function drawZoneScatter(mode) {
+    const el = document.getElementById(ZONE_MODES[mode].containerId);
+    const svg = el && el.querySelector('.zm-svg');
+    if (!svg || !el._zm) return;
+    const card = svg.parentNode;
+    const cs = getComputedStyle(card);
+    const w = Math.floor(card.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+    if (!(w >= 120) || w === el._zmW) return;
+    el._zmW = w;
+    const g = zmGeom(w);
+    svg.setAttribute('viewBox', `0 0 ${g.w} ${g.h}`);
+    svg.setAttribute('width', g.w);
+    svg.setAttribute('height', g.h);
+    svg.innerHTML = zoneScatterSvg(el._zm.zm, el._zm.metric, g, zmMeasurer(svg), el._zmSel);
+  }
+
+  /** Redraw every visible map at its new width. The tab switch and the end
+   *  of a drag call this directly. A map whose width did not change, or
+   *  whose tab is hidden, returns at once. */
+  function redrawZoneMapsNow() {
+    clearTimeout(zmRedrawTimer);
+    Object.keys(ZONE_MODES).forEach(drawZoneScatter);
+  }
+
+  // A crowded map takes tens of milliseconds to lay out, so a drag or a
+  // window resize redraws once the pointer rests, not on every event.
+  let zmRedrawTimer = 0;
+  function redrawZoneMapsSoon() {
+    clearTimeout(zmRedrawTimer);
+    zmRedrawTimer = setTimeout(redrawZoneMapsNow, 60);
   }
 
   function zoneStatesCard(tickers, metric) {
@@ -1992,9 +2184,14 @@
       return;
     }
     const metric = ZONE_METRIC[cfg.metric];
-    el.innerHTML = zoneScatterCard(zm, cfg, metric)
+    el.innerHTML = '<div class="card zm-card zm-plot"><svg class="zm-svg" role="img" aria-label="Zone map"></svg></div>'
       + zoneStatesCard(tickers, metric)
       + zoneClustersCard(tickers, metric);
+    // The scatter draws from this at the SVG's pixel width, now if the tab
+    // is visible, else when it is shown.
+    el._zm = { zm, metric };
+    el._zmW = 0;
+    drawZoneScatter(mode);
   }
 
   /** Mark one ticker selected on the dot and on every list link of the tab. */
@@ -2002,6 +2199,8 @@
     const el = document.getElementById(ZONE_MODES[mode].containerId);
     if (!el) return;
     const q = CSS.escape(sym);
+    // A redraw reads this, so the selection survives a divider drag.
+    el._zmSel = sym;
     el.querySelectorAll('.zm-pt.zm-sel').forEach(g => g.classList.remove('zm-sel'));
     el.querySelectorAll(`.zm-pt[data-zm-sym="${q}"]`).forEach(g => g.classList.add('zm-sel'));
     el.querySelectorAll('.tn-link.active-ticker').forEach(l => l.classList.remove('active-ticker'));
@@ -2023,7 +2222,14 @@
         // After initTickerClicks has cleared and set its single link.
         setTimeout(() => selectZoneTicker(mode, sym), 0);
       });
+      // Backstop only, the same lesson as syncRadarClamps: the observer
+      // delivers inside the rendering lifecycle, so the drag, resize and
+      // tab-switch paths call the redraw directly.
+      if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(redrawZoneMapsSoon).observe(el);
+      }
     });
+    window.addEventListener('resize', redrawZoneMapsSoon);
   }
   // ── END ZONE MAP ───────────────────────────────────────────────────
 

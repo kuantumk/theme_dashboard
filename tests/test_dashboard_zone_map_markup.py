@@ -105,15 +105,46 @@ class ZoneRendererTests(unittest.TestCase):
     def test_fixed_text_reserves_its_space_before_any_label(self):
         """Seen in the browser: the buy-area tag drew on top of a ticker label.
         The tag and both rail labels must be in `placed` before the label pass."""
-        body = _fn('zoneScatterCard')
+        body = _fn('zoneScatterSvg')
         reserve = body.index('placed.push(...fixedText)')
         first_label = body.index('placed.push(box)')
         self.assertLess(reserve, first_label)
         for text in ('Buy area · ', 'weekly EMA20', 'weekly extended'):
             self.assertIn(text, body)
 
+    def test_the_map_carries_no_title_or_caption(self):
+        """The user asked for both to go: the "Where is each name?" title and
+        the "N names: members of ..." caption had no use."""
+        for text in ('Where is each name?', 'zm-caption', 'Left off:'):
+            self.assertNotIn(text, _zone_section(), text)
+
+    def test_text_keeps_its_size_when_the_divider_moves(self):
+        """With a fixed viewBox the SVG scaled its text with the panel. The
+        viewBox now equals the pixel width, and every resize path redraws."""
+        draw = _fn('drawZoneScatter')
+        self.assertIn("setAttribute('width', g.w)", draw)
+        self.assertIn("setAttribute('viewBox', `0 0 ${g.w} ${g.h}`)", draw)
+        self.assertNotIn('const ZM = {', APP)
+        self.assertIn('redrawZoneMapsSoon();', _fn('initResizablePanels'))
+        self.assertIn('redrawZoneMapsNow();', _fn('initResizablePanels'))
+        self.assertIn('redrawZoneMapsNow();', _fn('initTabs'))
+        self.assertIn("addEventListener('resize', redrawZoneMapsSoon)", _fn('initZoneMaps'))
+
+    def test_every_name_gets_a_label(self):
+        """No label is skipped: a crowded name moves out on a leader line, and
+        the last fallback still places it beside its dot."""
+        body = _fn('zoneScatterSvg')
+        self.assertNotIn('if (hit) return;', body)
+        self.assertNotIn('q.box\n        ? ', body)
+        self.assertIn('zm-leader', body)
+        self.assertIn('zmLabelSpots(', body)
+
+    def test_a_redraw_keeps_the_selection(self):
+        self.assertIn('el._zmSel = sym;', _fn('selectZoneTicker'))
+        self.assertIn('el._zmSel', _fn('drawZoneScatter'))
+
     def test_an_off_scale_name_is_clamped_and_titled_with_its_real_value(self):
-        body = _fn('zoneScatterCard')
+        body = _fn('zoneScatterSvg')
         self.assertIn('zmClamp(', body)
         self.assertIn('zoneTriangle(', body)
         self.assertIn('t.d_daily', body)

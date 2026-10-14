@@ -361,7 +361,7 @@ class HighlightRenderSiteTests(unittest.TestCase):
         a tier on the dot would be a second meaning on the same channel. The
         list links under the map are ordinary .tn-link spans and DO carry the
         tier, like every other tab (zoneTickerLink is in RENDER_SITES)."""
-        body = _strip_js_comments(_fn_body('zoneScatterCard'))
+        body = _strip_js_comments(_fn_body('zoneScatterSvg'))
         for token in ('hlClass(', 'hlChipClass(', 'hlTitle(', 'HL_TIER_',
                       'hl-short', 'hl-ma-up', 'hl-ma-split'):
             self.assertNotIn(token, body, f'the zone scatter emits {token}')

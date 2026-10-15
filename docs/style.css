@@ -1503,8 +1503,10 @@ tbody tr.nav-active {
    VIZ TABS — panel
    ═══════════════════════════════════════════════════════ */
 
+/* 1:1 with the chart by default. The 4px resize handle sits between the two
+   panes, so each pane gets half of the rest: 50% minus half the handle. */
 .viz-left {
-  width: 60%;
+  width: calc(50% - 2px);
   display: flex;
   flex-direction: column;
   overflow-y: auto;

@@ -473,7 +473,7 @@ A ticker earns **at most one** tint, from the first rung it satisfies:
 
 ### Dashboard Panel Layout
 
-Every tab except Legends is a two-pane split: **chart on the left, ticker list on the right**, with a drag handle between them. Legends is one scrolling page with no chart (see Legends Tab below). On the four Viz tabs the list pane holds the zone map; `.viz-left` defaults to 60% and scrolls.
+Every tab except Legends is a two-pane split: **chart on the left, ticker list on the right**, with a drag handle between them. Legends is one scrolling page with no chart (see Legends Tab below). On the four Viz tabs the list pane holds the zone map; `.viz-left` defaults to `calc(50% - 2px)` — a 1:1 split with the chart, after the 4px handle — and scrolls.
 
 **`.left-panel` and `.right-panel` name DOM position, not screen position.** The DOM order is still list → handle → chart; the visual swap is three `order` declarations in `style.css` (`.right-panel` 1, `.resize-handle` 2, `.left-panel` 3). Read `.left-panel` as *the list pane* and `.right-panel` as *the chart pane* — including in older comments in this file that predate the swap. Renaming them means editing 13 near-identical tab blocks in `index.html` plus every CSS rule and JS query, so it is a deliberate follow-up, not drift.
 

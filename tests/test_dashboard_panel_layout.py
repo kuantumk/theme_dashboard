@@ -158,6 +158,26 @@ class DashboardPanelLayoutTests(unittest.TestCase):
                     "floor; the time-travel bar would wrap onto a second row",
                 )
 
+    def test_viz_tabs_split_one_to_one_with_the_chart(self) -> None:
+        """The zone map and the chart share the width evenly by default. Each
+        pane gets half of what the 4px resize handle leaves."""
+        # `.viz-left` sits after the responsive block in style.css, so search
+        # the whole sheet. The mobile `width: 100% !important` still wins there.
+        body = self._rule_body(self.css, ".viz-left", require="width")
+        self.assertRegex(
+            body,
+            r"\bwidth\s*:\s*calc\(\s*50%\s*-\s*2px\s*\)",
+            ".viz-left is no longer calc(50% - 2px); the Viz tabs' default "
+            "chart:zone-map split is 1:1",
+        )
+        handle = self._rule_body(self.desktop_css, ".resize-handle", require="width")
+        self.assertRegex(
+            handle,
+            r"\bwidth\s*:\s*4px",
+            "the resize handle is no longer 4px; recompute the 2px term in "
+            ".viz-left so the Viz split stays 1:1",
+        )
+
     def test_list_pane_keeps_its_low_drag_floor(self) -> None:
         body = self._rule_body(self.desktop_css, ".left-panel", require="min-width")
         self.assertRegex(

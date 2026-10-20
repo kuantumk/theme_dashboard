@@ -3,6 +3,10 @@ name: Daily Stock Screening and Dashboard Deployment
 on:
   schedule:
     # Single timezone-aware cron to avoid duplicate scheduled workflow runs.
+    # Backup trigger only: GitHub starts it 2.5-6 h late (measured Aug-Oct
+    # 2026), so the on-time start is a workflow_dispatch from a scheduled
+    # task. The guard job below skips this run when that dispatch already
+    # succeeded today.
     - cron: '30 13 * * 1-5'
       timezone: "America/Los_Angeles"
   workflow_dispatch: # Allow manual triggering (always runs)
@@ -17,7 +21,54 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A scheduled run is the late backup for the on-time dispatch. Skip it when
+  # a run of this workflow created after today's 13:00 PT close has already
+  # succeeded. The concurrency group makes this run wait for an in-flight
+  # dispatch, so the check sees that run's result. Any API failure runs the
+  # pipeline: a duplicate run costs time, a skipped one costs a session.
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - name: Skip the scheduled run if today's run already succeeded
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "${EVENT}" != "schedule" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # 13:00 today in Pacific time, as UTC. zoneinfo handles PST/PDT.
+          since=$(python3 -c '
+          from datetime import datetime, time, timezone
+          from zoneinfo import ZoneInfo
+          pt = ZoneInfo("America/Los_Angeles")
+          close = datetime.combine(datetime.now(pt).date(), time(13), pt)
+          print(close.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+          ')
+          if ! done_ids=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/daily-screening.yml/runs?status=success&created=>=${since}" \
+              --jq '.workflow_runs[].id'); then
+            echo "::warning::Run lookup failed; running the pipeline."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -n "${done_ids}" ]; then
+            echo "Run(s) created since ${since} already succeeded: ${done_ids//$'\n'/ }. Skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No successful run since ${since}. Running the pipeline."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   run-screening:
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
     runs-on: ubuntu-latest
 
     steps:

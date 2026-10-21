@@ -317,7 +317,7 @@ body {
    renderTimeTravelBar goes back up.
 
    This is the default for tabs whose table fits it — Themes, Parabolic, and
-   the four Viz tabs. The six list-heavy tabs override it below with a width
+   the five Viz tabs. The six list-heavy tabs override it below with a width
    measured from their own table; that block is the one to re-measure when a
    column is added.
 
@@ -369,7 +369,7 @@ body {
    overflows and the Inst% column is clipped off the right edge with no
    scrollbar to reveal it. It still clears the 385px bar floor.
 
-   Tabs absent here (Themes, Parabolic, the four Viz tabs) use the shared
+   Tabs absent here (Themes, Parabolic, the five Viz tabs) use the shared
    default above — Parabolic's 5-column table measures 286px and Themes renders
    chips, not a table. tests/test_dashboard_panel_layout.py pins these values
    and the 385px time-travel-bar floor they all clear. */
@@ -1479,7 +1479,7 @@ tbody tr.nav-active {
 }
 
 /* ═══════════════════════════════════════════════════════
-   ZONE MAP — the four Viz tabs
+   ZONE MAP — the five Viz tabs
    Every colour is an existing token. The three daily-zone classes
    (zm-under / zm-band / zm-above) paint the dots, the zone backgrounds,
    the cluster bar segments and the state rows. A rail is grey, never a

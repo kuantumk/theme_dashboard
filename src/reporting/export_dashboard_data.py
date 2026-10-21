@@ -1337,7 +1337,7 @@ def _highlight_from_row(row, short_interest=None):
     )
 
 
-# ── Zone map (the four Viz tabs) ────────────────────────────────────────────
+# ── Zone map (the five Viz tabs) ────────────────────────────────────────────
 #
 # Each ticker sits at (distance from the daily EMA20, distance from the weekly
 # EMA20), both in daily ATR14. The server decides every zone and state; the

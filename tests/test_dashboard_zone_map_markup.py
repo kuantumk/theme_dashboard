@@ -185,6 +185,26 @@ class ZoneMarkupTests(unittest.TestCase):
         on an all-unmapped day the map was empty and said nothing."""
         self.assertEqual(2, _fn('renderZoneMap').count('zoneUnmappedNote(zm)'))
 
+    def test_a_stale_etf_snapshot_says_so(self):
+        """A failed ETF fetch writes no etf_viz.json, so the tab keeps the last
+        snapshot. Its date must show beside the newest session, or a dead fetch
+        reads as a fresh map (the frozen-NAAIM-tile failure)."""
+        note = _fn('zoneStaleNote')
+        for token in ('zm-stale-note', 'latestSessionDate', 'snap.report_date', "mode !== 'etf'"):
+            self.assertIn(token, note)
+        # A date picked in the time-travel bar is the user's choice, not staleness.
+        self.assertIn('date', note.split('{', 1)[0])
+        self.assertEqual(2, _fn('renderZoneMap').count('zoneStaleNote(snap, mode, date)'))
+
+    def test_the_etf_loader_reads_the_newest_session_first(self):
+        body = _fn('loadETFVizData')
+        self.assertIn('META_URL', body)
+        self.assertIn('latestSessionDate', body)
+
+    def test_the_stale_note_shares_the_si_banner_style(self):
+        css = (ROOT / 'docs' / 'style.css').read_text(encoding='utf-8')
+        self.assertRegex(css, r'\.si-stale-note,\s*\.zm-stale-note\s*\{')
+
     def test_the_empty_map_names_etfs_with_no_bars(self):
         self.assertIn('zm.n_no_bars', _fn('renderZoneMap'))
 

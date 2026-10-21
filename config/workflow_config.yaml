@@ -114,6 +114,12 @@ zone_map:
   x_range: [-2.0, 5.0]            # fixed plot window, in ATR14
   y_range: [-4.0, 8.0]
 
+# ETF Viz tab — the long leveraged ETFs on the zone map. Zone limits and the
+# ADR floor come from zone_map:. Only the dollar floor differs: at $100M,
+# 15 of 47 long ETFs pass; at $20M, 28 pass (measured 2026-10-20).
+etf_viz:
+  min_avg_dollar_vol: 20000000
+
 # SI dashboard tab — heavily shorted stocks that have already sold off,
 # clustered under taxonomy L1 sections. One Finviz Ownership screener call
 # supplies short interest (src/data_collection/fetch_short_interest.py); the

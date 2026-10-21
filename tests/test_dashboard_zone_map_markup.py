@@ -176,9 +176,17 @@ class ZoneMarkupTests(unittest.TestCase):
             APP, r"etf:\s*\{\s*containerId: 'etfviz-zone', tabId: 'etfviz', metric: 'vars' \}")
 
     def test_the_unmapped_note_renders(self):
-        body = _fn('renderZoneMap')
-        self.assertIn('zm.unmapped', body)
-        self.assertIn('etf_themes.yaml', body)
+        note = _fn('zoneUnmappedNote')
+        self.assertIn('zm.unmapped', note)
+        self.assertIn('etf_themes.yaml', note)
+
+    def test_the_unmapped_note_shows_on_an_empty_map_too(self):
+        """Review finding: the empty-map branch returned before the note, so
+        on an all-unmapped day the map was empty and said nothing."""
+        self.assertEqual(2, _fn('renderZoneMap').count('zoneUnmappedNote(zm)'))
+
+    def test_the_empty_map_names_etfs_with_no_bars(self):
+        self.assertIn('zm.n_no_bars', _fn('renderZoneMap'))
 
     def test_no_network_code_remains(self):
         LEGENDS = (ROOT / 'docs' / 'legends.js').read_text(encoding='utf-8')

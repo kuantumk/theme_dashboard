@@ -1569,20 +1569,26 @@ def build_etf_viz_snapshot(etf_rows, metrics, theme_map, ticker_themes, report_d
     output, whose `zone` dicts supply the distances. Only long ETFs reach
     `build_zone_map`. Short and excluded ETFs are counted; a ticker with no
     map entry, or a long one with no theme source, is listed in `unmapped`.
+    A long ETF the fetch returned no bars for counts in `n_no_bars`, never
+    as under the floors: a failed download is not an illiquid fund.
 
-    Returns None when no ETF has bars (a failed fetch): an empty map would
-    read as a quiet market, so the caller keeps the last snapshot instead.
+    Returns None when no sheet row has bars (a failed fetch): an empty map
+    would read as a quiet market, so the caller keeps the last snapshot. The
+    test reads the sheet rows only, because one fetch also serves the
+    Industry tab, and Industry bars must not stand in for Lev bars.
     """
     import pandas as pd
 
+    metrics = metrics or {}
+    sheet = {str(row.get('ticker') or '').upper() for row in etf_rows}
     bars = [{'ticker': t.upper(), **{k: m['zone'].get(k) for k in ('close', 'ema20', 'ema20_w', 'atr14')}}
-            for t, m in (metrics or {}).items() if m.get('zone')]
+            for t, m in metrics.items() if t.upper() in sheet and m.get('zone')]
     if not bars:
         return None
     frame = pd.DataFrame(bars).astype({'ema20_w': float})
 
     rows, leaves_by_ticker, unmapped = [], {}, []
-    n_short = n_excluded = 0
+    n_short = n_excluded = n_no_bars = 0
     for row in etf_rows:
         ticker = str(row.get('ticker') or '').upper()
         if not ticker:
@@ -1600,7 +1606,10 @@ def build_etf_viz_snapshot(etf_rows, metrics, theme_map, ticker_themes, report_d
             unmapped.append(ticker)
             continue
         m = metrics.get(row.get('ticker')) or metrics.get(ticker) or {}
-        zone = m.get('zone') or {}
+        zone = m.get('zone')
+        if not zone:
+            n_no_bars += 1
+            continue
         leaves_by_ticker[ticker] = leaves
         rows.append({
             'ticker': ticker,
@@ -1618,8 +1627,34 @@ def build_etf_viz_snapshot(etf_rows, metrics, theme_map, ticker_themes, report_d
     unmapped = sorted(set(unmapped))
     if unmapped:
         print(f"   Warning: no theme in config/etf_themes.yaml for: {', '.join(unmapped)}")
-    zone_map.update({'n_short': n_short, 'n_excluded': n_excluded, 'unmapped': unmapped})
+    zone_map.update({'n_no_bars': n_no_bars, 'n_short': n_short,
+                     'n_excluded': n_excluded, 'unmapped': unmapped})
     return {'report_date': report_date, 'zone_map': zone_map}
+
+
+def export_etf_viz(etf_data, etf_metrics, report_date):
+    """Write etf_viz.json and append etf_viz_history.json.
+
+    No bars writes nothing, so the tab keeps the last snapshot under its own
+    date. The tab is not critical: an error is logged and the rest of
+    `export_all` (macro data, report meta, the prune) still runs.
+    """
+    try:
+        from src.themes.theme_registry import load_ticker_themes
+        etf_viz = build_etf_viz_snapshot(etf_data, etf_metrics, load_etf_theme_map(),
+                                         load_ticker_themes(), report_date)
+        if etf_viz is None:
+            print("   Warning: no Lev ETF bars; keeping the last etf_viz.json")
+            return
+        with open(OUTPUT_DIR / "etf_viz.json", 'w', encoding='utf-8') as f:
+            json.dump(etf_viz, f, indent=2)
+        print(f"   -> {OUTPUT_DIR / 'etf_viz.json'} "
+              f"({len(etf_viz['zone_map']['tickers'])} ETFs on the map)")
+        # Forward only, like etf_data_history.json: the roster and the theme
+        # map are today's, so a rebuild would pin them on old bars.
+        _update_history_file(OUTPUT_DIR / "etf_viz_history.json", report_date, etf_viz)
+    except Exception as e:
+        print(f"   Warning: ETF Viz export failed: {e}")
 
 
 def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
@@ -3051,23 +3086,10 @@ def export_all():
     if report_date and (etf_data or industry_data):
         update_etf_history(report_date, etf_data, industry_data)
 
-    # 4d. ETF Viz: the long Lev ETFs on the zone map. No bars (a failed fetch)
-    # writes nothing, so the tab keeps the last snapshot under its own date.
-    if report_date and etf_data and etf_metrics:
+    # 4d. ETF Viz: the long Lev ETFs on the zone map.
+    if report_date and etf_data:
         print("\n4d. Exporting ETF Viz zone map")
-        from src.themes.theme_registry import load_ticker_themes
-        etf_viz = build_etf_viz_snapshot(etf_data, etf_metrics, load_etf_theme_map(),
-                                         load_ticker_themes(), report_date)
-        if etf_viz is None:
-            print("   Warning: no ETF bars; keeping the last etf_viz.json")
-        else:
-            with open(OUTPUT_DIR / "etf_viz.json", 'w', encoding='utf-8') as f:
-                json.dump(etf_viz, f, indent=2)
-            print(f"   -> {OUTPUT_DIR / 'etf_viz.json'} "
-                  f"({len(etf_viz['zone_map']['tickers'])} ETFs on the map)")
-            # Forward only, like etf_data_history.json: the roster and the
-            # theme map are today's, so a rebuild would pin them on old bars.
-            _update_history_file(OUTPUT_DIR / "etf_viz_history.json", report_date, etf_viz)
+        export_etf_viz(etf_data, etf_metrics, report_date)
 
     # 5. Fetch Yahoo Finance macro data
     print("\n5. Fetching Yahoo Finance macro data")

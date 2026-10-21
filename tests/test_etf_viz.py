@@ -2,7 +2,10 @@
 
 import contextlib
 import io
+import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
@@ -149,6 +152,46 @@ class EtfVizSnapshotTests(unittest.TestCase):
 
     def test_no_bars_builds_nothing(self):
         self.assertIsNone(_snap(metrics={}))
+
+    def test_bars_for_other_etfs_only_build_nothing(self):
+        # One fetch serves the Lev and the Industry tabs. Industry bars alone
+        # must not stand in for a failed Lev fetch.
+        self.assertIsNone(_snap(tickers=('NVDL', 'TQQQ'), metrics=_metrics(('SMH', 'XBI'))))
+
+    def test_a_long_etf_with_no_bars_is_counted_apart_from_the_floor(self):
+        snap = _snap(tickers=('NVDL', 'TQQQ'), metrics=_metrics(('NVDL',)))
+        self.assertNotIn('TQQQ', _tickers(snap))
+        self.assertEqual(1, snap['zone_map']['n_no_bars'])
+        self.assertEqual(0, snap['zone_map']['n_floor_dropped'])
+
+
+class ExportEtfVizTests(unittest.TestCase):
+    def _run(self, metrics, out, **kw):
+        rows = [{'ticker': t, 'rs_sts': 80.0} for t in ('NVDL', 'TQQQ')]
+        with patch.object(ex, 'OUTPUT_DIR', out),                 patch.object(ex, 'load_etf_theme_map', return_value=THEME_MAP),                 patch('src.themes.theme_registry.load_ticker_themes', return_value=TICKER_THEMES),                 contextlib.redirect_stdout(io.StringIO()):
+            ex.export_etf_viz(rows, metrics, DATE, **kw)
+
+    def test_a_good_snapshot_writes_both_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            self._run(_metrics(('NVDL', 'TQQQ')), out)
+            self.assertEqual(DATE, json.loads((out / 'etf_viz.json').read_text())['report_date'])
+            self.assertEqual([DATE], [h['report_date'] for h in
+                                      json.loads((out / 'etf_viz_history.json').read_text())])
+
+    def test_no_bars_leaves_the_last_snapshot_alone(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            (out / 'etf_viz.json').write_text('{"report_date": "2026-10-19"}')
+            self._run({}, out)
+            self.assertEqual('2026-10-19', json.loads((out / 'etf_viz.json').read_text())['report_date'])
+            self.assertFalse((out / 'etf_viz_history.json').exists())
+
+    def test_an_error_is_logged_not_raised(self):
+        with tempfile.TemporaryDirectory() as d:
+            with patch.object(ex, 'build_etf_viz_snapshot', side_effect=ValueError('bad yaml')):
+                self._run(_metrics(('NVDL',)), Path(d))   # must not raise
+            self.assertFalse((Path(d) / 'etf_viz.json').exists())
 
 
 if __name__ == '__main__':

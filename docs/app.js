@@ -2135,6 +2135,13 @@
       + `<p class="zm-foot">${escHtml(foot)}</p></div>`;
   }
 
+  /** Only the ETF payload carries `unmapped`: sheet ETFs with no theme, so
+   *  with an unknown side, that stay off the map. Empty for the other tabs. */
+  function zoneUnmappedNote(zm) {
+    if (!zm.unmapped || !zm.unmapped.length) return '';
+    return `<p class="zm-foot">Not on the map, no theme in config/etf_themes.yaml: ${escHtml(zm.unmapped.join(', '))}.</p>`;
+  }
+
   function renderZoneMap(snap, mode, date) {
     const cfg = ZONE_MODES[mode];
     const el = cfg && document.getElementById(cfg.containerId);
@@ -2152,18 +2159,17 @@
     if (!tickers.length) {
       el.innerHTML = `<div class="no-data">No ticker passed the zone-map floors for ${escHtml(snap.report_date || date || 'this session')}: `
         + `${zm.n_candidates} candidates, ${zm.n_floor_dropped} under the floors, `
-        + `${zm.n_no_weekly} without a weekly EMA20, ${zm.n_no_daily} without a daily reading.</div>`;
+        + `${zm.n_no_weekly} without a weekly EMA20, ${zm.n_no_daily} without a daily reading`
+        + (zm.n_no_bars ? `, ${zm.n_no_bars} with no price bars` : '')
+        + '.</div>'
+        + zoneUnmappedNote(zm);
       return;
     }
     const metric = ZONE_METRIC[cfg.metric];
     el.innerHTML = '<div class="card zm-card zm-plot"><svg class="zm-svg" role="img" aria-label="Zone map"></svg></div>'
       + zoneStatesCard(tickers, metric)
       + zoneClustersCard(tickers, metric)
-      // Only the ETF payload carries `unmapped`: sheet ETFs with no theme, so
-      // with an unknown side, that stay off the map.
-      + (zm.unmapped && zm.unmapped.length
-        ? `<p class="zm-foot">Not on the map, no theme in config/etf_themes.yaml: ${escHtml(zm.unmapped.join(', '))}.</p>`
-        : '');
+      + zoneUnmappedNote(zm);
     // The scatter draws from this at the SVG's pixel width, now if the tab
     // is visible, else when it is shown.
     el._zm = { zm, metric };

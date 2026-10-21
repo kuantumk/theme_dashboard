@@ -520,7 +520,7 @@
     const stacked = analyse(SCN.stacked);
     const split = analyse(SCN.split);
 
-    const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz'];
+    const ZONE_TABS = ['themeviz', 'varsviz', 'momentumviz', 'volumeviz', 'etfviz'];
     const Z = C.ZONE_RULES;
 
     return [
@@ -806,7 +806,7 @@
       },
       {
         id: 'zone', title: 'Zone map (Viz tabs)',
-        intro: 'The four Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20.',
+        intro: 'The five Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20.',
         cards: [
           {
             id: 'zone-dots', title: 'Dot colour — the daily zone',
@@ -818,6 +818,7 @@
                 [zoneDot('zm-above'), `Amber: above the daily band, above ${signed(Z.bandHigh, 1)} ATR.`],
               ])}
               <p>Height is the weekly zone. Below ${signed(Z.weeklyLow, 1)} ATR the close is under the weekly EMA20. Above ${signed(Z.weeklyHigh, 1)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
+              <p>ETF Viz plots only long ETFs, and its dollar-volume floor is lower than the other tabs'.</p>
               ${zoneBgFigure()}
               <div class="zm-state zm-band"><div class="zm-state-head"><span>In the buy area</span><span class="zm-state-n">3</span></div></div>
               <p><span class="zm-bar" style="display:inline-flex;width:80px"><span class="zm-seg zm-band" style="width:50%"></span><span class="zm-seg zm-above" style="width:30%"></span><span class="zm-seg zm-under" style="width:20%"></span></span> A cluster bar: the leaf's names by daily zone.</p>`,

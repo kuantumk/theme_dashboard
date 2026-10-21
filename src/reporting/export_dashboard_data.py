@@ -27,6 +27,8 @@ from src.indicators.create_technical_indicators import (
     compute_inside_day,
     compute_sma50_full,
     compute_spy_cum_norm_100,
+    compute_weekly_ema,
+    weekly_ema_config,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 from src.themes.theme_taxonomy import resolve_l1, split_path
@@ -994,7 +996,9 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
 
     Standalone fetch that does NOT pollute the main price data pipeline.
     Returns ``{ticker: {'vars': float|None, 'color': 'green'|None,
-    'highlight': str|None}}``. Only the moving-average rungs can reach the tier
+    'highlight': str|None, 'zone': dict}}``. `zone` holds the ETF Viz inputs
+    from the last bar: `close`, `ema20`, `ema20_w`, `atr14`, `dollar_vol` and
+    `adr_pct` (None where a value is missing). Only the moving-average rungs can reach the tier
     here: an ETF carries neither short interest nor a tight-base column.
     VARS uses the same formula as :mod:`create_technical_indicators` so values
     are comparable to the stock VARS leaderboard; the SPY baseline series is
@@ -1009,11 +1013,16 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
         print("   Warning: yfinance not installed, skipping ETF metrics")
         return {}
 
-    # 8 months covers the 100-session VARS lookback plus ATR14 warm-up with slack.
+    # Two years, for the weekly EMA20 of the ETF Viz tab. That EMA seeds on its
+    # first week: over 8 months (~34 weeks) the seed keeps ~3% weight, which
+    # moves a 2x ETF's weekly distance visibly; over ~100 weeks it keeps less
+    # than 0.01%, as on the pipeline's 500-day history. VARS, ATR14, the EMAs,
+    # the SMA50 and ADR read only recent windows, so the longer fetch leaves
+    # them unchanged.
     unique_tickers = list(set(tickers))
     print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
     try:
-        data = yf.download(unique_tickers, period='8mo', progress=False, group_by='ticker')
+        data = yf.download(unique_tickers, period='2y', progress=False, group_by='ticker')
     except Exception as e:
         print(f"   Warning: yfinance download failed: {e}")
         return {}
@@ -1086,13 +1095,32 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
                 sma50=sma50.iloc[-1],
             )
 
-            # A row carrying only a tier still reaches the payload — the skip
-            # asks whether this ETF earned any metric at all, and the tier is
-            # one of them.
-            if vars_value is None and color is None and highlight is None:
+            # Zone-map inputs for the ETF Viz tab. Dollar volume uses the
+            # pipeline's `avg_dollar_vol` definition; a frame with no volume
+            # has none, and the zone map's floor then drops the ETF.
+            dollar_vol = None
+            if 'Volume' in df:
+                dv = (close * pd.to_numeric(df['Volume'])).rolling(
+                    window=20, min_periods=10).mean().iloc[-1]
+                dollar_vol = _finite(dv)
+            zone = {
+                'close': _finite(last_close),
+                'ema20': _finite(ema20.iloc[-1]),
+                'ema20_w': _finite(compute_weekly_ema(close, **weekly_ema_config()).iloc[-1]),
+                'atr14': _finite(atr14.iloc[-1]),
+                'dollar_vol': dollar_vol,
+                'adr_pct': _finite(adr_pct.iloc[-1]),
+            }
+
+            # A row carrying only a tier, or only zone inputs, still reaches
+            # the payload — the skip asks whether this ETF earned any metric
+            # at all.
+            if (vars_value is None and color is None and highlight is None
+                    and zone['close'] is None):
                 continue
             metrics[ticker] = {
                 'vars': vars_value, 'color': color, 'highlight': highlight,
+                'zone': zone,
             }
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")
@@ -1309,7 +1337,7 @@ def _highlight_from_row(row, short_interest=None):
     )
 
 
-# ── Zone map (the four Viz tabs) ────────────────────────────────────────────
+# ── Zone map (the five Viz tabs) ────────────────────────────────────────────
 #
 # Each ticker sits at (distance from the daily EMA20, distance from the weekly
 # EMA20), both in daily ATR14. The server decides every zone and state; the
@@ -1484,6 +1512,149 @@ def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
     out.sort(key=lambda t: t['ticker'])
     params = {key: cfg[key] for key in ZONE_MAP_DEFAULTS}
     return {'params': params, **counts, 'tickers': out}
+
+
+# ── ETF Viz (the long leveraged ETFs on the zone map) ──────────────────────
+#
+# config/etf_themes.yaml gives each Lev ETF sheet ticker a side and a theme.
+# Only long ETFs plot. A sheet ticker with no entry does not plot, because its
+# side is unknown and it could be inverse; the snapshot lists it instead.
+
+ETF_THEMES_FILE = PROJECT_ROOT / 'config' / 'etf_themes.yaml'
+ETF_SIDES = ('long', 'short', 'exclude')
+
+
+def load_etf_theme_map(path=ETF_THEMES_FILE):
+    """``{TICKER: entry}`` from the ETF theme map, or ``{}`` when it is absent."""
+    import yaml
+
+    path = Path(path)
+    if not path.exists():
+        return {}
+    with open(path, encoding='utf-8') as f:
+        data = yaml.safe_load(f) or {}
+    return {str(ticker).upper(): dict(entry or {}) for ticker, entry in data.items()}
+
+
+def etf_leaves(entry, ticker_themes):
+    """The theme paths of one ETF entry, or None when it has none to give.
+
+    Explicit `themes` win, and an empty list is a real answer (plot with no
+    cluster). Otherwise the underlying's tags are read live, so a retag of
+    the stock moves the ETF with no edit to the map.
+    """
+    if 'themes' in entry:
+        return list(entry['themes'] or [])
+    underlying = str(entry.get('underlying') or '').upper()
+    tags = ticker_themes.get(underlying) if underlying else None
+    return list(tags) if tags else None
+
+
+def etf_viz_config():
+    """`zone_map_config()` with the ETF Viz dollar floor in place of the shared one.
+
+    Zone limits and the ADR floor stay shared. At the shared $100M floor only
+    15 of 47 long ETFs pass (measured 2026-10-20).
+    """
+    cfg = zone_map_config()
+    etf_cfg = CONFIG.get('etf_viz') or {}
+    cfg['min_avg_dollar_vol'] = etf_cfg.get('min_avg_dollar_vol', 20_000_000)
+    return cfg
+
+
+def build_etf_viz_snapshot(etf_rows, metrics, theme_map, ticker_themes, report_date, cfg=None):
+    """Build the ETF Viz payload, ``{'report_date', 'zone_map'}``, or None.
+
+    `etf_rows` are the Lev ETF sheet rows; `metrics` is `fetch_etf_metrics`
+    output, whose `zone` dicts supply the distances. Only long ETFs reach
+    `build_zone_map`. Short and excluded ETFs are counted; a ticker with no
+    map entry, or a long one with no theme source, is listed in `unmapped`.
+    A long ETF the fetch returned no bars for counts in `n_no_bars`, never
+    as under the floors: a failed download is not an illiquid fund.
+
+    Returns None when no sheet row has bars (a failed fetch): an empty map
+    would read as a quiet market, so the caller keeps the last snapshot. The
+    test reads the sheet rows only, because one fetch also serves the
+    Industry tab, and Industry bars must not stand in for Lev bars.
+    """
+    import pandas as pd
+
+    metrics = metrics or {}
+    sheet = {str(row.get('ticker') or '').upper() for row in etf_rows}
+    bars = [{'ticker': t.upper(), **{k: m['zone'].get(k) for k in ('close', 'ema20', 'ema20_w', 'atr14')}}
+            for t, m in metrics.items() if t.upper() in sheet and m.get('zone')]
+    if not bars:
+        return None
+    frame = pd.DataFrame(bars).astype({'ema20_w': float})
+
+    rows, leaves_by_ticker, unmapped = [], {}, []
+    n_short = n_excluded = n_no_bars = 0
+    for row in etf_rows:
+        ticker = str(row.get('ticker') or '').upper()
+        if not ticker:
+            continue
+        entry = theme_map.get(ticker)
+        side = entry.get('side') if entry else None
+        if side == 'short':
+            n_short += 1
+            continue
+        if side == 'exclude':
+            n_excluded += 1
+            continue
+        leaves = etf_leaves(entry, ticker_themes) if side == 'long' else None
+        if leaves is None:
+            unmapped.append(ticker)
+            continue
+        m = metrics.get(row.get('ticker')) or metrics.get(ticker) or {}
+        zone = m.get('zone')
+        if not zone:
+            n_no_bars += 1
+            continue
+        leaves_by_ticker[ticker] = leaves
+        rows.append({
+            'ticker': ticker,
+            'vars': m.get('vars'),
+            'rs': row.get('rs_sts'),
+            'highlight': m.get('highlight'),
+            'ticker_color': m.get('color'),
+            'dollar_vol': zone.get('dollar_vol'),
+            'adr_pct': zone.get('adr_pct'),
+        })
+
+    zone_map = build_zone_map(rows, frame, leaves_by_ticker, cfg or etf_viz_config())
+    if zone_map is None:
+        return None
+    unmapped = sorted(set(unmapped))
+    if unmapped:
+        print(f"   Warning: no theme in config/etf_themes.yaml for: {', '.join(unmapped)}")
+    zone_map.update({'n_no_bars': n_no_bars, 'n_short': n_short,
+                     'n_excluded': n_excluded, 'unmapped': unmapped})
+    return {'report_date': report_date, 'zone_map': zone_map}
+
+
+def export_etf_viz(etf_data, etf_metrics, report_date):
+    """Write etf_viz.json and append etf_viz_history.json.
+
+    No bars writes nothing, so the tab keeps the last snapshot under its own
+    date. The tab is not critical: an error is logged and the rest of
+    `export_all` (macro data, report meta, the prune) still runs.
+    """
+    try:
+        from src.themes.theme_registry import load_ticker_themes
+        etf_viz = build_etf_viz_snapshot(etf_data, etf_metrics, load_etf_theme_map(),
+                                         load_ticker_themes(), report_date)
+        if etf_viz is None:
+            print("   Warning: no Lev ETF bars; keeping the last etf_viz.json")
+            return
+        with open(OUTPUT_DIR / "etf_viz.json", 'w', encoding='utf-8') as f:
+            json.dump(etf_viz, f, indent=2)
+        print(f"   -> {OUTPUT_DIR / 'etf_viz.json'} "
+              f"({len(etf_viz['zone_map']['tickers'])} ETFs on the map)")
+        # Forward only, like etf_data_history.json: the roster and the theme
+        # map are today's, so a rebuild would pin them on old bars.
+        _update_history_file(OUTPUT_DIR / "etf_viz_history.json", report_date, etf_viz)
+    except Exception as e:
+        print(f"   Warning: ETF Viz export failed: {e}")
 
 
 def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
@@ -2889,6 +3060,7 @@ def export_all():
 
     # 4b. Enrich ETFs with VARS + inside_day/tight_day color via standalone yfinance fetch
     all_etf_tickers = []
+    etf_metrics = {}
     if etf_data:
         all_etf_tickers += [e['ticker'] for e in etf_data]
     if industry_data:
@@ -2913,6 +3085,11 @@ def export_all():
     report_date = theme_data.get('report_date', '') if theme_data else ''
     if report_date and (etf_data or industry_data):
         update_etf_history(report_date, etf_data, industry_data)
+
+    # 4d. ETF Viz: the long Lev ETFs on the zone map.
+    if report_date and etf_data:
+        print("\n4d. Exporting ETF Viz zone map")
+        export_etf_viz(etf_data, etf_metrics, report_date)
 
     # 5. Fetch Yahoo Finance macro data
     print("\n5. Fetching Yahoo Finance macro data")

@@ -1,0 +1,104 @@
+# Theme map for the Lev ETF sheet — read by the ETF Viz tab
+# (export_dashboard_data.build_etf_viz_snapshot).
+#
+# Each sheet ticker has one entry. `side` is one of:
+#   long     the ETF goes on the zone map
+#   short    an inverse or volatility ETF; it stays off the map
+#   exclude  the row is not a leveraged ETF; it stays off the map
+#
+# A long entry gets its theme in one of two ways:
+#   underlying: TICKER   the underlying stock's tags in data/ticker_themes.json,
+#                        read on every run, so a retag of the stock moves the ETF
+#   themes: [path, ...]  explicit taxonomy paths; they win over `underlying`
+# `themes: []` plots the ETF with no cluster (no taxonomy node fits it).
+#
+# A bare L1 is allowed here for a broad-sector fund (LABU). That is a tagging
+# bug in ticker_themes.json, but no Biotech L2 describes a whole-sector basket.
+#
+# A sheet ticker with no entry does not plot: its side is unknown, so it could
+# be inverse. The export lists it under the map. tests/test_etf_themes.py fails
+# when the committed sheet copy (docs/data/etf_data.json) holds one.
+
+# Long, single stock: the theme is the underlying's live tag.
+AMDL: {side: long, underlying: AMD}
+TSLL: {side: long, underlying: TSLA}
+NVDL: {side: long, underlying: NVDA}
+MSTU: {side: long, underlying: MSTR}
+PLTU: {side: long, underlying: PLTR}
+APPX: {side: long, underlying: APP}
+NFLU: {side: long, underlying: NFLX}
+MSFU: {side: long, underlying: MSFT}
+UBRL: {side: long, underlying: UBER}
+SMCX: {side: long, underlying: SMCI}
+RGTX: {side: long, underlying: RGTI}
+CRWG: {side: long, underlying: CRWV}
+AVGX: {side: long, underlying: AVGO}
+ROBN: {side: long, underlying: HOOD}
+BABX: {side: long, underlying: BABA, themes: ["Geographic / China"]}   # BABA is untagged
+CONL: {side: long, underlying: COIN}
+HIMZ: {side: long, underlying: HIMS}
+IONX: {side: long, underlying: IONQ}
+RDTL: {side: long, underlying: RDDT}
+FBL:  {side: long, underlying: META}
+CRWL: {side: long, underlying: CRWD}
+NBIL: {side: long, underlying: NBIS}
+AMZU: {side: long, underlying: AMZN}
+TEMT: {side: long, underlying: TEM}
+GGLL: {side: long, underlying: GOOGL}
+AAPU: {side: long, underlying: AAPL}
+SNXX: {side: long, underlying: SNDK}
+MULL: {side: long, underlying: MU}
+STXL: {side: long, underlying: STX}
+INTW: {side: long, underlying: INTC}
+WDCX: {side: long, underlying: WDC}
+QCML: {side: long, underlying: QCOM}
+
+# Long, sector / commodity / crypto: an explicit path.
+ETHU: {side: long, themes: ["Fintech & Crypto / Crypto / Generalist"]}
+BITX: {side: long, themes: ["Fintech & Crypto / Crypto / Bitcoin Proxy"]}
+NUGT: {side: long, themes: ["Metals & Mining / Gold"]}
+AGQ:  {side: long, themes: ["Metals & Mining / Silver"]}
+BOIL: {side: long, themes: ["Oil & Gas / LNG & Natural Gas"]}
+GUSH: {side: long, themes: ["Oil & Gas / E&P"]}
+USO:  {side: long, themes: ["Oil & Gas / E&P"]}
+LABU: {side: long, themes: ["Biotech"]}
+UTSL: {side: long, themes: ["Power & Utilities / Diversified Utilities"]}
+SOXL: {side: long, themes: ["AI / Data Center / Chips & Processors"]}
+
+# Long, no taxonomy node (broad index, banks, homebuilders): plots with no cluster.
+TQQQ: {side: long, themes: []}
+TNA:  {side: long, themes: []}
+FAS:  {side: long, themes: []}
+DPST: {side: long, themes: []}
+NAIL: {side: long, themes: []}
+
+# Short or volatility: off the map.
+GGLS: {side: short}
+AAPD: {side: short}
+AMZD: {side: short}
+NVD:  {side: short}
+METD: {side: short}
+SMCZ: {side: short}
+RGTZ: {side: short}
+IONZ: {side: short}
+AMDD: {side: short}
+DAMD: {side: short}
+TSLQ: {side: short}
+BITI: {side: short}
+ETHD: {side: short}
+MSTZ: {side: short}
+PLTZ: {side: short}
+MSFD: {side: short}
+DUST: {side: short}
+ZSL:  {side: short}
+SBIT: {side: short}
+SQQQ: {side: short}
+LABD: {side: short}
+TZA:  {side: short}
+SOXS: {side: short}
+DRIP: {side: short}
+UVIX: {side: short}   # long VIX: it rises when the market falls
+
+# Not a leveraged ETF.
+CORD: {side: exclude}   # Cordiant Digital Infrastructure, a company
+HOOZ: {side: exclude}   # the sheet reads #N/A

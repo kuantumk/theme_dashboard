@@ -50,6 +50,7 @@
       <button class="tab-btn" data-tab="volumeviz" id="tab-volumeviz">Volume Viz</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">Industry</button>
       <button class="tab-btn" data-tab="etf" id="tab-etf">Lev ETF</button>
+      <button class="tab-btn" data-tab="etfviz" id="tab-etfviz">ETF Viz</button>
       <button class="tab-btn" data-tab="parabolic" id="tab-parabolic">Parabolic</button>
       <button class="tab-btn" data-tab="si" id="tab-si">SI</button>
       <button class="tab-btn" data-tab="legends" id="tab-legends">Legends</button>
@@ -676,6 +677,28 @@
         <div class="chart-area" id="etf-chart-area">
           <div class="chart-placeholder">
             <div class="placeholder-icon">📉</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: ETF VIZ ══════════════════════════════════ -->
+    <div class="tab-content" id="content-etfviz">
+      <div class="left-panel viz-left" id="etfviz-left">
+        <div class="time-travel-bar">
+          <div class="time-travel-dates" id="etfviz-tt-dates"></div>
+        </div>
+        <div class="zone-map" id="etfviz-zone"></div>
+        <!-- Drawn by legends.js from ZONE_RULES, the same limits the map uses. -->
+        <div class="themeviz-legend" data-viz-legend="zone"></div>
+      </div>
+      <div class="resize-handle" data-panel="etfviz"></div>
+      <div class="right-panel" id="etfviz-right">
+        <div class="chart-area" id="etfviz-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
             <div>Click any ticker to open chart</div>
             <div class="placeholder-sub">MA: 20 EMA · 50 SMA</div>
           </div>

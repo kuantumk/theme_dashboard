@@ -806,7 +806,7 @@
       },
       {
         id: 'zone', title: 'Zone map (Viz tabs)',
-        intro: 'The five Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20.',
+        intro: 'The five Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20. ETF Viz plots only long ETFs, with a lower dollar-volume floor than the other Viz tabs.',
         cards: [
           {
             id: 'zone-dots', title: 'Dot colour — the daily zone',
@@ -818,7 +818,6 @@
                 [zoneDot('zm-above'), `Amber: above the daily band, above ${signed(Z.bandHigh, 1)} ATR.`],
               ])}
               <p>Height is the weekly zone. Below ${signed(Z.weeklyLow, 1)} ATR the close is under the weekly EMA20. Above ${signed(Z.weeklyHigh, 1)} ATR it is extended. The zone backgrounds, the cluster bars and the state rows use the same three colours:</p>
-              <p>ETF Viz plots only long ETFs, and its dollar-volume floor is lower than the other tabs'.</p>
               ${zoneBgFigure()}
               <div class="zm-state zm-band"><div class="zm-state-head"><span>In the buy area</span><span class="zm-state-n">3</span></div></div>
               <p><span class="zm-bar" style="display:inline-flex;width:80px"><span class="zm-seg zm-band" style="width:50%"></span><span class="zm-seg zm-above" style="width:30%"></span><span class="zm-seg zm-under" style="width:20%"></span></span> A cluster bar: the leaf's names by daily zone.</p>`,
@@ -877,10 +876,11 @@
               <p>The blue button or dropdown is the session you see. Choose another date to go back in time, up to 180 days.</p>`,
           },
           {
-            id: 'stale', title: 'Amber banner — old short-interest data',
+            id: 'stale', title: 'Amber banner — old data',
             sample: '<span class="lg-num" style="color:var(--amber)">!</span>',
-            where: ['si'],
-            body: '<div class="si-stale-note">Short interest dated 2026-09-26, not this session (2026-09-29). Prices below are current.</div><p>The short-interest list did not update today. The tab still shows the last list, with this warning.</p>',
+            where: ['si', 'etfviz'],
+            body: '<div class="si-stale-note">Short interest dated 2026-09-26, not this session (2026-09-29). Prices below are current.</div><p>The short-interest list did not update today. The tab still shows the last list, with this warning.</p>'
+              + '<div class="zm-stale-note">No ETF Viz map was published for the newest session (2026-09-29). This map is from 2026-09-26.</div><p>The ETF price fetch did not publish a map today. The tab still shows the last map, with this warning.</p>',
           },
           {
             id: 'blue-misc', title: 'Other blue markers',

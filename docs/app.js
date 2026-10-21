@@ -1002,6 +1002,7 @@
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
   let etfVizHistory = [];    // Array of {report_date, zone_map} snapshots
+  let latestSessionDate = null; // report_meta.json's session: the newest any tab holds
   let activeSessionDate = null;
   let hasUserSelectedSession = false;
 
@@ -1452,8 +1453,12 @@
     Promise.all([
       fetch(withCacheBust(ETF_VIZ_DATA_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
       fetch(withCacheBust(ETF_VIZ_HISTORY_URL)).then(r => r.json()).catch(() => []),
+      // The newest session, for the stale note. Read here, not from another
+      // tab's loader, so it is set before this tab's first render.
+      fetch(withCacheBust(META_URL)).then(r => r.json()).catch(() => null),
     ])
-      .then(([current, history]) => {
+      .then(([current, history, meta]) => {
+        latestSessionDate = (meta && meta.report_date) || null;
         const byDate = {};
         (history || []).forEach(h => { byDate[h.report_date] = h; });
         if (current && current.report_date) {
@@ -2142,6 +2147,18 @@
     return `<p class="zm-foot">Not on the map, no theme in config/etf_themes.yaml: ${escHtml(zm.unmapped.join(', '))}.</p>`;
   }
 
+  /** The ETF Viz snapshot's age, shown only when it is older than the newest
+   *  session. A failed ETF fetch writes no etf_viz.json, so the tab keeps the
+   *  last map; without this note a dead fetch reads as a fresh one. The other
+   *  Viz tabs rebuild their history every run and are never behind. A date
+   *  picked in the time-travel bar is the user's choice, so it gets no note. */
+  function zoneStaleNote(snap, mode, date) {
+    if (mode !== 'etf' || date || !latestSessionDate || !snap.report_date) return '';
+    if (snap.report_date >= latestSessionDate) return '';
+    return `<div class="zm-stale-note">No ETF Viz map was published for the newest session `
+      + `(${escHtml(latestSessionDate)}). This map is from ${escHtml(snap.report_date)}.</div>`;
+  }
+
   function renderZoneMap(snap, mode, date) {
     const cfg = ZONE_MODES[mode];
     const el = cfg && document.getElementById(cfg.containerId);
@@ -2157,7 +2174,8 @@
     }
     const tickers = zm.tickers || [];
     if (!tickers.length) {
-      el.innerHTML = `<div class="no-data">No ticker passed the zone-map floors for ${escHtml(snap.report_date || date || 'this session')}: `
+      el.innerHTML = zoneStaleNote(snap, mode, date)
+        + `<div class="no-data">No ticker passed the zone-map floors for ${escHtml(snap.report_date || date || 'this session')}: `
         + `${zm.n_candidates} candidates, ${zm.n_floor_dropped} under the floors, `
         + `${zm.n_no_weekly} without a weekly EMA20, ${zm.n_no_daily} without a daily reading`
         + (zm.n_no_bars ? `, ${zm.n_no_bars} with no price bars` : '')
@@ -2166,7 +2184,8 @@
       return;
     }
     const metric = ZONE_METRIC[cfg.metric];
-    el.innerHTML = '<div class="card zm-card zm-plot"><svg class="zm-svg" role="img" aria-label="Zone map"></svg></div>'
+    el.innerHTML = zoneStaleNote(snap, mode, date)
+      + '<div class="card zm-card zm-plot"><svg class="zm-svg" role="img" aria-label="Zone map"></svg></div>'
       + zoneStatesCard(tickers, metric)
       + zoneClustersCard(tickers, metric)
       + zoneUnmappedNote(zm);

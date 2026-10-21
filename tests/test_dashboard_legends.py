@@ -228,8 +228,8 @@ class SingleSourceTests(unittest.TestCase):
     """Rule 1. A threshold inlined at a render site is invisible to the legend."""
 
     COLOUR_OUTPUTS = (
-        'up', 'dn', 'pos', 'neg', 'neu', 'short-blue', 'short-white', 'rvol-high',
-        'rvol-medium', 'rvol-low', 'ep-float-green', 'oversold', 'watch', 'overbought',
+        'up', 'dn', 'pos', 'neg', 'neu', 'short-blue', 'short-white',
+        'oversold', 'watch', 'overbought',
     )
 
     def _code_outside_registry(self):
@@ -254,8 +254,7 @@ class SingleSourceTests(unittest.TestCase):
         code = self._code_outside_registry()
         expected = {
             'rs': 3, 'vars': 4, 'inst': 5, 'short': 5, 'pct': 1,
-            'parabolicAtr': 1, 'epFloat': 1, 'epShort': 1, 'epDist52w': 1,
-            'epAtr': 1, 'epRvol': 1, 'macroChange': 2, 'fearGreed': 1,
+            'parabolicAtr': 1, 'macroChange': 2, 'fearGreed': 1,
             'nasiOsc': 1, 'nasiRsi': 1,
         }
         for table, n in expected.items():

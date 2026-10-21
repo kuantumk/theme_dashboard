@@ -21,10 +21,6 @@
   const SI_HISTORY_URL = 'data/si_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
-  const EP_AFTERNOON_URL = 'data/ep_scan_afternoon.json';
-  const EP_AFTERNOON_HISTORY_URL = 'data/ep_scan_afternoon_history.json';
-  const EP_MORNING_URL = 'data/ep_scan_morning.json';
-  const EP_MORNING_HISTORY_URL = 'data/ep_scan_morning_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
@@ -69,10 +65,6 @@
   const ETF_FALLBACK_URL = 'data/etf_data.json';
   const INDUSTRY_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zwmK5YnbBHyin0n0DHIEEydPapCkln1WCvlKv4IhwSg/export?format=csv&gid=549753148';
   const PAGE_LOAD_CACHE_KEY = Date.now();
-  // Time-travel retention window in calendar days. The server-side exporters
-  // already prune every *_history.json to this window; this client-side bound
-  // mirrors it so EP history (which it caps directly) stays consistent.
-  const SESSION_HISTORY_DAYS = 180;
 
   // Symbols that need a different symbol for TradingView widget vs data fetch.
   // NOTE: TVC/CAPITALCOM/CBOE treasury yield symbols are all restricted in the
@@ -84,31 +76,21 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, ep: null, parabolic: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
     etf: { column: 'vars', dir: 'desc' },
     industry: { column: 'vars', dir: 'desc' },
-    ep_afternoon: { column: 'float', dir: 'asc' },
-    ep_morning: { column: 'float', dir: 'asc' },
     parabolic: { column: 'atr_multi_50sma', dir: 'desc' },
   };
   let etfData = [];
   let industryData = [];
-  let epAfternoonData = [];
-  let epMorningData = [];
-  let epAfternoonHistory = [];
-  let epMorningHistory = [];
-  let epAfternoonEmptyMessage = 'No afternoon EP results.';
-  let epMorningEmptyMessage = 'No morning EP results.';
   let parabolicData = [];
   let volumeHistory = [];
   let parabolicEmptyMessage = 'No parabolic results for this date.';
   let industryEmptyMessage = 'No industry ETF data available.';
   let etfEmptyMessage = 'No ETF data available.';
-  // Combined lookup for news by ticker
-  let epAllTickers = {};
 
   function withCacheBust(url) {
     const separator = url.includes('?') ? '&' : '?';
@@ -141,13 +123,7 @@
     loadParabolicData();
     loadSIData();
     loadMacroEvents();
-    loadEPAfternoonData();
-    loadEPMorningData();
     initTableSort();
-    initEPNewsClick();
-    // Auto-refresh EP data every 10 minutes
-    setInterval(loadEPAfternoonData, 10 * 60 * 1000);
-    setInterval(loadEPMorningData, 10 * 60 * 1000);
   });
 
   // ── CLOCK ─────────────────────────────────────────────
@@ -359,7 +335,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, ep: -1, parabolic: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, parabolic: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -1195,7 +1171,7 @@
       bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
       otherwise: 'neu', missing: 'neu',
     },
-    // Signed percent columns: EPS%, Sales%, Intra%, Daily%, Monthly%, AH/PM Chg%.
+    // Signed percent columns: EPS%, Sales%, Intra%, Daily%, Monthly%.
     pct: {
       bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
       otherwise: 'neu', missing: 'neu',
@@ -1204,31 +1180,6 @@
     parabolicAtr: {
       bands: [{ op: '>=', at: 15, out: 'dn' }, { op: '>=', at: 12, out: 'short-blue' }],
       otherwise: 'neu', missing: 'neu',
-    },
-    // EP tab columns.
-    epFloat: {
-      bands: [{ op: '<', at: 150, out: 'ep-float-green' }],
-      otherwise: 'neu', missing: 'neu',
-    },
-    epShort: {
-      bands: [{ op: '>', at: 20, out: 'up' }, { op: '>', at: 10, out: 'short-blue' }],
-      otherwise: 'neu', missing: 'neu',
-    },
-    epDist52w: {
-      bands: [{ op: '>', at: -10, out: 'up' }],
-      otherwise: 'neu', missing: 'neu',
-    },
-    epAtr: {
-      bands: [
-        { op: '<', at: 5, out: 'up' },
-        { op: '<', at: 7, out: 'short-blue' },
-        { op: '<', at: 9, out: 'neu' },
-      ],
-      otherwise: 'dn', missing: 'neu',
-    },
-    epRvol: {
-      bands: [{ op: '>=', at: 3, out: 'rvol-high' }, { op: '>=', at: 1.5, out: 'rvol-medium' }],
-      otherwise: 'rvol-low', missing: 'neu',
     },
     // Overview: macro price and change columns. `pos`/`neg` rather than
     // `up`/`dn` because these carry !important over the price cell class.
@@ -1546,8 +1497,7 @@
 
   /** Session dates one tab has data for (newest first). Each bar lists only
    *  its own tab's finished sessions — never a calendar date another tab
-   *  wrote first (e.g. the 5:45 AM EP scan writes today's entry hours before
-   *  the 1:30 PM pipeline produces the other tabs' data). */
+   *  wrote first. */
   function tabSessionDates(...histories) {
     const dates = new Set();
     histories.forEach(hist => (hist || []).forEach(h => dates.add(h.report_date)));
@@ -1586,15 +1536,6 @@
     sortAndRenderParabolic();
     // SI (heavily shorted, already sold off)
     renderSI(siHistory.find(h => h.report_date === date), date);
-    // EP Scanner
-    applyEPAfternoonSnapshot(
-      epAfternoonHistory.find(h => h.report_date === date),
-      date
-    );
-    applyEPMorningSnapshot(
-      epMorningHistory.find(h => h.report_date === date),
-      date
-    );
     // Industry ETFs
     const indSnap = industryHistory.find(h => h.report_date === date);
     industryData = indSnap ? indSnap.data : [];
@@ -1626,8 +1567,6 @@
     renderTimeTravelBar('varsviz-tt-dates', varsDates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', tabSessionDates(industryHistory), onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', tabSessionDates(etfHistory), onTimeTravelSelect);
-    renderTimeTravelBar('ep-tt-dates',
-      tabSessionDates(epMorningHistory, epAfternoonHistory), onTimeTravelSelect);
     renderTimeTravelBar('parabolic-tt-dates', tabSessionDates(parabolicHistory), onTimeTravelSelect);
     renderTimeTravelBar('si-tt-dates', tabSessionDates(siHistory), onTimeTravelSelect);
   }
@@ -3159,7 +3098,7 @@
     tbody.innerHTML = html;
   }
 
-  // ── TABLE SORT (generic for ETF, Industry, and EP) ────
+  // ── TABLE SORT (generic for ETF, Industry, and Parabolic) ────
   function initTableSort() {
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
@@ -3181,278 +3120,10 @@
         th.classList.add(state.dir === 'desc' ? 'sorted-desc' : 'sorted-asc');
 
         if (tab === 'industry') sortAndRenderIndustry();
-        else if (tab === 'ep_afternoon') sortAndRenderEPAfternoon();
-        else if (tab === 'ep_morning') sortAndRenderEPMorning();
         else if (tab === 'parabolic') sortAndRenderParabolic();
         else sortAndRenderETF();
       });
     });
-  }
-
-  // ── EP SCANNER DATA (Afternoon + Morning) ──────────────────
-
-  function normalizeEPSnapshot(snapshot) {
-    if (!snapshot) return null;
-    const reportDate = snapshot.report_date || snapshot.scan_date;
-    if (!reportDate) return null;
-    return { ...snapshot, report_date: reportDate };
-  }
-
-  function buildEPHistory(current, history) {
-    const byDate = {};
-    (history || []).forEach(item => {
-      const snap = normalizeEPSnapshot(item);
-      if (snap) byDate[snap.report_date] = snap;
-    });
-
-    const currentSnap = normalizeEPSnapshot(current);
-    if (currentSnap) {
-      byDate[currentSnap.report_date] = currentSnap;
-    }
-
-    const sorted = Object.values(byDate)
-      .sort((a, b) => b.report_date.localeCompare(a.report_date));
-
-    // Keep snapshots within the last SESSION_HISTORY_DAYS calendar days,
-    // anchored to the newest snapshot (mirrors the server-side prune).
-    if (sorted.length === 0) return sorted;
-    const anchor = new Date(sorted[0].report_date + 'T12:00:00');
-    const cutoff = new Date(anchor);
-    cutoff.setDate(cutoff.getDate() - SESSION_HISTORY_DAYS);
-    return sorted.filter(s => new Date(s.report_date + 'T12:00:00') >= cutoff);
-  }
-
-  function refreshEPAllTickers() {
-    epAllTickers = {};
-    epAfternoonData.forEach(t => { epAllTickers[t.ticker] = t; });
-    epMorningData.forEach(t => { epAllTickers[t.ticker] = t; });
-  }
-
-  function formatEPSnapshotInfo(snapshot, selectedDate) {
-    if (!snapshot) {
-      return selectedDate ? `Session: ${selectedDate} | no scan` : '—';
-    }
-
-    const dateLabel = snapshot.scan_date || snapshot.report_date || selectedDate || '';
-    if (!snapshot.timestamp) {
-      return dateLabel ? `Session: ${dateLabel}` : '—';
-    }
-
-    const dt = new Date(snapshot.timestamp);
-    const updated = dt.toLocaleDateString() + ' ' +
-      dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return dateLabel ? `Session: ${dateLabel} | Updated: ${updated}` : `Updated: ${updated}`;
-  }
-
-  function applyEPAfternoonSnapshot(snapshot, selectedDate = null) {
-    const snap = normalizeEPSnapshot(snapshot);
-    epAfternoonData = snap ? (snap.tickers || []) : [];
-    epAfternoonEmptyMessage = selectedDate && !snap
-      ? 'No afternoon EP scan for this date.'
-      : 'No afternoon EP results.';
-    sortAndRenderEPAfternoon();
-    refreshEPAllTickers();
-
-    const infoEl = document.getElementById('ep-afternoon-refresh-info');
-    if (infoEl) infoEl.textContent = formatEPSnapshotInfo(snap, selectedDate);
-  }
-
-  function applyEPMorningSnapshot(snapshot, selectedDate = null) {
-    const snap = normalizeEPSnapshot(snapshot);
-    epMorningData = snap ? (snap.tickers || []) : [];
-    epMorningEmptyMessage = selectedDate && !snap
-      ? 'No morning EP scan for this date.'
-      : 'No morning EP results.';
-    sortAndRenderEPMorning();
-    refreshEPAllTickers();
-
-    const infoEl = document.getElementById('ep-morning-refresh-info');
-    if (infoEl) infoEl.textContent = formatEPSnapshotInfo(snap, selectedDate);
-  }
-
-  function preferredEPSnapshot(current, history) {
-    if (hasUserSelectedSession && activeSessionDate) {
-      return history.find(h => h.report_date === activeSessionDate) || null;
-    }
-    return normalizeEPSnapshot(current) || history[0] || null;
-  }
-
-  function loadEPAfternoonData() {
-    Promise.all([
-      fetch(withCacheBust(EP_AFTERNOON_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
-      fetch(withCacheBust(EP_AFTERNOON_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        epAfternoonHistory = buildEPHistory(current, history);
-        renderAllTimeTravelBars();
-        applyEPAfternoonSnapshot(
-          preferredEPSnapshot(current, epAfternoonHistory),
-          hasUserSelectedSession ? activeSessionDate : null
-        );
-      })
-      .catch(() => {
-        epAfternoonHistory = [];
-        renderAllTimeTravelBars();
-        document.getElementById('ep-afternoon-body').innerHTML =
-          '<tr><td colspan="8" class="no-data">Afternoon EP data not available.</td></tr>';
-      });
-  }
-
-  function loadEPMorningData() {
-    Promise.all([
-      fetch(withCacheBust(EP_MORNING_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
-      fetch(withCacheBust(EP_MORNING_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        epMorningHistory = buildEPHistory(current, history);
-        renderAllTimeTravelBars();
-        applyEPMorningSnapshot(
-          preferredEPSnapshot(current, epMorningHistory),
-          hasUserSelectedSession ? activeSessionDate : null
-        );
-      })
-      .catch(() => {
-        epMorningHistory = [];
-        renderAllTimeTravelBars();
-        document.getElementById('ep-morning-body').innerHTML =
-          '<tr><td colspan="8" class="no-data">Morning EP data not available.</td></tr>';
-      });
-  }
-
-  function sortAndRenderEPAfternoon() {
-    const s = sortState.ep_afternoon;
-    epAfternoonData.sort((a, b) => {
-      const av = a[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
-      const bv = b[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
-      return s.dir === 'desc' ? bv - av : av - bv;
-    });
-    renderEPAfternoonTable();
-  }
-
-  function sortAndRenderEPMorning() {
-    const s = sortState.ep_morning;
-    epMorningData.sort((a, b) => {
-      const av = a[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
-      const bv = b[s.column] ?? (s.dir === 'asc' ? Infinity : -Infinity);
-      return s.dir === 'desc' ? bv - av : av - bv;
-    });
-    renderEPMorningTable();
-  }
-
-  function renderEPAfternoonTable() {
-    const tbody = document.getElementById('ep-afternoon-body');
-    if (!epAfternoonData.length) {
-      tbody.innerHTML = `<tr><td colspan="8" class="no-data">${escHtml(epAfternoonEmptyMessage)}</td></tr>`;
-      return;
-    }
-    let html = '';
-    epAfternoonData.forEach(row => {
-      html += epRow(row, 'ah_chg_pct', 'ah_price', 'AH');
-    });
-    tbody.innerHTML = html;
-  }
-
-  function renderEPMorningTable() {
-    const tbody = document.getElementById('ep-morning-body');
-    if (!epMorningData.length) {
-      tbody.innerHTML = `<tr><td colspan="8" class="no-data">${escHtml(epMorningEmptyMessage)}</td></tr>`;
-      return;
-    }
-    let html = '';
-    epMorningData.forEach(row => {
-      html += epRow(row, 'pm_chg_pct', 'pm_price', 'PM');
-    });
-    tbody.innerHTML = html;
-  }
-
-  function epRow(row, chgKey, priceKey, label) {
-    const floatClass = pickBand(COLOR_BANDS.epFloat, row.float);
-    const shortClass = epShortClass(row.short);
-    const dist52wClass = epDist52wClass(row.dist_52w_high);
-    const atrClass = epAtrClass(row.atr_multiple);
-    const rvolClass = epRvolClass(row.rvol);
-
-    const floatStr = row.float != null ? row.float.toFixed(1) + 'M' : '—';
-    const shortStr = row.short != null ? row.short.toFixed(1) + '%' : '—';
-    const dist52wStr = row.dist_52w_high != null
-      ? (row.dist_52w_high > 0 ? '+' : '') + row.dist_52w_high.toFixed(1) + '%' : '—';
-    const atrStr = row.atr_multiple != null ? row.atr_multiple.toFixed(1) + '×' : '—';
-    const chgVal = row[chgKey];
-    const chgStr = chgVal != null ? (chgVal > 0 ? '+' : '') + chgVal.toFixed(2) + '%' : '—';
-    const chgClass = pctClass(chgVal);
-    const priceStr = row[priceKey] != null ? row[priceKey].toFixed(2) : '—';
-    const rvolStr = row.rvol != null ? row.rvol.toFixed(1) + 'x' : '—';
-
-    return `
-      <tr>
-        <td class="l">
-          <span class="tn-link${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · EP ' + label)}">${escHtml(row.ticker)}</span>
-        </td>
-        <td class="${floatClass}">${floatStr}</td>
-        <td class="${shortClass}">${shortStr}</td>
-        <td class="${dist52wClass}">${dist52wStr}</td>
-        <td class="${atrClass}">${atrStr}</td>
-        <td class="${chgClass}">${chgStr}</td>
-        <td>${priceStr}</td>
-        <td class="${rvolClass}">${rvolStr}</td>
-      </tr>
-    `;
-  }
-
-  // EP color helpers
-  function epShortClass(val) {
-    return pickBand(COLOR_BANDS.epShort, val);
-  }
-
-  function epDist52wClass(val) {
-    return pickBand(COLOR_BANDS.epDist52w, val);
-  }
-
-  function epAtrClass(val) {
-    return pickBand(COLOR_BANDS.epAtr, val);
-  }
-
-  function epRvolClass(val) {
-    return pickBand(COLOR_BANDS.epRvol, val);
-  }
-
-  // ── EP NEWS (shown on ticker click) ───────────────────────
-  function initEPNewsClick() {
-    document.getElementById('content-ep').addEventListener('click', (e) => {
-      const link = e.target.closest('.tn-link');
-      if (!link) return;
-      const sym = link.dataset.sym;
-      if (!sym) return;
-      const tickerData = epAllTickers[sym];
-      if (!tickerData || !tickerData.news || tickerData.news.length === 0) {
-        hideEPNews();
-        return;
-      }
-      showEPNews(sym, tickerData.news);
-    });
-  }
-
-  function showEPNews(ticker, newsItems) {
-    const section = document.getElementById('ep-news-section');
-    const tickerEl = document.getElementById('ep-news-ticker');
-    const contentEl = document.getElementById('ep-news-content');
-
-    tickerEl.textContent = ticker;
-    let html = '';
-    newsItems.forEach(item => {
-      html += `
-        <div class="ep-news-item">
-          <a href="${escAttr(item.link)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
-          <div class="ep-news-meta">${escHtml(item.source)} · ${escHtml(item.date)}</div>
-        </div>
-      `;
-    });
-    contentEl.innerHTML = html;
-    section.style.display = '';
-  }
-
-  function hideEPNews() {
-    document.getElementById('ep-news-section').style.display = 'none';
   }
 
   // ── STATUS UPDATE ─────────────────────────────────────

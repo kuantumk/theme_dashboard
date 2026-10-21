@@ -350,7 +350,6 @@ body {
      Volume   (9 col)   562px  ->  610px
      Lev ETF  (6 col)   539px  ->  585px
      Industry (6 col)   524px  ->  570px
-     EP       (8 col)   450px  ->  500px
      VARS     (8 col)   445px  ->  490px
      Momentum (7 col)   389px  ->  440px
 
@@ -360,7 +359,7 @@ body {
 
    Natural width is data-dependent: `td` is white-space:nowrap, so a longer
    ticker or a larger figure widens the table. These came from a snapshot where
-   many Volume/VARS leaf tables held 1-3 rows and both EP tables held one, so
+   many Volume/VARS leaf tables held 1-3 rows, so
    treat them as a floor and keep the slack. Re-measure when a column is added:
    set the table to width:max-content and read its bounding box.
 
@@ -377,7 +376,6 @@ body {
 #volume-left { width: 610px; }
 #etf-left { width: 585px; }
 #industry-left { width: 570px; }
-#ep-left { width: 500px; }
 #vars-left { width: 490px; }
 #momentum-left { width: 440px; }
 #si-left { width: 505px; }
@@ -582,12 +580,8 @@ td.l {
   color: #e0e0e0;
 }
 
-/* ── EP SCANNER ──────────────────────────────────────────── */
-.ep-float-green {
-  color: var(--green);
-}
-
-.ep-refresh-info {
+/* ── TABLE HEADER INFO (Parabolic count) ─────────────────── */
+.refresh-info {
   margin-left: auto;
   font-family: var(--display);
   font-size: 9px;
@@ -1382,61 +1376,6 @@ th.sorted-asc::after {
   font-size: 11px;
   font-weight: 300;
   letter-spacing: 0;
-}
-
-/* ── EP NEWS SECTION ───────────────────────────────────── */
-.ep-news-card {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.ep-news-content {
-  padding: 10px 14px;
-}
-
-.ep-news-item {
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.ep-news-item:last-child {
-  border-bottom: none;
-}
-
-.ep-news-item a {
-  color: var(--text);
-  text-decoration: underline 1px;
-  text-underline-offset: 2px;
-  font-size: 12px;
-  line-height: 1.5;
-  transition: color 0.15s;
-}
-
-.ep-news-item a:hover {
-  color: var(--accent);
-}
-
-.ep-news-meta {
-  font-family: var(--display);
-  font-size: 10px;
-  font-weight: 300;
-  color: var(--text3);
-  margin-top: 2px;
-  letter-spacing: 0;
-}
-
-/* ── EP RVOL COLOR ────────────────────────────────────── */
-.rvol-high {
-  color: var(--green);
-  font-weight: 600;
-}
-
-.rvol-medium {
-  color: var(--amber);
-}
-
-.rvol-low {
-  color: var(--text3);
 }
 
 /* ── ACTIVE TICKER ROW HIGHLIGHT ───────────────────────── */
@@ -2382,8 +2321,7 @@ tbody tr.nav-active {
   cursor: default;
 }
 
-.card-lbl.lg-static,
-.ep-news-item.lg-static {
+.card-lbl.lg-static {
   padding: 0;
   border: 0;
   display: inline;

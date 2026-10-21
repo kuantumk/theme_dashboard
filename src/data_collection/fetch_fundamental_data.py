@@ -84,10 +84,10 @@ def parse_snapshot_tables(soup: BeautifulSoup) -> Dict[str, str]:
     and miss Shs Float / P/E / EPS this Y / Sales Q/Q / Short Float /
     Inst Own / Inst Trans. Merge the pairs from every block.
 
-    This is the one parser for the quote page: the EP scans use it too.
-    finvizfinance's ``ticker_fundament()`` stopped working in the late-June
-    2026 redesign (it reads the removed ``div.quote-links`` first), and that
-    silently emptied the EP tab. Returns an empty dict when no block exists.
+    This is the one parser for the quote page. finvizfinance's
+    ``ticker_fundament()`` stopped working in the late-June 2026 redesign (it
+    reads the removed ``div.quote-links`` first), and that silently emptied
+    the since-retired EP tab. Returns an empty dict when no block exists.
     """
     data_dict = {}
     for table in soup.find_all('table', class_='snapshot-table2'):

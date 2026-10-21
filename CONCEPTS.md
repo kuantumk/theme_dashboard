@@ -114,7 +114,7 @@ The running cumulative total of the McClellan oscillator, tracked for its shape 
 A setup where an earnings release resets a stock's trajectory, producing a large gap and a sustained move rather than a one-day reaction. Abbreviated EP.
 
 ### EP scan
-The twice-daily search for stocks reporting earnings imminently that also satisfy the setup's structural preconditions, run once before the open and once before the close. It cannot be backfilled — it depends on live pre- and post-market pricing that no longer exists after the fact.
+The search for stocks gapping on earnings or another real catalyst that also satisfy the setup's structural preconditions. It cannot be backfilled — it depends on live pre- and post-market pricing that no longer exists after the fact. This repo ran it twice a day until 2026-10-20; it now lives in the `ep-scan` skill in the winner_research repo.
 
 ### RVol at time
 Volume so far today compared with volume by the same point in previous sessions, rather than against a whole-day average. The time-of-day alignment is the point: an hour into the session, total daily volume is not yet a meaningful comparison.

@@ -32,10 +32,6 @@ uv run python src/themes/analyze_theme_strength.py
 uv run python src/reporting/generate_daily_report.py
 uv run python src/reporting/export_dashboard_data.py
 
-# Run EP scans standalone (requires ALPACA_API_KEY/SECRET in .env)
-uv run python src/reporting/ep_scan_afternoon.py
-uv run python src/reporting/ep_scan_morning.py
-
 # Test a screener against a single ticker
 uv run python src/screening/run_screener.py --screener steady_trend --test --ticker AAPL
 
@@ -68,17 +64,14 @@ cd tests && uv run python backtest_theme_scoring.py
 9. **Theme Scoring** dual-metric (strength + confirmation) with actionability overlay
 10. **Report** markdown daily report → `reports/` (includes "Untagged tickers awaiting audit")
 
-### EP Scan Pipeline (Earnings Pivot Scanner)
+### EP Scan (retired 2026-10-20)
 
-Separate from the daily theme pipeline, two workflows scan for earnings-driven setups:
+The EP (episodic pivot) scans no longer run in this repo. EP scanning lives in the `ep-scan` skill in the winner_research repo. That skill reads the live TradingView screener, FINRA short interest and extended-hours RVol at time, and grades each candidate A++/A+/A/A-.
 
-- **Afternoon scan** (`ep-scan-afternoon.yml`, 2:00 PM Pacific) — Finviz screener for Today AMC earnings (short float >10%, avg vol >1M), filters for AH price ≥ close, enriches with RVol/technicals/news → `docs/data/ep_scan_afternoon.json`
-- **Morning scan** (`ep-scan-morning.yml`, 5:45 AM Pacific) — same filters for Today BMO earnings, filters for PM price ≥ prev close → `docs/data/ep_scan_morning.json`
-
-Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
-- **RVol at time**: uses Alpaca Market Data API (SIP feed) for 5-min extended-hours bars. Treats 4 AM–8 PM ET as one continuous session, computes cumulative volume ratio vs 10-session historical average. yfinance does NOT provide usable extended-hours volume at 5m intervals.
-- **Discord notification**: sends webhook alert with ticker summaries on scan completion.
-- **Local diagnostic runs**: both scan scripts accept `--out-dir <path>` (defaults to `docs/data/`) and `--no-discord`. The Windows Task Scheduler launcher `scripts/ep_scan_morning_local.bat` passes `--out-dir scripts/local_runs --no-discord` so local runs write to a gitignored sandbox and never dirty the CI-published `docs/data/ep_scan_*.json` files.
+- The two workflows, `src/reporting/ep_scan_*.py`, their tests, the EP tab and the `docs/data/ep_scan_*.json` exports are gone from `main`.
+- **⛔ Do not rewrite the history that holds the old exports.** winner_research backtests (`wr/blind.py`) copy `ep_scan_morning.json` and `ep_scan_afternoon.json` from the last `Daily report <date>` commit on or before the backtest date. Commits after this change hold no EP files, and `blind.py` skips a missing file.
+- **The Finviz avatar fix outlives the scans.** Finviz's **2026-07-15** screener redesign put a company-logo avatar in the ticker cell. Its one-letter fallback `<span>` sits before the symbol, so finvizfinance's flat `col.text` parse turns `OKLO` into `OOKLO` — **every ticker gets its first character doubled**. `src/data_collection/finviz_ticker_repair.py` re-reads each ticker from the row markup (`data-boxover-ticker`, then `<a class="tab-link">`). The SI collector is its one caller now. **Do not "fix" this by un-doubling the first character** — that guess re-corrupts silently the next time Finviz touches the avatar. finvizfinance 1.3.0 (Jan 2026) predates the redesign; re-check on any future release. `tests/test_finviz_ticker_repair.py` pins the fix.
+- **⛔ Do not call finvizfinance's `ticker_fundament()`.** Finviz's late-June 2026 quote-page redesign removed the `div.quote-links` block that the function reads first, so it raises `AttributeError` for every ticker. It emptied the EP tab for all of the Q2 2026 season. Read the quote page with `fetch_fundamental_data.parse_snapshot_tables`.
 
 ### Key Data Stores
 
@@ -91,8 +84,6 @@ Shared logic lives in `src/reporting/ep_scan_common.py`. Key details:
 | `data/screened_union.json` | JSON | `{date, tickers}` — latest screened union; the tag-audit routine's worklist (committed) |
 | `screening_output/**/*.parquet` | Parquet | Per-run master + per-screener numeric outputs (local scratch; regenerated each run, never committed, pruned to newest 10) |
 | `config/workflow_config.yaml` | YAML | All tunable parameters |
-| `docs/data/ep_scan_afternoon.json` | JSON | Afternoon EP scan results |
-| `docs/data/ep_scan_morning.json` | JSON | Morning EP scan results |
 
 ### Module Layout
 
@@ -219,9 +210,9 @@ Tickers that fail any condition stay default-colored. Logic lives in `src/report
 
 ### Dashboard Time Travel
 
-Each tab's session bar (every tab except Overview) shows the last 5 trading days as clickable date buttons plus a `+ more` dropdown that exposes every remaining session within the last **180 calendar days**. Retention is calendar-day-based, not a fixed session count: `THEMES_HISTORY_DAYS = 180` in `export_dashboard_data.py` (mirrored by `SCAN_HISTORY_DAYS` in `ep_scan_common.py` and `SESSION_HISTORY_DAYS` in `docs/app.js`) controls the window. The shared `_history_cutoff` helper anchors the cutoff to the newest available session date (not wall-clock today) so the window is reproducible and robust to stale/holiday export runs.
+Each tab's session bar (every tab except Overview) shows the last 5 trading days as clickable date buttons plus a `+ more` dropdown that exposes every remaining session within the last **180 calendar days**. Retention is calendar-day-based, not a fixed session count: `THEMES_HISTORY_DAYS = 180` in `export_dashboard_data.py` controls the window. The shared `_history_cutoff` helper anchors the cutoff to the newest available session date (not wall-clock today) so the window is reproducible and robust to stale/holiday export runs.
 
-**Every workflow run produces a fresh 180-calendar-day history**: `run_daily_workflow.py` calls `create_master_table.py --days 130` and each `run_screener.py --days 130` (~180 calendar days of trading sessions, with a few sessions of padding so the window is always full), so back-dated master + screener **parquet** files always carry today's full indicator schema (e.g. when `vars` was added, every dropdown session gets the new column on the very next workflow run instead of accumulating naturally). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` / `export_radar` / `export_volume` all iterate the per-day **parquet** files whose date falls within the 180-day window (and `export_radar` derives each date's screened union from the per-screener parquet via `stock_utils.union_tickers_for_date`) and rewrite `*_history.json` from scratch each run — no append-only drift; sessions older than 180 calendar days are pruned from the JSON. The on-disk parquet is separately pruned to the newest 10 sessions per subdir after export (`prune_screening_output`), so the docs JSON keeps the full window while local scratch stays small. Tabs without per-day source data (industry/leverage ETFs, EP scans) still accumulate one entry per workflow run and are pruned to the same window.
+**Every workflow run produces a fresh 180-calendar-day history**: `run_daily_workflow.py` calls `create_master_table.py --days 130` and each `run_screener.py --days 130` (~180 calendar days of trading sessions, with a few sessions of padding so the window is always full), so back-dated master + screener **parquet** files always carry today's full indicator schema (e.g. when `vars` was added, every dropdown session gets the new column on the very next workflow run instead of accumulating naturally). On the export side, `export_momentum_136` / `export_vars` / `export_parabolic` / `export_radar` / `export_volume` all iterate the per-day **parquet** files whose date falls within the 180-day window (and `export_radar` derives each date's screened union from the per-screener parquet via `stock_utils.union_tickers_for_date`) and rewrite `*_history.json` from scratch each run — no append-only drift; sessions older than 180 calendar days are pruned from the JSON. The on-disk parquet is separately pruned to the newest 10 sessions per subdir after export (`prune_screening_output`), so the docs JSON keeps the full window while local scratch stays small. Tabs without per-day source data (industry/leverage ETFs) still accumulate one entry per workflow run and are pruned to the same window.
 
 ### Dashboard Chart (TradingView Free Embed Widget)
 
@@ -253,20 +244,18 @@ These suppress only the EMA/SMA rows while keeping the main series title, OHLC, 
 
 All workflow parameters live in `config/workflow_config.yaml` (lookback windows, RS thresholds, screener list, scoring coefficients, theme settings).
 
-Environment variables (`.env`): `GOOGLE_SHEET_ID` (theme taxonomy sheet), `ALPACA_API_KEY` + `ALPACA_API_SECRET` (extended-hours volume for RVol), `IBKR_FLEX_TOKEN` (optional).
+Environment variables (`.env`): `GOOGLE_SHEET_ID` (theme taxonomy sheet), `IBKR_FLEX_TOKEN` (optional).
 
 ## CI/CD
 
-Three GitHub Actions workflows:
+One GitHub Actions workflow (the two EP scan workflows were retired on 2026-10-20; see EP Scan (retired) above):
 
 | Workflow | Schedule (Pacific) | What it does |
 |----------|-------------------|--------------|
 | `daily-screening.yml` | 1:30 PM | Full 10-step theme pipeline + Pages deploy |
-| `ep-scan-afternoon.yml` | 2:00 PM | AMC earnings scan → JSON + Discord alert + Pages deploy |
-| `ep-scan-morning.yml` | 5:45 AM | BMO earnings scan → JSON + Discord alert + Pages deploy |
 
-`daily-screening.yml` intentionally uses one timezone-aware cron entry (`America/Los_Angeles`) so GitHub creates only one scheduled workflow run at 1:30 PM Pacific. The EP scan workflows still use two UTC cron entries (PDT + PST) and pass the expected cron pair to the schedule guard via `SCHEDULE_GUARD_PDT_CRON` / `SCHEDULE_GUARD_PST_CRON` env vars. The guard skips EP scan runs whose triggering cron doesn't match the current Pacific offset. All workflows support `workflow_dispatch` for manual trigger.
+`daily-screening.yml` intentionally uses one timezone-aware cron entry (`America/Los_Angeles`) so GitHub creates only one scheduled workflow run at 1:30 PM Pacific. The workflow supports `workflow_dispatch` for manual trigger.
 
 ## Tech Stack
 
-Python 3.11+, pandas/numpy/scipy, pyarrow (parquet screening outputs), yfinance, Selenium (breadth scraping), finvizfinance + BeautifulSoup (fundamentals), Alpaca Market Data API (extended-hours volume). No TA-Lib — all indicators are pure pandas. Theme tagging uses no API-based LLM: the weekday Claude Code routine does the classification.
+Python 3.11+, pandas/numpy/scipy, pyarrow (parquet screening outputs), yfinance, Selenium (breadth scraping), finvizfinance + BeautifulSoup (fundamentals). No TA-Lib — all indicators are pure pandas. Theme tagging uses no API-based LLM: the weekday Claude Code routine does the classification.

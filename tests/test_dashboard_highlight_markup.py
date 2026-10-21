@@ -68,7 +68,6 @@ RENDER_SITES = (
     'renderParabolicTable',
     'renderIndustryTable',   # Industry ETFs
     'renderETFTable',        # Lev ETFs
-    'epRow',                 # shared by both EP tables
     'zoneTickerLink',        # Viz tabs — the lists under each zone map
 )
 
@@ -502,7 +501,7 @@ class HighlightTooltipTests(unittest.TestCase):
         so a retuned `HIGHLIGHT_SHORT_FLOOR` would leave this tooltip telling a
         trader 20% while the ladder gated somewhere else. The docstring on
         `compute_highlight_tier` openly invites that retune — it records the
-        level as chosen against the SI tab's 12% and the EP screener's 10% — so
+        level as chosen against the SI tab's 12% and the retired EP screener's 10% — so
         the drift this pins is a likely edit, not a hypothetical one.
         """
         from src.indicators.create_technical_indicators import (

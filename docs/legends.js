@@ -540,13 +540,13 @@
                 <li><b>Near an average:</b> |close − EMA10| or |close − EMA20| &lt; ${R.closeToMaAtr} × ATR14.</li>
               </ul>
               <p class="lg-formula">(tight day OR inside day) AND near an average</p>
-              <p>The server computes this rule. The EP tab does not use it. The Viz tabs show the same signal as a pulsing green ring.</p>`,
+              <p>The server computes this rule. The Viz tabs show the same signal as a pulsing green ring.</p>`,
             fig: `<div class="lg-figs">${dp('inside', 'Inside day on EMA10', true)}${dp('tight', 'Tight day on EMA10', true)}${dp('extended', 'Counter-example: wide bar far above EMA10', false)}</div>`,
           },
           {
             id: 'selected', title: 'Yellow text, solid underline — selected ticker',
             sample: link('active-ticker', 'AMD'),
-            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
+            where: LIST_TABS.concat(['macro'], ZONE_TABS),
             body: `<p>This ticker is on the chart now. Click a ticker or use the ↑/↓ keys to select one. In a table, the row also gets a yellow tint and outline.</p>
               <table class="lg-mini"><tbody>
                 ${miniRow('', '', 'NVDA', ['91'])}
@@ -559,7 +559,7 @@
           {
             id: 'hover', title: 'Blue text on hover — clickable ticker',
             sample: `<span class="tn-link lg-live">hover me</span>`,
-            where: LIST_TABS.concat(['macro', 'ep'], ZONE_TABS),
+            where: LIST_TABS.concat(['macro'], ZONE_TABS),
             body: '<p>The pointer is on a ticker. Click it to open its chart. The dotted underline marks every clickable ticker.</p>',
           },
           {
@@ -587,7 +587,7 @@
           {
             id: 'ladder', title: 'The ladder — one tint per ticker',
             sample: link('tight-range day-pattern-green', 'TICK'),
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<ol class="lg-ladder">${tierIntro}</ol>
               <p>The order is a display choice, not a ranking claim. A tab skips a rung when it has no data for that rung, and the ladder continues to the next one. So green does not mean "not crowded".</p>
               <p>The tint is a background, so it combines with green text. The sample above is a tight-range ticker with the green day pattern.</p>
@@ -596,7 +596,7 @@
           {
             id: 'tight', title: 'Violet tint — tight range',
             sample: link('tight-range', 'CRWD'),
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<p>For ${R.tightMinWindow} to ${R.tightMaxWindow} sessions, the closes barely moved against how far this stock normally travels, and the range formed in a constructive place. Both parts are true:</p>
               <ul class="lg-rules">
                 <li><b>Shape:</b> close range ÷ (ADR% × √N) ≤ ${R.tightRatioMax} for some window of N closes, <i>or</i> that ratio is in the tightest ${R.tightPctileMax}% of the stock's own last ${R.tightPctileLookback} sessions. The longest passing window is reported.</li>
@@ -614,21 +614,21 @@
           {
             id: 'short', title: 'Cyan-blue tint — crowded short',
             sample: link('hl-short', 'BYND'),
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<p>Short interest is ${R.shortFloorPct}% of float or more. The Short% number in the same row turns green at the same level.</p>`,
             fig: figure(floatBarSvg(), '', `Short interest at or above ${R.shortFloorPct}% of float`),
           },
           {
             id: 'ma-up', title: 'Green tint — averages stacked',
             sample: link('hl-ma-up', 'PLTR'),
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is above SMA50. The SMA50 needs a full 50 sessions of data.</p>',
             fig: figure(candleSvg(stacked), checkList(stackChecks(stacked, false), { expect: true, yes: 'Result: green tint', no: 'Result: no green tint' }), 'EMA10 > EMA20 > SMA50'),
           },
           {
             id: 'ma-split', title: 'Orange tint — split stack',
             sample: link('hl-ma-split', 'SNOW'),
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: '<p>EMA10 is above EMA20, and EMA20 is not above SMA50. This rung states where the averages sit. It does not state a direction.</p>',
             fig: figure(candleSvg(split), checkList(stackChecks(split, true), { expect: true, yes: 'Result: orange tint', no: 'Result: no orange tint' }), 'EMA10 > EMA20, EMA20 ≤ SMA50'),
           },
@@ -736,8 +736,8 @@
           {
             id: 'pct', title: 'Signed % columns',
             sample: '<span class="lg-num up">+4.1%</span>',
-            where: ['momentum', 'volume', 'vars', 'industry', 'etf', 'ep'],
-            body: `${bandTable(B.pct, spct)}<p>Applies to EPS%, Sales%, Intra%, Daily%, Monthly%, AH Chg% and PM Chg%.</p>`,
+            where: ['momentum', 'volume', 'vars', 'industry', 'etf'],
+            body: `${bandTable(B.pct, spct)}<p>Applies to EPS%, Sales%, Intra%, Daily%, Monthly%.</p>`,
           },
           {
             id: 'atrmul', title: 'ATRMul — stretch above the 50-day SMA',
@@ -750,18 +750,6 @@
             sample: '<span class="lg-num dn">-38.4</span>',
             where: ['si'],
             body: '<p>60D DD and 15D Drop are always red. Every row on the SI tab has already sold off, so the colour marks the column, not a level.</p>',
-          },
-          {
-            id: 'ep', title: 'EP scanner columns',
-            sample: '<span class="lg-num rvol-high">3.4x</span>',
-            where: ['ep'],
-            wide: true,
-            body: `<div class="lg-subgrid"><div class="lg-sub"><h4>Float(M)</h4>${bandTable(B.epFloat, v => num(v, 0) + 'M')}</div>
-              <div class="lg-sub"><h4>Short%</h4>${bandTable(B.epShort, pct1)}</div>
-              <div class="lg-sub"><h4>52W Hi%</h4>${bandTable(B.epDist52w, spct)}</div>
-              <div class="lg-sub"><h4>ATR× — distance from the 50-day SMA</h4>${bandTable(B.epAtr, v => num(v, 1) + '×')}</div>
-              <div class="lg-sub"><h4>RVol — relative volume at this time of day</h4>${bandTable(B.epRvol, v => num(v, 1) + 'x')}</div></div>
-              <p>AH Chg% and PM Chg% use the signed % rule.</p>`,
           },
         ],
       },
@@ -883,7 +871,7 @@
           {
             id: 'dates', title: 'Blue date button — the session on screen',
             sample: '<span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span>',
-            where: LIST_TABS.concat(['ep'], ZONE_TABS),
+            where: LIST_TABS.concat(ZONE_TABS),
             body: `<div class="lg-inline"><span class="tt-date-btn active lg-static">09-29<span class="tt-weekday">Tue</span></span><span class="tt-date-select active lg-static">09-26 Fri</span><span class="tt-date-btn lg-static">09-25<span class="tt-weekday">Thu</span></span></div>
               <p>The blue button or dropdown is the session you see. Choose another date to go back in time, up to 180 days.</p>`,
           },
@@ -896,11 +884,10 @@
           {
             id: 'blue-misc', title: 'Other blue markers',
             sample: '<span class="card-lbl lg-static"><span class="badge">sorted by VARS</span></span>',
-            where: ['macro', 'industry', 'etf', 'ep', 'parabolic', 'themes'],
+            where: ['macro', 'industry', 'etf', 'parabolic', 'themes'],
             body: `<div class="lg-wide-keys">${keyList([
-                ['<span class="card-lbl lg-static"><span class="badge">sorted by VARS</span></span>', 'Blue badge: how a table is sorted, or which session an EP table covers.'],
+                ['<span class="card-lbl lg-static"><span class="badge">sorted by VARS</span></span>', 'Blue badge: how a table is sorted.'],
                 ['<span class="event-datetime">Sep 30 08:30</span>', 'Blue time: a macro event in the MACRO EVENTS list.'],
-                ['<span class="ep-news-item lg-static"><a href="#" tabindex="-1" onclick="return false">News headline</a></span>', 'Blue on hover: an EP news link.'],
                 ['<button type="button" class="radar-more lg-static" tabindex="-1">+5 more</button>', 'Blue on hover: show the hidden chips of a leaf.'],
                 ['<span class="resize-handle lg-handle-demo"></span><span class="resize-handle dragging lg-handle-demo"></span>', 'Grey at rest, blue on hover or drag: the handle between the list and the chart.'],
               ])}</div>`,

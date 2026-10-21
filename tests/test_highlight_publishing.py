@@ -459,7 +459,7 @@ class EtfHighlightTests(unittest.TestCase):
         series scored `ma_up` before this producer moved to a full window, which
         is a stacked-trend claim about a stock with no 50-day trend to read. The
         20-bar case above never reached the ladder at all, so it did not cover
-        this. The EP scans refuse the same shape through their own `sma50_full`.
+        this.
         """
         for bars in (25, 30, 49):
             with self.subTest(bars=bars):

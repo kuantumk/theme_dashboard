@@ -33,9 +33,10 @@ def compute_spy_cum_norm_100(spy_df):
 def compute_ema_pair(close):
     """EMA10 and EMA20 on one close series, as ``(ema10, ema20)``.
 
-    Three producers feed the highlight ladder — this pipeline, the ETF recompute
-    and the EP scans — and each used to spell these two formulas out with a
-    comment asserting it matched the others. That is the shape this project was
+    Two producers feed the highlight ladder — this pipeline and the ETF
+    recompute (the EP scans were a third until they were retired) — and each
+    used to spell these two formulas out with a comment asserting it matched
+    the others. That is the shape this project was
     already bitten by and fixed once: `compute_inside_day` below exists because
     the same definition lived in two places and was one edit away from drifting.
     """
@@ -467,8 +468,8 @@ def compute_highlight_tier(tight_range=None, short_interest=None,
     **The order is a display preference, not a ranking claim.** Nothing
     measures whether a tight range predicts better than a crowded short, or either
     better than a stacked average. The 20% floor is chosen as well: the SI tab
-    gates its roster at 12% and the EP screener at 10%, so three numbers
-    describe one idea and none is calibrated.
+    gates its roster at 12% and the retired EP screener gated at 10%, so three
+    numbers described one idea and none is calibrated.
 
     **A rung whose input is missing is skipped, and the ladder carries on.** So
     a tier names the highest rung whose input the CALLER HOLDS, never the
@@ -487,8 +488,8 @@ def compute_highlight_tier(tight_range=None, short_interest=None,
     nothing. Equal averages fall to rung 4. `tests/test_highlight_tier.py` pins
     the reduced form against the request's original wording.
 
-    Takes plain scalars rather than a frame row, because the ETF recompute and
-    the EP scans hold neither. Shared with every producer for the same reason
+    Takes plain scalars rather than a frame row, because the ETF recompute
+    holds neither. Shared with every producer for the same reason
     `compute_inside_day` is — one definition cannot drift from itself.
     """
     if _highlight_flag(tight_range):

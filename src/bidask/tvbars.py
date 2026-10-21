@@ -6,8 +6,8 @@ else in reach supplies it:
 
 * **yfinance returns the bars with zero volume on every one.** With
   `prepost=True` it serves 66 pre-market and 48 after-hours 5-minute bars per
-  session and every one carries 0. `CLAUDE.md` already records this for the EP
-  scan; it was confirmed again on 2026-09-17 across six probe symbols and 15
+  session and every one carries 0. The retired EP scan hit this first; it was
+  confirmed again on 2026-09-17 across six probe symbols and 15
   sessions. A baseline built from those is a zero denominator, not a quiet
   ticker, and every ratio against it is infinite.
 * **No screener column answers it either.** Every relative-volume field the

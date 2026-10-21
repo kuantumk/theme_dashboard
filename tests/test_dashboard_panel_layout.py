@@ -41,7 +41,6 @@ PER_TAB_WIDTHS = {
     "#volume-left": 610,
     "#etf-left": 585,
     "#industry-left": 570,
-    "#ep-left": 500,
     "#vars-left": 490,
     "#momentum-left": 440,
     "#si-left": 505,

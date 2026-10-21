@@ -1,14 +1,14 @@
-"""Ticker extraction from Finviz screener markup, plus the all-dropped alarm.
+"""Ticker extraction from Finviz screener markup.
 
 Finviz's 2026-07-15 redesign put a logo avatar inside the ticker cell. Its
 one-letter fallback <span> sits before the real symbol, and finvizfinance's
-flat `col.text` parse concatenates the two — "OKLO" arrives as "OOKLO". Every
-downstream Yahoo lookup then 404s, so the scan silently exported zero tickers
-for three weeks of earnings season. These tests pin both halves of the fix:
-reading the symbol back out of the markup, and making a 100% drop rate loud.
+flat `col.text` parse concatenates the two — "OKLO" arrives as "OOKLO". These
+tests pin the fix: reading the symbol back out of the markup. The SI
+collector depends on it (measured 2026-09-10: 231 of 231 rows corrupted).
 
 The HTML fixtures below are the real cell shapes, captured live from the
-screener before and after the redesign.
+screener before and after the redesign. Moved from
+tests/test_ep_scan_ticker_parsing.py when the EP scans were retired.
 """
 
 import unittest
@@ -17,12 +17,10 @@ from unittest import mock
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from src.reporting import ep_scan_common
-from src.reporting.ep_scan_common import (
+from src.data_collection.finviz_ticker_repair import (
     _ticker_from_row,
     make_ticker_repair_view,
     repair_ticker_column,
-    send_discord_notification,
 )
 
 
@@ -123,49 +121,8 @@ class RepairTickerColumnTest(unittest.TestCase):
         self.assertEqual(repair_ticker_column(table, rows), 0)
 
 
-class AllDroppedAlarmTest(unittest.TestCase):
-    """An empty export on a non-zero screened count must not read as a quiet day."""
-
-    def _content(self, tickers, screened_count):
-        with mock.patch.object(ep_scan_common, "DISCORD_WEBHOOK_URL", "https://example/hook"), \
-             mock.patch.object(ep_scan_common.requests, "post") as post:
-            post.return_value = mock.Mock(status_code=204)
-            send_discord_notification(
-                "Afternoon Earnings", "2026-08-07", tickers, screened_count=screened_count
-            )
-        return post.call_args.kwargs["json"]["content"]
-
-    def test_warns_when_every_screened_candidate_was_dropped(self):
-        content = self._content([], screened_count=68)
-
-        self.assertIn("68", content)
-        self.assertIn("dropped", content)
-        self.assertNotIn("No qualifying tickers found", content)
-
-    def test_reports_a_genuinely_quiet_day_normally(self):
-        content = self._content([], screened_count=0)
-
-        self.assertIn("No qualifying tickers found", content)
-        self.assertNotIn("dropped", content)
-
-    def test_omitted_screened_count_keeps_the_original_message(self):
-        content = self._content([], screened_count=None)
-
-        self.assertIn("No qualifying tickers found", content)
-
-    def test_results_still_render_the_metrics_table(self):
-        content = self._content(
-            [{"ticker": "OKLO", "float": 12.0, "short": 15.0, "ah_chg_pct": 4.2}],
-            screened_count=68,
-        )
-
-        self.assertIn("OKLO", content)
-        self.assertIn("AH CHG", content)
-        self.assertNotIn("dropped", content)
-
-
 class TickerRepairViewFactoryTests(unittest.TestCase):
-    """The repair must not be welded to the Overview view.
+    """The repair must not be welded to one screener view.
 
     The SI collector reads the Ownership view (v=131), which carries Short
     Float directly. It sees the identical avatar corruption — measured
@@ -184,11 +141,6 @@ class TickerRepairViewFactoryTests(unittest.TestCase):
         from finvizfinance.screener.ownership import Ownership
 
         self.assertEqual(make_ticker_repair_view(Ownership)().tickers_repaired, 0)
-
-    def test_overview_alias_is_built_from_the_same_factory(self):
-        from finvizfinance.screener.overview import Overview
-
-        self.assertTrue(issubclass(ep_scan_common._TickerRepairOverview, Overview))
 
 
 if __name__ == "__main__":

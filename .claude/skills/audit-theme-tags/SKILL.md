@@ -77,7 +77,7 @@ The script can't tell whether a ticker's current tag still reflects reality. For
 
 Use the WebFetch / WebSearch tools to verify. Don't try to audit every ticker — focus on:
 
-- **High attention**: tickers in recent EP scan results
+- **High attention**: tickers in recent EP scan results (winner_research's `ep-scan` skill)
 - **Concentration risk**: tickers leading a hot theme (a mis-tag distorts the whole hub)
 - **Stale validation**: tickers untouched in `data/theme_review_state.json` for >90 days
 

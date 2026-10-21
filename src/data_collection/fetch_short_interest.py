@@ -34,7 +34,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from config.settings import SCREENING_OUTPUT_DIR, SHORT_INTEREST_FILE
-from src.reporting.ep_scan_common import make_ticker_repair_view
+from src.data_collection.finviz_ticker_repair import make_ticker_repair_view
 
 logger = logging.getLogger(__name__)
 

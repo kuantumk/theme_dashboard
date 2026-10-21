@@ -27,6 +27,8 @@ from src.indicators.create_technical_indicators import (
     compute_inside_day,
     compute_sma50_full,
     compute_spy_cum_norm_100,
+    compute_weekly_ema,
+    weekly_ema_config,
 )
 from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLAR_VOL
 from src.themes.theme_taxonomy import resolve_l1, split_path
@@ -994,7 +996,9 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
 
     Standalone fetch that does NOT pollute the main price data pipeline.
     Returns ``{ticker: {'vars': float|None, 'color': 'green'|None,
-    'highlight': str|None}}``. Only the moving-average rungs can reach the tier
+    'highlight': str|None, 'zone': dict}}``. `zone` holds the ETF Viz inputs
+    from the last bar: `close`, `ema20`, `ema20_w`, `atr14`, `dollar_vol` and
+    `adr_pct` (None where a value is missing). Only the moving-average rungs can reach the tier
     here: an ETF carries neither short interest nor a tight-base column.
     VARS uses the same formula as :mod:`create_technical_indicators` so values
     are comparable to the stock VARS leaderboard; the SPY baseline series is
@@ -1009,11 +1013,16 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
         print("   Warning: yfinance not installed, skipping ETF metrics")
         return {}
 
-    # 8 months covers the 100-session VARS lookback plus ATR14 warm-up with slack.
+    # Two years, for the weekly EMA20 of the ETF Viz tab. That EMA seeds on its
+    # first week: over 8 months (~34 weeks) the seed keeps ~3% weight, which
+    # moves a 2x ETF's weekly distance visibly; over ~100 weeks it keeps less
+    # than 0.01%, as on the pipeline's 500-day history. VARS, ATR14, the EMAs,
+    # the SMA50 and ADR read only recent windows, so the longer fetch leaves
+    # them unchanged.
     unique_tickers = list(set(tickers))
     print(f"   Fetching OHLC for {len(unique_tickers)} ETF tickers from Yahoo Finance...")
     try:
-        data = yf.download(unique_tickers, period='8mo', progress=False, group_by='ticker')
+        data = yf.download(unique_tickers, period='2y', progress=False, group_by='ticker')
     except Exception as e:
         print(f"   Warning: yfinance download failed: {e}")
         return {}
@@ -1086,13 +1095,32 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
                 sma50=sma50.iloc[-1],
             )
 
-            # A row carrying only a tier still reaches the payload — the skip
-            # asks whether this ETF earned any metric at all, and the tier is
-            # one of them.
-            if vars_value is None and color is None and highlight is None:
+            # Zone-map inputs for the ETF Viz tab. Dollar volume uses the
+            # pipeline's `avg_dollar_vol` definition; a frame with no volume
+            # has none, and the zone map's floor then drops the ETF.
+            dollar_vol = None
+            if 'Volume' in df:
+                dv = (close * pd.to_numeric(df['Volume'])).rolling(
+                    window=20, min_periods=10).mean().iloc[-1]
+                dollar_vol = _finite(dv)
+            zone = {
+                'close': _finite(last_close),
+                'ema20': _finite(ema20.iloc[-1]),
+                'ema20_w': _finite(compute_weekly_ema(close, **weekly_ema_config()).iloc[-1]),
+                'atr14': _finite(atr14.iloc[-1]),
+                'dollar_vol': dollar_vol,
+                'adr_pct': _finite(adr_pct.iloc[-1]),
+            }
+
+            # A row carrying only a tier, or only zone inputs, still reaches
+            # the payload — the skip asks whether this ETF earned any metric
+            # at all.
+            if (vars_value is None and color is None and highlight is None
+                    and zone['close'] is None):
                 continue
             metrics[ticker] = {
                 'vars': vars_value, 'color': color, 'highlight': highlight,
+                'zone': zone,
             }
         except Exception as e:
             print(f"     Error processing {ticker}: {e}")

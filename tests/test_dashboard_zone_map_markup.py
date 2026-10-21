@@ -19,7 +19,7 @@ HTML = (ROOT / 'docs' / 'index.html').read_text(encoding='utf-8')
 CONFIG = yaml.safe_load((ROOT / 'config' / 'workflow_config.yaml').read_text(encoding='utf-8'))
 
 #: Every Viz tab draws a zone map.
-ZONE_TABS = ('themeviz', 'varsviz', 'momentumviz', 'volumeviz')
+ZONE_TABS = ('themeviz', 'varsviz', 'momentumviz', 'volumeviz', 'etfviz')
 
 
 def _zone_section():
@@ -164,6 +164,21 @@ class ZoneMarkupTests(unittest.TestCase):
         self.assertIn("tabId + '-chart-area'", _fn('initTickerClicks'))
         for tab in ZONE_TABS:
             self.assertIn(f'id="{tab}-chart-area"', HTML, tab)
+
+    def test_etf_viz_sits_right_of_lev_etf(self):
+        buttons = re.findall(r'data-tab="(\w+)"[^>]*>([^<]+)</button>', HTML)
+        ids = [b[0] for b in buttons]
+        self.assertEqual(ids.index('etf') + 1, ids.index('etfviz'))
+        self.assertEqual('ETF Viz', dict(buttons)['etfviz'])
+
+    def test_etf_mode_prints_vars(self):
+        self.assertRegex(
+            APP, r"etf:\s*\{\s*containerId: 'etfviz-zone', tabId: 'etfviz', metric: 'vars' \}")
+
+    def test_the_unmapped_note_renders(self):
+        body = _fn('renderZoneMap')
+        self.assertIn('zm.unmapped', body)
+        self.assertIn('etf_themes.yaml', body)
 
     def test_no_network_code_remains(self):
         LEGENDS = (ROOT / 'docs' / 'legends.js').read_text(encoding='utf-8')

@@ -266,7 +266,7 @@ class SingleSourceTests(unittest.TestCase):
     def test_the_viz_keys_are_generated_not_hand_written(self):
         """Each zone map's key is drawn by legends.js from the same classes the
         map paints with. The hand-written network keys had drifted."""
-        self.assertEqual(4, len(re.findall(r'data-viz-legend="zone"', HTML)))
+        self.assertEqual(5, len(re.findall(r'data-viz-legend="zone"', HTML)))
         self.assertEqual(0, len(re.findall(r'data-viz-legend="(?:rs|vars)"', HTML)))
         self.assertIn('[data-viz-legend="zone"]', LEGENDS)
 

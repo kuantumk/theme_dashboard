@@ -23,6 +23,8 @@
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
   const ETF_DATA_HISTORY_URL = 'data/etf_data_history.json';
+  const ETF_VIZ_DATA_URL = 'data/etf_viz.json';
+  const ETF_VIZ_HISTORY_URL = 'data/etf_viz_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
   const NASI_DATA_URL = 'data/nasi.json';
   // Oversold line for OUR series. Not portable from a vendor's chart: RSI at the
@@ -76,7 +78,7 @@
   };
 
   // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, parabolic: null };
+  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, etfviz: null, parabolic: null };
 
   // Sort state per table
   let sortState = {
@@ -120,6 +122,7 @@
     loadVARSData();
     loadIndustryETFData();
     loadETFData();
+    loadETFVizData();
     loadParabolicData();
     loadSIData();
     loadMacroEvents();
@@ -335,7 +338,7 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, parabolic: -1 };
+  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, etfviz: -1, parabolic: -1 };
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -998,6 +1001,7 @@
                              // nothing to backfill.
   let industryHistory = [];  // Array of {report_date, data} snapshots
   let etfHistory = [];       // Array of {report_date, data} snapshots
+  let etfVizHistory = [];    // Array of {report_date, zone_map} snapshots
   let activeSessionDate = null;
   let hasUserSelectedSession = false;
 
@@ -1442,6 +1446,31 @@
       });
   }
 
+  // ETF Viz: the long Lev ETFs on the zone map. Its history grows one entry
+  // per daily run, like the Lev ETF tab's.
+  function loadETFVizData() {
+    Promise.all([
+      fetch(withCacheBust(ETF_VIZ_DATA_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+      fetch(withCacheBust(ETF_VIZ_HISTORY_URL)).then(r => r.json()).catch(() => []),
+    ])
+      .then(([current, history]) => {
+        const byDate = {};
+        (history || []).forEach(h => { byDate[h.report_date] = h; });
+        if (current && current.report_date) {
+          byDate[current.report_date] = current;
+        }
+        etfVizHistory = Object.values(byDate)
+          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+        renderAllTimeTravelBars();
+        renderZoneMap(current, 'etf');
+      })
+      .catch(err => {
+        console.warn('ETF Viz data not available:', err);
+        const vz = document.getElementById('etfviz-zone');
+        if (vz) vz.innerHTML = '<div class="no-data">ETF Viz data not available.<br>Run the daily workflow to generate data.</div>';
+      });
+  }
+
   function loadSIData() {
     Promise.all([
       fetch(withCacheBust(SI_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
@@ -1550,6 +1579,8 @@
       ? `No ETF data for ${date}.`
       : 'No ETF data available.';
     sortAndRenderETF();
+    // ETF Viz
+    renderZoneMap(etfVizHistory.find(h => h.report_date === date), 'etf', date);
   }
 
   function renderAllTimeTravelBars() {
@@ -1567,6 +1598,7 @@
     renderTimeTravelBar('varsviz-tt-dates', varsDates, onTimeTravelSelect);
     renderTimeTravelBar('industry-tt-dates', tabSessionDates(industryHistory), onTimeTravelSelect);
     renderTimeTravelBar('etf-tt-dates', tabSessionDates(etfHistory), onTimeTravelSelect);
+    renderTimeTravelBar('etfviz-tt-dates', tabSessionDates(etfVizHistory), onTimeTravelSelect);
     renderTimeTravelBar('parabolic-tt-dates', tabSessionDates(parabolicHistory), onTimeTravelSelect);
     renderTimeTravelBar('si-tt-dates', tabSessionDates(siHistory), onTimeTravelSelect);
   }
@@ -1655,7 +1687,7 @@
     onSelect(date);
   }
 
-  // ── ZONE MAP — the four Viz tabs ───────────────────────────────────
+  // ── ZONE MAP — the five Viz tabs ───────────────────────────────────
   // Each ticker sits at (close vs the daily EMA20, close vs the weekly
   // EMA20), both in daily ATR14. The server decides every zone and state
   // (export_dashboard_data.build_zone_map); this code only draws. It paints
@@ -1667,6 +1699,7 @@
     vars: { containerId: 'varsviz-zone', tabId: 'varsviz', metric: 'vars' },
     momentum: { containerId: 'momentumviz-zone', tabId: 'momentumviz', metric: 'rs' },
     volume: { containerId: 'volumeviz-zone', tabId: 'volumeviz', metric: 'vars' },
+    etf: { containerId: 'etfviz-zone', tabId: 'etfviz', metric: 'vars' },
   };
 
   const ZONE_METRIC = {
@@ -2125,7 +2158,12 @@
     const metric = ZONE_METRIC[cfg.metric];
     el.innerHTML = '<div class="card zm-card zm-plot"><svg class="zm-svg" role="img" aria-label="Zone map"></svg></div>'
       + zoneStatesCard(tickers, metric)
-      + zoneClustersCard(tickers, metric);
+      + zoneClustersCard(tickers, metric)
+      // Only the ETF payload carries `unmapped`: sheet ETFs with no theme, so
+      // with an unknown side, that stay off the map.
+      + (zm.unmapped && zm.unmapped.length
+        ? `<p class="zm-foot">Not on the map, no theme in config/etf_themes.yaml: ${escHtml(zm.unmapped.join(', '))}.</p>`
+        : '');
     // The scatter draws from this at the SVG's pixel width, now if the tab
     // is visible, else when it is shown.
     el._zm = { zm, metric };

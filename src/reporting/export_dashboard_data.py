@@ -1486,6 +1486,42 @@ def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
     return {'params': params, **counts, 'tickers': out}
 
 
+# ── ETF Viz (the long leveraged ETFs on the zone map) ──────────────────────
+#
+# config/etf_themes.yaml gives each Lev ETF sheet ticker a side and a theme.
+# Only long ETFs plot. A sheet ticker with no entry does not plot, because its
+# side is unknown and it could be inverse; the snapshot lists it instead.
+
+ETF_THEMES_FILE = PROJECT_ROOT / 'config' / 'etf_themes.yaml'
+ETF_SIDES = ('long', 'short', 'exclude')
+
+
+def load_etf_theme_map(path=ETF_THEMES_FILE):
+    """``{TICKER: entry}`` from the ETF theme map, or ``{}`` when it is absent."""
+    import yaml
+
+    path = Path(path)
+    if not path.exists():
+        return {}
+    with open(path, encoding='utf-8') as f:
+        data = yaml.safe_load(f) or {}
+    return {str(ticker).upper(): dict(entry or {}) for ticker, entry in data.items()}
+
+
+def etf_leaves(entry, ticker_themes):
+    """The theme paths of one ETF entry, or None when it has none to give.
+
+    Explicit `themes` win, and an empty list is a real answer (plot with no
+    cluster). Otherwise the underlying's tags are read live, so a retag of
+    the stock moves the ETF with no edit to the map.
+    """
+    if 'themes' in entry:
+        return list(entry['themes'] or [])
+    underlying = str(entry.get('underlying') or '').upper()
+    tags = ticker_themes.get(underlying) if underlying else None
+    return list(tags) if tags else None
+
+
 def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     """Build a single momentum_136 snapshot dict from one screener CSV.
 

@@ -46,15 +46,6 @@ SIDE_WEAK = "weak"
 # two boards disagree about what "this theme's leaders" means.
 TOP_MEMBERS = 3
 
-# Defaults for the three scoring knobs, mirroring the `bidask:` block of
-# `config/workflow_config.yaml`. `BidAskConfig` carries all three, so `_tunable`
-# reads them off the config object; these defaults are the fallback for a config
-# double that predates them, which is what the tests build. `tests/test_bidask_grouping.py` pins these equal to the
-# shipped YAML so the two cannot drift apart unnoticed.
-DEFAULT_RVOL_CAP = 5.0
-DEFAULT_BREADTH_COEF = 0.5
-DEFAULT_BREADTH_MIN_MEMBERS = 2
-
 
 def load_themes(path: Optional[str] = None) -> dict:
     target = path or TICKER_THEMES_FILE
@@ -63,12 +54,6 @@ def load_themes(path: Optional[str] = None) -> dict:
             return json.load(handle)
     except (OSError, json.JSONDecodeError):
         return {}
-
-
-def _tunable(cfg, name: str, default: float) -> float:
-    """Read one scoring knob from the config object, else its named default."""
-    value = getattr(cfg, name, None)
-    return default if value is None else float(value)
 
 
 def _leaves_for(symbol: str, meta: dict, themes: dict) -> list[tuple[str, str]]:
@@ -90,11 +75,11 @@ def _leaves_for(symbol: str, meta: dict, themes: dict) -> list[tuple[str, str]]:
 def _tally(total_groups: int, total_tickers: int) -> dict:
     """How much there was to show, so the page can say what it is not showing.
 
-    The cap is deliberate — an industry fallback can hold 70 tickers and would
-    otherwise consume the column. Reporting it is what was missing: on
-    2026-08-14 the strong column rendered 13 of 124 groups and the page gave no
-    hint that the other 111 existed, so a theme that was genuinely bid looked
-    identical to one that was not being tracked at all.
+    The browser's display cap is deliberate — an industry fallback can hold 70
+    tickers and would otherwise consume the column. Reporting it is what was
+    missing: on 2026-08-14 the strong column rendered 13 of 124 groups and the
+    page gave no hint that the other 111 existed, so a theme that was genuinely
+    bid looked identical to one that was not being tracked at all.
 
     Only the totals are published. The browser counts "shown" after its
     sliders and display caps, so that figure agrees with the screen.
@@ -203,7 +188,7 @@ def _roster_sizes(universe: list[dict], themes: dict) -> dict[str, int]:
 
 
 def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
-                  universe=None, include_all: bool = False) -> dict:
+                  universe=None) -> dict:
     """Split one poll's qualifying rows into strong-tape and weak-tape columns.
 
     `rows` are the rows that cleared the relative-volume gate. Each carries
@@ -225,9 +210,12 @@ def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
     theme and spend its whole budget before reaching the ones being distributed.
     There is no `reverse` parameter left to pass the wrong way round.
 
-    `include_all` publishes complete scoring inputs for browser filtering;
-    display limits and effective scoring settings travel with the columns.
-    The default remains capped for direct callers. `truncated` carries totals.
+    Every group and every member is returned: the browser filters on its
+    sliders, recomputes a filtered group's score from the members still
+    visible, and only then applies the display caps. A server-side cap would
+    hide exactly the members that recomputation needs. The caps and the
+    effective scoring settings travel with the columns under `scoring`, and
+    `truncated` carries the totals the page reports against.
     """
     strong_rows, weak_rows = [], []
     for source in rows:
@@ -243,45 +231,42 @@ def build_columns(rows, themes: dict, cfg, *, grouped: bool = True,
         if SIDE_WEAK in sides:
             weak_rows.append(payload)
 
+    # The scoring knobs, read once per call. The same dict is published, so
+    # the browser recomputes a filtered score with exactly these values.
+    scoring = {
+        "rvol_cap": float(cfg.group_rvol_cap),
+        "breadth_coef": float(cfg.group_breadth_coef),
+        "breadth_min_members": int(cfg.group_breadth_min_members),
+        "top_members": TOP_MEMBERS,
+        "max_rows_per_column": cfg.max_rows_per_column,
+        "max_rows_per_group": cfg.max_rows_per_group if grouped else cfg.max_rows_per_column,
+    }
     pool = list(rows) if universe is None else list(universe)
     split = _flat if not grouped else _grouped
-    strong, strong_meta = split(strong_rows, themes, cfg, pool, include_all)
-    weak, weak_meta = split(weak_rows, themes, cfg, pool, include_all)
+    strong, strong_meta = split(strong_rows, themes, scoring, pool)
+    weak, weak_meta = split(weak_rows, themes, scoring, pool)
     return {
-        "scoring": {
-            "rvol_cap": _tunable(cfg, "group_rvol_cap", DEFAULT_RVOL_CAP),
-            "breadth_coef": _tunable(cfg, "group_breadth_coef", DEFAULT_BREADTH_COEF),
-            "breadth_min_members": int(_tunable(
-                cfg, "group_breadth_min_members", DEFAULT_BREADTH_MIN_MEMBERS)),
-            "top_members": TOP_MEMBERS,
-            "max_rows_per_column": cfg.max_rows_per_column,
-            "max_rows_per_group": cfg.max_rows_per_group if grouped else cfg.max_rows_per_column,
-        },
+        "scoring": scoring,
         "strong": strong,
         "weak": weak,
         "truncated": {"strong": strong_meta, "weak": weak_meta},
     }
 
 
-def _score(members: list[dict], roster: int, cfg) -> float:
+def _score(members: list[dict], roster: int, scoring: dict) -> float:
     """Capped top-three mean plus the additive breadth term, rounded for display.
 
     Rounded here rather than at render time so the number the board ranks on is
     the number it shows. A sort on an unrounded value beside a rounded label is
     a board whose order cannot be checked against its own figures.
     """
-    total = _intensity(members, _tunable(cfg, "group_rvol_cap", DEFAULT_RVOL_CAP))
-    total += _breadth(
-        len(members),
-        roster,
-        _tunable(cfg, "group_breadth_coef", DEFAULT_BREADTH_COEF),
-        int(_tunable(cfg, "group_breadth_min_members",
-                     DEFAULT_BREADTH_MIN_MEMBERS)),
-    )
+    total = _intensity(members, scoring["rvol_cap"])
+    total += _breadth(len(members), roster, scoring["breadth_coef"],
+                      scoring["breadth_min_members"])
     return round(total, 4)
 
 
-def _flat(rows: list[dict], _themes: dict, cfg, universe: list[dict], include_all: bool
+def _flat(rows: list[dict], _themes: dict, scoring: dict, universe: list[dict]
           ) -> tuple[list[dict], dict]:
     """Crypto path: one pseudo-group, ranked. The taxonomy is equities-only.
 
@@ -294,19 +279,16 @@ def _flat(rows: list[dict], _themes: dict, cfg, universe: list[dict], include_al
     if not members:
         return [], _tally(0, total_tickers)
     roster = len({r.get("symbol") for r in universe if r.get("symbol")})
-    shown = [{
+    return [{
         "name": "All",
         "origin": "flat",
-        # Scored before the column cap, so the ranking does not depend on how
-        # many rows happen to fit.
-        "score": _score(members, roster, cfg),
+        "score": _score(members, roster, scoring),
         "roster": roster,
-        "members": members if include_all else members[: cfg.max_rows_per_column],
-    }]
-    return shown, _tally(1, total_tickers)
+        "members": members,
+    }], _tally(1, total_tickers)
 
 
-def _grouped(rows: list[dict], themes: dict, cfg, universe: list[dict], include_all: bool
+def _grouped(rows: list[dict], themes: dict, scoring: dict, universe: list[dict]
              ) -> tuple[list[dict], dict]:
     roster = _roster_sizes(universe, themes)
 
@@ -322,22 +304,6 @@ def _grouped(rows: list[dict], themes: dict, cfg, universe: list[dict], include_
         bucket["members"] = _dedupe(bucket["members"])
         bucket["members"].sort(key=_sort_key)
         bucket["roster"] = roster.get(bucket["name"], 0)
-        bucket["score"] = _score(bucket["members"],
-                                 roster.get(bucket["name"], 0), cfg)
+        bucket["score"] = _score(bucket["members"], bucket["roster"], scoring)
     groups.sort(key=lambda b: (-b["score"], b["name"]))
-
-    if include_all:
-        return groups, _tally(len(groups), len({r["symbol"] for r in rows}))
-
-    # Cap per group *before* spending the column budget. Without the per-group
-    # limit the top bucket takes as many slots as it has members and every other
-    # narrative is dropped — an industry fallback can easily hold 70 tickers.
-    capped, budget = [], cfg.max_rows_per_column
-    for bucket in groups:
-        if budget <= 0:
-            break
-        take = min(budget, cfg.max_rows_per_group)
-        bucket["members"] = bucket["members"][:take]
-        budget -= len(bucket["members"])
-        capped.append(bucket)
-    return capped, _tally(len(groups), len({r["symbol"] for r in rows}))
+    return groups, _tally(len(groups), len({r["symbol"] for r in rows}))

@@ -86,9 +86,10 @@ class ParseNaaimSeriesTests(unittest.TestCase):
         self.assertIsNone(edd.parse_naaim_series(body))
 
     def test_a_non_numeric_close_yields_nothing_rather_than_raising(self):
-        """parse is called outside the request's try block, and neither
-        update_breadth_history nor export_all guards the chain -- an escaping
-        ValueError would abort the whole daily export, not just this tile.
+        """parse is called outside the request's try block, and
+        update_breadth_history does not guard the chain -- an escaping
+        ValueError would drop every breadth reading and fail the export run,
+        not just blank this tile.
 
         The corruption has to land in the Close column specifically: the parse
         reads only the date and the close, so a junk Open is correctly ignored
@@ -304,11 +305,10 @@ class FetchNaaimExposureTests(unittest.TestCase):
         self.assertIsNone(reading)
 
     def test_a_broken_url_template_returns_none_rather_than_raising(self):
-        """The URL is built inside the try. This function is called unguarded --
-        neither update_breadth_history nor export_all wraps it -- so an escaping
-        KeyError from a renamed config key or a stray brace in the template
-        would abort the whole daily export, losing every later tab, over one
-        tile."""
+        """The URL is built inside the try. update_breadth_history calls this
+        unguarded, so an escaping KeyError from a renamed config key or a stray
+        brace in the template would drop every breadth reading and fail the
+        export run over one tile."""
         broken = dict(edd.CONFIG["market_breadth"])
         broken.pop("naaim_url")
         with patch.dict(edd.CONFIG, {"market_breadth": broken}):

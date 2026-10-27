@@ -148,8 +148,8 @@ class PerSessionFlagTests(unittest.TestCase):
                 (screening / 'vars' / f'vars_{ds}.parquet').write_text('x')
             seen = {}
 
-            def fake_build(csv_file, day_flags, newest_session=False):
-                ds = csv_file.stem.replace('vars_', '')
+            def fake_build(path, day_flags, newest_session=False, fundamentals=None):
+                ds = path.stem.replace('vars_', '')
                 seen[ds] = day_flags
                 return {'report_date': ds, 'themes': []}
 

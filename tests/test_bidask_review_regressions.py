@@ -119,7 +119,7 @@ class TestCalculationBoundaries(unittest.TestCase):
     def test_full_payload_keeps_scoring_members_beyond_display_limit(self):
         cfg = load_config({"max_rows_per_column": 1, "group_rvol_cap": 2.0})
         rows = [{"symbol": symbol, "rvol_at_time": ratio, "sides": ["strong"], "industry": "Group"} for symbol, ratio in (("A", 5), ("B", 1), ("C", 1))]
-        columns = build_columns(rows, {}, cfg, universe=rows, include_all=True)
+        columns = build_columns(rows, {}, cfg, universe=rows)
         self.assertEqual(len(columns["strong"][0]["members"]), 3)
         self.assertEqual(columns["strong"][0]["roster"], 3)
         self.assertAlmostEqual(columns["strong"][0]["score"], 1.8333)
@@ -137,7 +137,7 @@ class TestClockAndFeedIntegration(unittest.TestCase):
         index = pd.date_range("2026-09-16", periods=288 * 2 + 30, freq="5min", tz="UTC").tz_convert(server.ET)
         frame = pd.DataFrame({"Volume": [1.] * 576 + [1000.] * 30}, index=index)
         rows = pd.DataFrame([{"symbol": "BTC", "feed_symbol": "BINANCE:BTCUSDT.P", "volume": 60., "close": 100., "change_pct": 1.}])
-        payload = Payload(rows=rows, feed="streaming", matched=1, market_status="24/7")
+        payload = Payload(rows=rows, feed="streaming", matched=1, market_status="24/7", session_state="crypto")
         with tempfile.TemporaryDirectory() as temp, \
              mock.patch.object(server, "datetime", clock), \
              mock.patch.object(server, "fetch", return_value=payload), \
@@ -147,7 +147,7 @@ class TestClockAndFeedIntegration(unittest.TestCase):
             engine._profile_threads["crypto"].join(timeout=3)
             engine.poll_once()
             self.assertEqual(engine.profile_dates["crypto"], "2026-09-18")
-            self.assertEqual(engine.qualified["crypto"][0]["rvol_at_time"], 2.)
+            self.assertEqual(engine.snapshots["crypto"].qualified[0]["rvol_at_time"], 2.)
             self.assertEqual(engine.build_state()["crypto"]["rvol"]["anchor"], "00:00 UTC")
 
     def test_delayed_rows_fail_closed_even_in_mixed_feed(self):
@@ -156,7 +156,7 @@ class TestClockAndFeedIntegration(unittest.TestCase):
         clock.now.side_effect = lambda tz=None: now.astimezone(tz) if tz else now
         for mixed in (False, True):
             rows = pd.DataFrame([{"symbol": s, "volume": 1000., "close": 100., "change_pct": 1., "update_mode": mode} for s, mode in (("BTC", "delayed_streaming_900"), ("ETH", "streaming" if mixed else "delayed_streaming_900"))])
-            payload = Payload(rows=rows, feed="mixed" if mixed else "delayed_streaming_900", matched=2, market_status="24/7")
+            payload = Payload(rows=rows, feed="mixed" if mixed else "delayed_streaming_900", matched=2, market_status="24/7", session_state="crypto")
             with tempfile.TemporaryDirectory() as temp, \
                  mock.patch.object(server, "datetime", clock), \
                  mock.patch.object(server, "fetch", return_value=payload), \
@@ -165,7 +165,7 @@ class TestClockAndFeedIntegration(unittest.TestCase):
                 engine.poll_once()
                 engine._profile_threads["crypto"].join(timeout=3)
                 engine.poll_once()
-                self.assertEqual([r["symbol"] for r in engine.qualified["crypto"]], ["ETH"] if mixed else [])
+                self.assertEqual([r["symbol"] for r in engine.snapshots["crypto"].qualified], ["ETH"] if mixed else [])
                 status = engine.build_state()["crypto"]["rvol"]
                 self.assertEqual(status["delayed_rows"], 1 if mixed else 2)
                 if not mixed:

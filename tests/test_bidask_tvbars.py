@@ -309,7 +309,7 @@ class TestCompletionDeadline(unittest.TestCase):
             connection = tvbars._Connection("tok", interval="5", bars=100)
             result = connection.series_batch(["NASDAQ:AAA"])
         self.assertEqual(result, [({}, "timeout")])
-        self.assertLessEqual(tick[0], tvbars.BATCH_IDLE_TIMEOUT)
+        self.assertLessEqual(tick[0], tvbars.BATCH_DEADLINE)
         self.assertTrue(any("~h~123" in raw for raw in sock.sent))
 
     def test_partial_rows_do_not_override_a_timeout(self):

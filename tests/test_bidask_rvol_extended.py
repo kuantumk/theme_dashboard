@@ -29,7 +29,6 @@ from src.bidask.rvol_at_time import (
     baseline_at,
     build_profiles,
     cache_path,
-    extended_volume_is_dead,
     load_profiles,
     minutes_since_open,
     rvol_at_time,
@@ -199,23 +198,18 @@ class TestDeadExtendedVolume(unittest.TestCase):
         dead.loc[np.asarray(pre), "Volume"] = 0.0
         return dead
 
-    def test_zero_volume_extended_bars_are_detected(self):
-        self.assertTrue(extended_volume_is_dead(self._zero_extended()))
-
     def test_a_symbol_with_dead_extended_volume_gets_no_profile(self):
-        frames = pd.concat([self._zero_extended()] * 1)
-        profiles = build_profiles({"AAA": frames}, sessions=10)
+        profiles = build_profiles({"AAA": self._zero_extended()}, sessions=10)
         self.assertNotIn("AAA", profiles)
 
     def test_absent_extended_bars_are_not_dead_volume(self):
         """A quiet name simply has no bar there. That is legitimate history."""
         quiet = session_frame(3, regular_total=1_000_000)
-        self.assertFalse(extended_volume_is_dead(quiet))
         self.assertIn("AAA", build_profiles({"AAA": quiet}, sessions=10))
 
     def test_real_extended_volume_is_not_dead(self):
-        self.assertFalse(extended_volume_is_dead(
-            session_frame(3, pre_total=2_000, regular_total=1_000_000)))
+        live = session_frame(3, pre_total=2_000, regular_total=1_000_000)
+        self.assertIn("AAA", build_profiles({"AAA": live}, sessions=10))
 
 
 class TestSessionCompleteness(unittest.TestCase):

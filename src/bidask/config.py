@@ -10,22 +10,15 @@ from dataclasses import dataclass
 from typing import FrozenSet, Optional
 
 from config.settings import CONFIG, TRADINGVIEW_SESSION_SIGN, TRADINGVIEW_SESSIONID
+# The states `in_play_rvol_schedules` may be keyed by. Read from
+# `session_state`, which imports nothing in the package, so this module cannot
+# end up in an import cycle through `rvol_at_time` -> `tvbars` -> `tvsocket`.
+from src.bidask.session_state import SCHEDULE_STATES
 
 # Windows TradingView actually populates. `average_volume_20d_calc` is accepted
 # by the screener but returns null for every row, so a 20-day average — the
 # window a trader would naturally ask for — is not obtainable from this feed.
 VALID_AVG_WINDOWS = (10, 30, 60, 90)
-
-# The states `in_play_rvol_schedules` may be keyed by. Three come from
-# `src/bidask/session_state.py` and the fourth is the crypto board, which has
-# no session state at all.
-#
-# This module cannot import `rvol_at_time` to read `SCHEDULE_STATES` from it:
-# that module reaches `tvbars` and then `tvsocket`, which imports `cookie_jar`
-# from here, so the import would be a cycle. `tests/test_bidask_rvol_at_time.py` pins the two
-# tuples equal instead — the same arrangement `feed.SESSION_LABELS` and
-# `session_state.SESSION_STATES` already live under.
-RVOL_SCHEDULE_STATES = ("pre_market", "market", "post_market", "crypto")
 
 # Keys that no longer mean anything, each naming what replaced it. Ignoring one
 # would silently drop a leg of the gate — which is precisely how the previous
@@ -208,12 +201,12 @@ def load_config(overrides: Optional[dict] = None) -> BidAskConfig:
                 "bidask.in_play_rvol_schedules must map a session state to its "
                 f"[[minutes, floor], ...] bands; got {value!r}."
             ) from exc
-        unknown = [state for state, _ in items if state not in RVOL_SCHEDULE_STATES]
+        unknown = [state for state, _ in items if state not in SCHEDULE_STATES]
         if unknown:
             raise ValueError(
                 f"bidask.in_play_rvol_schedules has no such state(s): "
                 f"{', '.join(map(str, unknown))}. Valid keys are "
-                f"{', '.join(RVOL_SCHEDULE_STATES)}."
+                f"{', '.join(SCHEDULE_STATES)}."
             )
         return tuple((state, _bands(state, bands)) for state, bands in items)
 

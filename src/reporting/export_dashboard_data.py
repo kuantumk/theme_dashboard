@@ -10,6 +10,7 @@ import math
 import re
 import csv
 import io
+import traceback
 import urllib.request
 from pathlib import Path
 from datetime import datetime, date, timedelta, timezone
@@ -40,6 +41,10 @@ from src.screening.screeners.parabolic import MIN_ATR_MULTI_50SMA, MIN_AVG_DOLLA
 from src.themes.theme_taxonomy import resolve_l1, split_path
 
 OUTPUT_DIR = DOCS_DATA_DIR
+
+#: The two overflow buckets, which are not trading narratives. The flat-table
+#: tabs sink them to the bottom; the L1-clustered tabs and the zone maps hide them.
+CATCHALL_THEMES = frozenset({'Uncategorized', 'Singleton'})
 
 
 def _attach_hierarchy(themes_list):
@@ -109,143 +114,18 @@ MACRO_TICKERS = {
 }
 
 
-def find_latest_report():
-    """Find the most recent daily report file."""
-    reports = sorted(REPORTS_DIR.glob("daily_report_*.md"), reverse=True)
-    if not reports:
-        print("No daily reports found.")
-        return None
-    return reports[0]
+def latest_report_date():
+    """Session date of the newest daily report, read from its file name, or None.
 
-
-def parse_report(filepath):
-    """Parse the daily report markdown into structured data."""
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-
-    result = {
-        'report_date': None,
-        'ncfd': None,
-        'mmfi': None,
-        'themes': [],
-    }
-
-    date_match = re.search(r'daily_report_(\d{4}-\d{2}-\d{2})', filepath.name)
-    if date_match:
-        result['report_date'] = date_match.group(1)
-
-    ncfd_match = re.search(r'NCFD.*?:\s*([\d.]+)%', content)
-    mmfi_match = re.search(r'MMFI.*?:\s*([\d.]+)%', content)
-    mmtw_match = re.search(r'MMTW.*?:\s*([\d.]+)%', content)
-    mmth_match = re.search(r'MMTH.*?:\s*([\d.]+)%', content)
-    if ncfd_match:
-        result['ncfd'] = float(ncfd_match.group(1))
-    if mmfi_match:
-        result['mmfi'] = float(mmfi_match.group(1))
-    if mmtw_match:
-        result['mmtw'] = float(mmtw_match.group(1))
-    if mmth_match:
-        result['mmth'] = float(mmth_match.group(1))
-
-    # Parse themes
-    lines = content.split('\n')
-    theme_section_lines = []
-    in_themes = False
-
-    for line in lines:
-        if '## 🌍 Market Themes' in line or '## Market Themes' in line:
-            in_themes = True
-            continue
-        if in_themes and (
-            '## 📈 Trading Performance' in line or
-            '## Trading Performance' in line or
-            '## Executive Summary' in line or
-            (line.startswith('---') and len(line.strip()) <= 5)
-        ):
-            if '## 📊 Market Context' not in line:
-                break
-            continue
-        if in_themes:
-            theme_section_lines.append(line)
-
-    theme_text = '\n'.join(theme_section_lines)
-
-    theme_pattern = re.compile(
-        r'###\s+(\d+)\.\s+(.+?)(?:\s+[🔥⚡💫🌟])?\s*\n'
-        r'\*\*Theme Score\*\*:\s*([\d.]+)\s*\|\s*\*\*Avg RS\*\*:\s*([\d.]+)%',
-        re.MULTILINE
-    )
-
-    # Collect ALL ### header positions (numbered themes AND uncategorized/other)
-    # so we never bleed one section's tickers into another.
-    all_section_starts = [m.start() for m in re.finditer(r'^### ', theme_text, re.MULTILINE)]
-
-    for match in theme_pattern.finditer(theme_text):
-        rank = int(match.group(1))
-        name = match.group(2).strip()
-        score = float(match.group(3))
-        avg_rs = float(match.group(4))
-
-        start = match.end()
-        next_starts = [s for s in all_section_starts if s > match.start()]
-        end = next_starts[0] if next_starts else len(theme_text)
-        section = theme_text[start:end]
-
-        tickers = parse_ticker_table(section)
-
-        result['themes'].append({
-            'rank': rank,
-            'name': name,
-            'score': score,
-            'avg_rs': avg_rs,
-            'tickers': tickers
-        })
-
-    return result
-
-
-def parse_ticker_table(section):
-    """Parse a markdown table of tickers from a theme section."""
-    tickers = []
-    lines = section.strip().split('\n')
-    in_table = False
-    headers = []
-
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('###'):
-            break
-        if line.startswith('**Tickers:**'):
-            continue
-        if '|' in line:
-            cells = [c.strip() for c in line.split('|')]
-            cells = [c for c in cells if c]
-            if not in_table:
-                if 'Ticker' in cells[0] or 'ticker' in cells[0].lower():
-                    headers = cells
-                    in_table = True
-                continue
-            if cells and ('Ticker' in cells[0] or 'ticker' in cells[0].lower()):
-                break
-            if all(c.replace('-', '').replace(':', '') == '' for c in cells):
-                continue
-            if len(cells) >= 7 and headers:
-                # Table columns: Ticker | VARS | RS% | Price | Vol(M) | Float(M) | EPS% | Sales% | Inst% | Short%
-                ticker_data = {
-                    'ticker': cells[0].strip(),
-                    'vars': safe_float(cells[1]) if len(cells) > 1 else None,
-                    'rs': safe_float(cells[2]) if len(cells) > 2 else None,
-                    'price': safe_float(cells[3]) if len(cells) > 3 else None,
-                    'float': cells[5].strip() if len(cells) > 5 else None,
-                    'eps': cells[6].strip() if len(cells) > 6 else None,
-                    'sales': cells[7].strip() if len(cells) > 7 else None,
-                    'inst': cells[8].strip() if len(cells) > 8 else None,
-                    'short': safe_float(cells[9]) if len(cells) > 9 else None,
-                }
-                tickers.append(ticker_data)
-    return tickers
+    The report body is not parsed: `report_meta.json` carries only this date
+    and the export timestamp, and the ETF tabs use it as their session date.
+    """
+    for report in sorted(REPORTS_DIR.glob("daily_report_*.md"), reverse=True):
+        match = re.search(r'daily_report_(\d{4}-\d{2}-\d{2})', report.name)
+        if match:
+            return match.group(1)
+    print("No daily reports found.")
+    return None
 
 
 def safe_float(val):
@@ -1107,10 +987,9 @@ def load_spy_cum_norm_100():
 
 
 THEMES_HISTORY_DAYS = 180  # Time-travel retention window in calendar days.
-# The dashboard shows the 5 most-recent sessions as buttons and the rest in a
-# dropdown; every session whose date falls within the last 180 calendar days is
-# retained. (Generating the back-dated source CSVs that far back is driven by
-# the `--days` argument in run_daily_workflow.py.)
+# Every session whose date falls within the last 180 calendar days is retained
+# and offered in the session bar. (Generating the back-dated source parquet
+# that far back is driven by the `--days` argument in run_daily_workflow.py.)
 
 
 def _history_cutoff(date_strings):
@@ -1164,6 +1043,57 @@ def _update_history_file(history_file, report_date, entry):
     dates = [h['report_date'] for h in history]
     span = f"{len(dates)} sessions, {dates[-1]} -> {dates[0]}" if dates else "empty"
     print(f"   -> {history_file} (history: {span})")
+
+
+def _export_session_history(sessions, build, out_dir, name, describe,
+                            history_view=None, compact_history=False):
+    """Write one tab's current snapshot and rebuild its whole history file.
+
+    `sessions` is ``[(date_str, source), ...]`` in any order. Sessions older
+    than the retention window are skipped; the rest are built newest first by
+    ``build(date_str, source, newest_session)``, and a None snapshot is dropped.
+
+    ⛔ The first snapshot to land becomes `<name>.json`, the one the tab renders
+    as current, so it is the only one built with ``newest_session=True`` — the
+    only one allowed today's short interest (see `_highlight_from_row`). This
+    is the one place that rule lives.
+
+    Writes `<name>.json` and `<name>_history.json` (every snapshot, newest
+    first, passed through `history_view` when given) from scratch, so a re-run
+    that regenerated back-dated parquet republishes every session. Returns the
+    current snapshot, or None when nothing was built.
+    """
+    sessions = sorted(sessions, key=lambda s: s[0], reverse=True)
+    cutoff = _history_cutoff([date_str for date_str, _ in sessions])
+
+    history = []
+    for date_str, source in sessions:
+        if cutoff is not None and date_str < cutoff:
+            continue
+        snap = build(date_str, source, not history)
+        if snap is not None:
+            history.append(snap)
+
+    if not history:
+        print(f"   Every {name} session was empty, skipping {name} export")
+        return None
+
+    current = history[0]
+    out = out_dir / f"{name}.json"
+    with open(out, 'w', encoding='utf-8') as fh:
+        json.dump(current, fh, indent=2)
+    print(f"   -> {out} ({describe(current)}, date {current['report_date']})")
+
+    written = history_view(history) if history_view else history
+    history_out = out_dir / f"{name}_history.json"
+    with open(history_out, 'w', encoding='utf-8') as fh:
+        if compact_history:
+            json.dump(written, fh, separators=(',', ':'))
+        else:
+            json.dump(written, fh, indent=2)
+    dates = [h['report_date'] for h in written]
+    print(f"   -> {history_out} (history: {len(written)} sessions, {dates[-1]} -> {dates[0]})")
+    return current
 
 
 def update_etf_history(report_date, etf_data, industry_data):
@@ -1347,7 +1277,6 @@ _ZONE_STATE_BY_CELL = {
 }
 
 ZONE_MASTER_COLUMNS = ('close', 'ema20', 'ema20_w', 'atr14', 'tight_range', 'tight_len')
-ZONE_HIDDEN_LEAVES = {'Uncategorized', 'Singleton'}
 
 
 def zone_map_config():
@@ -1472,7 +1401,7 @@ def build_zone_map(rows, master_df, leaves_by_ticker, cfg=None):
             'highlight': row.get('highlight'),
             'ticker_color': row.get('ticker_color'),
             'leaves': [p for p in (leaves_by_ticker.get(ticker) or [])
-                       if p not in ZONE_HIDDEN_LEAVES],
+                       if p not in CATCHALL_THEMES],
         })
     out.sort(key=lambda t: t['ticker'])
     params = {key: cfg[key] for key in ZONE_MAP_DEFAULTS}
@@ -1622,61 +1551,44 @@ def export_etf_viz(etf_data, etf_metrics, report_date):
         print(f"   Warning: ETF Viz export failed: {e}")
 
 
-def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
-    """Build a single momentum_136 snapshot dict from one screener CSV.
+# ── Screener-backed tabs (Momentum, VARS, Volume) ───────────────────────────
+#
+# The three builders share the per-ticker row tail, the theme bucketing and the
+# fundamentals join; each adds its own leading fields and its own grouping.
 
-    Returns the JSON-serializable {'report_date', 'themes': [...]} structure or
-    None if the CSV is empty / unreadable. Pure function — no I/O side effects.
 
-    `newest_session` says whether this snapshot is the one the tab renders as
-    current. Only then does short interest reach the highlight ladder — see
-    `_highlight_from_row`. It defaults to False so a new history loop that
-    forgets to pass it drops a rung rather than fabricating one.
+def _screener_theme_buckets(tickers):
+    """``(ticker_themes, theme_to_tickers)`` for one screener's tickers.
+
+    An untagged ticker falls back to Uncategorized so it still appears. The
+    full tag map comes back too, because the zone map reads it for its cluster
+    rows. The import stays function-local: tests patch
+    `src.themes.theme_registry.load_ticker_themes`.
     """
-    import sqlite3
-    import pandas as pd
     from src.themes.theme_registry import load_ticker_themes
     from src.themes.theme_taxonomy import build_theme_to_tickers
 
-    df = su.load_df_from_parquet(csv_file).fillna(0)
-    if df.empty:
-        return None
-
-    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
-
-    # Build ticker -> themes filtered map (Uncategorized fallback so untagged tickers still appear)
     ticker_themes = load_ticker_themes()
-    screener_tickers = df['ticker'].astype(str).str.upper().tolist()
-    filtered_map = {
-        t: ticker_themes.get(t) or ['Uncategorized']
-        for t in screener_tickers
+    filtered_map = {t: ticker_themes.get(t) or ['Uncategorized'] for t in tickers}
+    return ticker_themes, build_theme_to_tickers(filtered_map)
+
+
+def _vars_fields(row):
+    """The two VARS columns the VARS and Volume rows lead with."""
+    return {
+        'vars': round(float(row.get('vars', 0) or 0), 2),
+        'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
     }
 
-    # Reverse to theme -> tickers; empty groups dict skips consolidation/removal (preserves singletons)
-    theme_to_tickers = build_theme_to_tickers(filtered_map)
 
-    # Single-shot fundamentals lookup
-    fundamentals = {}
-    if FUNDAMENTALS_DB.exists() and screener_tickers:
-        conn = sqlite3.connect(FUNDAMENTALS_DB)
-        placeholders = ','.join(['?'] * len(screener_tickers))
-        rows = conn.execute(f'''
-            SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
-                   short_interest, inst_transactions
-            FROM fundamentals
-            WHERE ticker IN ({placeholders})
-        ''', screener_tickers).fetchall()
-        conn.close()
-        for r in rows:
-            fundamentals[r[0]] = {
-                'shares_float': r[1],
-                'eps_growth_yoy': r[2],
-                'sales_growth_yoy': r[3],
-                'short_interest': r[4],
-                'inst_transactions': r[5],
-            }
+def _screener_ticker_rows(df, fundamentals, newest_session, lead=None):
+    """``{TICKER: payload row}`` for one zero-filled screener frame.
 
-    # Per-ticker dict from master CSV row + fundamentals
+    `lead(row, ticker)` returns the tab's own fields, which sit between
+    `ticker` and the shared tail. Key order is the JSON's field order, so
+    the tail is spelled out once here. `newest_session` gates the highlight
+    ladder's short rung — see `_highlight_from_row`.
+    """
     per_ticker = {}
     for _, row in df.iterrows():
         t = str(row['ticker']).upper()
@@ -1685,6 +1597,7 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
         dollar_vol, adr_pct = filter_metrics(row)
         per_ticker[t] = {
             'ticker': t,
+            **(lead(row, t) if lead else {}),
             'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
             'price': round(float(row.get('close', 0) or 0), 2),
             'dollar_vol': dollar_vol,
@@ -1697,99 +1610,105 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
             'highlight': _highlight_from_row(
                 row, short_val if newest_session else None),
         }
+    return per_ticker
 
-    # Build theme list (sort tickers within theme by RS desc, themes by count desc)
-    themes_list = []
+
+def _theme_tables(theme_to_tickers, per_ticker, sort_field, skip=()):
+    """Yield ``(theme, rows)`` per non-empty theme, rows sorted by `sort_field` desc."""
     for theme_name, tickers in theme_to_tickers.items():
-        ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
-        if not ticker_dicts:
+        if theme_name in skip:
             continue
-        ticker_dicts.sort(key=lambda x: -x['rs'])
-        themes_list.append({'name': theme_name, 'tickers': ticker_dicts})
+        rows = [per_ticker[t] for t in tickers if t in per_ticker]
+        if not rows:
+            continue
+        rows.sort(key=lambda x: -x[sort_field])
+        yield theme_name, rows
 
-    # Catch-all buckets sort to the bottom regardless of count — they're
-    # overflow, not thematic concentration.
-    catchall_themes = {'Uncategorized', 'Singleton'}
-    themes_list.sort(key=lambda th: (
-        th['name'] in catchall_themes,
-        -len(th['tickers']),
-        th['name'],
-    ))
 
-    # Apply ticker_color flags
-    if day_flags:
-        for th in themes_list:
-            enrich_with_ticker_color(th['tickers'], day_flags)
-
-    _attach_hierarchy(themes_list)
-
+def _avg_vars_table(name, rows):
     return {
-        'report_date': csv_date,
-        'themes': themes_list,
-        'zone_map': build_zone_map(
-            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
+        'name': name,
+        'avg_vars': round(sum(td['vars'] for td in rows) / len(rows), 2),
+        'tickers': rows,
     }
 
 
-def export_momentum_136(day_flags_by_date):
-    """Export momentum_136 — rebuilds full N-session history from CSVs every run.
+def _color_tables(tables, day_flags):
+    """Apply the session's day-pattern flags to every table's ticker rows."""
+    if day_flags:
+        for table in tables:
+            enrich_with_ticker_color(table['tickers'], day_flags)
 
-    Like `export_parabolic`, this iterates the per-day momentum_136 CSVs within
-    the retention window (last THEMES_HISTORY_DAYS calendar days) and writes both
-    the current snapshot (newest date) and the history file from scratch.
-    Replaces the old append-only behavior so every workflow run produces a
-    complete dropdown history, even when the daily workflow re-runs `--days N`
-    and regenerates back-dated CSVs (e.g. after a new indicator was added).
+
+def _build_momentum_136_snapshot(path, day_flags, newest_session=False, fundamentals=None):
+    """Build a single momentum_136 snapshot dict from one screener parquet.
+
+    Returns the JSON-serializable {'report_date', 'themes', 'zone_map'}
+    structure, or None if the parquet is empty.
+
+    `newest_session` says whether this snapshot is the one the tab renders as
+    current. Only then does short interest reach the highlight ladder — see
+    `_highlight_from_row`. It defaults to False so a new history loop that
+    forgets to pass it drops a rung rather than fabricating one.
+
+    `fundamentals` is the table an exporter loads once per run; None looks this
+    session's tickers up in `fundamentals.db` (a missing file reads as empty).
     """
-    csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.parquet'),
-        reverse=True,  # newest first
-    )
-    if not csvs:
-        print("   No momentum_136 CSVs found, skipping momentum export")
-        return
+    df = su.load_df_from_parquet(path).fillna(0)
+    if df.empty:
+        return None
 
-    cutoff = _history_cutoff([f.stem.replace('momentum_136_', '') for f in csvs])
+    session_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
+    screener_tickers = df['ticker'].astype(str).str.upper().tolist()
+    ticker_themes, theme_to_tickers = _screener_theme_buckets(screener_tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(screener_tickers)
+    per_ticker = _screener_ticker_rows(df, fundamentals, newest_session)
 
-    history = []
-    for csv_file in csvs:
-        date_str = csv_file.stem.replace('momentum_136_', '')
-        if cutoff is not None and date_str < cutoff:
-            continue
-        # The first snapshot to land becomes momentum_136.json, so it is the
-        # only one allowed the short rung.
-        snap = _build_momentum_136_snapshot(
-            csv_file, day_flags_by_date.get(date_str, {}),
-            newest_session=not history)
-        if snap is None:
-            continue
-        history.append(snap)
+    # Tickers within a theme by RS desc; themes by count desc.
+    themes_list = [{'name': name, 'tickers': rows}
+                   for name, rows in _theme_tables(theme_to_tickers, per_ticker, 'rs')]
+    # Catch-all buckets sort to the bottom regardless of count — they're
+    # overflow, not thematic concentration.
+    themes_list.sort(key=lambda th: (
+        th['name'] in CATCHALL_THEMES,
+        -len(th['tickers']),
+        th['name'],
+    ))
+    _color_tables(themes_list, day_flags)
+    _attach_hierarchy(themes_list)
 
-    if not history:
-        print("   All momentum_136 CSVs were empty, skipping momentum export")
-        return
-
-    # Newest snapshot is the "current" view
-    current = history[0]
-    out = OUTPUT_DIR / "momentum_136.json"
-    with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(current, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in current['themes'])
-    print(
-        f"   -> {out} ({len(current['themes'])} themes, "
-        f"{total_tickers} tickers, date {current['report_date']})"
-    )
-
-    # Rewrite full history (replaces _update_history_file's append-only behavior)
-    history_out = OUTPUT_DIR / "momentum_136_history.json"
-    with open(history_out, 'w', encoding='utf-8') as fh:
-        json.dump(history, fh, indent=2)
-    dates = [h['report_date'] for h in history]
-    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
+    return {
+        'report_date': session_date,
+        'themes': themes_list,
+        'zone_map': build_zone_map(
+            per_ticker.values(), _load_zone_master(session_date), ticker_themes),
+    }
 
 
-def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
-    """Build a single VARS snapshot dict from one screener CSV.
+def export_momentum_136(day_flags_by_date, fundamentals=None):
+    """Export momentum_136 — rebuilds the full retention-window history every run."""
+    files = (SCREENING_OUTPUT_DIR / 'momentum_136').glob('momentum_136_*.parquet')
+    sessions = [(f.stem.replace('momentum_136_', ''), f) for f in files]
+    if not sessions:
+        print("   No momentum_136 parquet found, skipping momentum export")
+        return None
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers()
+
+    def build(date_str, path, newest_session):
+        return _build_momentum_136_snapshot(
+            path, day_flags_by_date.get(date_str, {}),
+            newest_session=newest_session, fundamentals=fundamentals)
+
+    return _export_session_history(
+        sessions, build, OUTPUT_DIR, 'momentum_136',
+        lambda cur: (f"{len(cur['themes'])} themes, "
+                     f"{sum(len(th['tickers']) for th in cur['themes'])} tickers"))
+
+
+def _build_vars_snapshot(path, day_flags, newest_session=False, fundamentals=None):
+    """Build a single VARS snapshot dict from one screener parquet.
 
     Tickers are grouped by leaf theme path, then leaves are clustered under
     their taxonomy L1: `themes` is a list of L1 sections, each carrying its
@@ -1801,96 +1720,28 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
     L1 sort by avg VARS desc; tickers within a leaf by VARS desc. An
     L1 is `hot` when avg member RS >= `vars_tab.hot_rs_threshold` and it
     has >= 3 members. `zone_map` covers the tickers the tab renders.
-    Returns the JSON dict or None if the CSV is empty. Pure function.
+    Returns the JSON dict or None if the parquet is empty.
 
-    `newest_session` gates the highlight ladder's short rung, as in
-    `_build_momentum_136_snapshot`.
+    `newest_session` and `fundamentals` are as in `_build_momentum_136_snapshot`.
     """
-    import sqlite3
-    from src.themes.theme_registry import load_ticker_themes
-    from src.themes.theme_taxonomy import build_theme_to_tickers
-
-    df = su.load_df_from_parquet(csv_file).fillna(0)
+    df = su.load_df_from_parquet(path).fillna(0)
     if df.empty:
         return None
 
-    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
-
-    ticker_themes = load_ticker_themes()
+    session_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
     screener_tickers = df['ticker'].astype(str).str.upper().tolist()
-    filtered_map = {
-        t: ticker_themes.get(t) or ['Uncategorized']
-        for t in screener_tickers
-    }
-    theme_to_tickers = build_theme_to_tickers(filtered_map)
-
-    # Single-shot fundamentals lookup
-    fundamentals = {}
-    if FUNDAMENTALS_DB.exists() and screener_tickers:
-        conn = sqlite3.connect(FUNDAMENTALS_DB)
-        placeholders = ','.join(['?'] * len(screener_tickers))
-        rows = conn.execute(f'''
-            SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
-                   short_interest, inst_transactions
-            FROM fundamentals
-            WHERE ticker IN ({placeholders})
-        ''', screener_tickers).fetchall()
-        conn.close()
-        for r in rows:
-            fundamentals[r[0]] = {
-                'shares_float': r[1],
-                'eps_growth_yoy': r[2],
-                'sales_growth_yoy': r[3],
-                'short_interest': r[4],
-                'inst_transactions': r[5],
-            }
-
-    per_ticker = {}
-    for _, row in df.iterrows():
-        t = str(row['ticker']).upper()
-        f = fundamentals.get(t, {})
-        short_val = f.get('short_interest')
-        dollar_vol, adr_pct = filter_metrics(row)
-        per_ticker[t] = {
-            'ticker': t,
-            'vars': round(float(row.get('vars', 0) or 0), 2),
-            'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
-            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
-            'price': round(float(row.get('close', 0) or 0), 2),
-            'dollar_vol': dollar_vol,
-            'adr_pct': adr_pct,
-            'float': _fmt_float_m(f.get('shares_float')),
-            'eps': _fmt_growth(f.get('eps_growth_yoy')),
-            'sales': _fmt_growth(f.get('sales_growth_yoy')),
-            'inst': _fmt_inst(f.get('inst_transactions')),
-            'short': round(float(short_val), 1) if short_val is not None else None,
-            'highlight': _highlight_from_row(
-                row, short_val if newest_session else None),
-        }
+    ticker_themes, theme_to_tickers = _screener_theme_buckets(screener_tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(screener_tickers)
+    per_ticker = _screener_ticker_rows(
+        df, fundamentals, newest_session, lead=lambda row, _t: _vars_fields(row))
 
     # Leaf tables — drop Uncategorized/Singleton; no per-leaf minimum (L1
     # breadth decides below, so a 2-member leaf like Cybersecurity / Endpoint
     # still renders inside its L1 section).
-    HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
-    leaf_list = []
-    for theme_name, tickers in theme_to_tickers.items():
-        if theme_name in HIDDEN_THEMES:
-            continue
-        ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
-        if not ticker_dicts:
-            continue
-        ticker_dicts.sort(key=lambda x: -x['vars'])
-        avg_vars = sum(td['vars'] for td in ticker_dicts) / len(ticker_dicts)
-        leaf_list.append({
-            'name': theme_name,
-            'avg_vars': round(avg_vars, 2),
-            'tickers': ticker_dicts,
-        })
-
-    if day_flags:
-        for leaf in leaf_list:
-            enrich_with_ticker_color(leaf['tickers'], day_flags)
-
+    leaf_list = [_avg_vars_table(name, rows) for name, rows in _theme_tables(
+        theme_to_tickers, per_ticker, 'vars', skip=CATCHALL_THEMES)]
+    _color_tables(leaf_list, day_flags)
     _attach_hierarchy(leaf_list)
 
     # Cluster leaves under their L1; score, flag and sort each L1 section.
@@ -1929,9 +1780,9 @@ def _build_vars_snapshot(csv_file, day_flags, newest_session=False):
     rendered = [td for grp in l1_list for leaf in grp['leaves'] for td in leaf['tickers']]
 
     return {
-        'report_date': csv_date,
+        'report_date': session_date,
         'themes': l1_list,
-        'zone_map': build_zone_map(rendered, _load_zone_master(csv_date), ticker_themes),
+        'zone_map': build_zone_map(rendered, _load_zone_master(session_date), ticker_themes),
     }
 
 
@@ -1951,73 +1802,36 @@ def write_vars_artifact(snapshot, artifact_dir=None):
     return out
 
 
-def export_vars(day_flags_by_date):
-    """Export VARS — rebuilds full N-session history from CSVs every run.
-
-    Mirrors `export_momentum_136` / `export_parabolic`: iterates the per-day
-    vars_*.parquet files within the retention window (last THEMES_HISTORY_DAYS
-    calendar days) and writes both the current snapshot and the history file
-    from scratch.
-    """
-    csvs = sorted(
-        (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.parquet'),
-        reverse=True,
-    )
-    if not csvs:
-        print("   No vars CSVs found, skipping vars export")
+def export_vars(day_flags_by_date, fundamentals=None):
+    """Export VARS — rebuilds the full retention-window history every run,
+    then writes the current snapshot as a date-stamped workflow artifact."""
+    files = (SCREENING_OUTPUT_DIR / 'vars').glob('vars_*.parquet')
+    sessions = [(f.stem.replace('vars_', ''), f) for f in files]
+    if not sessions:
+        print("   No vars parquet found, skipping vars export")
         return None
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers()
 
-    cutoff = _history_cutoff([f.stem.replace('vars_', '') for f in csvs])
+    def build(date_str, path, newest_session):
+        return _build_vars_snapshot(
+            path, day_flags_by_date.get(date_str, {}),
+            newest_session=newest_session, fundamentals=fundamentals)
 
-    history = []
-    for csv_file in csvs:
-        date_str = csv_file.stem.replace('vars_', '')
-        if cutoff is not None and date_str < cutoff:
-            continue
-        # The first snapshot to land becomes vars.json, so it is the only one
-        # allowed the short rung.
-        snap = _build_vars_snapshot(
-            csv_file, day_flags_by_date.get(date_str, {}),
-            newest_session=not history)
-        if snap is None:
-            continue
-        history.append(snap)
-
-    if not history:
-        print("   All vars CSVs were empty, skipping vars export")
+    current = _export_session_history(
+        sessions, build, OUTPUT_DIR, 'vars',
+        lambda cur: (f"{len(cur['themes'])} L1s, "
+                     f"{sum(grp.get('n', len(grp.get('tickers', []))) for grp in cur['themes'])} tickers"))
+    if current is None:
         return None
-
-    current = history[0]
-    out = OUTPUT_DIR / "vars.json"
-    with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(current, fh, indent=2)
-    total_tickers = sum(grp.get('n', len(grp.get('tickers', []))) for grp in current['themes'])
-    print(
-        f"   -> {out} ({len(current['themes'])} L1s, "
-        f"{total_tickers} tickers, date {current['report_date']})"
-    )
-
-    history_out = OUTPUT_DIR / "vars_history.json"
-    with open(history_out, 'w', encoding='utf-8') as fh:
-        json.dump(history, fh, indent=2)
-    dates = [h['report_date'] for h in history]
-    print(f"   -> {history_out} (history: {len(history)} sessions, {dates[-1]} -> {dates[0]})")
 
     artifact_out = write_vars_artifact(current)
     if artifact_out:
         print(f"   -> {artifact_out} (VARS tab artifact)")
-
     return current
 
 
 # ── SI tab (heavily shorted names that have already sold off) ───────────────
-
-SI_HIDDEN_THEMES = {'Uncategorized', 'Singleton'}
-
-
-def _si_config():
-    return CONFIG.get('si_tab', {})
-
 
 def _finite(value):
     """Return ``value`` as a float, or None when it is missing or not finite.
@@ -2165,10 +1979,10 @@ def _build_si_snapshot(si_rows, master_df, day_flags, ticker_themes, radar_ranks
     members_by_l1 = {}
     for ticker in per_ticker:
         for path in ticker_themes.get(ticker) or []:
-            if path in SI_HIDDEN_THEMES:
+            if path in CATCHALL_THEMES:
                 continue
             l1 = resolve_l1(path)
-            if not l1 or l1 in SI_HIDDEN_THEMES:
+            if not l1 or l1 in CATCHALL_THEMES:
                 continue
             leaves_by_l1.setdefault(l1, {}).setdefault(path, []).append(ticker)
             # A set, so a name tagged into two leaves of one L1 counts once
@@ -2239,7 +2053,7 @@ def export_si(day_flags_by_date, root=None, out_dir=None, si_file=None):
     history from the master parquet would pin today's short interest onto a
     three-month-old price bar and publish it as that session's reading — a
     fabricated number, not a stale one. So this appends one entry per run,
-    like the ETF and EP tabs, pruned to the same retention window.
+    like the ETF tabs, pruned to the same retention window.
     """
     from src.themes.theme_registry import load_ticker_themes
 
@@ -2269,7 +2083,7 @@ def export_si(day_flags_by_date, root=None, out_dir=None, si_file=None):
     snapshot = _build_si_snapshot(
         si_rows, master_df, day_flags_by_date.get(master_date, {}),
         load_ticker_themes(),
-        _load_radar_ranks(out_dir / 'radar.json'), _si_config(),
+        _load_radar_ranks(out_dir / 'radar.json'), CONFIG.get('si_tab', {}),
         si_date=payload.get('date'),
     )
     if snapshot is None:
@@ -2325,8 +2139,8 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
     master_df = su.load_df_from_parquet(master_file)
     if master_df.empty:
         return None
-    csv_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
-    if not csv_date:
+    session_date = str(master_df['date'].iloc[0]) if 'date' in master_df.columns else ''
+    if not session_date:
         return None
 
     # `compute_radar`'s member dicts carry no moving averages — only ticker,
@@ -2425,7 +2239,7 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
         })
 
     return {
-        'report_date': csv_date,
+        'report_date': session_date,
         'params': body['params'],
         'universe_size': body['universe_size'],
         'n_leaves_scored': body['n_leaves_scored'],
@@ -2433,116 +2247,98 @@ def _build_radar_snapshot(master_file, screened_set, day_flags, tickers_per_leaf
         'zone_map': build_zone_map(zone_rows, master_df, leaves_by_ticker, zone_cfg),
     }
 
-def export_radar(day_flags_by_date, root=None, out_dir=None):
+
+def export_radar(day_flags_by_date, root=None, out_dir=None, fundamentals=None):
     """Export the L1 Radar (dashboard Themes tab) — full
     retention-window history every run.
 
-    Mirrors `export_vars`: iterates the per-day master parquet files within
-    the window, derives each date's screened union from the per-screener
-    parquet, and rewrites both files from scratch. `radar.json` keeps every
-    scored L1 and leaf (no top-N burial) *and* every member ticker; history
-    entries cap L1s at `radar.history_l1_limit` and chips at
-    `radar.tickers_per_leaf`, and are written compact to bound size.
+    Iterates the per-day master parquet files within the window, derives each
+    date's screened union from the per-screener parquet, and rewrites both
+    files from scratch. `radar.json` keeps every scored L1 and leaf (no top-N
+    burial) *and* every member ticker; history entries cap L1s at
+    `radar.history_l1_limit` and chips at `radar.tickers_per_leaf`, and are
+    written compact to bound size.
     """
     root = Path(root) if root is not None else SCREENING_OUTPUT_DIR
     out_dir = Path(out_dir) if out_dir is not None else OUTPUT_DIR
 
-    master_files = sorted((root / 'master').glob('master_*.parquet'), reverse=True)
-    if not master_files:
+    files = (root / 'master').glob('master_*.parquet')
+    sessions = [(f.stem.replace('master_', ''), f) for f in files]
+    if not sessions:
         print("   No master parquet found, skipping radar export")
         return None
 
-    cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
-    chip_cap = int(CONFIG.get('radar', {}).get('tickers_per_leaf', 10))
+    radar_cfg = CONFIG.get('radar', {})
+    chip_cap = int(radar_cfg.get('tickers_per_leaf', 10))
+    l1_limit = int(radar_cfg.get('history_l1_limit', 20))
 
     # Short interest loads once, outside the session loop — the loop runs about
     # 124 times and Finviz publishes one current figure, not a series. The
     # radar's universe is every tagged ticker, so that is the key set to ask
     # for; `fundamentals.db` holds the screened union, and the rest miss.
-    from src.themes.theme_registry import load_ticker_themes
-    fundamentals = _load_fundamentals_for_tickers(load_ticker_themes().keys())
+    if fundamentals is None:
+        from src.themes.theme_registry import load_ticker_themes
+        fundamentals = _load_fundamentals_for_tickers(load_ticker_themes().keys())
 
-    history = []
-    for master_file in master_files:
-        date_str = master_file.stem.replace('master_', '')
-        if cutoff is not None and date_str < cutoff:
-            continue
+    def build(date_str, master_file, newest_session):
         screened_set = su.union_tickers_for_date(
             date_str, CONFIG['screeners'], root=root
         )
-        # The newest session (first to land in `history`) becomes radar.json and
-        # ships every member; older sessions stay capped so radar_history.json
-        # does not balloon — it already carries ~124 sessions.
-        snap = _build_radar_snapshot(
+        # The newest session becomes radar.json and ships every member; older
+        # sessions stay capped so radar_history.json does not balloon — it
+        # already carries ~124 sessions.
+        return _build_radar_snapshot(
             master_file, screened_set, day_flags_by_date.get(date_str, {}),
-            tickers_per_leaf=None if not history else chip_cap,
+            tickers_per_leaf=None if newest_session else chip_cap,
             fundamentals=fundamentals,
-            newest_session=not history,
+            newest_session=newest_session,
         )
-        if snap is None:
-            continue
-        history.append(snap)
 
-    if not history:
-        print("   Radar produced no entries, skipping export")
-        return None
+    def trim(history):
+        return [
+            {**snap, 'l1s': [
+                # history[0] is the uncapped current snapshot — re-cap its chips
+                # so every history entry carries the same top-N roster.
+                {**l1, 'leaves': [
+                    {**lf, 'tickers': lf['tickers'][:chip_cap]} for lf in l1['leaves']
+                ]} if i == 0 else l1
+                for l1 in snap['l1s'][:l1_limit]
+            ]}
+            for i, snap in enumerate(history)
+        ]
 
-    current = history[0]
-    out = out_dir / "radar.json"
-    with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(current, fh, indent=2)
-    print(
-        f"   -> {out} ({len(current['l1s'])} L1s, "
-        f"{current['n_leaves_scored']} leaves, universe {current['universe_size']}, "
-        f"date {current['report_date']})"
-    )
-
-    l1_limit = int(CONFIG.get('radar', {}).get('history_l1_limit', 20))
-    trimmed = [
-        {**snap, 'l1s': [
-            # history[0] is the uncapped current snapshot — re-cap its chips so
-            # every history entry carries the same top-N roster.
-            {**l1, 'leaves': [
-                {**lf, 'tickers': lf['tickers'][:chip_cap]} for lf in l1['leaves']
-            ]} if i == 0 else l1
-            for l1 in snap['l1s'][:l1_limit]
-        ]}
-        for i, snap in enumerate(history)
-    ]
-    history_out = out_dir / "radar_history.json"
-    with open(history_out, 'w', encoding='utf-8') as fh:
-        json.dump(trimmed, fh, separators=(',', ':'))
-    dates = [h['report_date'] for h in trimmed]
-    print(f"   -> {history_out} (history: {len(trimmed)} sessions, {dates[-1]} -> {dates[0]})")
-
-    return current
+    return _export_session_history(
+        sessions, build, out_dir, 'radar',
+        lambda cur: (f"{len(cur['l1s'])} L1s, {cur['n_leaves_scored']} leaves, "
+                     f"universe {cur['universe_size']}"),
+        history_view=trim, compact_history=True)
 
 
-def _build_volume_snapshot(date_str, day_flags, newest_session=False):
-    """Build a single Volume snapshot from the volspike + denvol CSVs for one date.
+#: The two scans the Volume tab unions, in the order their `scan` tag reads.
+VOLUME_SCANS = ('volspike', 'denvol')
+
+
+def _build_volume_snapshot(date_str, day_flags, newest_session=False, fundamentals=None):
+    """Build a single Volume snapshot from the volspike + denvol parquet for one date.
 
     Unions the tickers from both scans (tagging each with which scan matched),
     groups them by theme, and sorts within each theme by VARS desc and themes by
     avg VARS desc. ALL themes are shown (no min-ticker filter); Uncategorized and
-    Singleton sink to the bottom. Returns the JSON dict, or None if neither CSV
-    has rows. Pure function.
+    Singleton sink to the bottom. Returns the JSON dict, or None if neither scan
+    has rows for the date.
 
-    `newest_session` gates the highlight ladder's short rung, as in
-    `_build_momentum_136_snapshot`.
+    `newest_session` and `fundamentals` are as in `_build_momentum_136_snapshot`.
     """
-    import sqlite3
     import pandas as pd
-    from src.themes.theme_registry import load_ticker_themes
-    from src.themes.theme_taxonomy import build_theme_to_tickers
 
     # Union the two scans for this date; tag each ticker with its source scan(s).
     frames = []
     scan_for_ticker = {}
-    for scan_name in ('volspike', 'denvol'):
-        csv_file = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.parquet'
-        if not csv_file.exists():
+    for scan_name in VOLUME_SCANS:
+        path = SCREENING_OUTPUT_DIR / scan_name / f'{scan_name}_{date_str}.parquet'
+        if not path.exists():
             continue
-        sdf = su.load_df_from_parquet(csv_file).fillna(0)
+        sdf = su.load_df_from_parquet(path).fillna(0)
         if sdf.empty:
             continue
         frames.append(sdf)
@@ -2557,151 +2353,65 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     if df.empty:
         return None
 
-    csv_date = str(df['date'].iloc[0]) if 'date' in df.columns else date_str
-
-    ticker_themes = load_ticker_themes()
+    session_date = str(df['date'].iloc[0]) if 'date' in df.columns else date_str
     screener_tickers = df['ticker'].astype(str).str.upper().tolist()
-    filtered_map = {
-        t: ticker_themes.get(t) or ['Uncategorized']
-        for t in screener_tickers
-    }
-    theme_to_tickers = build_theme_to_tickers(filtered_map)
-
-    # Single-shot fundamentals lookup
-    fundamentals = {}
-    if FUNDAMENTALS_DB.exists() and screener_tickers:
-        conn = sqlite3.connect(FUNDAMENTALS_DB)
-        placeholders = ','.join(['?'] * len(screener_tickers))
-        rows = conn.execute(f'''
-            SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
-                   short_interest, inst_transactions
-            FROM fundamentals
-            WHERE ticker IN ({placeholders})
-        ''', screener_tickers).fetchall()
-        conn.close()
-        for r in rows:
-            fundamentals[r[0]] = {
-                'shares_float': r[1],
-                'eps_growth_yoy': r[2],
-                'sales_growth_yoy': r[3],
-                'short_interest': r[4],
-                'inst_transactions': r[5],
-            }
-
-    per_ticker = {}
-    for _, row in df.iterrows():
-        t = str(row['ticker']).upper()
-        f = fundamentals.get(t, {})
-        short_val = f.get('short_interest')
-        dollar_vol, adr_pct = filter_metrics(row)
-        per_ticker[t] = {
-            'ticker': t,
+    ticker_themes, theme_to_tickers = _screener_theme_buckets(screener_tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(screener_tickers)
+    per_ticker = _screener_ticker_rows(
+        df, fundamentals, newest_session,
+        lead=lambda row, t: {
             'scan': scan_for_ticker.get(t, ''),
             'days_since_hv': _int_or_none(row.get('days_since_highest_volume')),
-            'vars': round(float(row.get('vars', 0) or 0), 2),
-            'vars_20ema': round(float(row.get('vars_20ema', 0) or 0), 2),
-            'rs': round(float(row.get('rs_sts_pct', 0) or 0), 1),
-            'price': round(float(row.get('close', 0) or 0), 2),
-            'dollar_vol': dollar_vol,
-            'adr_pct': adr_pct,
-            'float': _fmt_float_m(f.get('shares_float')),
-            'eps': _fmt_growth(f.get('eps_growth_yoy')),
-            'sales': _fmt_growth(f.get('sales_growth_yoy')),
-            'inst': _fmt_inst(f.get('inst_transactions')),
-            'short': round(float(short_val), 1) if short_val is not None else None,
-            'highlight': _highlight_from_row(
-                row, short_val if newest_session else None),
-        }
-
-    # Build theme list — show ALL themes (no min-ticker filter); sort by avg VARS desc.
-    # Uncategorized/Singleton sink to the bottom regardless of avg VARS.
-    catchall_themes = {'Uncategorized', 'Singleton'}
-    themes_list = []
-    for theme_name, tickers in theme_to_tickers.items():
-        ticker_dicts = [per_ticker[t] for t in tickers if t in per_ticker]
-        if not ticker_dicts:
-            continue
-        ticker_dicts.sort(key=lambda x: -x['vars'])
-        avg_vars = sum(td['vars'] for td in ticker_dicts) / len(ticker_dicts)
-        themes_list.append({
-            'name': theme_name,
-            'avg_vars': round(avg_vars, 2),
-            'tickers': ticker_dicts,
+            **_vars_fields(row),
         })
 
+    # Show ALL themes (no min-ticker filter); sort by avg VARS desc.
+    # Uncategorized/Singleton sink to the bottom regardless of avg VARS.
+    themes_list = [_avg_vars_table(name, rows)
+                   for name, rows in _theme_tables(theme_to_tickers, per_ticker, 'vars')]
     themes_list.sort(key=lambda th: (
-        th['name'] in catchall_themes,
+        th['name'] in CATCHALL_THEMES,
         -th['avg_vars'],
         th['name'],
     ))
-
-    if day_flags:
-        for th in themes_list:
-            enrich_with_ticker_color(th['tickers'], day_flags)
-
+    _color_tables(themes_list, day_flags)
     _attach_hierarchy(themes_list)
 
     return {
-        'report_date': csv_date,
+        'report_date': session_date,
         'themes': themes_list,
         'zone_map': build_zone_map(
-            per_ticker.values(), _load_zone_master(csv_date), ticker_themes),
+            per_ticker.values(), _load_zone_master(session_date), ticker_themes),
     }
 
 
-def export_volume(day_flags_by_date):
+def export_volume(day_flags_by_date, fundamentals=None):
     """Export the Volume tab — union of the volspike + denvol scans.
 
-    Rebuilds the full retention-window history every run (same pattern as
-    export_vars): collects every date within the last THEMES_HISTORY_DAYS
-    calendar days for which either scan produced a CSV, newest first, and writes
-    both the current snapshot and the history file.
+    Rebuilds the full retention-window history every run from every date for
+    which either scan wrote a parquet.
     """
     dates = set()
-    for scan_name in ('volspike', 'denvol'):
-        for csv_file in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.parquet'):
+    for scan_name in VOLUME_SCANS:
+        for path in (SCREENING_OUTPUT_DIR / scan_name).glob(f'{scan_name}_*.parquet'):
             # filename pattern: <scan>_YYYY-MM-DD.parquet
-            dates.add(csv_file.stem[len(scan_name) + 1:])
-
+            dates.add(path.stem[len(scan_name) + 1:])
     if not dates:
-        print("   No volspike/denvol CSVs found, skipping volume export")
+        print("   No volspike/denvol parquet found, skipping volume export")
         return None
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers()
 
-    cutoff = _history_cutoff(dates)
-
-    history = []
-    for date_str in sorted(dates, reverse=True):
-        if cutoff is not None and date_str < cutoff:
-            continue
-        # The first snapshot to land becomes volume.json, so it is the only one
-        # allowed the short rung.
-        snap = _build_volume_snapshot(
+    def build(date_str, _source, newest_session):
+        return _build_volume_snapshot(
             date_str, day_flags_by_date.get(date_str, {}),
-            newest_session=not history)
-        if snap is None:
-            continue
-        history.append(snap)
+            newest_session=newest_session, fundamentals=fundamentals)
 
-    if not history:
-        print("   All volspike/denvol CSVs were empty, skipping volume export")
-        return None
-
-    current = history[0]
-    out = OUTPUT_DIR / "volume.json"
-    with open(out, 'w', encoding='utf-8') as fh:
-        json.dump(current, fh, indent=2)
-    total_tickers = sum(len(th['tickers']) for th in current['themes'])
-    print(
-        f"   -> {out} ({len(current['themes'])} themes, "
-        f"{total_tickers} tickers, date {current['report_date']})"
-    )
-
-    history_out = OUTPUT_DIR / "volume_history.json"
-    with open(history_out, 'w', encoding='utf-8') as fh:
-        json.dump(history, fh, indent=2)
-    dates_sorted = [h['report_date'] for h in history]
-    print(f"   -> {history_out} (history: {len(history)} sessions, {dates_sorted[-1]} -> {dates_sorted[0]})")
-    return current
+    return _export_session_history(
+        [(d, d) for d in dates], build, OUTPUT_DIR, 'volume',
+        lambda cur: (f"{len(cur['themes'])} themes, "
+                     f"{sum(len(th['tickers']) for th in cur['themes'])} tickers"))
 
 
 def _numeric_series(df, column):
@@ -2733,33 +2443,48 @@ def _int_or_none(value):
     return int(number)
 
 
-def _load_fundamentals_for_tickers(tickers):
-    """Load float, institutional transactions, and short interest for tickers."""
+#: The `fundamentals.db` columns the payload rows read, in SELECT order.
+FUNDAMENTALS_COLUMNS = ('shares_float', 'eps_growth_yoy', 'sales_growth_yoy',
+                        'short_interest', 'inst_transactions')
+
+
+def _load_fundamentals_for_tickers(tickers=None):
+    """``{TICKER: {column: value}}`` from `fundamentals.db`, or ``{}``.
+
+    `tickers=None` reads the whole table, which is how an exporter loads it
+    once per run: the table holds the screened union only, and Finviz
+    publishes one current figure per ticker rather than a series.
+
+    Guarded: a missing, locked or malformed database logs a warning and reads
+    as empty, so every tab still publishes with blank fundamentals columns
+    instead of aborting the export.
+    """
     import sqlite3
 
-    unique = sorted({str(t).upper() for t in tickers if str(t).strip()})
-    if not unique or not FUNDAMENTALS_DB.exists():
+    if not FUNDAMENTALS_DB.exists():
         return {}
+    columns = ', '.join(('ticker',) + FUNDAMENTALS_COLUMNS)
+    if tickers is None:
+        query, params = f'SELECT {columns} FROM fundamentals', []
+    else:
+        params = sorted({str(t).upper() for t in tickers if str(t).strip()})
+        if not params:
+            return {}
+        placeholders = ','.join(['?'] * len(params))
+        query = f'SELECT {columns} FROM fundamentals WHERE ticker IN ({placeholders})'
 
     try:
         conn = sqlite3.connect(FUNDAMENTALS_DB)
-        placeholders = ','.join(['?'] * len(unique))
-        rows = conn.execute(f'''
-            SELECT ticker, shares_float, short_interest, inst_transactions
-            FROM fundamentals
-            WHERE ticker IN ({placeholders})
-        ''', unique).fetchall()
-        conn.close()
+        try:
+            rows = conn.execute(query, params).fetchall()
+        finally:
+            conn.close()
     except Exception as e:
         print(f"   Warning: fundamentals lookup failed: {e}")
         return {}
 
     return {
-        str(row[0]).upper(): {
-            'shares_float': row[1],
-            'short_interest': row[2],
-            'inst_transactions': row[3],
-        }
+        str(row[0]).upper(): dict(zip(FUNDAMENTALS_COLUMNS, row[1:]))
         for row in rows
     }
 
@@ -2882,27 +2607,27 @@ def _parabolic_snapshot(report_date, candidates, fundamentals, newest_session=Fa
     }
 
 
-def export_parabolic():
+def export_parabolic(fundamentals=None):
     """Export parabolic scanner data and the retention-window session history."""
-    import pandas as pd
-
     master_dir = SCREENING_OUTPUT_DIR / 'master'
     master_files = sorted(master_dir.glob('master_*.parquet'), reverse=True)
     if not master_files:
-        print("   No master CSVs found, skipping parabolic export")
+        print("   No master parquet found, skipping parabolic export")
         return None
 
-    candidate_sets = []
-    all_tickers = set()
     cutoff = _history_cutoff([f.stem.replace('master_', '') for f in master_files])
+    # Newest first, so the window is a prefix of `master_files` and each
+    # session's previous file is the next entry.
     current_files = [
         f for f in master_files
         if cutoff is None or f.stem.replace('master_', '') >= cutoff
     ]
 
+    candidate_sets = []
+    all_tickers = set()
+    master_df = su.load_df_from_parquet(current_files[0])
     for idx, master_file in enumerate(current_files):
         previous_file = master_files[idx + 1] if idx + 1 < len(master_files) else None
-        master_df = su.load_df_from_parquet(master_file)
         previous_df = su.load_df_from_parquet(previous_file) if previous_file else None
         report_date = (
             str(master_df['date'].iloc[0])
@@ -2913,8 +2638,11 @@ def export_parabolic():
         candidates = filter_parabolic_candidates(master_df, previous_df)
         all_tickers.update(candidates['ticker'].astype(str).str.upper().tolist())
         candidate_sets.append((report_date, candidates))
+        # This session's previous frame is the next session's own: read once.
+        master_df = previous_df
 
-    fundamentals = _load_fundamentals_for_tickers(all_tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(all_tickers)
 
     history = []
     for report_date, candidates in candidate_sets:
@@ -2940,112 +2668,44 @@ def export_parabolic():
     return current
 
 
-def export_all():
-    """Main export function."""
-    print("=" * 60)
-    print("EXPORTING DASHBOARD DATA")
-    print("=" * 60)
+def _write_json(path, payload):
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    parabolic_data = None
-    volume_data = None
 
-    # 1. Parse latest report — only for report_date/theme_count in
-    # report_meta.json and the ETF-history session date. The Themes tab is fed
-    # by the radar export below; the legacy screened themes.json /
-    # themes_history.json exports are retired.
-    report_file = find_latest_report()
-    theme_data = None
-    if report_file:
-        print(f"\n1. Parsing report: {report_file.name}")
-        theme_data = parse_report(report_file)
-    else:
-        print("\n1. No report found")
+def export_etf_tabs(report_date):
+    """The Lev ETF and Industry tabs, their histories, and ETF Viz.
 
-    # Day-pattern colour flags (tight/inside + close_to_ma), one set per
-    # session, each read from that session's own master parquet.
-    day_flags_by_date = load_day_flags_by_date()
-    if day_flags_by_date:
-        newest = max(day_flags_by_date)
-        print(f"   Day-pattern flags: {len(day_flags_by_date)} sessions, "
-              f"{len(day_flags_by_date[newest])} green on {newest}")
-
-    # 1b. Export Momentum 1/3/6 screener (independent of daily report)
-    print("\n1b. Exporting momentum_136 data")
-    export_momentum_136(day_flags_by_date)
-
-    # 1c. Export Volume tab (union of volspike + denvol scans, independent of daily report)
-    print("\n1c. Exporting volume data")
-    volume_data = export_volume(day_flags_by_date)
-
-    # 1d. Export VARS screener (independent of daily report)
-    print("\n1d. Exporting vars data")
-    export_vars(day_flags_by_date)
-
-    # 1e. Export Parabolic screener data (independent of daily report)
-    print("\n1e. Exporting parabolic data")
-    parabolic_data = export_parabolic()
-
-    # 1f. Export L1 Radar (screener-independent; must run before the
-    # screening_output prune at the tail so the full master window is on disk)
-    radar_data = None
-    if CONFIG.get('radar', {}).get('enabled', True):
-        print("\n1f. Exporting L1 radar data")
-        radar_data = export_radar(day_flags_by_date)
-
-    # 1g. Export SI tab. Must run AFTER the radar export: the HOT badge reads
-    # radar.json, and reading it earlier would badge every session against the
-    # previous run's ranks.
-    print("\n1g. Exporting SI data")
-    export_si(day_flags_by_date)
-
-    # 2. Update market breadth history
-    print("\n2. Updating market breadth history")
-    update_breadth_history(theme_data.get('report_date') if theme_data else None)
-
-    # 3. Fetch leverage ETF data
+    Both sheets are fetched and enriched with VARS, colour and tier from one
+    standalone yfinance download, and only then written — once each.
+    """
     print("\n3. Fetching leverage ETF data")
     etf_data = fetch_etf_data()
-    if etf_data:
-        etf_output = OUTPUT_DIR / "etf_data.json"
-        with open(etf_output, 'w', encoding='utf-8') as f:
-            json.dump(etf_data, f, indent=2)
-        print(f"   -> {etf_output} ({len(etf_data)} ETFs)")
-
-    # 4. Fetch Industry ETF data
     print("\n4. Fetching industry ETF data")
     industry_data = fetch_industry_etf_data()
-    if industry_data:
-        ind_output = OUTPUT_DIR / "industry_etf.json"
-        with open(ind_output, 'w', encoding='utf-8') as f:
-            json.dump(industry_data, f, indent=2)
-        print(f"   -> {ind_output} ({len(industry_data)} industry ETFs)")
 
-    # 4b. Enrich ETFs with VARS + inside_day/tight_day color via standalone yfinance fetch
-    all_etf_tickers = []
+    # 4b. VARS + inside_day/tight_day colour via a standalone yfinance fetch.
+    all_etf_tickers = [e['ticker'] for e in (etf_data or []) + (industry_data or [])]
     etf_metrics = {}
-    if etf_data:
-        all_etf_tickers += [e['ticker'] for e in etf_data]
-    if industry_data:
-        all_etf_tickers += [e['ticker'] for e in industry_data]
     if all_etf_tickers:
         print("\n   Computing VARS + ticker colors for ETFs...")
         spy_baseline = load_spy_cum_norm_100()
         etf_metrics = fetch_etf_metrics(all_etf_tickers, spy_baseline) if spy_baseline is not None else {}
-        if etf_metrics:
-            if etf_data:
-                etf_v, etf_c = enrich_etf_with_metrics(etf_data, etf_metrics)
-                print(f"   Enriched leverage ETFs: {etf_v} with VARS, {etf_c} with ticker color")
-                with open(OUTPUT_DIR / "etf_data.json", 'w', encoding='utf-8') as f:
-                    json.dump(etf_data, f, indent=2)
-            if industry_data:
-                ind_v, ind_c = enrich_etf_with_metrics(industry_data, etf_metrics)
-                print(f"   Enriched industry ETFs: {ind_v} with VARS, {ind_c} with ticker color")
-                with open(OUTPUT_DIR / "industry_etf.json", 'w', encoding='utf-8') as f:
-                    json.dump(industry_data, f, indent=2)
+        if etf_metrics and etf_data:
+            etf_v, etf_c = enrich_etf_with_metrics(etf_data, etf_metrics)
+            print(f"   Enriched leverage ETFs: {etf_v} with VARS, {etf_c} with ticker color")
+        if etf_metrics and industry_data:
+            ind_v, ind_c = enrich_etf_with_metrics(industry_data, etf_metrics)
+            print(f"   Enriched industry ETFs: {ind_v} with VARS, {ind_c} with ticker color")
 
-    # 4c. Update ETF history (use theme report_date as session date)
-    report_date = theme_data.get('report_date', '') if theme_data else ''
+    if etf_data:
+        _write_json(OUTPUT_DIR / "etf_data.json", etf_data)
+        print(f"   -> {OUTPUT_DIR / 'etf_data.json'} ({len(etf_data)} ETFs)")
+    if industry_data:
+        _write_json(OUTPUT_DIR / "industry_etf.json", industry_data)
+        print(f"   -> {OUTPUT_DIR / 'industry_etf.json'} ({len(industry_data)} industry ETFs)")
+
+    # 4c. ETF history, keyed by the daily report's session date.
     if report_date and (etf_data or industry_data):
         update_etf_history(report_date, etf_data, industry_data)
 
@@ -3054,54 +2714,122 @@ def export_all():
         print("\n4d. Exporting ETF Viz zone map")
         export_etf_viz(etf_data, etf_metrics, report_date)
 
-    # 5. Fetch Yahoo Finance macro data
+
+def export_macro_data():
     print("\n5. Fetching Yahoo Finance macro data")
     macro_data = fetch_yahoo_macro_data()
     if macro_data:
         macro_output = OUTPUT_DIR / "macro_data.json"
-        with open(macro_output, 'w', encoding='utf-8') as f:
-            json.dump(macro_data, f, indent=2)
+        _write_json(macro_output, macro_data)
         print(f"   -> {macro_output}")
     else:
         print("   -> Macro data fetch failed, charts will show TradingView data only")
 
-    # 6. Fetch upcoming macro events from Forex Factory
+
+def export_macro_events():
     print("\n6. Fetching upcoming macro events")
-    try:
-        macro_events = fetch_macro_events()
-        if macro_events:
-            write_events_json(macro_events, OUTPUT_DIR / "events.json")
-        else:
-            print("   -> Macro events fetch returned no data, keeping existing events.json")
-    except Exception as e:
-        print(f"   -> Macro events fetch failed: {e} -- keeping existing events.json")
+    macro_events = fetch_macro_events()
+    if macro_events:
+        write_events_json(macro_events, OUTPUT_DIR / "events.json")
+    else:
+        print("   -> Macro events fetch returned no data, keeping existing events.json")
 
-    # 7. Report meta
+
+def export_all():
+    """Main export function.
+
+    Each step runs under its own guard: a step that raises prints its traceback
+    and the remaining steps still run, down to report_meta.json and the prune.
+    The failures are then raised together at the end, so the process still
+    exits non-zero and CI still fails loudly — the guard only stops one broken
+    tab from blanking every other one.
+    """
+    print("=" * 60)
+    print("EXPORTING DASHBOARD DATA")
+    print("=" * 60)
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    failures = []
+
+    def step(label, fn, *args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception:
+            traceback.print_exc()
+            print(f"   !! {label} FAILED; continuing with the remaining steps")
+            failures.append(label)
+            return None
+
+    # 1. The newest daily report's date: report_meta.json and the ETF-history
+    # session date. The Themes tab is fed by the radar export below.
+    report_date = latest_report_date()
+    print(f"\n1. Latest report session: {report_date or 'none found'}")
+
+    # Day-pattern colour flags (tight/inside + close_to_ma), one set per
+    # session, each read from that session's own master parquet.
+    day_flags_by_date = step('day-pattern flags', load_day_flags_by_date) or {}
+    if day_flags_by_date:
+        newest = max(day_flags_by_date)
+        print(f"   Day-pattern flags: {len(day_flags_by_date)} sessions, "
+              f"{len(day_flags_by_date[newest])} green on {newest}")
+
+    # One fundamentals read serves every tab below (guarded: empty on failure).
+    fundamentals = _load_fundamentals_for_tickers()
+
+    print("\n1b. Exporting momentum_136 data")
+    step('momentum_136', export_momentum_136, day_flags_by_date, fundamentals=fundamentals)
+
+    print("\n1c. Exporting volume data")
+    step('volume', export_volume, day_flags_by_date, fundamentals=fundamentals)
+
+    print("\n1d. Exporting vars data")
+    step('vars', export_vars, day_flags_by_date, fundamentals=fundamentals)
+
+    print("\n1e. Exporting parabolic data")
+    step('parabolic', export_parabolic, fundamentals=fundamentals)
+
+    # 1f. L1 Radar (screener-independent; must run before the screening_output
+    # prune at the tail so the full master window is on disk)
+    if CONFIG.get('radar', {}).get('enabled', True):
+        print("\n1f. Exporting L1 radar data")
+        step('radar', export_radar, day_flags_by_date, fundamentals=fundamentals)
+
+    # 1g. SI tab. Must run AFTER the radar export: the HOT badge reads
+    # radar.json, and reading it earlier would badge every session against the
+    # previous run's ranks.
+    print("\n1g. Exporting SI data")
+    step('si', export_si, day_flags_by_date)
+
+    print("\n2. Updating market breadth history")
+    step('market breadth', update_breadth_history, report_date)
+
+    step('ETF tabs', export_etf_tabs, report_date)
+    step('macro data', export_macro_data)
+    step('macro events', export_macro_events)
+
+    # 7. Report meta. winner_research finds dashboard commits by the
+    # `Daily report <date>` commits that touch this file and copies it whole.
     print("\n7. Writing report meta")
-    meta = {
+    step('report meta', _write_json, OUTPUT_DIR / "report_meta.json", {
         'export_timestamp': datetime.now(timezone.utc).isoformat(),
-        'report_date': theme_data.get('report_date') if theme_data else None,
-        'theme_count': len(theme_data.get('themes', [])) if theme_data else 0,
-        'volume_count': sum(len(th.get('tickers', [])) for th in volume_data.get('themes', [])) if volume_data else 0,
-        'parabolic_count': len(parabolic_data.get('tickers', [])) if parabolic_data else 0,
-        'etf_count': len(etf_data) if etf_data else 0,
-        'industry_etf_count': len(industry_data) if industry_data else 0,
-        'radar_l1_count': len(radar_data.get('l1s', [])) if radar_data else 0,
-    }
-    with open(OUTPUT_DIR / "report_meta.json", 'w') as f:
-        json.dump(meta, f, indent=2)
-
-    print(f"\n{'=' * 60}")
-    print("EXPORT COMPLETE")
-    print(f"{'=' * 60}")
+        'report_date': report_date,
+    })
 
     # Retention prune: screening_output/ is local scratch regenerated each run.
     # Runs LAST — after every history JSON above has read the full window — so it
     # only trims what the next run will regenerate (no-op in CI; nothing persists).
     from src.screening.prune_screening_output import prune_screening_output
-    pruned = prune_screening_output()
+    pruned = step('prune', prune_screening_output)
     if pruned:
         print(f"Pruned {pruned} old screening_output parquet file(s)")
+
+    print(f"\n{'=' * 60}")
+    if failures:
+        print(f"EXPORT FINISHED WITH {len(failures)} FAILED STEP(S): {', '.join(failures)}")
+        print(f"{'=' * 60}")
+        raise RuntimeError(f"dashboard export steps failed: {', '.join(failures)}")
+    print("EXPORT COMPLETE")
+    print(f"{'=' * 60}")
 
 
 if __name__ == '__main__':

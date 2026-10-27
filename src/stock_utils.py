@@ -72,7 +72,11 @@ def union_tickers_for_date(date_str, screeners, root=SCREENING_OUTPUT_DIR):
             continue
         try:
             df = load_df_from_parquet(parquet_file)
-        except Exception:
+        except Exception as e:
+            # Skipping still answers, so say so: a silently dropped screener
+            # shrinks the union and nothing downstream can tell.
+            print(f"   Warning: unreadable {parquet_file}, left out of the "
+                  f"{date_str} screened union: {e}")
             continue
         if 'ticker' in df.columns and len(df):
             tickers.update(str(t) for t in df['ticker'].tolist())

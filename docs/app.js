@@ -350,8 +350,8 @@
     if (!container) return [];
     const leftPanel = container.querySelector('.left-panel');
     if (!leftPanel) return [];
-    // Arrow-key travel is out of scope on the zone map, so its list links
-    // are skipped (each ticker also repeats across its states and clusters).
+    // The zone map's lists are rows, not one column, so zoneArrowNav walks
+    // them and this list skips them (each ticker also repeats across cards).
     return Array.from(leftPanel.querySelectorAll('.tn-link')).filter(l => !l.closest('.zone-map'));
   }
 
@@ -381,14 +381,19 @@
 
   function initArrowKeyNav() {
     document.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
 
       // Don't intercept if user is typing in an input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+      const tabId = getActiveTabId();
+      if (zoneArrowNav(tabId, e.key)) {
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') return;
       e.preventDefault();
 
-      const tabId = getActiveTabId();
       const links = getTickerLinksForTab(tabId);
       if (links.length === 0) return;
 
@@ -2098,7 +2103,7 @@
         + `<div class="zm-state-note">${escHtml(s.note)}</div>`
         + `<div class="zm-state-list">${list}</div></div>`;
     }).join('');
-    return `<div class="card zm-card"><div class="card-lbl">Seven states, best first</div>${rows}</div>`;
+    return `<div class="card zm-card">${rows}</div>`;
   }
 
   function zoneClustersCard(tickers, metric) {
@@ -2136,7 +2141,7 @@
       ? `${remaining.length} more ${remaining.length === 1 ? 'name sits' : 'names sit'} in ${rest} other ${rest === 1 ? 'theme' : 'themes'} or carry no theme tag. `
       : '')
       + `Buy area / total. Names in the buy area are bold. The number after each ticker is its ${metric.label}.`;
-    return `<div class="card zm-card"><div class="card-lbl">Where they cluster</div>${rows || '<div class="no-data">No theme tags.</div>'}`
+    return `<div class="card zm-card">${rows || '<div class="no-data">No theme tags.</div>'}`
       + `<p class="zm-foot">${escHtml(foot)}</p></div>`;
   }
 
@@ -2209,6 +2214,48 @@
     el.querySelectorAll(`.tn-link[data-sym="${q}"]`).forEach(l => l.classList.add('active-ticker'));
   }
 
+  /** Arrow keys on a zone map's lists. Left and right step along one row;
+   *  up and down jump to the first name of the next row. A ticker repeats
+   *  across the states and clusters cards, so the position is the link
+   *  element, not the symbol. Returns false when the tab has no zone map. */
+  function zoneArrowNav(tabId, key) {
+    const mode = Object.keys(ZONE_MODES).find(m => ZONE_MODES[m].tabId === tabId);
+    const el = mode && document.getElementById(ZONE_MODES[mode].containerId);
+    if (!el) return false;
+    const rows = Array.from(el.querySelectorAll('.zm-state-list, .zm-leaf-list'))
+      .map(r => Array.from(r.querySelectorAll('.tn-link')))
+      .filter(r => r.length);
+    if (!rows.length) return true;
+
+    // A re-render or a dot click leaves no stored link in the lists, so
+    // re-enter at the first link of the selected symbol.
+    let cur = el._zmNavLink;
+    if (!cur || !el.contains(cur)) {
+      cur = el._zmSel ? el.querySelector(`.tn-link[data-sym="${CSS.escape(el._zmSel)}"]`) : null;
+    }
+    let r = cur ? rows.findIndex(row => row.includes(cur)) : -1;
+    let i = r >= 0 ? rows[r].indexOf(cur) : -1;
+
+    if (r < 0) {
+      if (key === 'ArrowUp' || key === 'ArrowLeft') return true;
+      r = 0; i = 0;
+    } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      i += key === 'ArrowRight' ? 1 : -1;
+      if (i < 0 || i >= rows[r].length) return true;
+    } else {
+      r += key === 'ArrowDown' ? 1 : -1;
+      if (r < 0 || r >= rows.length) return true;
+      i = 0;
+    }
+
+    const link = rows[r][i];
+    el._zmNavLink = link;
+    selectZoneTicker(mode, link.dataset.sym);
+    link.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    openChart(tabId, link.dataset.sym);
+    return true;
+  }
+
   function initZoneMaps() {
     Object.entries(ZONE_MODES).forEach(([mode, cfg]) => {
       const el = document.getElementById(cfg.containerId);
@@ -2218,6 +2265,7 @@
         const link = e.target.closest('.tn-link');
         const sym = pt ? pt.dataset.zmSym : link ? link.dataset.sym : null;
         if (!sym) return;
+        el._zmNavLink = pt ? null : link;
         // A list link is a .tn-link, so initTickerClicks opens its chart.
         // A dot is not, so this handler opens the chart for it.
         if (pt) openChart(cfg.tabId, sym);

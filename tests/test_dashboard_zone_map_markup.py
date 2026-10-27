@@ -88,12 +88,32 @@ class ZoneRendererTests(unittest.TestCase):
         for token in ('tn-link', 'hlClass(', 'hlTitle(', 'day-pattern-green', 'data-sym='):
             self.assertIn(token, body)
 
-    def test_arrow_keys_skip_the_zone_map_lists(self):
-        """Review finding: `.viz-left` is a `.left-panel`, so arrow keys walked
-        the states and clusters lists — each ticker came up twice, and the dot
-        ring stayed on the old name. Arrow keys on the map are out of scope."""
+    def test_the_column_walk_skips_the_zone_map_lists(self):
+        """Review finding: `.viz-left` is a `.left-panel`, so the up/down column
+        walk read the states and clusters lists as one column — each ticker
+        came up twice, and the dot ring stayed on the old name."""
         body = _fn('getTickerLinksForTab')
         self.assertIn("closest('.zone-map')", body)
+
+    def test_arrow_keys_walk_the_zone_map_by_rows(self):
+        """Left and right step along a row; up and down change rows. The
+        zone map handles the key before the column walk sees it."""
+        nav = _fn('zoneArrowNav')
+        self.assertIn("'.zm-state-list, .zm-leaf-list'", nav)
+        for key in ('ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'):
+            self.assertIn(key, nav)
+        # The position is the link, since a ticker repeats across cards.
+        self.assertIn('el._zmNavLink = link', nav)
+        self.assertIn('selectZoneTicker(mode', nav)
+        self.assertIn('openChart(tabId', nav)
+        keys = _fn('initArrowKeyNav')
+        self.assertLess(keys.index('zoneArrowNav(tabId, e.key)'), keys.index('getTickerLinksForTab(tabId)'))
+        self.assertIn('el._zmNavLink = pt ? null : link', _fn('initZoneMaps'))
+
+    def test_the_lists_carry_no_card_titles(self):
+        """The user asked for both titles to go: they had no use."""
+        for text in ('Seven states, best first', 'Where they cluster'):
+            self.assertNotIn(text, _zone_section(), text)
 
     def test_the_footer_counts_only_themes_that_hold_a_remaining_name(self):
         """Review finding: the footer counted every hidden leaf, including

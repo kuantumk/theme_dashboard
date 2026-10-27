@@ -645,8 +645,8 @@ td.l {
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-  padding: 8px 14px;
-  margin-bottom: 10px;
+  padding: 1px 14px;
+  margin-bottom: 1px;
   background: transparent;
   border: 1px solid var(--border);
 }
@@ -1487,7 +1487,7 @@ tbody tr.nav-active {
    marker colour (the NASI rule). Labels and rails are structure, not signal.
    ═══════════════════════════════════════════════════════ */
 
-.zone-map { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.zone-map { display: flex; flex-direction: column; gap: 12px; }
 .zm-card { margin: 0; }
 /* No viewBox scaling: drawZoneScatter gives the SVG a fixed pixel size and
    a matching viewBox, so the font sizes below are real px at any panel

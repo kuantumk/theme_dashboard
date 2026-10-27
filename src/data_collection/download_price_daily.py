@@ -19,10 +19,54 @@ END_DATE = TODAY + dt.timedelta(days=1)  # yf.download end_date is not inclusive
 START_DATE = TODAY - dt.timedelta(days=int(CONFIG["price_data"]["lookback_days"]))
 
 
-def download_yf_price_data(start_date, end_date):
+BATCH_SIZE = 200
+BATCH_RETRY_WAIT_S = 30
+
+
+class DownloadCoverageError(RuntimeError):
+    """Too few of the requested tickers came back to publish a run from."""
+
+
+def _download_batch(tickers, escaped, start_date, end_date):
+    """``{ticker: frame}`` for one batch. Raises if the request itself failed."""
+    batch_df = yf.download(
+        tickers=escaped,
+        start=start_date,
+        end=end_date,
+        group_by='ticker',
+        threads=True,
+        progress=False
+    )
+    found = {}
+    if batch_df.empty or not isinstance(batch_df.columns, pd.MultiIndex):
+        return found
+    symbols = set(batch_df.columns.get_level_values(0))
+    for ticker, escaped_ticker in zip(tickers, escaped):
+        if escaped_ticker not in symbols:
+            continue
+        try:
+            t_df = batch_df[escaped_ticker].copy()
+            t_df.columns = [c.lower() for c in t_df.columns]
+            if not t_df['close'].dropna().empty:
+                found[ticker] = t_df
+        except Exception:
+            continue
+    return found
+
+
+def download_yf_price_data(start_date, end_date, min_coverage=None):
     """
     Download price history data from Yahoo Finance.
     Robustly handles rate limits and ensures Benchmark (SPY) is valid.
+
+    A batch that fails outright (an exception or an empty frame) is retried
+    once. With ``min_coverage`` set, the download raises
+    ``DownloadCoverageError`` -- before writing anything -- when fewer than
+    that share of the requested tickers came back, so a partial Yahoo outage
+    cannot replace the price file with a thinned universe that every tab
+    then publishes. market_history calls this without ``min_coverage``: it
+    retries rate-limited tickers itself after this returns, and a back-dated
+    range legitimately lacks tickers listed since.
     """
     price_data_dict = {}
 
@@ -70,10 +114,9 @@ def download_yf_price_data(start_date, end_date):
 
     print(f"\nDownloading {len(tickers)} market tickers in batches...")
 
-    BATCH_SIZE = 200
     escaped_tickers = [t.replace('.', '-') for t in tickers]
-
     success_count = 0
+    failed_batches = 0
 
     for i in range(0, len(tickers), BATCH_SIZE):
         batch_tickers = tickers[i:i+BATCH_SIZE]
@@ -82,51 +125,43 @@ def download_yf_price_data(start_date, end_date):
         if i % (BATCH_SIZE * 5) == 0:
             print(f"  Processing {i}/{len(tickers)}...")
 
-        try:
-            batch_df = yf.download(
-                tickers=batch_escaped,
-                start=start_date,
-                end=end_date,
-                group_by='ticker',
-                threads=True,
-                progress=False
-            )
+        found = None
+        for attempt in range(2):
+            try:
+                found = _download_batch(batch_tickers, batch_escaped, start_date, end_date)
+            except Exception as e:
+                print(f"  Batch {i // BATCH_SIZE} failed (attempt {attempt + 1}): {e}")
+                found = None
+            if found:
+                break
+            if attempt == 0:
+                print(f"  Batch {i // BATCH_SIZE} returned nothing; retrying in {BATCH_RETRY_WAIT_S}s")
+                time.sleep(BATCH_RETRY_WAIT_S)
+        if not found:
+            failed_batches += 1
+            continue
 
-            if batch_df.empty:
-                continue
+        price_data_dict.update(found)
+        success_count += len(found)
+        time.sleep(1.0)
 
-            for ticker, escaped_ticker in zip(batch_tickers, batch_escaped):
-                try:
-                    if isinstance(batch_df.columns, pd.MultiIndex):
-                        if escaped_ticker in batch_df.columns.get_level_values(0):
-                            t_df = batch_df[escaped_ticker].copy()
-                            t_df.columns = [c.lower() for c in t_df.columns]
-
-                            if not t_df['close'].dropna().empty:
-                                price_data_dict[ticker] = t_df
-                                success_count += 1
-                    else:
-                        pass
-
-                except Exception:
-                    continue
-
-            time.sleep(1.0)
-
-        except Exception as e:
-            print(f"  Batch failed: {e}")
-            time.sleep(5)
-
-    print(f"\nDownload complete. Success: {success_count}/{len(tickers)} tickers.")
+    print(f"\nDownload complete. Success: {success_count}/{len(tickers)} tickers "
+          f"({failed_batches} batches returned nothing after a retry).")
     print(f"Indices status: SPY={'YES' if 'SPY' in price_data_dict else 'NO'}")
 
     if 'SPY' not in price_data_dict:
         raise ValueError("CRITICAL ERROR: SPY data failed to download. Cannot proceed.")
     if '^GSPC' not in price_data_dict:
         raise ValueError("CRITICAL ERROR: ^GSPC data failed to download. Cannot proceed.")
+    if min_coverage is not None and tickers and success_count / len(tickers) < min_coverage:
+        raise DownloadCoverageError(
+            f"Only {success_count}/{len(tickers)} tickers downloaded "
+            f"({success_count / len(tickers):.1%}, minimum {min_coverage:.0%}); "
+            f"{PRICE_DATA_FILE} left unchanged.")
 
     su.pickle_object_to_file(price_data_dict, PRICE_DATA_FILE)
 
 
 if __name__ == '__main__':
-    download_yf_price_data(START_DATE, END_DATE)
+    download_yf_price_data(START_DATE, END_DATE,
+                           min_coverage=float(CONFIG["price_data"]["min_coverage"]))

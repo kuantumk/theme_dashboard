@@ -20,8 +20,14 @@ from config.settings import (
     PROJECT_ROOT, SCREENING_OUTPUT_DIR, SHORT_INTEREST_FILE
 )
 import src.stock_utils as su
+# Re-exported: update_breadth_history calls it through this module's namespace,
+# which is what the breadth tests patch.
+from src.data_collection.barchart_breadth import (
+    BREADTH_KEYS, breadth_reading_is_fresh, fetch_barchart_breadth,
+)
 from src.data_collection.fetch_macro_events import fetch_macro_events, write_events_json
 from src.indicators.create_technical_indicators import (
+    compute_atr14,
     compute_ema_pair,
     compute_highlight_tier,
     compute_inside_day,
@@ -364,14 +370,18 @@ def update_breadth_history(session_date=None):
         with open(BREADTH_HISTORY_FILE, 'r') as f:
             history = json.load(f)
 
-    # One reading per indicator per session. barchart.com via Playwright is the
-    # primary source; the step-3 scrape in BREADTH_FILE fills only the keys it
-    # missed. Both used to append, and the two scrapers round differently, so
-    # every run wrote a near-duplicate pair (MMFI 33.2, 33.21) into the history
-    # winner_research's backtests read. `as_of` lets a re-run of the same
-    # session replace its reading rather than append a second one.
-    barchart_data = fetch_barchart_breadth() or {}
-    for key in ['ncfd', 'mmfi', 'mmtw', 'mmth']:
+    # One reading per indicator per session. Step 3 of the daily workflow
+    # scrapes barchart.com into BREADTH_FILE; when that file is fresh and
+    # complete it is the reading, and no second browser is opened. Otherwise
+    # (a standalone export, or step 3 missed a key) barchart is scraped here
+    # and the file fills only the keys that scrape missed. `as_of` lets a
+    # re-run of the same session replace its reading rather than append a
+    # second one: winner_research's backtests read these histories.
+    if breadth_reading_is_fresh(current):
+        barchart_data = current
+    else:
+        barchart_data = fetch_barchart_breadth() or {}
+    for key in BREADTH_KEYS:
         val = barchart_data.get(key)
         if val is None:
             val = current.get(key)
@@ -421,62 +431,6 @@ def update_breadth_history(session_date=None):
     print(f"  Market breadth updated: NCFD={ncfd_val}, MMFI={mmfi_val}, MMTW={mmtw_val}, MMTH={mmth_val}, "
           f"NAAIM={naaim_val} (survey {naaim_as_of})")
     return history
-
-
-def fetch_barchart_breadth():
-    """Fetch NCFD, MMFI, MMTW and MMTH from barchart.com using Playwright (JS-rendered pages)."""
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("  Warning: Playwright not installed. Run: uv sync && uv run playwright install chromium")
-        return None
-
-    result = {}
-    symbols = {
-        'ncfd': 'https://www.barchart.com/stocks/quotes/$NCFD/overview',
-        'mmfi': 'https://www.barchart.com/stocks/quotes/$MMFI/overview',
-        'mmtw': 'https://www.barchart.com/stocks/quotes/$MMTW/overview',
-        'mmth': 'https://www.barchart.com/stocks/quotes/$MMTH/overview',
-    }
-
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.set_extra_http_headers({
-                'User-Agent': CONFIG["market_breadth"]["user_agent"]
-            })
-
-            for key, url in symbols.items():
-                try:
-                    page.goto(url, timeout=60000, wait_until='domcontentloaded')
-                    page.wait_for_selector('span.last-change', timeout=20000)
-                    import time
-                    time.sleep(3)
-
-                    price_text = page.evaluate('''() => {
-                        const el = document.querySelector('span.last-change[data-ng-class*="lastPrice"]');
-                        if (el && el.textContent.trim()) return el.textContent.trim();
-                        const first = document.querySelector('span.last-change');
-                        if (first && first.textContent.trim()) return first.textContent.trim();
-                        return null;
-                    }''')
-
-                    if price_text:
-                        val = float(price_text.replace('%', '').replace(',', '').strip())
-                        result[key] = round(val, 2)
-                        print(f"    {key.upper()} = {val}%")
-                    else:
-                        print(f"    Warning: Could not extract {key.upper()} price from barchart")
-                except Exception as e:
-                    print(f"    Warning: Failed to scrape {key.upper()}: {e}")
-
-            browser.close()
-    except Exception as e:
-        print(f"  Error with Playwright scraping: {e}")
-        return None
-
-    return result if result else None
 
 
 def fetch_cnn_fear_greed():
@@ -1058,12 +1012,7 @@ def fetch_etf_metrics(tickers, spy_cum_norm_100):
             ema10, ema20 = compute_ema_pair(close)
             sma50 = compute_sma50_full(close)
 
-            # ATR14
-            high_low = high - low
-            high_prev = (high - close.shift(1)).abs()
-            low_prev = (low - close.shift(1)).abs()
-            tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
-            atr14 = tr.rolling(window=14, min_periods=1).mean()
+            atr14 = compute_atr14(high, low, close)
 
             # VARS — gated on ≥50 bars so recent IPOs don't produce garbage.
             vars_value = None

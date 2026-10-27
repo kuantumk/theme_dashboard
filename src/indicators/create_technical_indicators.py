@@ -15,17 +15,25 @@ import src.stock_utils as su
 from config.settings import CONFIG, PRICE_DATA_FILE, PRICE_DATA_TA_FILE
 
 
+def compute_atr14(high, low, close):
+    """14-period Average True Range (simple mean of the true range, min_periods=1).
+
+    The one definition shared by the stock pipeline, SPY's VARS baseline and
+    the ETF recompute in export_dashboard_data.fetch_etf_metrics.
+    """
+    prev_close = close.shift(1)
+    tr = pd.concat([high - low, (high - prev_close).abs(), (low - prev_close).abs()],
+                   axis=1).max(axis=1)
+    return tr.rolling(window=14, min_periods=1).mean()
+
+
 def compute_spy_cum_norm_100(spy_df):
     """Return the 100-session rolling sum of SPY's ATR14-normalized daily change.
 
     Shared by stock VARS (calculate_technical_indicators) and ETF VARS
     (export_dashboard_data.fetch_etf_metrics) so the baseline can't drift.
     """
-    high_low = spy_df['high'] - spy_df['low']
-    high_prev = (spy_df['high'] - spy_df['close'].shift(1)).abs()
-    low_prev = (spy_df['low'] - spy_df['close'].shift(1)).abs()
-    tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
-    atr14 = tr.rolling(window=14, min_periods=1).mean()
+    atr14 = compute_atr14(spy_df['high'], spy_df['low'], spy_df['close'])
     norm_change = (spy_df['close'] - spy_df['close'].shift(1)) / atr14
     return norm_change.rolling(window=100, min_periods=1).sum()
 
@@ -669,11 +677,7 @@ def calculate_technical_indicators():
             daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=10).mean() - 1
 
             # ATR14 (14-period Average True Range)
-            high_low = daily['high'] - daily['low']
-            high_prev = (daily['high'] - daily['close'].shift(1)).abs()
-            low_prev = (daily['low'] - daily['close'].shift(1)).abs()
-            tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
-            daily['atr14'] = tr.rolling(window=14, min_periods=1).mean()
+            daily['atr14'] = compute_atr14(daily['high'], daily['low'], daily['close'])
             daily['atr_pct'] = daily['atr14'] / daily['close']
 
             # ATR multiple from the 50-day SMA, matching Project608 parash logic.

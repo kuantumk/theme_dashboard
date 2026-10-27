@@ -5,13 +5,13 @@
 def filter_master_table(master_df):
     filter_conditions = (
         # liquidity (shares)
-        (master_df['vol_sma50'] >= 750e3) &
+        (master_df['vol_sma50_partial'] >= 750e3) &
 
         # liquidity (dollars, 20-day rolling)
-        (master_df['avg_dollar_vol'] >= 15.0e6) &
+        (master_df['avg_dollar_vol_partial'] >= 15.0e6) &
 
         # ADR %
-        (master_df['adr_pct'] >= 0.04) &
+        (master_df['adr_pct_partial'] >= 0.04) &
 
         # any-of momentum thresholds
         (

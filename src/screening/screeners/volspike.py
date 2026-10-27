@@ -11,12 +11,12 @@ def filter_master_table(master_df):
         (master_df['up_dollar_vol_max'] >= 40e6) &
 
         # average volume >= 1M shares (50-day)
-        (master_df['vol_sma50'] >= 1e6) &
+        (master_df['vol_sma50_partial'] >= 1e6) &
 
         # ADR% >= 4%
-        (master_df['adr_pct'] >= 0.04) &
+        (master_df['adr_pct_partial'] >= 0.04) &
 
         # price >= $2 and above the 200-day SMA
         (master_df['close'] >= 2.0) &
-        (master_df['close'] >= master_df['sma200'])
+        (master_df['close'] >= master_df['sma200_partial'])
     )

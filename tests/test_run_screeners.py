@@ -41,6 +41,8 @@ def master(date_str, seed):
         df[col] = rng.integers(0, 100, n).astype(float)
     df['up_dollar_vol_max'] *= 1e8
     df.iloc[::7, df.columns.get_loc('sma200')] = np.nan   # zero-filled for the screeners
+    for col in ('sma25', 'sma30', 'sma50', 'sma100', 'sma200', 'vol_sma50', 'avg_dollar_vol', 'adr_pct'):
+        df[f'{col}_partial'] = df[col]
     df['ticker'] = [f'T{i}' for i in range(n)]
     return df
 

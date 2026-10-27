@@ -576,6 +576,40 @@ def compute_max_down_streak(close, lookback=DROP_LOOKBACK):
 
 VOL_SPIKE_WINDOW = '365D'  # trailing 1-year (calendar) lookback for volume-spike detection
 
+# Bars a new listing needs before its partial-window columns read anything.
+# Chosen, not measured: enough that one opening-day print is not the average.
+PARTIAL_MIN_BARS = 5
+PARTIAL_SMA_WINDOWS = (25, 30, 50, 100, 200)
+
+
+def compute_partial_windows(daily, min_bars=PARTIAL_MIN_BARS):
+    """Screener-only twins of the moving averages and liquidity averages,
+    defined from `min_bars` bars instead of half the window.
+
+    A new listing has no `sma200` until bar 100, no `vol_sma50` until bar 25
+    and no `avg_dollar_vol` / `adr_pct` until bar 10. The screeners read a
+    zero-filled master, so those NaNs became 0: the moving-average legs passed
+    without testing anything and the liquidity floors failed, which kept an
+    IPO off every screener for its first 10-25 sessions. These columns use
+    whatever bars exist instead.
+
+    They are NEW columns rather than a lower `min_periods` on the originals
+    because market_history archives the originals and winner_research reads
+    them (charts, flags, grading, its liquidity filter); see "Downstream
+    repos" in CLAUDE.md. Once a ticker has half the window, each twin equals
+    its original exactly, so only young listings screen differently.
+    """
+    out = {}
+    close = daily['close']
+    for n in PARTIAL_SMA_WINDOWS:
+        out[f'sma{n}_partial'] = close.rolling(window=n, min_periods=min_bars).mean()
+    out['vol_sma50_partial'] = daily['volume'].rolling(window=50, min_periods=min_bars).mean()
+    out['avg_dollar_vol_partial'] = (
+        (daily['volume'] * close).rolling(window=20, min_periods=min_bars).mean())
+    out['adr_pct_partial'] = (
+        (daily['high'] / daily['low']).rolling(window=20, min_periods=min_bars).mean() - 1)
+    return out
+
 
 def _days_since_window_high(series, index, window=VOL_SPIKE_WINDOW):
     """Calendar days since the most recent bar that printed a high of the trailing ``window``.
@@ -676,6 +710,11 @@ def calculate_technical_indicators():
             # ADR%
             daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=10).mean() - 1
 
+            # Partial-window twins the screeners read, so a new listing is
+            # judged on the bars it has. See compute_partial_windows.
+            for col, series in compute_partial_windows(daily).items():
+                daily[col] = series
+
             # ATR14 (14-period Average True Range)
             daily['atr14'] = compute_atr14(daily['high'], daily['low'], daily['close'])
             daily['atr_pct'] = daily['atr14'] / daily['close']
@@ -720,9 +759,10 @@ def calculate_technical_indicators():
             for col in tr.columns:
                 daily[col] = tr[col]
 
-            # Coiled-theme reusable setup features.
-            # Retained so the standalone `coiled_theme` screener (kept but no longer
-            # in the daily workflow) still has its time-series inputs precomputed.
+            # Setup features first built for the retired `coiled_theme` screener.
+            # Nothing in this repo gates on them any more, but market_history
+            # archives every master column, so dropping them is a schema change
+            # (see "Downstream repos" in CLAUDE.md).
             daily['range_pct'] = (daily['high'] - daily['low']) / daily['close']
             daily['range10_pct'] = (
                 daily['high'].rolling(window=10, min_periods=5).max()

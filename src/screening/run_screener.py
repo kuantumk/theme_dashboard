@@ -54,8 +54,8 @@ def screen_master(filled_master, screeners):
     """``{name: passing rows}`` for one zero-filled master frame.
 
     Each screener gets its own copy, so one that adds columns to the frame
-    it is handed (``coiled_theme`` does) cannot change what the next one
-    sees or writes, exactly as when each screener ran in its own process.
+    it is handed cannot change what the next one sees or writes, exactly as
+    when each screener ran in its own process.
     """
     results = {}
     for name, module in screeners.items():

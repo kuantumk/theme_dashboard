@@ -14,9 +14,8 @@ import re
 import unittest
 from pathlib import Path
 
-from src.bidask.crypto_state import CHANGE_FIELD, CRYPTO, REF_24H
 from src.bidask.grouping import RVOL_FIELD, SIDES_FIELD
-from src.bidask.session_state import REFERENCE_FIELDS
+from src.bidask.session_state import CRYPTO, REFERENCE_FIELDS
 
 WEB = Path(__file__).resolve().parents[1] / "src" / "bidask" / "web"
 HTML = (WEB / "index.html").read_text(encoding="utf-8")
@@ -183,8 +182,8 @@ class TestReferenceMarkerIsATextLabel(unittest.TestCase):
                 self.assertIn(f"'{reference}': '{field}'", APP,
                               f"{state}: no change field mapped for {reference!r}")
 
-    def test_the_crypto_reference_is_mapped_too(self):
-        self.assertIn(f"'{REF_24H}': '{CHANGE_FIELD}'", APP)
+    def test_the_crypto_state_keys_its_own_row(self):
+        """The loop above checks the pair; this checks it sits under `crypto`."""
         self.assertIn(f"{CRYPTO}: {{", APP,
                       "the crypto session state is missing from the move table")
 

@@ -20,12 +20,11 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from src.bidask.config import RVOL_SCHEDULE_STATES, load_config
+from src.bidask.config import load_config
 from src.bidask.rvol_at_time import (
     BARS_PER_SESSION,
-    CRYPTO,
+    GRID_FOR_STATE,
     SCHEDULE_ORIGIN_MIN,
-    SCHEDULE_STATES,
     SESSION_MINUTES,
     baseline_at,
     build_profiles,
@@ -36,7 +35,14 @@ from src.bidask.rvol_at_time import (
     save_profiles,
     threshold_for,
 )
-from src.bidask.session_state import CLOSED, MARKET, POST_MARKET, PRE_MARKET
+from src.bidask.session_state import (
+    CLOSED,
+    CRYPTO,
+    MARKET,
+    POST_MARKET,
+    PRE_MARKET,
+    SCHEDULE_STATES,
+)
 
 ET = ZoneInfo("America/New_York")
 
@@ -202,19 +208,18 @@ class TestThresholdSchedule(unittest.TestCase):
         self.assertEqual(floors, sorted(floors))
 
 
-class TestScheduleStatesMatchTheConfigGuard(unittest.TestCase):
-    """`config.py` cannot import this module — it reaches `tvbars` and then
-    `tvsocket`, which imports `config` for its cookie jar, so the edge would be
-    a cycle — and so carries its own copy of the valid state keys. Pinned here,
-    exactly as `feed.SESSION_LABELS` and
-    `session_state.SESSION_STATES` are pinned to each other.
+class TestEveryScheduleStateIsWired(unittest.TestCase):
+    """`session_state.SCHEDULE_STATES` is what `load_config` accepts as a key.
 
-    A key in one table and not the other is a state the gate can be configured
-    for and never looks up, or one it looks up and no config may name.
+    A state it accepts but these tables lack is one the gate can be configured
+    for and then looks up on the wrong clock, from the wrong origin, or against
+    no numerator at all.
     """
 
-    def test_the_two_tables_carry_the_same_states(self):
-        self.assertEqual(sorted(SCHEDULE_STATES), sorted(RVOL_SCHEDULE_STATES))
+    def test_each_state_has_a_grid_an_origin_and_a_numerator(self):
+        from src.bidask.universe import VOLUME_FIELDS
+        for table in (GRID_FOR_STATE, SCHEDULE_ORIGIN_MIN, VOLUME_FIELDS):
+            self.assertEqual(sorted(table), sorted(SCHEDULE_STATES))
 
     def test_every_shipped_schedule_names_a_state_with_an_origin(self):
         for state, _bands in load_config().in_play_rvol_schedules:

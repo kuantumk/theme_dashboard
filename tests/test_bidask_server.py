@@ -12,6 +12,7 @@ import time
 import unittest
 import urllib.error
 import urllib.request
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
@@ -23,11 +24,13 @@ from src.bidask import server
 from src.bidask.config import load_config
 from src.bidask.server import (
     STATE_FILENAME,
+    MarketSnapshot,
     _drop_non_finite,
     _equity_session_date,
     _is_tracked_location,
     make_handler,
 )
+from src.bidask.session_state import CRYPTO, MARKET, REF_24H
 
 
 class TestOutputLocationGuard(unittest.TestCase):
@@ -151,7 +154,7 @@ class TestAllDroppedAlarm(unittest.TestCase):
 
     def test_state_carries_the_match_and_universe_pair(self):
         eng = self.engine()
-        eng.matched["equity"], eng.universe["equity"] = 2806, 0
+        eng.snapshots["equity"] = MarketSnapshot(matched=2806, universe=0)
         state = eng.build_state()["equity"]
         self.assertEqual(state["matched"], 2806)
         self.assertEqual(state["universe"], 0)
@@ -171,7 +174,8 @@ class TestSessionStateFromTheFeed(unittest.TestCase):
 
     One value describes the whole response. Reading it per row would let two
     tickers in one poll be judged against different references and different
-    floors, which no banner on screen would show.
+    floors, which no banner on screen would show. The feed resolves it once,
+    beside the banner label, and the server reads it off the payload.
     """
 
     def frame(self, rows):
@@ -179,24 +183,40 @@ class TestSessionStateFromTheFeed(unittest.TestCase):
         return pd.DataFrame(rows)
 
     def test_the_feeds_own_spelling_resolves(self):
-        from src.bidask.server import _session_state
-        from src.bidask.session_state import MARKET, POST_MARKET, PRE_MARKET
-        self.assertEqual(_session_state(self.frame([{"current_session": "market"}])),
+        from src.bidask.feed import _session
+        from src.bidask.session_state import POST_MARKET, PRE_MARKET
+        self.assertEqual(_session(self.frame([{"current_session": "market"}]))[0],
                          MARKET)
-        self.assertEqual(_session_state(self.frame([{"current_session": "pre_market"}])),
+        self.assertEqual(_session(self.frame([{"current_session": "pre_market"}]))[0],
                          PRE_MARKET)
-        self.assertEqual(_session_state(self.frame([{"current_session": "post_market"}])),
+        self.assertEqual(_session(self.frame([{"current_session": "post_market"}]))[0],
                          POST_MARKET)
 
     def test_an_absent_or_unmapped_value_is_closed_never_open(self):
         # A state the board has no rules for must not borrow another state's
         # reference price and volume floor.
-        from src.bidask.server import _session_state
+        from src.bidask.feed import _session
         from src.bidask.session_state import CLOSED
-        self.assertEqual(_session_state(self.frame([{"close": 10.0}])), CLOSED)
-        self.assertEqual(_session_state(self.frame([{"current_session": "brand_new"}])),
+        self.assertEqual(_session(self.frame([{"close": 10.0}]))[0], CLOSED)
+        self.assertEqual(_session(self.frame([{"current_session": "brand_new"}]))[0],
                          CLOSED)
-        self.assertEqual(_session_state(self.frame([{"current_session": None}])), CLOSED)
+        self.assertEqual(_session(self.frame([{"current_session": None}]))[0], CLOSED)
+
+    def test_the_server_judges_by_the_payloads_state_not_by_its_rows(self):
+        """The rows say `market`; the payload says closed. The payload wins,
+        because it is the one reading the banner was printed from."""
+        from src.bidask.feed import Payload
+        _, rows = TestPollOnceEndToEnd().rows()
+        payload = Payload(rows=rows, feed="streaming", matched=len(rows),
+                          market_status="market closed")
+        with TemporaryDirectory() as tmp:
+            eng = server.TapeEngine(load_config(), Path(tmp), markets=("equity",))
+            with mock.patch("src.bidask.server.fetch", return_value=payload), \
+                 mock.patch.object(server.TapeEngine, "ensure_profiles", lambda *a: None):
+                eng.poll_once()
+            state = eng.build_state()["equity"]
+        self.assertEqual(state["rvol"]["session_state"], "closed")
+        self.assertIsNone(state["rvol"]["floor"])
 
 
 class TestRvolStatusBlock(unittest.TestCase):
@@ -215,7 +235,8 @@ class TestRvolStatusBlock(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
         if gate_fields:
-            eng.gates["equity"] = RvolGate(rows=pd.DataFrame(), **gate_fields)
+            eng.snapshots["equity"] = MarketSnapshot(
+                gate=RvolGate(rows=pd.DataFrame(), **gate_fields))
         return eng
 
     def test_a_healthy_poll_names_no_cause(self):
@@ -300,12 +321,11 @@ class TestColumnsComeFromThisPoll(unittest.TestCase):
 
     def test_qualifying_rows_reach_the_columns_with_their_sides(self):
         eng = self.engine()
-        eng.qualified["equity"] = [
-            {"symbol": "AAA", "rvol_at_time": 3.0, "industry": "Software",
-             "sides": {"strong": ("open",), "weak": ("prev close",)}},
-        ]
-        eng.pregate["equity"] = [{"symbol": "AAA", "industry": "Software"},
-                                 {"symbol": "BBB", "industry": "Software"}]
+        eng.snapshots["equity"] = MarketSnapshot(
+            qualified=[{"symbol": "AAA", "rvol_at_time": 3.0, "industry": "Software",
+                        "sides": {"strong": ("open",), "weak": ("prev close",)}}],
+            pregate=[{"symbol": "AAA", "industry": "Software"},
+                     {"symbol": "BBB", "industry": "Software"}])
         columns = eng.build_state()["equity"]["columns"]
         # A gapped-down recovering name is genuinely strong against its open
         # and weak against yesterday, and belongs in both columns.
@@ -316,17 +336,17 @@ class TestColumnsComeFromThisPoll(unittest.TestCase):
         # Two members of the industry roster, one qualifying: the share is 1/2,
         # not 1/1. Taken after the gate every share would be 1.0.
         eng = self.engine()
-        eng.qualified["equity"] = [
-            {"symbol": "AAA", "rvol_at_time": 2.0, "industry": "Software",
-             "sides": {"strong": ("open",)}},
-            {"symbol": "BBB", "rvol_at_time": 2.0, "industry": "Software",
-             "sides": {"strong": ("open",)}},
-        ]
-        eng.pregate["equity"] = [{"symbol": s, "industry": "Software"}
-                                 for s in ("AAA", "BBB", "CCC", "DDD")]
+        eng.snapshots["equity"] = MarketSnapshot(
+            qualified=[{"symbol": "AAA", "rvol_at_time": 2.0, "industry": "Software",
+                        "sides": {"strong": ("open",)}},
+                       {"symbol": "BBB", "rvol_at_time": 2.0, "industry": "Software",
+                        "sides": {"strong": ("open",)}}],
+            pregate=[{"symbol": s, "industry": "Software"}
+                     for s in ("AAA", "BBB", "CCC", "DDD")])
         half = eng.build_state()["equity"]["columns"]["strong"][0]["score"]
 
-        eng.pregate["equity"] = eng.pregate["equity"][:2]
+        snapshot = eng.snapshots["equity"]
+        eng.snapshots["equity"] = replace(snapshot, pregate=snapshot.pregate[:2])
         full = eng.build_state()["equity"]["columns"]["strong"][0]["score"]
         self.assertLess(half, full)
 
@@ -383,7 +403,7 @@ class TestPollOnceEndToEnd(unittest.TestCase):
 
         profile, rows = self.rows()
         payload = Payload(rows=rows, feed="streaming", matched=len(rows),
-                          market_status="market open")
+                          market_status="market open", session_state=MARKET)
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
             eng.themes = {}       # industry fallback, independent of the tag file
@@ -414,7 +434,7 @@ class TestPollOnceEndToEnd(unittest.TestCase):
         _, rows = self.rows()
         rows["avg_volume"] = 1.0          # $20/day: under every floor
         payload = Payload(rows=rows, feed="streaming", matched=len(rows),
-                          market_status="market open")
+                          market_status="market open", session_state=MARKET)
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
             eng.themes = {}
@@ -464,6 +484,107 @@ class TestPollOnceEndToEnd(unittest.TestCase):
     def test_the_payload_serializes_with_nan_forbidden(self):
         _, state = self.engine_and_state()
         json.dumps(state, allow_nan=False)
+
+    def test_scanned_at_is_the_scan_time_not_the_write_time(self):
+        """The pill says when the market was scanned. Stamped at build time it
+        advanced on every cadence-change rewrite with no new scan behind it."""
+        eng, state = self.engine_and_state()
+        self.assertTrue(state["scanned_at"])
+        later = server.datetime(2031, 1, 1, 23, 59, 59)
+        clock = mock.Mock()
+        clock.now.return_value = later
+        with mock.patch("src.bidask.server.datetime", clock):
+            self.assertEqual(eng.build_state()["equity"]["scanned_at"],
+                             state["scanned_at"])
+
+    def test_unread_top_level_fields_are_not_published(self):
+        eng, _ = self.engine_and_state()
+        top = set(eng.build_state())
+        self.assertEqual(top, {"poll_seconds", "equity"})
+
+
+class TestNoHalfBuiltBoard(unittest.TestCase):
+    """⛔ A state write landing mid-poll must publish a whole poll, not a mixture.
+
+    The HTTP thread calls `write_state` whenever the cadence changes, at any
+    moment of the poll thread's cycle. The engine used to reset its per-market
+    columns, gate and session state at the top of each poll and rebuild them
+    one by one, so a write in that window published empty columns beside
+    `floor: null` — which the page renders as "the board is shut" about a
+    market that was open and trading.
+    """
+
+    def test_a_write_during_the_rebuild_sees_the_previous_poll_whole(self):
+        from src.bidask import universe
+
+        poll = TestPollOnceEndToEnd()
+        eng, before = poll.engine_and_state()
+        self.assertEqual(before["rvol"]["floor"], 1.2)
+        self.assertTrue(before["columns"]["strong"])
+
+        # Run the next poll, and have a "POST" build the state at the worst
+        # moment: after the feed answered, while the gate is being applied.
+        mid_poll = []
+        real_gate = universe.apply_rvol_gate
+
+        def gate_then_peek(*args, **kwargs):
+            mid_poll.append(eng.build_state()["equity"])
+            return real_gate(*args, **kwargs)
+
+        from src.bidask.feed import Payload
+        profile, rows = poll.rows()
+        payload = Payload(rows=rows, feed="streaming", matched=len(rows),
+                          market_status="market open", session_state=MARKET)
+        with TemporaryDirectory() as tmp, \
+             mock.patch("src.bidask.server.fetch", return_value=payload), \
+             mock.patch("src.bidask.server.apply_rvol_gate", gate_then_peek), \
+             mock.patch("src.bidask.server.minutes_since_open",
+                        return_value=poll.ELAPSED), \
+             mock.patch.object(server.TapeEngine, "ensure_profiles", lambda *a: None):
+            eng.out_path = Path(tmp) / STATE_FILENAME
+            eng.poll_once()
+
+        self.assertEqual(len(mid_poll), 1, "the hook never ran")
+        seen = mid_poll[0]
+        self.assertEqual(seen["rvol"]["floor"], 1.2,
+                         "a mid-poll write published a shut board")
+        self.assertEqual(seen["rvol"]["session_state"], "market")
+        self.assertEqual(seen["columns"], before["columns"])
+
+    def test_concurrent_writers_never_publish_a_partial_state(self):
+        """Hammer `write_state` from a second thread across many polls."""
+        poll = TestPollOnceEndToEnd()
+        eng, _ = poll.engine_and_state()
+        from src.bidask.feed import Payload
+        _, rows = poll.rows()
+        payload = Payload(rows=rows, feed="streaming", matched=len(rows),
+                          market_status="market open", session_state=MARKET)
+        seen, stop = [], threading.Event()
+
+        def writer():
+            while not stop.is_set():
+                eng.write_state()
+                seen.append(json.loads(eng.out_path.read_text(encoding="utf-8")))
+
+        with TemporaryDirectory() as tmp, \
+             mock.patch("src.bidask.server.fetch", return_value=payload), \
+             mock.patch("src.bidask.server.minutes_since_open",
+                        return_value=poll.ELAPSED), \
+             mock.patch.object(server.TapeEngine, "ensure_profiles", lambda *a: None):
+            eng.out_path = Path(tmp) / STATE_FILENAME
+            eng.write_state()
+            thread = threading.Thread(target=writer)
+            thread.start()
+            try:
+                for _ in range(15):
+                    eng.poll_once()
+            finally:
+                stop.set()
+                thread.join(timeout=10)
+        self.assertTrue(seen)
+        for state in seen:
+            self.assertEqual(state["equity"]["rvol"]["floor"], 1.2)
+            self.assertTrue(state["equity"]["columns"]["strong"])
 
 
 class TestTheClassifierIsGone(unittest.TestCase):
@@ -619,7 +740,7 @@ class TestCryptoPollReachesTheGate(unittest.TestCase):
 
         profile, rows = self.rows()
         payload = Payload(rows=rows, feed="streaming", matched=len(rows),
-                          market_status="24/7")
+                          market_status="24/7", session_state=CRYPTO)
         with TemporaryDirectory() as tmp:
             eng = TapeEngine(load_config(), Path(tmp), markets=("crypto",))
             eng.profiles["crypto"] = ({f"BINANCE:{s}USDT.P": profile for s in ("BTC", "ETH", "DOGE")}
@@ -655,7 +776,6 @@ class TestCryptoPollReachesTheGate(unittest.TestCase):
 
     def test_each_side_names_the_24_hour_reference(self):
         """R15. The label is what stops it reading as an equity session test."""
-        from src.bidask.crypto_state import REF_24H
         _, state = self.engine_and_state()
 
         def sides_of(column, symbol):
@@ -671,7 +791,6 @@ class TestCryptoPollReachesTheGate(unittest.TestCase):
 
     def test_the_payload_names_the_reference_and_the_anchor(self):
         """The page can only report a cause the payload carries."""
-        from src.bidask.crypto_state import REF_24H
         _, state = self.engine_and_state()
         self.assertEqual(state["rvol"]["reference"], REF_24H)
         self.assertEqual(state["rvol"]["anchor"], "00:00 UTC")
@@ -687,7 +806,7 @@ class TestCryptoPollReachesTheGate(unittest.TestCase):
     def test_the_stablecoin_never_reaches_the_gate_at_all(self):
         eng, state = self.engine_and_state()
         self.assertNotIn("USDT", self.shown(state))
-        self.assertNotIn("USDT", {r["symbol"] for r in eng.pregate["crypto"]})
+        self.assertNotIn("USDT", {r["symbol"] for r in eng.snapshots["crypto"].pregate})
 
     def test_an_unavailable_source_says_so_rather_than_showing_a_quiet_market(self):
         """R18. A 24/7 market has no closing bell to explain an empty board."""
@@ -959,7 +1078,7 @@ class TestFrozenNumeratorReachesThePayload(unittest.TestCase):
         profile = np.cumsum(np.full(BARS_PER_SESSION, 60_000.0 / BARS_PER_SESSION))
         base = datetime(2026, 9, 18, 10, 30, tzinfo=ET)
         # One timestamp per poll, not per call: `poll_once` reads the clock for
-        # the market grid and again for the payload's `generated_at`, and both
+        # the market grid and again for the payload's `scanned_at`, and both
         # belong to the same cycle.
         tick = [base]
         clock = mock.Mock()
@@ -974,7 +1093,8 @@ class TestFrozenNumeratorReachesThePayload(unittest.TestCase):
             for poll, volume in enumerate(volumes_per_poll):
                 tick[0] = base + timedelta(seconds=gap_seconds * poll)
                 payload = Payload(rows=self.rows(volume), feed="streaming",
-                                  matched=60, market_status="market open")
+                                  matched=60, market_status="market open",
+                                  session_state=MARKET)
                 with mock.patch("src.bidask.server.fetch", return_value=payload), \
                      mock.patch("src.bidask.server.datetime", clock), \
                      mock.patch("src.bidask.server.minutes_since_open",

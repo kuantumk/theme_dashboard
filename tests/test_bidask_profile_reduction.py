@@ -1,8 +1,8 @@
 """`build_profiles` must stay bit-exact while it gets faster.
 
 Measured 2026-09-18 at full universe scale — 1,800 symbols x 2,496 bars, the
-real shape of a warm-up — the reduction took **33.25s**, of which
-`extended_volume_is_dead` was 2.47s. That was a tenth of the warm-up when the
+real shape of a warm-up — the reduction took **33.25s**, of which the
+dead-extended-volume check was 2.47s. That was a tenth of the warm-up when the
 fetch cost ~195s. Once batching and a smaller incremental fetch bring the
 download near 49s, a 33s reduction is most of what is left.
 
@@ -26,12 +26,13 @@ The spec, from `build_profiles`' own contract:
 
 import math
 import unittest
+from dataclasses import replace
 
 import numpy as np
 import pandas as pd
 
 from src.bidask.rvol_at_time import (BAR_MINUTES, CRYPTO_GRID, EQUITY_GRID,
-                                     build_profiles, extended_volume_is_dead)
+                                     build_profiles)
 
 
 def reference_profiles(bars_by_symbol, sessions=10, exclude_date=None,
@@ -194,34 +195,40 @@ class TestTheFailClosedRulesSurvive(unittest.TestCase):
     """The rejections matter more than the arithmetic — each one is a symbol
     that will score 0 and stay off the board rather than be admitted wrong."""
 
+    # One core bar is enough for a day to count, so these cases isolate the
+    # dead-extended-volume rule from the completeness rule.
+    LENIENT = replace(EQUITY_GRID, min_core_bars=1)
+
     def test_a_symbol_whose_extended_bars_all_read_zero_is_rejected(self):
         """The yfinance shape. A zero denominator makes every ratio infinite."""
         rng = np.random.default_rng(18)
         frame = synthetic(rng, days=12, zero_extended=True)
-        self.assertTrue(extended_volume_is_dead(frame, EQUITY_GRID))
+        self.assertTrue(reference_dead(frame, EQUITY_GRID))
         self.assertEqual(build_profiles({"S0": frame}), {})
+        self.assertEqual(build_profiles({"S0": frame}, grid=self.LENIENT), {})
 
     def test_a_quiet_pre_market_is_not_a_dead_one(self):
         """No bar at all is ordinary thinness; a bar reading zero is evidence."""
         frame = frame_for(
             [f"2026-09-0{d} 09:{m:02d}" for d in range(1, 9) for m in (35, 40)],
             [5_000.0] * 16)
-        self.assertFalse(extended_volume_is_dead(frame, EQUITY_GRID))
+        self.assertFalse(reference_dead(frame, EQUITY_GRID))
+        self.assertIn("S0", build_profiles({"S0": frame}, grid=self.LENIENT))
 
     def test_the_dead_check_agrees_with_the_specification(self):
         rng = np.random.default_rng(19)
         for zero in (True, False):
             for nan_rate in (0.0, 0.2):
-                frame = synthetic(rng, days=4, nan_rate=nan_rate,
+                frame = synthetic(rng, days=12, nan_rate=nan_rate,
                                   zero_extended=zero)
-                self.assertEqual(extended_volume_is_dead(frame, EQUITY_GRID),
-                                 reference_dead(frame, EQUITY_GRID),
+                self.assertEqual(sorted(build_profiles({"S0": frame})),
+                                 sorted(reference_profiles({"S0": frame})),
                                  f"zero={zero} nan_rate={nan_rate}")
 
     def test_an_empty_frame_is_neither_dead_nor_a_curve(self):
         empty = pd.DataFrame({"Volume": []},
                              index=pd.DatetimeIndex([], tz="America/New_York"))
-        self.assertFalse(extended_volume_is_dead(empty, EQUITY_GRID))
+        self.assertFalse(reference_dead(empty, EQUITY_GRID))
         self.assertEqual(build_profiles({"S0": empty}), {})
 
 

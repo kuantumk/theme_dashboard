@@ -30,10 +30,8 @@ import pandas as pd
 
 from src.bidask.config import load_config
 from src.bidask.feed import _bare_ticker
-from src.bidask.crypto_state import REF_24H, crypto_sides
 from src.bidask.rvol_at_time import (
     BARS_PER_SESSION,
-    CRYPTO,
     CRYPTO_GRID,
     EQUITY_GRID,
     GRID_FOR_STATE,
@@ -47,12 +45,11 @@ from src.bidask.rvol_at_time import (
 )
 from src.bidask.session_state import (
     CLOSED,
+    CRYPTO,
     MARKET,
     POST_MARKET,
     PRE_MARKET,
-    REF_OPEN,
-    REF_PREV_CLOSE,
-    REF_SESSION_CLOSE,
+    SESSIONS,
 )
 from src.bidask.universe import (
     VOLUME_FIELDS,
@@ -451,39 +448,28 @@ class TestMarketStatus(unittest.TestCase):
     UI must not read `update_mode` as "the market is live".
     """
 
-    def test_session_field_maps_to_a_human_label(self):
-        from src.bidask.feed import _market_status
+    def test_session_field_maps_to_a_state_and_a_human_label(self):
+        from src.bidask.feed import _session
         # `market` is the value the feed actually sends during the regular
         # session (verified live 2026-08-12). The original `regular` spelling was
         # assumed, never observed, and left the UI styling an open market as
         # delayed; both map now so neither vintage regresses.
-        self.assertEqual(_market_status(frame([{"current_session": "market"}])),
-                         "market open")
-        self.assertEqual(_market_status(frame([{"current_session": "regular"}])),
-                         "market open")
-        self.assertEqual(_market_status(frame([{"current_session": "out_of_session"}])),
-                         "market closed")
-        self.assertEqual(_market_status(frame([{"current_session": "pre_market"}])),
-                         "pre-market")
-        self.assertEqual(_market_status(frame([{"current_session": "post_market"}])),
-                         "after hours")
+        for raw, expected in (("market", (MARKET, "market open")),
+                              ("regular", (MARKET, "market open")),
+                              ("out_of_session", (CLOSED, "market closed")),
+                              ("pre_market", (PRE_MARKET, "pre-market")),
+                              ("post_market", (POST_MARKET, "after hours"))):
+            with self.subTest(raw=raw):
+                self.assertEqual(_session(frame([{"current_session": raw}])), expected)
 
     def test_unknown_session_value_is_passed_through_readably(self):
-        from src.bidask.feed import _market_status
-        self.assertEqual(_market_status(frame([{"current_session": "some_new_state"}])),
-                         "some new state")
+        from src.bidask.feed import _session
+        self.assertEqual(_session(frame([{"current_session": "some_new_state"}])),
+                         (CLOSED, "some new state"))
 
     def test_missing_session_column_yields_empty(self):
-        from src.bidask.feed import _market_status
-        self.assertEqual(_market_status(frame([{"close": 10.0}])), "")
-
-    def test_payload_market_open_only_for_trading_states(self):
-        from src.bidask.feed import Payload
-        empty = pd.DataFrame()
-        self.assertTrue(Payload(rows=empty, market_status="market open").market_open)
-        self.assertTrue(Payload(rows=empty, market_status="pre-market").market_open)
-        self.assertFalse(Payload(rows=empty, market_status="market closed").market_open)
-        self.assertFalse(Payload(rows=empty, market_status="").market_open)
+        from src.bidask.feed import _session
+        self.assertEqual(_session(frame([{"close": 10.0}])), (CLOSED, ""))
 
 
 class TestCadenceClamp(unittest.TestCase):
@@ -670,6 +656,7 @@ class TestTradedValueFieldIsUnreliable(unittest.TestCase):
         # The reading the response did carry survives the failure, so the
         # session pill keeps telling the truth while the feed pill reports.
         self.assertEqual(payload.market_status, "pre-market")
+        self.assertEqual(payload.session_state, PRE_MARKET)
 
 
 class TestEmptyResultStillReportsTheFeed(unittest.TestCase):
@@ -688,6 +675,7 @@ class TestEmptyResultStillReportsTheFeed(unittest.TestCase):
             payload = fetch_equities(CFG)
         self.assertTrue(payload.rows.empty)
         self.assertEqual(payload.market_status, "pre-market")
+        self.assertEqual(payload.session_state, PRE_MARKET)
         self.assertEqual(payload.feed, "streaming")
         self.assertFalse(payload.delayed)
 
@@ -701,6 +689,7 @@ class TestEmptyResultStillReportsTheFeed(unittest.TestCase):
         self.assertTrue(payload.rows.empty)
         self.assertEqual(payload.feed, "streaming")
         self.assertEqual(payload.market_status, "24/7")
+        self.assertEqual(payload.session_state, CRYPTO)
 
 
 # ── crypto ───────────────────────────────────────────────────────
@@ -849,51 +838,13 @@ class TestCryptoFailsClosed(unittest.TestCase):
         self.assertFalse(crypto_gate([], 720.0).source_unavailable)
 
 
-class TestCryptoPriceReference(unittest.TestCase):
-    """R15. The side test is that market's own 24-hour reference, and it says so.
-
-    Kept out of `session_state.py` deliberately: each of that module's four
-    states selects a reference price AND a volume floor, and crypto has
-    neither an open nor a close to measure against. A crypto entry in that
-    table would be a session state the feed never sends.
-    """
-
-    def test_up_over_24_hours_is_strong_against_the_24_hour_reference(self):
-        sides = crypto_sides({"change_pct": 3.4})
-        self.assertEqual(sides.strong, (REF_24H,))
-        self.assertEqual(sides.weak, ())
-
-    def test_down_over_24_hours_is_weak(self):
-        sides = crypto_sides({"change_pct": -3.4})
-        self.assertEqual(sides.weak, (REF_24H,))
-        self.assertEqual(sides.strong, ())
-
-    def test_the_reference_is_labelled_as_24_hour_not_as_a_session(self):
-        """It renders beside the equity labels, so it must not read as one."""
-        self.assertIn("24h", REF_24H)
-        self.assertNotIn(REF_24H, (REF_OPEN, REF_PREV_CLOSE, REF_SESSION_CLOSE))
-
-    def test_an_unreadable_or_flat_change_earns_no_side(self):
-        for value in (None, float("nan"), "n/a", 0.0):
-            sides = crypto_sides({"change_pct": value})
-            self.assertEqual((sides.strong, sides.weak), ((), ()),
-                             f"{value!r} earned a side")
-
-    def test_a_missing_field_earns_no_side(self):
-        sides = crypto_sides({})
-        self.assertEqual((sides.strong, sides.weak), ((), ()))
-
-
 class TestCryptoIsNotASessionState(unittest.TestCase):
-    """The two vocabularies stay apart, the way the repo pins every other pair."""
+    """`crypto` keys the floors and the reference table, but the feed never
+    sends it: `fetch_crypto` stamps it. See `test_bidask_session_state.TestCrypto`
+    for its 24-hour price reference."""
 
     def test_crypto_is_absent_from_the_equity_session_table(self):
-        from src.bidask.session_state import SESSION_STATES
-        self.assertNotIn(CRYPTO, SESSION_STATES.values())
-
-    def test_the_schedule_key_and_the_side_module_agree_on_one_spelling(self):
-        from src.bidask.crypto_state import CRYPTO as CRYPTO_SIDE_KEY
-        self.assertEqual(CRYPTO_SIDE_KEY, CRYPTO)
+        self.assertNotIn(CRYPTO, {state for state, _ in SESSIONS.values()})
 
     def test_the_crypto_grid_is_the_one_the_gate_looks_up_for_that_state(self):
         self.assertIs(GRID_FOR_STATE[CRYPTO], CRYPTO_GRID)

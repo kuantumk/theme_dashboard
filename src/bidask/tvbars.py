@@ -58,7 +58,7 @@ from typing import Iterable, Optional
 
 import websocket
 
-from src.bidask.tvsocket import HEADERS, ORIGIN, QuoteAuthError, auth_token, encode, iter_frames
+from src.bidask.tvsocket import HEADERS, ORIGIN, auth_token, encode, iter_frames
 
 SOCKET_URL = "wss://data.tradingview.com/socket.io/websocket?from=chart%2F"
 
@@ -161,11 +161,13 @@ DEFAULT_WORKERS = 6
 BARS_IN_FLIGHT = 20_000
 MAX_BATCH = 32
 
-# How long the drain tolerates complete silence before giving up on whatever
-# has not answered. Applies to the BATCH, not to each symbol: every series is
-# in flight at once, so the budget is a silence timeout rather than a sum. A
+# Total wall-clock budget for draining one batch, counted from when its series
+# are opened. It is a DEADLINE, not a silence timeout: traffic does not reset
+# it, so a socket that keeps sending heartbeats or updates for charts that have
+# already finished cannot hold an unfinished one open forever. It applies to
+# the BATCH, not to each symbol — every series is in flight at once — so a
 # symbol that never answers costs this once, not once per batch mate.
-BATCH_IDLE_TIMEOUT = SYMBOL_TIMEOUT
+BATCH_DEADLINE = SYMBOL_TIMEOUT
 
 
 def batch_for(bars: int) -> int:
@@ -325,9 +327,7 @@ class _Connection:
         collected = {chart: {} for chart in charts}
         reasons = {chart: "timeout" for chart in charts}
         done = set()
-        # Bound unfinished chart work, even if the socket keeps sending
-        # heartbeats or updates for a series that has already completed.
-        deadline = time.monotonic() + BATCH_IDLE_TIMEOUT
+        deadline = time.monotonic() + BATCH_DEADLINE
         while len(done) < len(charts):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -401,9 +401,11 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
     that resolves on no exchange is simply absent from the result; callers
     fail closed on a missing baseline rather than guessing one.
 
-    Raises `QuoteAuthError` when the session cookie is missing or rejected. An
-    empty return, by contrast, means the socket answered and had nothing — the
-    two must stay distinguishable, or a dead credential reads as a dead market.
+    Raises `tvsocket.QuoteAuthError` when the session cookie is missing or
+    rejected — the token is minted here, on the caller's thread, before any
+    worker starts. An empty return, by contrast, means the socket answered and
+    had nothing — the two must stay distinguishable, or a dead credential reads
+    as a dead market.
     """
     wanted = [s for s in dict.fromkeys(str(s) for s in symbols if s) if s]
     if not wanted:
@@ -429,8 +431,6 @@ def fetch_bars(symbols: Iterable[str], *, interval: str = DEFAULT_INTERVAL,
                     if connection is None:
                         connection = _Connection(token, interval=interval, bars=bars)
                     frames = _resolve_batch(connection, chunk)
-                except QuoteAuthError:
-                    raise
                 except Exception:  # noqa: BLE001 — one dropped socket, not the warm-up
                     if connection is not None:
                         connection.close()

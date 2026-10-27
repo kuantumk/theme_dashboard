@@ -19,17 +19,20 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.bidask.feed import CRYPTO_COLUMNS, EQUITY_COLUMNS, SESSION_LABELS
+from src.bidask.feed import CRYPTO_COLUMNS, EQUITY_COLUMNS
 from src.bidask.session_state import (
     CLOSED,
+    CRYPTO,
     MARKET,
     POST_MARKET,
     PRE_MARKET,
+    REF_24H,
     REF_OPEN,
     REF_PREV_CLOSE,
     REF_SESSION_CLOSE,
     REFERENCE_FIELDS,
-    SESSION_STATES,
+    SESSIONS,
+    resolve_session,
     resolve_state,
     sides_for,
 )
@@ -66,10 +69,10 @@ class TestResolveState(unittest.TestCase):
         self.assertEqual(resolve_state("half_day_close"), CLOSED)
 
     def test_extended_is_recognised_but_still_closed(self):
-        # The value is in SESSION_LABELS yet carries no reference/floor pair,
+        # The value has a banner label yet carries no reference/floor pair,
         # and it was not observed in the after-hours probe. Closed until one is
         # assigned, rather than borrowed from a neighbouring state.
-        self.assertEqual(resolve_state("extended"), CLOSED)
+        self.assertEqual(resolve_session("extended"), (CLOSED, "extended hours"))
 
     def test_case_and_whitespace_are_normalised(self):
         self.assertEqual(resolve_state(" Market "), MARKET)
@@ -82,12 +85,16 @@ class TestResolveState(unittest.TestCase):
         self.assertEqual(resolve_state(""), CLOSED)
         self.assertEqual(resolve_state(float("nan")), CLOSED)
 
-    def test_every_feed_label_has_a_state(self):
-        # The two tables describe the same vendor vocabulary. A spelling added
-        # to one and not the other renders a banner for a state the board has
-        # no rules for.
-        for raw in SESSION_LABELS:
-            self.assertIn(raw, SESSION_STATES, f"{raw} names a label but no state")
+    def test_an_unknown_value_is_labelled_readably_and_still_closed(self):
+        # The banner may name a state the board has no rules for; the board
+        # never applies any to it.
+        self.assertEqual(resolve_session("half_day_close"), (CLOSED, "half day close"))
+
+    def test_crypto_is_never_a_value_the_feed_can_send(self):
+        # `fetch_crypto` stamps it; no `current_session` reading may reach it,
+        # or an equity response could be judged against the 24-hour reference.
+        self.assertNotIn(CRYPTO, {state for state, _ in SESSIONS.values()})
+        self.assertEqual(resolve_state("crypto"), CLOSED)
 
 
 class TestRegularSession(unittest.TestCase):
@@ -95,15 +102,15 @@ class TestRegularSession(unittest.TestCase):
 
     def test_above_open_and_above_previous_close_is_strong_only(self):
         sides = sides_for(row(change_from_open=1.4, change=2.6), MARKET)
-        self.assertTrue(sides.is_strong)
-        self.assertFalse(sides.is_weak)
+        self.assertTrue(sides.strong)
+        self.assertFalse(sides.weak)
         self.assertEqual(sides.strong, (REF_OPEN, REF_PREV_CLOSE))
         self.assertEqual(sides.weak, ())
 
     def test_below_open_and_below_previous_close_is_weak_only(self):
         sides = sides_for(row(change_from_open=-1.4, change=-2.6), MARKET)
-        self.assertTrue(sides.is_weak)
-        self.assertFalse(sides.is_strong)
+        self.assertTrue(sides.weak)
+        self.assertFalse(sides.strong)
         self.assertEqual(sides.weak, (REF_OPEN, REF_PREV_CLOSE))
         self.assertEqual(sides.strong, ())
 
@@ -111,8 +118,8 @@ class TestRegularSession(unittest.TestCase):
         # AE1: closed at $10, opened at $9, now $9.50. Strong against the open,
         # weak against yesterday close, and both readings are true.
         sides = sides_for(row(change_from_open=5.6, change=-5.0), MARKET)
-        self.assertTrue(sides.is_strong)
-        self.assertTrue(sides.is_weak)
+        self.assertTrue(sides.strong)
+        self.assertTrue(sides.weak)
         self.assertEqual(sides.strong, (REF_OPEN,))
         self.assertEqual(sides.weak, (REF_PREV_CLOSE,))
 
@@ -124,8 +131,8 @@ class TestRegularSession(unittest.TestCase):
     def test_exactly_flat_earns_no_side(self):
         # A zero move is not a direction. Both tests are strict.
         sides = sides_for(row(change_from_open=0.0, change=0.0), MARKET)
-        self.assertFalse(sides.is_strong)
-        self.assertFalse(sides.is_weak)
+        self.assertFalse(sides.strong)
+        self.assertFalse(sides.weak)
         self.assertEqual((sides.strong, sides.weak), ((), ()))
 
     def test_flat_against_one_reference_still_reads_the_other(self):
@@ -193,6 +200,37 @@ class TestAfterHours(unittest.TestCase):
         self.assertEqual((sides.strong, sides.weak), ((), ()))
 
 
+class TestCrypto(unittest.TestCase):
+    """R15. One rolling 24-hour reference, labelled so it does not read as a
+    session. The same `sides_for` path the equity states take."""
+
+    def test_up_over_24_hours_is_strong_against_the_24_hour_reference(self):
+        sides = sides_for(row(change_pct=3.4), CRYPTO)
+        self.assertEqual((sides.strong, sides.weak), ((REF_24H,), ()))
+
+    def test_down_over_24_hours_is_weak(self):
+        sides = sides_for(row(change_pct=-3.4), CRYPTO)
+        self.assertEqual((sides.strong, sides.weak), ((), (REF_24H,)))
+
+    def test_the_equity_change_fields_are_ignored(self):
+        sides = sides_for(row(change_pct=-1.0, change=9.0, change_from_open=9.0),
+                          CRYPTO)
+        self.assertEqual((sides.strong, sides.weak), ((), (REF_24H,)))
+
+    def test_the_reference_is_labelled_as_24_hour_not_as_a_session(self):
+        self.assertIn("24h", REF_24H)
+        self.assertNotIn(REF_24H, (REF_OPEN, REF_PREV_CLOSE, REF_SESSION_CLOSE))
+
+    def test_an_unreadable_flat_or_missing_change_earns_no_side(self):
+        # A dead `24h_close_change|5` must empty the board, not fill a column.
+        for value in (None, float("nan"), "n/a", 0.0):
+            sides = sides_for(row(change_pct=value), CRYPTO)
+            self.assertEqual((sides.strong, sides.weak), ((), ()),
+                             f"{value!r} earned a side")
+        sides = sides_for(row(), CRYPTO)
+        self.assertEqual((sides.strong, sides.weak), ((), ()))
+
+
 class TestClosedBoard(unittest.TestCase):
     """No state, no reference, no side — however far the price has moved."""
 
@@ -200,15 +238,14 @@ class TestClosedBoard(unittest.TestCase):
         moving = row(change_from_open=8.0, change=8.0,
                      premarket_change=8.0, postmarket_change=8.0)
         sides = sides_for(moving, CLOSED)
-        self.assertFalse(sides.is_strong)
-        self.assertFalse(sides.is_weak)
-        self.assertEqual(sides.state, CLOSED)
+        self.assertFalse(sides.strong)
+        self.assertFalse(sides.weak)
 
     def test_out_of_session_and_holiday_resolve_to_a_closed_board(self):
         for raw in ("out_of_session", "holiday", "some_new_value"):
             with self.subTest(raw=raw):
+                self.assertEqual(resolve_state(raw), CLOSED)
                 sides = sides_for(row(change=5.0), resolve_state(raw))
-                self.assertEqual(sides.state, CLOSED)
                 self.assertEqual((sides.strong, sides.weak), ((), ()))
 
 
@@ -248,27 +285,29 @@ class TestFeedColumns(unittest.TestCase):
         # A reference reading a column the feed never requests is null on every
         # row, which reads as a flat market rather than as a missing field.
         for state, pairs in REFERENCE_FIELDS.items():
+            if state == CRYPTO:
+                continue
             for name, _ in pairs:
                 with self.subTest(state=state, field=name):
                     self.assertIn(name, EQUITY_COLUMNS)
 
-    def test_new_price_and_volume_columns_are_selected(self):
-        for name in ("relative_volume_intraday|5", "open", "change_from_open",
-                     "premarket_change", "premarket_close", "premarket_volume",
-                     "postmarket_change", "postmarket_close", "postmarket_volume"):
+    def test_the_crypto_reference_is_selected_under_its_vendor_name(self):
+        # `fetch_crypto` renames `24h_close_change|5` to `change_pct`.
+        self.assertEqual(REFERENCE_FIELDS[CRYPTO], (("change_pct", REF_24H),))
+        self.assertIn("24h_close_change|5", CRYPTO_COLUMNS)
+
+    def test_the_volume_numerators_are_selected(self):
+        for name in ("volume", "premarket_volume", "current_session"):
             with self.subTest(field=name):
                 self.assertIn(name, EQUITY_COLUMNS)
 
-    def test_equity_list_no_longer_asks_for_a_book(self):
+    def test_no_list_asks_for_a_book(self):
         # The america scanner publishes no quote field: selecting one returns
-        # null for every row, which is indistinguishable from a dead feed.
-        self.assertNotIn("bid", EQUITY_COLUMNS)
-        self.assertNotIn("ask", EQUITY_COLUMNS)
-
-    def test_crypto_list_keeps_its_book(self):
-        # The crypto scanner genuinely does publish bid/ask.
-        self.assertIn("bid", CRYPTO_COLUMNS)
-        self.assertIn("ask", CRYPTO_COLUMNS)
+        # null for every row, which is indistinguishable from a dead feed. The
+        # crypto scanner does publish one, but nothing on the board reads it.
+        for columns in (EQUITY_COLUMNS, CRYPTO_COLUMNS):
+            self.assertNotIn("bid", columns)
+            self.assertNotIn("ask", columns)
 
 
 if __name__ == "__main__":

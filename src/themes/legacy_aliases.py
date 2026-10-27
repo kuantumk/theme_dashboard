@@ -4,70 +4,346 @@ Bridges historical theme strings (still present in the curated Google Sheet
 and in any cached LLM output) to the canonical hierarchical paths defined in
 ``config/theme_taxonomy.yaml``.
 
-The authoritative mapping table lives in ``tools/migrate_themes.py`` — the
-one-shot migration script that produced today's ``data/ticker_themes.json``.
-This module re-exposes that table so live code (``apply_google_sheet_ground_truth``,
-the dashboard exporter, …) can translate stale labels into the new taxonomy
-on the fly without having to re-run the migration.
+``OLD_TO_NEW`` below is the alias table the May 2026 taxonomy migration
+produced. Live code (``apply_google_sheet_ground_truth``, the dashboard
+exporter, …) translates stale labels through it on the fly, and the
+market_history archive maps pre-taxonomy tags with ``normalize_legacy_themes``.
 
 When a new stale label appears in the Google Sheet that has no mapping here,
 ``normalize_legacy_theme`` returns ``None`` and the caller drops it. Add the
-new entry to ``OLD_TO_NEW`` (in ``tools/migrate_themes.py``) and the
-correction propagates automatically.
+new entry to ``OLD_TO_NEW`` and the correction propagates automatically.
 """
 
 from __future__ import annotations
 
-import importlib.util
-import sys
-from functools import lru_cache
-from pathlib import Path
 from typing import Dict, List, Optional
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_MIGRATE_PATH = _REPO_ROOT / "tools" / "migrate_themes.py"
-
-
-@lru_cache(maxsize=1)
-def _load_migration_tables() -> Dict[str, Dict]:
-    """Import the migration script as a private module and pull its dicts.
-
-    Cached so we only pay the import cost once per process. Returns empty
-    dicts if the migration script is missing (e.g. someone deletes the
-    historical record), which makes the system fail-soft rather than crash.
-    """
-    if not _MIGRATE_PATH.exists():
-        return {"OLD_TO_NEW": {}, "TICKER_OVERRIDES": {}, "MULTI_THEME_ADDITIONS": {}}
-
-    # Make sure the repo root is on sys.path so migrate_themes' own
-    # `sys.path.insert(0, str(ROOT))` line is a no-op rather than a duplicate.
-    if str(_REPO_ROOT) not in sys.path:
-        sys.path.insert(0, str(_REPO_ROOT))
-
-    spec = importlib.util.spec_from_file_location("_migrate_themes_aliases", _MIGRATE_PATH)
-    if spec is None or spec.loader is None:
-        return {"OLD_TO_NEW": {}, "TICKER_OVERRIDES": {}, "MULTI_THEME_ADDITIONS": {}}
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return {
-        "OLD_TO_NEW": dict(getattr(module, "OLD_TO_NEW", {})),
-        "TICKER_OVERRIDES": dict(getattr(module, "TICKER_OVERRIDES", {})),
-        "MULTI_THEME_ADDITIONS": dict(getattr(module, "MULTI_THEME_ADDITIONS", {})),
-    }
-
-
-def _table() -> Dict[str, str]:
-    return _load_migration_tables()["OLD_TO_NEW"]
-
-
-def ticker_overrides() -> Dict[str, List[str]]:
-    """Return the per-ticker override table from the migration (read-only)."""
-    return _load_migration_tables()["TICKER_OVERRIDES"]
-
-
-def multi_theme_additions() -> Dict[str, List[str]]:
-    """Return the per-ticker secondary-theme additions from the migration."""
-    return _load_migration_tables()["MULTI_THEME_ADDITIONS"]
+OLD_TO_NEW: Dict[str, str] = {
+    'AI - Software & Analytics': 'AI / Software & Analytics',
+    'AI - Software Services': 'AI / Software & Analytics',
+    'AI - Data Center & Cloud': 'AI / Data Center / Cloud & Hyperscalers',
+    'AI - Data Center & Cloud Services': 'AI / Data Center / Cloud & Hyperscalers',
+    'AI - Data Center Components': 'AI / Data Center / Components',
+    'AI - Data Center Power': 'AI / Data Center / Power & Cooling',
+    'AI - Infra / Connectivity': 'AI / Data Center / Networking & Connectivity',
+    'AI - Infra / Core Chips': 'AI / Data Center / Chips & Processors',
+    'AI - Infra / Optics': 'AI / Data Center / Optics',
+    'AI - Infra / Power/Cooling': 'AI / Data Center / Power & Cooling',
+    'AI - Memory & Storage': 'AI / Data Center / Memory',
+    'AI - Optics': 'AI / Data Center / Optics',
+    'AI - Optoelectronics': 'AI / Data Center / Optics',
+    'AI - Processors': 'AI / Data Center / Chips & Processors',
+    'AI - Robotics': 'Robotics / Industrial Automation',
+    'AI - Robotics & Automation': 'Robotics / Industrial Automation',
+    'AI - Security & Surveillance': 'Cybersecurity / Surveillance & IoT',
+    'AI - Semiconductor Processing': 'AI / Semiconductor Equipment',
+    'AI - Semiconductor Testing': 'AI / Semiconductor Equipment',
+    'AI - Biotech & Drug Discovery': 'AI / Drug Discovery',
+    'AI - Drug Discovery': 'AI / Drug Discovery',
+    'AI - Conversational Avatars': 'AI / Hardware / Avatars',
+    'Hardware / AR & Smart Glasses': 'AI / Hardware / AR Glasses',
+    'AR/VR / Software': 'AI / Hardware / AR Glasses',
+    'Semiconductor / IP Licensing': 'Semiconductors / IP Licensing',
+    'Semiconductor / Materials': 'Semiconductors / Materials',
+    'Semiconductor Processing': 'Semiconductors / Manufacturing & Equipment',
+    'Semiconductors / Display Drivers': 'Semiconductors / Display Drivers',
+    'Semiconductors / Specialty Foundry': 'Semiconductors / Specialty Foundry',
+    'Connectivity / High-Speed Video & Data': 'Telecom / High-Speed Video & Data',
+    'Connectivity / RF Filters': 'Telecom / RF Filters',
+    'Software / Data & Analytics': 'Software & Internet / Data & Analytics',
+    'Software / Software Services': 'Software & Internet / SaaS & Vertical',
+    'Software Services': 'Software & Internet / SaaS & Vertical',
+    'Software / DevOps': 'Software & Internet / DevOps & Data',
+    'Software / PropTech': 'Software & Internet / PropTech',
+    'Software / Social Media Management': 'Software & Internet / Social & Communication',
+    'Software / RT3D & Gaming Engines': 'Software & Internet / Gaming',
+    'IT Services & Consulting': 'Software & Internet / BPO & IT Services',
+    'Business Process Outsourcing (BPO)': 'Software & Internet / BPO & IT Services',
+    'Business Services / Uniform Rental & Workplace Supplies': 'Industrials / Workplace Services & Uniforms',
+    'Human Capital Management / Benefits Tech': 'Software & Internet / SaaS & Vertical',
+    'EdTech / Online Learning': 'Education / EdTech & Online Learning',
+    'Education / Higher Education Services': 'Education / Higher Education',
+    'Ads Tech & Marketing': 'Software & Internet / Ads & Marketing Tech',
+    'Digital Entertainment / Streaming': 'Software & Internet / Streaming',
+    'Digital Entertainment / iGaming': 'Software & Internet / iGaming',
+    'Digital Entertainment / Dating Services': 'Software & Internet / Dating',
+    'Gaming': 'Software & Internet / Gaming',
+    'Social Media / Political Sentiment': 'Software & Internet / Social & Communication',
+    'E-commerce and Digital Retail': 'Software & Internet / E-commerce',
+    'E-commerce / Automotive Marketplace': 'Retail (Multi-Category) / Auto Marketplace',
+    'E-commerce / Event Ticketing': 'Retail (Multi-Category) / Event Ticketing',
+    'E-commerce / Luxury Resale': 'Retail (Multi-Category) / Luxury Resale',
+    'E-commerce / Personal Styling': 'Retail (Multi-Category) / Personal Styling',
+    'E-commerce / Southeast Asia': 'Retail (Multi-Category) / Southeast Asia',
+    'Luxury Retail / Home Furnishings': 'Consumer / Home Goods & Furnishings',
+    'Home Furnishings': 'Consumer / Home Goods & Furnishings',
+    'Home Services Marketplace': 'Real Estate / Home Services Marketplace',
+    'Supply Chain / Traceability': 'Logistics / Supply Chain Tech',
+    'Cybersecurity': 'Cybersecurity / Generalist',
+    'Smart Home / IoT Security': 'Cybersecurity / Surveillance & IoT',
+    'Security / Surveillance Technology': 'Cybersecurity / Surveillance & IoT',
+    'Fintech / Payment Security': 'Cybersecurity / Data Security',
+    'Fintech & Digital Payments': 'Fintech & Crypto / Payments',
+    'Fintech / Digital Payments': 'Fintech & Crypto / Payments',
+    'Fintech / Cross-border Payments': 'Fintech & Crypto / Payments',
+    'Fintech / Infrastructure': 'Fintech & Crypto / Payments',
+    'Fintech / Buy Now Pay Later': 'Fintech & Crypto / BNPL',
+    'Fintech / Mortgage Lending': 'Fintech & Crypto / Mortgage Lending',
+    'Fintech / Wealth Management': 'Fintech & Crypto / Wealth & Asset Management',
+    'Financial Services / Consumer Finance': 'Fintech & Crypto / Consumer Finance',
+    'Financial Services / Wealth Management': 'Fintech & Crypto / Wealth & Asset Management',
+    'Financial Services / Mortgage Lending': 'Fintech & Crypto / Mortgage Lending',
+    'Financial Services / Investment Banking': 'Fintech & Crypto / Investment Banking',
+    'Financial Services / Specialty Lending': 'Fintech & Crypto / Specialty Lending',
+    'Financial Services / Private Equity Proxy': 'Fintech & Crypto / Private Equity Proxy',
+    'Financial Services / Digital Assets': 'Fintech & Crypto / Crypto / Infrastructure',
+    'Financials / Insurance Brokerage': 'Fintech & Crypto / Insurance & Insurtech',
+    'Financials - Insurance Brokerage': 'Fintech & Crypto / Insurance & Insurtech',
+    'Financials / Insurtech': 'Fintech & Crypto / Insurance & Insurtech',
+    'Financials / SPAC': 'Fintech & Crypto / SPAC',
+    'Financials / Specialty Lending': 'Fintech & Crypto / Specialty Lending',
+    'Financials / Argentina': 'Geographic / Argentina',
+    'Private Credit': 'Fintech & Crypto / Private Credit',
+    'Cryptocurrency': 'Fintech & Crypto / Crypto / Generalist',
+    'Cryptocurrency / Bitcoin Proxy': 'Fintech & Crypto / Crypto / Bitcoin Proxy',
+    'Cryptocurrency / Mining': 'Fintech & Crypto / Crypto / Mining',
+    'Cryptocurrency / Infrastructure': 'Fintech & Crypto / Crypto / Infrastructure',
+    'Biotech / Oncology': 'Biotech / Oncology / General',
+    'Biotechnology / Oncology': 'Biotech / Oncology / General',
+    'Biotech / Oncology Antibodies': 'Biotech / Oncology / Antibodies',
+    'Biotech / Oncology Immunotherapy': 'Biotech / Oncology / Immuno-Oncology',
+    'Biotech / Immuno-Oncology': 'Biotech / Oncology / Immuno-Oncology',
+    'Biotech / Precision Oncology': 'Biotech / Oncology / Precision',
+    'Biotech / Oncology - RAS Inhibitors': 'Biotech / Oncology / RAS Inhibitors',
+    'Biotech / Oncology - Oncolytic Viruses': 'Biotech / Oncology / Oncolytic Viruses',
+    'Biotech / Rare Disease': 'Biotech / Rare Disease',
+    'Biotech / Rare Diseases': 'Biotech / Rare Disease',
+    'Biotechnology / Rare Diseases': 'Biotech / Rare Disease',
+    'Biotech / Rare Endocrine Diseases': 'Biotech / Rare Disease',
+    'Biotech / Immunology': 'Biotech / Immunology',
+    'Biotechnology / Immunology': 'Biotech / Immunology',
+    'Biotech / Autoimmune': 'Biotech / Immunology',
+    'Biotech / Neuroscience': 'Biotech / Neuroscience',
+    'Biotech - Neuroscience': 'Biotech / Neuroscience',
+    'Biotech / Neurodegenerative': 'Biotech / Neuroscience',
+    'Biotechnology / CNS': 'Biotech / CNS',
+    'Biotech / Metabolic & Obesity': 'Biotech / Metabolic & Obesity',
+    'Biotech / Cell Therapy': 'Biotech / Cell & Gene Therapy',
+    'Biotech / Cell & Gene Therapy': 'Biotech / Cell & Gene Therapy',
+    'Biotech / Gene Therapy': 'Biotech / Cell & Gene Therapy',
+    'Biotechnology / Gene Therapy': 'Biotech / Cell & Gene Therapy',
+    'Biotech / Gene Editing': 'Biotech / Gene Editing',
+    'Biotechnology / Gene Editing': 'Biotech / Gene Editing',
+    'Biotech / RNAi': 'Biotech / RNAi & Antisense',
+    'Biotechnology / Vaccines': 'Biotech / Infectious Disease & Vaccines',
+    'Biotechnology / Infectious Disease': 'Biotech / Infectious Disease & Vaccines',
+    'Biotechnology / Anti-Infectives': 'Biotech / Anti-Infectives',
+    'Biotechnology / mRNA Technology': 'Biotech / Infectious Disease & Vaccines',
+    'Biotechnology / Nephrology': 'Biotech / Nephrology',
+    'Biotech / Cardiovascular': 'Biotech / Cardiovascular',
+    'Biotech / Respiratory': 'Biotech / Respiratory',
+    'Biotech / Ophthalmology': 'Biotech / Ophthalmology',
+    'Biotech / Dermatology': 'Biotech / Dermatology',
+    'Biotech / GI Disorders': 'Biotech / GI Disorders',
+    'Biotech / Gastrointestinal': 'Biotech / GI Disorders',
+    'Biotech / Specialty Pharma': 'Biotech / Specialty Pharma',
+    'Biotech / Psychedelic Medicine': 'Biotech / Psychedelic Medicine',
+    'Biotech / Drug Delivery': 'Biotech / Drug Delivery',
+    'Biotech / Drug Discovery': 'Biotech / Drug Discovery Platform',
+    'Biotech / Next-Gen Biologics': 'Biotech / Drug Discovery Platform',
+    'Biotech / Targeted Protein Degradation': 'Biotech / Targeted Protein Degradation',
+    'Biotechnology / Protein Degradation': 'Biotech / Targeted Protein Degradation',
+    'Biotech / Precision Medicine': 'Biotech / Drug Discovery Platform',
+    'Biotech / Complement System': 'Biotech / Complement System',
+    'Biotech / Complement-mediated Diseases': 'Biotech / Complement System',
+    'Biotech / Medical Countermeasures': 'Biotech / Infectious Disease & Vaccines',
+    'Biopharma / Uro-Oncology': 'Biotech / Oncology / General',
+    'Life Sciences / Genomics': 'Biotech / Genomics & Diagnostics Platforms',
+    'Life Sciences / Spatial Biology': 'Biotech / Genomics & Diagnostics Platforms',
+    'Genomics / Long-Read Sequencing': 'Biotech / Genomics & Diagnostics Platforms',
+    'Food & Animal Safety / Genomics': 'Biotech / Genomics & Diagnostics Platforms',
+    'Healthcare / Diagnostics': 'Healthcare / Diagnostics & Labs',
+    'Healthcare / Data & Imaging': 'Healthcare / Imaging',
+    'Healthcare / Data & Analytics': 'Healthcare / Data & Analytics',
+    'Healthcare / AI-Driven Managed Care': 'Healthcare / Managed Care',
+    'Healthcare / Skilled Nursing Facilities': 'Healthcare / Skilled Nursing',
+    'Healthcare / Home Health Services': 'Healthcare / Home & Behavioral Health',
+    'Healthcare / Behavioral Health Services': 'Healthcare / Home & Behavioral Health',
+    'Healthcare / Staffing & Workforce Solutions': 'Healthcare / Staffing',
+    'Healthcare / Clinical Research Organizations (CRO)': 'Healthcare / CRO & Clinical Services',
+    'Healthcare / E-commerce & Pharmacy': 'Healthcare / Pharmacy & E-commerce',
+    "Healthcare / Women's Health": "Healthcare / Women's Health",
+    'Healthcare / Animal Health': 'Healthcare / Animal Health',
+    'Healthcare / Hospitals': 'Healthcare / Hospitals & Facilities',
+    'Healthcare / Cardiovascular': 'Healthcare / Specialty Pharmaceuticals',
+    'Healthcare / Ophthalmic Pharmaceuticals': 'Healthcare / Specialty Pharmaceuticals',
+    'Healthcare / China': 'Geographic / China',
+    'Healthcare / Latin America': 'Geographic / Latin America',
+    'Health': 'Healthcare / Managed Care',
+    'Medical Devices / Diagnostics': 'MedTech / Diagnostics',
+    'MedTech / Diagnostics': 'MedTech / Diagnostics',
+    'MedTech / Diabetes Management': 'MedTech / Diabetes',
+    'MedTech / Wearables': 'MedTech / Wearables',
+    'Medical Devices / Cardiovascular': 'MedTech / Cardiovascular',
+    'Medical Devices / Oncology': 'MedTech / Oncology Devices',
+    'Medical Devices / Aesthetics': 'MedTech / Aesthetics',
+    'Medical Devices / Respiratory': 'MedTech / Respiratory',
+    'Medical Devices / Spinal Surgery': 'MedTech / Spinal & Orthopedic',
+    'Medical Devices / Surgical Robotics': 'MedTech / Surgical Robotics',
+    'Medical Devices / Dermatology': 'MedTech / Dermatology Devices',
+    'Medical Isotopes': 'MedTech / Diagnostics',
+    'Solar': 'Clean Energy / Solar',
+    'Solar / Commercial & Industrial': 'Clean Energy / Solar / C&I Install',
+    'Solar / Inverters': 'Clean Energy / Solar / Inverters',
+    'Solar / Thin-Film': 'Clean Energy / Solar / Thin-Film',
+    'Fuel Cell': 'Clean Energy / Fuel Cell & Hydrogen',
+    'Batteries': 'Clean Energy / Batteries & Storage',
+    'Consumer Goods / Batteries': 'Clean Energy / Batteries & Storage',
+    'Energy Storage / Grid Infrastructure': 'Clean Energy / Grid Infrastructure',
+    'Renewable Fuels / Ethanol': 'Clean Energy / Renewable Fuels',
+    'Energy - Decarbonization Technology': 'Clean Energy / Decarbonization Tech',
+    'Sustainability / Electronics Recycling': 'Specialty Chemicals / Recycling & Sustainability',
+    'Sustainability / Plastic Recycling': 'Specialty Chemicals / Recycling & Sustainability',
+    'Infrastructure / Energy & Renewables': 'Clean Energy / Grid Infrastructure',
+    'Energy / Oil & Gas Exploration & Production': 'Oil & Gas / E&P',
+    'Energy / Offshore E&P': 'Oil & Gas / E&P',
+    'Energy / Oilfield Services': 'Oil & Gas / Oilfield Services',
+    'Energy / Oilfield Services / Proppants': 'Oil & Gas / Oilfield Services / Proppants',
+    'Energy Services / Completion Fluids': 'Oil & Gas / Oilfield Services / Completion Fluids',
+    'Energy / Oil & Gas Drilling': 'Oil & Gas / Oilfield Services / Drilling',
+    'Energy / Offshore Drilling': 'Oil & Gas / Offshore Drilling',
+    'Energy - Offshore Drilling': 'Oil & Gas / Offshore Drilling',
+    'Energy / Fracking & Completion': 'Oil & Gas / Oilfield Services / Pressure Pumping',
+    'Energy / Oil Refining': 'Oil & Gas / Refining',
+    'Natural Gas / LNG Infrastructure': 'Oil & Gas / LNG & Natural Gas',
+    'Energy - Coal': 'Oil & Gas / Coal',
+    'Nuclear': 'Nuclear / Uranium Mining',
+    'Nuclear / Fuel Technology': 'Nuclear / Fuel Technology',
+    'Electricity / Power Generation': 'Power & Utilities / Power Generation',
+    'Electrcity/Power': 'Power & Utilities / Power Generation',
+    'Mining / Gold': 'Metals & Mining / Gold',
+    'Gold Mining': 'Metals & Mining / Gold',
+    'Mining - Gold': 'Metals & Mining / Gold',
+    'Precious Metals / Gold Mining': 'Metals & Mining / Gold',
+    'Precious Metals / Gold & Silver Mining': 'Metals & Mining / Gold',
+    'Precious Metals / Silver & Gold Mining': 'Metals & Mining / Silver',
+    'Precious Metals / Silver Mining': 'Metals & Mining / Silver',
+    'Mining / Silver': 'Metals & Mining / Silver',
+    'Precious Metals / Gold Royalty': 'Metals & Mining / Gold Royalty',
+    'Precious Metals / Mining': 'Metals & Mining / Diversified',
+    'Mining / Precious Metals': 'Metals & Mining / Diversified',
+    'Mining / Copper': 'Metals & Mining / Copper',
+    'Metals / Copper': 'Metals & Mining / Copper',
+    'Mining / Lithium': 'Metals & Mining / Lithium / Hard Rock',
+    'Mining / Lithium - DLE': 'Metals & Mining / Lithium / Brine & DLE',
+    'Metals / Lithium Extraction': 'Metals & Mining / Lithium / Brine & DLE',
+    'Mining / Magnesium': 'Metals & Mining / Magnesium',
+    'Mining / Platinum Group Metals': 'Metals & Mining / Platinum Group',
+    'Mining / PGM & Gold': 'Metals & Mining / Platinum Group',
+    'Metals - Gold, Silver, Copper, Aluminum': 'Metals & Mining / Diversified',
+    'Strategic Minerals': 'Metals & Mining / Rare Earth & Strategic',
+    'Critical Minerals / Rare Earth Elements': 'Metals & Mining / Rare Earth & Strategic',
+    'Steel / Vertically Integrated': 'Metals & Mining / Steel',
+    'Industrial Metals / Aluminum': 'Metals & Mining / Aluminum',
+    'Space': 'Space / Satellites & Communication',
+    'Space / Launches': 'Space / Launch',
+    'Space / Satellites & Communication': 'Space / Satellites & Communication',
+    'Space / Tourism': 'Space / Tourism',
+    'Infrastructure / Modular Space': 'Industrials / Modular Space',
+    'Telecom / Satellite Services': 'Telecom / Satellite Services',
+    'Aerospace & Defense / Components': 'Defense & Aerospace / Defense Components',
+    'Aerospace / Manufacturing': 'Defense & Aerospace / Commercial Aerospace / Manufacturing',
+    'Aerospace / Aftermarket & MRO': 'Defense & Aerospace / Commercial Aerospace / MRO',
+    'Aviation / Engine Maintenance & Leasing': 'Defense & Aerospace / Commercial Aerospace / Engines',
+    'Aviation / In-Flight Connectivity': 'Defense & Aerospace / Commercial Aerospace / In-Flight Connectivity',
+    'Aviation / Electric & Hybrid': 'Defense & Aerospace / Regional & Electric Aviation',
+    'Aviation / Regional Mobility': 'Defense & Aerospace / Regional & Electric Aviation',
+    'Defense / Electronic Warfare': 'Defense & Aerospace / Electronic Warfare',
+    'Defense / Ammunition': 'Defense & Aerospace / Ammunition',
+    'Defense / Optical Systems': 'Defense & Aerospace / Optical Systems',
+    'Drones': 'Defense & Aerospace / Drones',
+    'EV & AV': 'EV & Autonomous / EV Manufacturers',
+    'EV / Charging Infrastructure': 'EV & Autonomous / Charging Infrastructure',
+    'EV / Micromobility': 'EV & Autonomous / Micromobility',
+    'EV Infrastructure / V2G': 'EV & Autonomous / V2G Infrastructure',
+    'LiDAR & AV Tech': 'EV & Autonomous / ADAS & LiDAR',
+    'Automotive / ADAS': 'EV & Autonomous / ADAS & LiDAR',
+    'Autonomous Vehicles / Software': 'EV & Autonomous / Autonomous Vehicles',
+    'Automotive / Components': 'Automotive (Legacy) / Components',
+    'Automotive / Aftermarket & MRO': 'Automotive (Legacy) / Aftermarket & MRO',
+    'Automotive / Driveline & Powertrain': 'Automotive (Legacy) / Driveline',
+    'Automotive / Semiconductors': 'Automotive (Legacy) / Semiconductors',
+    'Consumer / Fast Casual Restaurants': 'Consumer / Restaurants / Fast Casual',
+    'Consumer / Casual Dining': 'Consumer / Restaurants / Casual Dining',
+    'Consumer / Athletic Apparel': 'Consumer / Apparel & Footwear / Athletic',
+    'Consumer / Footwear': 'Consumer / Apparel & Footwear / Athletic',
+    'Consumer - Premium Footwear': 'Consumer / Apparel & Footwear / Premium & Luxury',
+    'Consumer - Footwear Retail': 'Retail (Multi-Category) / Footwear Retail',
+    "Consumer / Children's Apparel": "Consumer / Apparel & Footwear / Children's",
+    'Consumer / Cosmetics': 'Consumer / Cosmetics & Personal Care',
+    'Consumer / Eyewear': 'Consumer / Eyewear',
+    'Consumer / Protein & Nutrition': 'Consumer / Protein & Nutrition',
+    'Consumer / RV & Outdoor Lifestyle': 'Consumer / RV & Outdoor Lifestyle',
+    'Consumer / Cannabinoids': 'Consumer / Cannabinoids',
+    'Consumer Goods / Health & Wellness': 'Consumer / Health & Wellness',
+    'Retail / Specialty Apparel': 'Retail (Multi-Category) / Specialty Apparel',
+    'Retail / Home Goods': 'Retail (Multi-Category) / Home Goods',
+    'Retail / Discount Grocery': 'Retail (Multi-Category) / Discount Grocery',
+    'Retail / Discount Specialty': 'Retail (Multi-Category) / Discount Specialty',
+    'Retail / Sporting Goods & Outdoor': 'Retail (Multi-Category) / Sporting Goods',
+    'Real Estate / Diversified REIT': 'Real Estate / Diversified REIT',
+    'Real Estate / Office & Residential': 'Real Estate / Office & Commercial REIT',
+    'Real Estate - Residential': 'Real Estate / Residential REIT',
+    'Real Estate / Tech-Enabled Brokerage': 'Real Estate / Tech-Enabled Brokerage',
+    'Real Estate / iBuying': 'Real Estate / iBuying & PropTech',
+    'Industrial / Heavy Machinery Components': 'Industrials / Heavy Machinery & Components',
+    'Industrial / Additive Manufacturing': 'Industrials / Additive Manufacturing',
+    'Industrial / Testing & Certification': 'Industrials / Testing & Certification',
+    'Industrial / Distribution Technology': 'Industrials / Distribution Technology',
+    'Electronic Manufacturing Services (EMS)': 'Industrials / Electronic Manufacturing',
+    'Building Materials / Distribution': 'Industrials / Building Materials',
+    'Building Materials / Wood Products': 'Industrials / Wood Products',
+    'Building Materials / Flooring': 'Industrials / Flooring',
+    'Building Materials / PVC': 'Industrials / PVC',
+    'Logistics / Maritime Shipping': 'Logistics / Maritime Shipping',
+    'Logistics / Freight Brokerage': 'Logistics / Freight Brokerage & Trucking',
+    'Logistics / Container Leasing': 'Logistics / Container Leasing',
+    'Telecom / 5G Infrastructure': 'Telecom / 5G Infrastructure',
+    'Telecom / Fiber Infrastructure': 'Telecom / Fiber',
+    'Telecommunications / Argentina': 'Telecom / Argentina',
+    'Telecommunications / Latin America': 'Telecom / Latin America',
+    'Travel & Leisure / Cruise Lines': 'Travel & Leisure / Cruise Lines',
+    'Travel & Leisure / Online Travel Agencies': 'Travel & Leisure / Online Travel',
+    'Travel & Leisure / Short-term Rentals': 'Travel & Leisure / Short-term Rentals',
+    'Transportation / Car Rental': 'Travel & Leisure / Car Rental',
+    'Airlines / Major Carriers': 'Travel & Leisure / Airlines / Major',
+    'Airlines / Low-Cost Carriers': 'Travel & Leisure / Airlines / Low-Cost',
+    'Airlines / Ultra-Low-Cost Carriers': 'Travel & Leisure / Airlines / Ultra-Low-Cost',
+    'Entertainment / Themed Attractions': 'Travel & Leisure / Themed Attractions',
+    'Entertainment / Theme Parks': 'Travel & Leisure / Theme Parks',
+    'Entertainment / Live Events': 'Travel & Leisure / Live Events',
+    'Quantum Computing': 'Quantum Computing',
+    'Agriculture / Crop Protection': 'Agriculture / Crop Protection',
+    'Agriculture / Fertilizers': 'Agriculture / Fertilizers',
+    'Agriculture / Processing & Trading': 'Agriculture / Processing & Trading',
+    'Agriculture / Alternative Protein': 'Agriculture / Alternative Protein',
+    'Cannabis': 'Cannabis / Cultivation',
+    'Cannabis / Cultivation': 'Cannabis / Cultivation',
+    'Cannabis / Cultivation & Brands': 'Cannabis / Cultivation',
+    'Cannabis / Multi-State Operators & Brands': 'Cannabis / Multi-State Operators & Brands',
+    'Chemicals / Specialty Chemicals': 'Specialty Chemicals / Specialty Materials',
+    'Chemicals / Specialty Materials': 'Specialty Chemicals / Specialty Materials',
+    'Chemicals / Specialized Materials': 'Specialty Chemicals / Specialty Materials',
+    'Chemicals / Chlor-Alkali': 'Specialty Chemicals / Chlor-Alkali',
+    'Specialty Chemicals / Titanium Dioxide': 'Specialty Chemicals / Titanium Dioxide',
+    'Gig Economy / Ride-Hailing': 'Gig Economy / Ride-Hailing',
+    'Gig Economy / Delivery Platforms': 'Gig Economy / Delivery',
+    'Gig Economy / Freelance Platforms': 'Gig Economy / Freelance Platforms',
+    'Private Prisons & Detention': 'Cybersecurity / Surveillance & IoT',
+    'Individual Episodic Pivots / Singletons': 'Singleton',
+    'Uncategorized': 'Singleton',
+    'Meme Stocks': 'Singleton',
+}
 
 
 def normalize_legacy_theme(label: str) -> Optional[str]:
@@ -78,7 +354,7 @@ def normalize_legacy_theme(label: str) -> Optional[str]:
     """
     if not label:
         return None
-    return _table().get(str(label).strip())
+    return OLD_TO_NEW.get(str(label).strip())
 
 
 def normalize_legacy_themes(labels) -> List[str]:
@@ -98,18 +374,3 @@ def normalize_legacy_themes(labels) -> List[str]:
         seen.add(canonical)
         out.append(canonical)
     return out
-
-
-def known_l1_prefixes() -> set[str]:
-    """Return every distinct L1 narrative the alias table maps to.
-
-    Used by the defensive ``resolve_l1`` helper in ``theme_taxonomy`` to
-    recognise old-format labels like "AI - Memory & Storage" whose L1 prefix
-    (text before the first " - ") is a real taxonomy narrative.
-    """
-    prefixes: set[str] = set()
-    for canonical in _table().values():
-        head = canonical.split(" / ", 1)[0].strip()
-        if head:
-            prefixes.add(head)
-    return prefixes

@@ -8,18 +8,13 @@ Combines all data sources:
 - Fundamental data
 """
 
-import json
 import pandas as pd
 import sqlite3
-from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Set
-from glob import glob
 
-import src.stock_utils as su
-from src.themes.analyze_theme_strength import analyze_theme_strength
 from src.themes.theme_registry import load_ticker_themes
-from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB, SCREENING_OUTPUT_DIR
+from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB
 
 OUTPUT_DIR = REPORTS_DIR
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -100,7 +95,7 @@ def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, 
     hot_themes = theme_df[theme_df['is_hot']].shape[0] if 'is_hot' in theme_df.columns else 0
 
     return f"""## Executive Summary
-- **Total stocks screened**: {total_stocks}
+- **Stocks in the master table**: {total_stocks}
 - **Hot themes identified**: {hot_themes} (avg RS_STS% > {CONFIG['themes']['hot_theme_rs_threshold']}%)
 - **Untagged tickers awaiting audit**: {len(untagged_tickers)}{' (' + ', '.join(untagged_tickers[:15]) + (', ...' if len(untagged_tickers) > 15 else '') + ')' if untagged_tickers else ''}
 """
@@ -475,40 +470,3 @@ def save_report(report: str, date_str: str):
     print(f"OK Report saved to {filename}")
     return filename
 
-
-if __name__ == '__main__':
-    # Load latest master table
-    master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
-    if master_files:
-        latest_master = master_files[-1]
-        print(f"Loading {latest_master}")
-
-        master_df = su.load_df_from_parquet(latest_master)
-        date_str = Path(latest_master).stem.replace('master_', '')
-
-        # Mock market breadth
-        market_breadth = {
-            'ncfd': 65.2,
-            'mmfi': 58.7,
-            'timestamp': datetime.now().isoformat()
-        }
-
-        # Analyze themes
-        theme_df = analyze_theme_strength(master_df, market_breadth)
-
-        # Generate report
-        report = generate_daily_report(
-            date_str=date_str,
-            master_df=master_df,
-            theme_df=theme_df,
-            market_breadth=market_breadth,
-            untagged_tickers=[]
-        )
-
-        # Save report
-        save_report(report, date_str)
-
-        print("\nReport preview (first 2000 chars):")
-        print(report[:2000])
-    else:
-        print("No master tables found")

@@ -12,7 +12,6 @@ fundamental_data:
   cache_days: 7
   rate_limit_seconds: 2
   max_retries: 3
-  database_path: "data/fundamentals.db"
 
 # RS calculation
 rs_score:
@@ -59,7 +58,6 @@ themes:
 
   dashboard_theme_limit: 30
   dashboard_tickers_per_theme: 10
-  min_stocks_per_theme: 3
   hot_theme_rs_threshold: 70.0
   high_momentum_threshold: 80.0
   min_scored_breadth: 2
@@ -227,8 +225,6 @@ dashboard:
 # Report settings
 report:
   output_dir: "reports"
-  include_charts: false
-  email_report: false
 
 # Screeners to run
 screeners:

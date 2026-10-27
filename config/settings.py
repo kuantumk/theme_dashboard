@@ -17,7 +17,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # ─── Environment Variables ──────────────────────────────────────
 load_dotenv(PROJECT_ROOT / ".env")
 
-IBKR_FLEX_TOKEN = os.getenv("IBKR_FLEX_TOKEN", "")
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
 # TradingView session cookies for the bid/ask dashboard (src/bidask/).

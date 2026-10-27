@@ -10,11 +10,13 @@ import pandas as pd
 import yfinance as yf
 
 import src.stock_utils as su
-from config.settings import PRICE_DATA_FILE
+from config.settings import CONFIG, PRICE_DATA_FILE
 
 TODAY = dt.date.today()
 END_DATE = TODAY + dt.timedelta(days=1)  # yf.download end_date is not inclusive
-START_DATE = TODAY - dt.timedelta(days=500)
+# market_history reads the same key as this download's length (its warm-up
+# must cover the 365-day volume-spike window), so the two cannot drift.
+START_DATE = TODAY - dt.timedelta(days=int(CONFIG["price_data"]["lookback_days"]))
 
 
 def download_yf_price_data(start_date, end_date):

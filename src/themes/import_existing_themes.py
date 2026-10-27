@@ -1,74 +1,17 @@
 """
-Import existing theme groups from Google Sheet and create initial ticker_themes.json.
+Read the curated Google Sheet's ticker-to-theme labels.
+
+The labels are raw and often legacy; ``tag_new_tickers`` remaps and validates
+them before anything is written.
 """
 
 import pandas as pd
 from typing import Dict, List
-from collections import Counter
 
 from config.settings import CONFIG, GOOGLE_SHEET_ID
-from src.themes.theme_registry import save_ticker_themes
 
 gid = CONFIG["themes"]["google_sheet_gid"]
 GOOGLE_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=csv&gid={gid}"
-
-
-def parse_theme_from_description(description: str, theme_company: str) -> List[str]:
-    """Parse the theme/sub-theme from the Theme/Company column."""
-    themes = []
-    desc_lower = description.lower()
-
-    # AI Infrastructure sub-themes
-    if 'memory' in desc_lower or 'hard disk' in desc_lower:
-        themes.append("AI - Infra / Memory")
-    elif any(word in desc_lower for word in ['optic', 'fiber', 'photonic', 'laser']):
-        themes.append("AI - Infra / Optics")
-    elif 'silicon carbide' in desc_lower or 'gan' in desc_lower or 'sic' in desc_lower:
-        themes.append("AI - Infra / Silicon Carbide")
-    elif 'power' in desc_lower or 'cooling' in desc_lower:
-        themes.append("AI - Infra / Power/Cooling")
-    elif any(word in desc_lower for word in ['connectivity', 'transceiver']):
-        themes.append("AI - Infra / Connectivity")
-    elif any(word in desc_lower for word in ['chip', 'cpu', 'gpu', 'semiconductor', 'nvidia', 'broadcom', 'amd', 'intel']):
-        themes.append("AI - Infra / Core Chips")
-    elif 'cloud' in desc_lower or 'data center' in desc_lower or 'hpc' in desc_lower:
-        themes.append("AI - Data Center & Cloud")
-    elif 'robot' in desc_lower or 'automation' in desc_lower:
-        themes.append("AI - Robotics & Automation")
-    elif 'analytics' in desc_lower or 'software' in desc_lower or 'ai' in desc_lower:
-        themes.append("AI - Software & Analytics")
-    elif 'smr' in desc_lower or 'small modular reactor' in desc_lower or 'microreactor' in desc_lower:
-        themes.append("Nuclear / SMR")
-    elif 'uranium' in desc_lower:
-        themes.append("Nuclear / Uranium")
-    elif 'nuclear fuel' in desc_lower:
-        themes.append("Nuclear / Fuel Technology")
-    elif 'nuclear' in desc_lower and 'fleet' in desc_lower:
-        themes.append("Electricity / Power Generation")
-    elif 'electric utility' in desc_lower or 'power' in desc_lower:
-        themes.append("Electricity / Power Generation")
-    elif 'bitcoin mining' in desc_lower or 'cryptocurrency mining' in desc_lower:
-        themes.append("Cryptocurrency / Mining")
-    elif 'crypto' in desc_lower or 'blockchain' in desc_lower or 'bitcoin etf' in desc_lower:
-        themes.append("Cryptocurrency / Infrastructure")
-    elif 'satellite launch' in desc_lower or 'rocket' in desc_lower:
-        themes.append("Space / Launches")
-    elif 'satellite' in desc_lower or 'broadband' in desc_lower:
-        themes.append("Space / Satellites & Communication")
-    elif 'space infrastructure' in desc_lower or 'space manufacturing' in desc_lower:
-        themes.append("Space / Manufacturing")
-    elif 'lunar' in desc_lower or 'mars' in desc_lower:
-        themes.append("Space / Exploration")
-    elif 'drone' in desc_lower or 'vertical take' in desc_lower or 'evtol' in desc_lower:
-        themes.append("Drones")
-
-    if not themes:
-        if 'ai' in desc_lower:
-            themes.append("AI - Other")
-        else:
-            themes.append("Uncategorized")
-
-    return themes
 
 
 def import_google_sheet_themes() -> Dict[str, List[str]]:
@@ -105,24 +48,3 @@ def import_google_sheet_themes() -> Dict[str, List[str]]:
     print(f"\nExtracted themes for {len(ticker_themes)} tickers")
 
     return ticker_themes
-
-if __name__ == '__main__':
-    ticker_themes = import_google_sheet_themes()
-
-    print("\nSample ticker themes:")
-    for ticker, themes in list(ticker_themes.items())[:10]:
-        print(f"  {ticker}: {themes}")
-
-    save_ticker_themes(ticker_themes)
-
-    print("\nOK Theme import complete!")
-    print(f"  Total tickers: {len(ticker_themes)}")
-
-    theme_counts = Counter()
-    for themes in ticker_themes.values():
-        for theme in themes:
-            theme_counts[theme] += 1
-
-    print(f"\n  Tickers per theme:")
-    for theme, count in sorted(theme_counts.items(), key=lambda x: -x[1]):
-        print(f"    {theme}: {count}")

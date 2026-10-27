@@ -22,6 +22,7 @@ import sys
 import threading
 import time
 import webbrowser
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -29,14 +30,17 @@ from zoneinfo import ZoneInfo
 
 from config.settings import PROJECT_ROOT
 from src.bidask.config import load_config
-from src.bidask.crypto_state import REF_24H, crypto_sides
-from src.bidask.feed import fetch
+from src.bidask.feed import DELAYED_PREFIX, fetch
 from src.bidask.grouping import SIDES_FIELD, build_columns, load_themes
-from src.bidask.session_state import CLOSED, resolve_state, sides_for
-from src.bidask.stall import StallWatch
-from src.bidask.universe import apply_rvol_gate, build_universe, volume_since_anchor
+from src.bidask.session_state import CLOSED, REF_24H, sides_for
+from src.bidask.stall import StallReading, StallWatch
+from src.bidask.universe import (
+    RvolGate,
+    apply_rvol_gate,
+    build_universe,
+    volume_since_anchor,
+)
 from src.bidask.rvol_at_time import (
-    CRYPTO,
     CRYPTO_GRID,
     EQUITY_GRID,
     build_for_symbols,
@@ -147,19 +151,52 @@ def _drop_non_finite(record: dict) -> None:
             record[key] = None
 
 
-def _session_state(rows) -> str:
-    """The session state this response describes, from the feed's own field.
+@dataclass(frozen=True)
+class MarketSnapshot:
+    """Everything one market's poll produced, published as ONE unit.
 
-    The local clock is never consulted: a holiday, an early close and a feed
-    outage all look like an ordinary afternoon from here. Extraction mirrors
-    `feed._market_status` — one value describes the whole response, so reading
-    it per row would let two tickers in one poll be judged against different
-    references and different floors.
+    ⛔ Built in locals by `TapeEngine._poll_market` and swapped in with a single
+    assignment. The engine used to keep eleven per-market dicts and reset them
+    at the top of each poll before rebuilding them one by one, while the HTTP
+    thread could call `write_state` at any moment (a cadence change does). A
+    write landing in that window published a half-built board — empty columns
+    beside `floor: null` — which the page renders as "the board is shut" about
+    a market that was open and trading. A reader now sees the previous poll or
+    the next one, never a mixture.
+
+    `qualified` cleared the relative-volume gate and carries the side or sides
+    each row earned; `pregate` is the liquidity-filtered universe before it,
+    which is `build_columns`'s breadth denominator. A failed poll publishes a
+    snapshot with neither — the board is a claim about now, and last poll's
+    columns standing through an outage would say the market is doing something
+    it may have stopped doing.
     """
-    if "current_session" not in getattr(rows, "columns", ()):
-        return CLOSED
-    values = rows["current_session"].dropna().unique().tolist()
-    return resolve_state(values[0]) if values else CLOSED
+
+    error: str = ""
+    feed: str = ""
+    # Unknown counts as delayed — see `feed.Payload.delayed`.
+    delayed: bool = True
+    # Distinct from `feed`: a real-time entitlement on a closed market is
+    # still a closed market.
+    market_status: str = ""
+    # Rows the screener matched server-side, and rows that survived our own
+    # floors. Published as a pair because the ratio is the diagnosis: a healthy
+    # `matched` beside a zero `universe` is an upstream field change, and it is
+    # indistinguishable from a quiet market without both.
+    matched: int = 0
+    universe: int = 0
+    qualified: list = field(default_factory=list)
+    pregate: list = field(default_factory=list)
+    gate: Optional[RvolGate] = None
+    delayed_rows: int = 0
+    session_state: str = CLOSED
+    # Whether the vendor's volume column is still advancing. DIAGNOSTIC ONLY —
+    # see `src/bidask/stall.py`; it must never reach a score, a side, or an
+    # admission. None when the poll never reached the gate: a poll that did not
+    # happen cannot assert the feed has frozen.
+    stall: Optional[StallReading] = None
+    # When this market was actually scanned, not when the state was written.
+    scanned_at: str = ""
 
 
 class TapeEngine:
@@ -177,34 +214,17 @@ class TapeEngine:
         self.out_path = out_dir / STATE_FILENAME
         self.markets = markets
         self.themes = load_themes()
-        self.errors = {m: "" for m in markets}
-        self.feeds = {m: "" for m in markets}
-        self.market_status = {m: "" for m in markets}
-        # Rows the screener matched server-side, and rows that survived our own
-        # floors. Published as a pair because the ratio is the diagnosis: a
-        # healthy `matched` beside a zero `universe` is an upstream field
-        # change, and it is indistinguishable from a quiet market without both.
-        self.matched = {m: 0 for m in markets}
-        self.universe = {m: 0 for m in markets}
-        # One poll's two frames, as row dicts. `qualified` cleared the
-        # relative-volume gate and carries the side or sides each row earned;
-        # `pregate` is the liquidity-filtered universe before it, which is
-        # `build_columns`'s breadth denominator. Both are rewritten every poll
-        # and cleared before a failed one — the board is a claim about now, and
-        # last poll's columns standing through an outage would say the market
-        # is doing something it may have stopped doing.
-        self.qualified = {m: [] for m in markets}
-        self.pregate = {m: [] for m in markets}
-        self.gates = {m: None for m in markets}
-        self.delayed_rows = {m: 0 for m in markets}
-        self.session_states = {m: CLOSED for m in markets}
+        # One snapshot per market, each replaced whole by its poll. See
+        # `MarketSnapshot` for why nothing here is ever reset in place.
+        self.snapshots: dict = {m: MarketSnapshot() for m in markets}
         # Whether the vendor's volume column is still advancing. The board's
         # every other guard keys off ABSENCE — a zero reading, a NaN, a raised
         # warm-up — and a column that keeps serving plausible static numbers
         # trips none of them. See `src/bidask/stall.py`; it is diagnostic only
-        # and must never reach a score, a side, or an admission.
+        # and must never reach a score, a side, or an admission. It keeps its
+        # reference across a failed poll, so the next successful poll compares
+        # against it across the outage.
         self.stall = StallWatch()
-        self.stalls: dict = {m: None for m in markets}
         # Latched so the alarm prints on the transition rather than 360 times
         # an hour. A line per poll is noise, and noise is not a signal.
         self._all_dropped = {m: False for m in markets}
@@ -215,6 +235,9 @@ class TapeEngine:
         # Set when cadence changes, so the poll loop can abandon a wait it is
         # already sitting in rather than finishing the old interval first.
         self.wake = threading.Event()
+        # Serialises `write_state` across the poll thread and the HTTP thread,
+        # from building the state through replacing the file, so two writers
+        # cannot land an older build over a newer one.
         self._lock = threading.Lock()
         # Relative Volume at Time baselines: one cumulative-volume curve per
         # ticker, from its own recent sessions. Built once per session in the
@@ -366,148 +389,12 @@ class TapeEngine:
         """One full cycle across every market. Returns False if every feed failed."""
         any_ok = False
         for market in self.markets:
-            payload = fetch(market, self.cfg)
-            self.errors[market] = payload.error
-            self.feeds[market] = payload.feed
-            self.market_status[market] = payload.market_status
-            self.matched[market] = payload.matched
-            self.universe[market] = len(payload.rows)
-            # A 100% drop rate is an upstream-breakage signal, not a quiet
-            # market — the same alarm the EP scan grew after Finviz mangled its
-            # tickers. `Value.Traded` went dark for a whole session precisely
-            # because this ratio was computed every poll and never read.
-            dropped = bool(payload.matched) and payload.rows.empty and not payload.error
-            if dropped != self._all_dropped[market]:
-                self._all_dropped[market] = dropped
-                if dropped:
-                    print(f"  WARNING {market}: screener matched {payload.matched} rows "
-                          "and every one failed the local floors — an upstream field "
-                          "change is the usual cause, not a quiet market")
-                else:
-                    print(f"  {market}: universe recovered ({len(payload.rows)} rows)")
-            # Reset before the early exit. The columns are a claim about right
-            # now, so last poll's rows must not stand through a feed outage and
-            # say the market is doing something it may have stopped doing.
-            self.qualified[market] = []
-            self.pregate[market] = []
-            self.gates[market] = None
-            self.delayed_rows[market] = 0
-            self.session_states[market] = CLOSED
-            # A poll that did not happen cannot assert the feed has frozen. The
-            # watch keeps its reference — the next successful poll compares
-            # against it across the outage — but the published verdict goes.
-            self.stalls[market] = None
-            if payload.error:
-                continue
-            # A feed reading proves the response arrived, so the poll succeeded
-            # even when no row survived our own floors. Charging the backoff
-            # counter for that throttles 10s to 150s and prints "feed
-            # unavailable" about a vendor that is streaming — the same
-            # misdirection this module was just fixed to stop.
-            if payload.feed or not payload.rows.empty:
-                any_ok = True
-            if payload.rows.empty:
-                continue
-
-            # One clock read per market, on that market's own grid, so the
-            # session date and the elapsed-minutes figure cannot disagree.
-            # ⛔ Both markets take this path. Crypto used to skip it, so the
-            # flat 1.2 floor was expressible in config and did nothing on the
-            # running board — a green unit test beside an unfiltered tab.
-            grid = MARKET_GRIDS.get(market, EQUITY_GRID)
-            now = datetime.now(tz=grid.tz)
-            elapsed = minutes_since_open(now, grid=grid)
-
-            # Liquidity first, and its result is kept: it is the gate's input
-            # AND `build_columns`'s breadth denominator. Taken after the gate
-            # instead, every group's qualifying share would be 1.0 and the
-            # breadth term would rank nothing.
-            universe = build_universe(payload.rows, self.cfg, market=market)
-            self.pregate[market] = universe.to_dict("records")
-            # Counted after OUR floors, so a 100% drop at the average-dollar-
-            # volume floor reads as one (emptyReason's matched-vs-universe
-            # branch) rather than falling through to "the board is shut".
-            self.universe[market] = len(universe)
-
-            # Warm baselines for the liquidity-filtered set, not the raw
-            # response. A row below the dollar-volume floor can never reach a
-            # column, so a baseline for it is a websocket round trip spent on a
-            # curve nothing will read — measured 2,797 matched against 2,179
-            # surviving on one live poll, so roughly a fifth of the warm-up.
-            # Names crossing the liquidity floor later warm incrementally and
-            # remain excluded until their own instrument baseline is ready.
-            self.ensure_profiles(market, _session_date(market, now), universe)
-
-            # Crypto is not a session state — it has no open and no close — so
-            # it carries the `crypto` gate key and its own 24-hour price
-            # reference (`src/bidask/crypto_state.py`) rather than borrowing
-            # either from the equity table.
-            if market == "crypto":
-                state = CRYPTO
-            else:
-                state = _session_state(payload.rows)
-            self.session_states[market] = state
-
-            # ⛔ Watch the numerator the gate is about to divide, not some
-            # nearby column. `volume_since_anchor` is the same call
-            # `score_rvol_at_time` makes, so a vendor field that freezes is
-            # caught in the exact quantity that would go wrong — and the state
-            # travels with it, because the column being read changes at the
-            # bell and a comparison across that boundary measures the swap.
-            if "symbol" in universe.columns:
-                self.stalls[market] = self.stall.observe(
-                    market, state,
-                    dict(zip(universe["symbol"].astype(str),
-                             volume_since_anchor(universe, state))),
-                    now.timestamp())
-
-            # Profiles are stored by instrument, then mapped to this poll's
-            # display names only after checking the session date. A delayed
-            # snapshot has no trustworthy observation time in this feed, so it
-            # cannot share the wall-clock denominator or current floor.
-            with self._profile_lock:
-                current = (self.profiles.get(market, {})
-                           if self.profile_dates.get(market) == _session_date(market, now)
-                           else {})
-                profiles = {name: current[source] for name, source
-                            in self._symbol_map(universe).items() if source in current}
-            # Mixed entitlement responses retain each row's update mode.
-            # Removing its curve fails only that delayed row closed.
-            modes = (universe["update_mode"].fillna(payload.feed).astype(str)
-                     if "update_mode" in universe.columns else None)
-            if modes is not None:
-                delayed = set(universe.loc[modes.str.startswith("delayed"), "symbol"].astype(str))
-            elif payload.feed.startswith("delayed"):
-                delayed = set(universe["symbol"].astype(str))
-            else:
-                delayed = set()
-            profiles = {name: curve for name, curve in profiles.items() if name not in delayed}
-            self.delayed_rows[market] = len(delayed)
-            gate = apply_rvol_gate(universe, self.cfg, state=state,
-                                   profiles=profiles,
-                                   elapsed_minutes=elapsed)
-            self.gates[market] = gate
-            records = gate.rows.to_dict("records")
-
-            # Strong and weak are two independent tests, never a branch. A
-            # stock above today's open and below yesterday's close is
-            # genuinely being accumulated against one reference and
-            # distributed against the other, and both readings belong on
-            # the board. Only a side actually earned reaches the payload:
-            # membership downstream is an `in` test, so an empty tuple
-            # under a live key would place a row in a column with no
-            # reference to name it.
-            for record in records:
-                sides = (crypto_sides(record) if market == "crypto"
-                         else sides_for(record, state))
-                record[SIDES_FIELD] = {
-                    name: references
-                    for name, references in (("strong", sides.strong),
-                                             ("weak", sides.weak))
-                    if references
-                }
-                _drop_non_finite(record)
-            self.qualified[market] = records
+            snapshot, ok = self._poll_market(market)
+            # The one write. Everything above it was built in locals, so a
+            # `write_state` from the HTTP thread sees this market's previous
+            # poll or this one, never a board half-way between them.
+            self.snapshots[market] = snapshot
+            any_ok = any_ok or ok
 
         self.consecutive_failures = 0 if any_ok else self.consecutive_failures + 1
         # A write failure must not touch consecutive_failures: that counter
@@ -515,47 +402,201 @@ class TapeEngine:
         self.write_state()
         return any_ok
 
+    def _poll_market(self, market: str) -> tuple:
+        """Fetch and judge one market. Returns `(MarketSnapshot, feed_ok)`.
+
+        Reads no published state and writes none, apart from the stall watch's
+        own reference and the drop alarm's latch — so the caller can publish
+        the result in one assignment.
+        """
+        payload = fetch(market, self.cfg)
+        self._note_all_dropped(market, payload)
+        # A failed or empty poll publishes only what the response carried: no
+        # columns, no gate, no stall verdict. The columns are a claim about
+        # right now, so last poll's rows must not stand through a feed outage.
+        snapshot = MarketSnapshot(
+            error=payload.error,
+            feed=payload.feed,
+            delayed=payload.delayed,
+            market_status=payload.market_status,
+            matched=payload.matched,
+            universe=len(payload.rows),
+            scanned_at=datetime.now().strftime("%H:%M:%S"),
+        )
+        if payload.error:
+            return snapshot, False
+        # A feed reading proves the response arrived, so the poll succeeded
+        # even when no row survived our own floors. Charging the backoff
+        # counter for that throttles 10s to 150s and prints "feed
+        # unavailable" about a vendor that is streaming — the same
+        # misdirection this module was just fixed to stop.
+        ok = bool(payload.feed) or not payload.rows.empty
+        if payload.rows.empty:
+            return snapshot, ok
+
+        # One clock read per market, on that market's own grid, so the
+        # session date and the elapsed-minutes figure cannot disagree.
+        # ⛔ Both markets take this path. Crypto used to skip it, so the
+        # flat 1.2 floor was expressible in config and did nothing on the
+        # running board — a green unit test beside an unfiltered tab.
+        grid = MARKET_GRIDS.get(market, EQUITY_GRID)
+        now = datetime.now(tz=grid.tz)
+        elapsed = minutes_since_open(now, grid=grid)
+
+        # Liquidity first, and its result is kept: it is the gate's input
+        # AND `build_columns`'s breadth denominator. Taken after the gate
+        # instead, every group's qualifying share would be 1.0 and the
+        # breadth term would rank nothing.
+        universe = build_universe(payload.rows, self.cfg, market=market)
+
+        # Warm baselines for the liquidity-filtered set, not the raw
+        # response. A row below the dollar-volume floor can never reach a
+        # column, so a baseline for it is a websocket round trip spent on a
+        # curve nothing will read — measured 2,797 matched against 2,179
+        # surviving on one live poll, so roughly a fifth of the warm-up.
+        # Names crossing the liquidity floor later warm incrementally and
+        # remain excluded until their own instrument baseline is ready.
+        self.ensure_profiles(market, _session_date(market, now), universe)
+
+        # The feed resolved the state once for the whole response: an equity
+        # session from `current_session`, or `crypto`, which that scanner's
+        # payload is stamped with because the market has no session at all.
+        state = payload.session_state
+
+        # ⛔ Watch the numerator the gate is about to divide, not some
+        # nearby column. `volume_since_anchor` is the same call
+        # `score_rvol_at_time` makes, so a vendor field that freezes is
+        # caught in the exact quantity that would go wrong — and the state
+        # travels with it, because the column being read changes at the
+        # bell and a comparison across that boundary measures the swap.
+        stall = None
+        if "symbol" in universe.columns:
+            stall = self.stall.observe(
+                market, state,
+                dict(zip(universe["symbol"].astype(str),
+                         volume_since_anchor(universe, state))),
+                now.timestamp())
+
+        # Profiles are stored by instrument, then mapped to this poll's
+        # display names only after checking the session date. A delayed
+        # snapshot has no trustworthy observation time in this feed, so it
+        # cannot share the wall-clock denominator or current floor.
+        with self._profile_lock:
+            current = (self.profiles.get(market, {})
+                       if self.profile_dates.get(market) == _session_date(market, now)
+                       else {})
+            profiles = {name: current[source] for name, source
+                        in self._symbol_map(universe).items() if source in current}
+        # Mixed entitlement responses retain each row's update mode.
+        # Removing its curve fails only that delayed row closed. An unknown
+        # mode is NOT delayed here, unlike the feed pill: this decides
+        # admission, and an absent `update_mode` is no evidence of delay.
+        modes = (universe["update_mode"].fillna(payload.feed).astype(str)
+                 if "update_mode" in universe.columns else None)
+        if modes is not None:
+            delayed = set(universe.loc[modes.str.startswith(DELAYED_PREFIX),
+                                       "symbol"].astype(str))
+        elif payload.feed.startswith(DELAYED_PREFIX):
+            delayed = set(universe["symbol"].astype(str))
+        else:
+            delayed = set()
+        profiles = {name: curve for name, curve in profiles.items() if name not in delayed}
+        gate = apply_rvol_gate(universe, self.cfg, state=state,
+                               profiles=profiles,
+                               elapsed_minutes=elapsed)
+        records = gate.rows.to_dict("records")
+
+        # Strong and weak are two independent tests, never a branch. A
+        # stock above today's open and below yesterday's close is
+        # genuinely being accumulated against one reference and
+        # distributed against the other, and both readings belong on
+        # the board. Only a side actually earned reaches the payload:
+        # membership downstream is an `in` test, so an empty tuple
+        # under a live key would place a row in a column with no
+        # reference to name it.
+        for record in records:
+            sides = sides_for(record, state)
+            record[SIDES_FIELD] = {
+                name: references
+                for name, references in (("strong", sides.strong),
+                                         ("weak", sides.weak))
+                if references
+            }
+            _drop_non_finite(record)
+
+        return MarketSnapshot(
+            error=snapshot.error,
+            feed=snapshot.feed,
+            delayed=snapshot.delayed,
+            market_status=snapshot.market_status,
+            matched=snapshot.matched,
+            # Counted after OUR floors, so a 100% drop at the average-dollar-
+            # volume floor reads as one (emptyReason's matched-vs-universe
+            # branch) rather than falling through to "the board is shut".
+            universe=len(universe),
+            qualified=records,
+            pregate=universe.to_dict("records"),
+            gate=gate,
+            delayed_rows=len(delayed),
+            session_state=state,
+            stall=stall,
+            scanned_at=snapshot.scanned_at,
+        ), ok
+
+    def _note_all_dropped(self, market: str, payload) -> None:
+        """Print, on the transition, when the feed's own floor emptied a response.
+
+        A 100% drop rate is an upstream-breakage signal, not a quiet market —
+        the same alarm the EP scan grew after Finviz mangled its tickers.
+        `Value.Traded` went dark for a whole session precisely because this
+        ratio was computed every poll and never read.
+        """
+        dropped = bool(payload.matched) and payload.rows.empty and not payload.error
+        if dropped == self._all_dropped[market]:
+            return
+        self._all_dropped[market] = dropped
+        if dropped:
+            print(f"  WARNING {market}: screener matched {payload.matched} rows "
+                  "and every one failed the local floors — an upstream field "
+                  "change is the usual cause, not a quiet market")
+        else:
+            print(f"  {market}: universe recovered ({len(payload.rows)} rows)")
+
     def build_state(self) -> dict:
-        state = {"poll_seconds": self.poll_seconds,
-                 "min_poll_seconds": self.cfg.min_poll_seconds,
-                 "max_poll_seconds": self.cfg.max_poll_seconds,
-                 "generated_at": datetime.now().strftime("%H:%M:%S")}
+        state = {"poll_seconds": self.poll_seconds}
         for market in self.markets:
+            snapshot = self.snapshots[market]
             # The rows that cleared this poll's gate, ranked against the
             # pre-gate universe. Stateless: nothing here remembers an earlier
             # poll, so the columns describe the market now rather than the
             # session so far.
             columns = build_columns(
-                self.qualified[market],
+                snapshot.qualified,
                 self.themes,
                 self.cfg,
                 grouped=(market != "crypto"),
-                universe=self.pregate[market],
-                include_all=True,
+                universe=snapshot.pregate,
             )
-            feed = self.feeds[market]
             state[market] = {
                 "columns": columns,
-                "feed": feed,
-                "delayed": (not feed) or feed.startswith("delayed"),
-                # Distinct from `feed`: a real-time entitlement on a closed
-                # market is still a closed market.
-                "market_status": self.market_status[market],
+                "feed": snapshot.feed,
+                "delayed": snapshot.delayed,
+                "market_status": snapshot.market_status,
                 # The pair the empty column needs to name its own cause.
-                "matched": self.matched[market],
-                "universe": self.universe[market],
-                "error": self.errors[market],
-                "scanned_at": datetime.now().strftime("%H:%M:%S"),
+                "matched": snapshot.matched,
+                "universe": snapshot.universe,
+                "error": snapshot.error,
+                "scanned_at": snapshot.scanned_at,
+                # The board's only statement of why a column is empty.
+                # Relative volume is the sole admission path on BOTH tabs, so
+                # this block is what separates a broken source from a quiet
+                # market — and the crypto tab needs it at least as much, since
+                # a 24/7 market has no closing bell to explain an empty column.
+                "rvol": self.rvol_status(market, snapshot),
             }
-            # The board's only statement of why a column is empty. Relative
-            # volume is the sole admission path on BOTH tabs, so this block is
-            # what separates a broken source from a quiet market — and the
-            # crypto tab needs it at least as much, since a 24/7 market has no
-            # closing bell to explain an empty column.
-            state[market]["rvol"] = self.rvol_status(market)
         return state
 
-    def rvol_status(self, market: str) -> dict:
+    def rvol_status(self, market: str, snapshot: Optional[MarketSnapshot] = None) -> dict:
         """What the relative-volume gate could and could not judge this poll.
 
         Relative volume is the only admission path to either column, so when it
@@ -570,15 +611,18 @@ class TapeEngine:
         more than no board — and the pair is what says how much of the market
         that board covers.
         """
-        gate = self.gates.get(market)
-        stall = self.stalls.get(market)
-        status = self.profile_status.get(market, "pending")
+        snapshot = self.snapshots[market] if snapshot is None else snapshot
+        gate, stall = snapshot.gate, snapshot.stall
+        # The warm-up thread rewrites these, so read the pair together.
+        with self._profile_lock:
+            status = self.profile_status.get(market, "pending")
+            tickers = len(self.profiles.get(market, {}))
         return {
             # The warm-up's own state, so a thin board during the download
             # reads as a warm-up in progress rather than as a dull morning.
             "status": status,
-            "tickers": len(self.profiles.get(market, {})),
-            "session_state": self.session_states.get(market, CLOSED),
+            "tickers": tickers,
+            "session_state": snapshot.session_state,
             # R15: what the sides were measured against, so the crypto column
             # is not read as an equity session measure. The equity states name
             # their own references per row; crypto has exactly one.
@@ -590,8 +634,8 @@ class TapeEngine:
             "scored": 0 if gate is None else gate.scored,
             "polled": 0 if gate is None else gate.polled,
             "unavailable": bool(gate is not None and gate.source_unavailable),
-            "delayed_rows": self.delayed_rows.get(market, 0),
-            "reason": self._rvol_reason(market, gate),
+            "delayed_rows": snapshot.delayed_rows,
+            "reason": self._rvol_reason(snapshot, status, tickers),
             # ⛔ The frozen-column verdict. `unavailable` above cannot cover
             # it: that needs EVERY reading to be zero, and a column serving
             # plausible static numbers scores every row. Because `baseline_at`
@@ -602,7 +646,8 @@ class TapeEngine:
             "stall_watched": 0 if stall is None else stall.watched,
         }
 
-    def _rvol_reason(self, market: str, gate) -> str:
+    @staticmethod
+    def _rvol_reason(snapshot: MarketSnapshot, status: str, tickers: int) -> str:
         """Name the cause when the source failed, else "".
 
         Empty on a healthy poll, on an empty response, and on a closed market:
@@ -610,18 +655,23 @@ class TapeEngine:
         reader after a vendor that is working. `RvolGate.source_unavailable`
         makes those three distinctions; this only has to name what is left.
         """
+        gate = snapshot.gate
         if gate is None or not gate.source_unavailable:
             return ""
-        if self.delayed_rows.get(market, 0):
+        if snapshot.delayed_rows:
             return "delayed volume has no trustworthy observation time"
-        status = self.profile_status.get(market, "pending")
-        if not self.profiles.get(market):
+        if not tickers:
             return f"relative-volume baselines unavailable ({status})"
         return (f"relative volume unusable for all {gate.polled} rows polled "
                 f"(baselines: {status})")
 
     def write_state(self) -> bool:
         """Write atomically so a mid-write fetch never sees a truncated file.
+
+        Called from the poll thread after every poll and from the HTTP thread
+        on a cadence change. The lock covers building the state as well as
+        replacing the file, so two writers cannot interleave and land an older
+        build over a newer one.
 
         `allow_nan=False` is load-bearing: the default emits a bare `NaN` token,
         which is valid Python but invalid JSON, and the browser would reject the
@@ -633,14 +683,14 @@ class TapeEngine:
         it serves the file on the same cadence the writer uses. Retry briefly
         rather than treating a read collision as a write failure.
         """
-        try:
-            payload = json.dumps(self.build_state(), separators=(",", ":"), allow_nan=False)
-        except ValueError as exc:
-            print(f"  state serialization failed (non-finite value): {exc}")
-            return False
-
         tmp = self.out_path.with_suffix(".tmp")
         with self._lock:
+            try:
+                payload = json.dumps(self.build_state(), separators=(",", ":"),
+                                     allow_nan=False)
+            except ValueError as exc:
+                print(f"  state serialization failed (non-finite value): {exc}")
+                return False
             tmp.write_text(payload, encoding="utf-8")
             for attempt in range(6):
                 try:
@@ -654,15 +704,14 @@ class TapeEngine:
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    """Serves the app directory plus exactly one state route."""
+    """Serves the app directory plus exactly one state route.
+
+    Everything else resolves inside WEB_DIR because the base class is
+    constructed with `directory=WEB_DIR` (see `make_handler`).
+    """
 
     state_path: Path = None  # set by the factory below
     engine = None            # set by the factory below
-
-    def translate_path(self, path):
-        # Everything else resolves inside WEB_DIR because the base class is
-        # constructed with directory=WEB_DIR.
-        return super().translate_path(path)
 
     def end_headers(self):
         """Forbid caching of the app's own assets.

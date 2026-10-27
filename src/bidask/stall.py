@@ -63,18 +63,17 @@ DEFAULT_MIN_ACTIVE = 25
 class StallReading:
     """One poll's verdict on whether the numerator column is still advancing.
 
-    ⛔ `moved` and `watched` describe the most recent COMPARISON, not this
-    poll. The window is 120s and the board polls every 10s, so roughly one poll
-    in thirteen actually compares. Reporting zero on the other twelve made the
-    figures blink out on a page that redraws every poll — measured live
-    2026-09-18. They are 0 only until the first comparison of a state, which is
+    ⛔ `watched` describes the most recent COMPARISON, not this poll. The
+    window is 120s and the board polls every 10s, so roughly one poll in
+    thirteen actually compares. Reporting zero on the other twelve made the
+    figure blink out on a page that redraws every poll — measured live
+    2026-09-18. It is 0 only until the first comparison of a state, which is
     the honest reading: nothing has been compared yet.
     """
 
     stalled: bool       # two or more consecutive still windows
     seconds: float      # how long the column has been still, 0 when moving
-    moved: int          # symbols whose volume changed in the MOST RECENT comparison
-    watched: int        # symbols in that comparison, 0 until the first one
+    watched: int        # symbols in the MOST RECENT comparison, 0 until the first
 
 
 @dataclass
@@ -87,9 +86,8 @@ class _Watch:
     last_moved_at: float = 0.0
     strikes: int = 0
     stalled: bool = False
-    # The most recent comparison's figures, carried between windows so a page
-    # redrawing every poll does not watch them blink out.
-    moved: int = 0
+    # The most recent comparison's coverage, carried between windows so a page
+    # redrawing every poll does not watch it blink out.
     watched: int = 0
 
     def anchor(self, state: str, values: dict, now: float) -> None:
@@ -99,7 +97,6 @@ class _Watch:
         self.last_moved_at = now
         self.strikes = 0
         self.stalled = False
-        self.moved = 0
         self.watched = 0
 
 
@@ -139,18 +136,18 @@ class StallWatch:
         # swap, not the feed, so the reference is abandoned rather than carried.
         if watch.state != state:
             watch.anchor(state, active, now)
-            return StallReading(False, 0.0, 0, 0)
+            return StallReading(False, 0.0, 0)
 
         if not watch.values:
             watch.anchor(state, active, now)
-            return StallReading(False, 0.0, 0, 0)
+            return StallReading(False, 0.0, 0)
 
         if now - watch.taken_at < self.window_seconds:
             # Too soon to judge. The standing verdict and the last
-            # comparison's figures persist, so neither the pill nor the count
+            # comparison's coverage persist, so neither the pill nor the count
             # beside it flickers between polls.
             return StallReading(watch.stalled, self._age(watch, now),
-                                watch.moved, watch.watched)
+                                watch.watched)
 
         common = [s for s in active if s in watch.values]
         if len(common) < self.min_active:
@@ -158,22 +155,21 @@ class StallWatch:
             # quiet one. Re-anchor rather than hold a reference that will age
             # into a false conviction the moment volume arrives.
             watch.anchor(state, active, now)
-            return StallReading(False, 0.0, 0, 0)
+            return StallReading(False, 0.0, 0)
 
-        moved = sum(1 for s in common if active[s] != watch.values[s])
+        moved = any(active[s] != watch.values[s] for s in common)
         watch.values = active
         watch.taken_at = now
-        watch.moved = moved
         watch.watched = len(common)
         if moved:
             watch.strikes = 0
             watch.stalled = False
             watch.last_moved_at = now
-            return StallReading(False, 0.0, moved, len(common))
+            return StallReading(False, 0.0, len(common))
 
         watch.strikes += 1
         watch.stalled = watch.strikes >= self.strikes
-        return StallReading(watch.stalled, self._age(watch, now), 0, len(common))
+        return StallReading(watch.stalled, self._age(watch, now), len(common))
 
     @staticmethod
     def _age(watch: _Watch, now: float) -> float:

@@ -27,8 +27,7 @@ admission. It changes what the page says.
 
 import unittest
 
-from src.bidask.rvol_at_time import CRYPTO
-from src.bidask.session_state import MARKET, PRE_MARKET
+from src.bidask.session_state import CRYPTO, MARKET, PRE_MARKET
 from src.bidask.stall import StallWatch
 
 
@@ -60,7 +59,7 @@ class TestAMovingSourceIsNeverAccused(unittest.TestCase):
         first = watch.observe("equity", MARKET, moved, now=130.0)
         second = watch.observe("equity", MARKET, moved, now=260.0)
         self.assertFalse(first.stalled)
-        self.assertEqual(first.moved, 1)
+        self.assertEqual(first.watched, 200)
         # The second window is genuinely still, but it is the FIRST strike
         # after movement, so it must not convict on its own.
         self.assertFalse(second.stalled)
@@ -95,12 +94,10 @@ class TestAMovingSourceIsNeverAccused(unittest.TestCase):
         compared = watch.observe("equity", MARKET, volumes(200, base=2000.0),
                                  now=130.0)
         self.assertEqual(compared.watched, 200)
-        self.assertEqual(compared.moved, 200)
         between = watch.observe("equity", MARKET, volumes(200, base=2000.0),
                                 now=140.0)
         self.assertEqual(between.watched, 200,
                          "the coverage figure vanished between windows")
-        self.assertEqual(between.moved, 200)
 
     def test_too_few_active_symbols_cannot_convict(self):
         """04:02 with three names trading is not evidence of a dead column."""
@@ -164,7 +161,6 @@ class TestAFrozenColumnIsConvicted(unittest.TestCase):
         self.assertFalse(first.stalled, "the first reading sets the reference")
         self.assertFalse(second.stalled, "one still window is not yet a verdict")
         self.assertTrue(third.stalled)
-        self.assertEqual(third.moved, 0)
         self.assertEqual(third.watched, 250)
 
     def test_the_verdict_reports_how_long_the_column_has_been_still(self):

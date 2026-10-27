@@ -1,17 +1,18 @@
 """Session state and reference-price resolution for the tape board.
 
-One poll's row becomes a session state, and that state decides which reference
-price the board measures against. The state also decides the relative-volume
-floor (`src/bidask/universe.py`), so the two choices travel together: a state
-that acquired a reference without a floor, or the reverse, would gate half the
-board by one set of rules and half by another.
+One poll's response becomes a session state, and that state decides which
+reference price the board measures against. The state also decides the
+relative-volume floor (`src/bidask/universe.py`), so the two choices travel
+together: a state that acquired a reference without a floor, or the reverse,
+would gate half the board by one set of rules and half by another.
 
-| `current_session` | Reference for strong / weak            |
-|-------------------|----------------------------------------|
-| `pre_market`      | previous session close                 |
-| `market`          | session open **or** previous close     |
-| `post_market`     | the regular session close              |
-| anything else     | none — the board declares itself shut  |
+| state         | Reference for strong / weak            |
+|---------------|----------------------------------------|
+| `pre_market`  | previous session close                 |
+| `market`      | session open **or** previous close     |
+| `post_market` | the regular session close              |
+| `crypto`      | the price 24 hours ago                 |
+| anything else | none — the board declares itself shut  |
 
 **Strong and weak are two independent tests, never a branch.** A stock that
 closed at $10, opened at $9 and now trades at $9.50 is genuinely strong against
@@ -36,15 +37,21 @@ references above, and all non-null on 100% of rows through the regular session.
 
 **⛔ An unmapped `current_session` is closed, not open.** The feed sends
 `market` for the regular session — verified live, after `regular` had been
-assumed for months and never observed. Both spellings map here, and `feed.py`
-carries the same pair in `SESSION_LABELS`; the two tables describe one vendor
-vocabulary and a spelling added to one belongs in the other. A value in neither
-table resolves to a closed board, because the alternative is applying a
+assumed for months and never observed. Both spellings map here. A value not in
+`SESSIONS` resolves to a closed board, because the alternative is applying a
 reference price and a volume floor that were written for a different state.
 
-This module is the equity path. Crypto trades continuously, has no session
-state and measures against its own 24-hour reference, so it does not borrow
-these rules.
+**`crypto` is a state the feed never sends.** The crypto scanner carries no
+`current_session` at all: that market has no open and no close, only one
+rolling 24-hour reference. `feed.fetch_crypto` stamps the state itself, which is
+why `crypto` is a key of `REFERENCE_FIELDS` and of the floor schedules but never
+a value in `SESSIONS`. Its reference is labelled `24h ago` (R15) so a reader
+switching tabs does not carry an equity session meaning across.
+
+This module imports nothing from the package. `config.py` and `rvol_at_time.py`
+both read the state names from here, which is what lets one definition serve
+both without the import cycle (`rvol_at_time` -> `tvbars` -> `tvsocket` ->
+`config`) that used to force a second copy.
 """
 
 from __future__ import annotations
@@ -53,39 +60,49 @@ import math
 from dataclasses import dataclass
 from typing import Tuple
 
-# The four states the board recognises. The three trading values are spelled as
-# the feed spells them, so a config block keyed by state reads the same way the
+# The states the board recognises. The three trading values are spelled as the
+# feed spells them, so a config block keyed by state reads the same way the
 # payload does.
 PRE_MARKET = "pre_market"
 MARKET = "market"
 POST_MARKET = "post_market"
 CLOSED = "closed"
+# The crypto board's state. Not a session — see the module docstring.
+CRYPTO = "crypto"
+
+# The states `bidask.in_play_rvol_schedules` may be keyed by: every state that
+# has a floor. `closed` is absent on purpose — it has none, and admits nothing.
+SCHEDULE_STATES = (PRE_MARKET, MARKET, POST_MARKET, CRYPTO)
 
 # What each side is measured against. These strings reach the screen, so they
 # read as a trader would name the comparison rather than as a column name.
 REF_OPEN = "open"
 REF_PREV_CLOSE = "prev close"
 REF_SESSION_CLOSE = "session close"
+# Deliberately unlike the three above, all of which name a session boundary the
+# crypto market does not have.
+REF_24H = "24h ago"
 
-# Every `current_session` value the feed is known to send. Keep this in step
-# with `SESSION_LABELS` in `src/bidask/feed.py`: that table decides what the
-# banner says, this one decides what the board does, and a value that reaches
-# one without the other renders a state the board has no rules for.
-SESSION_STATES = {
-    "market": MARKET,
-    "regular": MARKET,
-    "pre_market": PRE_MARKET,
-    "premarket": PRE_MARKET,
-    "post_market": POST_MARKET,
-    "postmarket": POST_MARKET,
-    "out_of_session": CLOSED,
-    "holiday": CLOSED,
+# Every `current_session` value the feed is known to send, mapped to the state
+# the board acts on AND the label the banner prints. One table, so a spelling
+# cannot reach the banner without also reaching the rules, or the reverse.
+SESSIONS = {
+    # `market` is what the feed actually sends while the regular session runs
+    # — verified live, 2026-08-12. `regular` was assumed and never observed.
+    "market": (MARKET, "market open"),
+    "regular": (MARKET, "market open"),
+    "pre_market": (PRE_MARKET, "pre-market"),
+    "premarket": (PRE_MARKET, "pre-market"),
+    "post_market": (POST_MARKET, "after hours"),
+    "postmarket": (POST_MARKET, "after hours"),
+    "out_of_session": (CLOSED, "market closed"),
+    "holiday": (CLOSED, "holiday"),
     # `extended` is listed here to record a decision rather than to leave one
     # to a fall-through. It was not observed during the after-hours probe and
     # no reference price or volume floor has been assigned to it, so it reads
     # as closed until one is. Borrowing the post-market pair would be a guess
     # about which side of 16:00 the value means.
-    "extended": CLOSED,
+    "extended": (CLOSED, "extended hours"),
 }
 
 # Per state, the change fields that answer it, paired with the reference each
@@ -96,11 +113,13 @@ SESSION_STATES = {
 # board. Pre-market and after hours carry one each: before the bell there is no
 # open yet, and after it `close` still holds the 16:00 print — measured, not
 # assumed — so any reference derived from `close` reports the session that has
-# already ended rather than the window now trading.
+# already ended rather than the window now trading. Crypto carries one:
+# `24h_close_change|5`, which `feed.fetch_crypto` maps onto `change_pct`.
 REFERENCE_FIELDS = {
     MARKET: (("change_from_open", REF_OPEN), ("change", REF_PREV_CLOSE)),
     PRE_MARKET: (("premarket_change", REF_PREV_CLOSE),),
     POST_MARKET: (("postmarket_change", REF_SESSION_CLOSE),),
+    CRYPTO: (("change_pct", REF_24H),),
     CLOSED: (),
 }
 
@@ -113,45 +132,40 @@ class Sides:
     gapped-down recovering stock, not a conflict to resolve downstream.
     """
 
-    state: str
     strong: Tuple[str, ...] = ()
     weak: Tuple[str, ...] = ()
 
-    @property
-    def is_strong(self) -> bool:
-        return bool(self.strong)
 
-    @property
-    def is_weak(self) -> bool:
-        return bool(self.weak)
-
-
-def resolve_state(current_session) -> str:
-    """Map the feed's own session field to one of the four states.
+def resolve_session(current_session) -> Tuple[str, str]:
+    """`(state, banner label)` for one value of the feed's own session field.
 
     The local clock is never consulted: a holiday, an early close and a feed
-    outage all look like an ordinary afternoon from here.
+    outage all look like an ordinary afternoon from here. An unknown value is
+    closed, and its label is the raw value made readable — the banner may name
+    a state the board has no rules for, but the board never applies any.
     """
     try:
         raw = str(current_session).strip().lower()
     except Exception:  # noqa: BLE001 — an unprintable value is still just closed
-        return CLOSED
-    return SESSION_STATES.get(raw, CLOSED)
+        return CLOSED, ""
+    return SESSIONS.get(raw, (CLOSED, raw.replace("_", " ")))
+
+
+def resolve_state(current_session) -> str:
+    """Map the feed's own session field to the state the board acts on."""
+    return resolve_session(current_session)[0]
 
 
 def direction_of(row, field: str) -> int:
     """+1 above the reference, -1 below it, 0 when the field cannot answer.
 
-    Public because `src/bidask/crypto_state.py` reads the same guard. Crypto
-    has no session state and keeps its own module, but the question "what does
-    this change field say about direction" is one question, and two copies of
-    these three guards would drift on the first edit.
-
-    Non-finite first, for the reason the classifier's guards give: pandas
+    Non-finite first, for the reason the classifier's guards gave: pandas
     yields NaN rather than None for a null cell, and every comparison against
     NaN is False. Without the explicit test a null field would fall through
     both branches to the same 0 — right today, and one refactor away from a
-    default that reads a missing column as a direction.
+    default that reads a missing column as a direction. On the crypto board a
+    dead `24h_close_change|5` therefore empties the columns rather than filling
+    one with the whole universe.
 
     An exact zero is 0 as well. A stock sitting on its open has not moved
     against it, and a zero move is not a direction.
@@ -193,4 +207,4 @@ def sides_for(row, state: str) -> Sides:
             strong.append(reference)
         elif direction < 0:
             weak.append(reference)
-    return Sides(state=state, strong=tuple(strong), weak=tuple(weak))
+    return Sides(strong=tuple(strong), weak=tuple(weak))

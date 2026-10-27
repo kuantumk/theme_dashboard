@@ -28,8 +28,8 @@
   // Display caps apply only after the browser has filtered and ranked groups.
 
   // Which change field answers each reference, per session state. Mirrors
-  // `REFERENCE_FIELDS` in `src/bidask/session_state.py` and the single pair in
-  // `src/bidask/crypto_state.py`. Keyed by state because one reference name has
+  // `REFERENCE_FIELDS` in `src/bidask/session_state.py`, crypto's single pair
+  // included. Keyed by state because one reference name has
   // two fields behind it: `prev close` is answered by `change` during the
   // session and by `premarket_change` before the bell, and reading the wrong
   // one prints yesterday's move beside this morning's.

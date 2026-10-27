@@ -353,7 +353,7 @@ Master columns: `tightness` (ratio of the reported window; the lowest ratio over
 
 `compute_weekly_ema` in `create_technical_indicators.py` (the `ema20_w` column) + `build_zone_map` and its helpers in `export_dashboard_data.py` (the four snapshot builders and `build_etf_viz_snapshot` each write a `zone_map` block) + the ZONE MAP section and the `ZONE_RULES` / `ZONE_STATES` registry in `docs/app.js` (display). Tunables live in the `zone_map:` config block.
 
-Theme Viz, VARS Viz, Momentum Viz, Volume Viz and ETF Viz each plot their tab's names by two distances, both in daily ATR14: across, `(close − ema20) / atr14`; up, `(close − ema20_w) / atr14`. The server assigns every zone and one of seven states; the browser only draws. Below the map, a states card lists the names by state, and a clusters card ranks the leaves by how many names sit in the buy area.
+Theme Viz, VARS Viz, Momentum Viz, Volume Viz and ETF Viz each plot their tab's names by two distances, both in daily ATR14: across, `(close − ema20) / atr14`; up, `(close − ema20_w) / atr14`. The server assigns every zone and one of seven states; the browser only draws. Below the map, a states card lists the names by state, and a clusters card ranks the leaves by how many names sit in the buy area. Each state and each leaf is one row for the arrow keys (`zoneArrowNav`): left and right step along the row, and up and down go to the first name of the next row. A ticker repeats across the two cards, so the position is the link element, not the symbol.
 
 | Tab | Universe (all with `adr_pct` ≥ 0.04; `avg_dollar_vol` ≥ $100M unless stated) | Row number |
 |---|---|---|

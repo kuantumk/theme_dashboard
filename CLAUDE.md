@@ -152,6 +152,21 @@ Launching at 09:25 is now safe, but **pre-market is still the better habit** —
 
 That same run is also the first live pre-market board: `current_session` resolved to `pre_market`, the 3.0 floor applied, **880 of 1,821 rows scored**, and the columns filled with sides labelled `prev close` — JBS reading 418.2 at the top. While the warm-up was still running the board published `unavailable: true` with `relative-volume baselines unavailable (pending)` rather than an empty column, which is the R18 promise doing its job on the one state that had never been exercised.
 
+### ⛔ Downstream repos — check them before any master-table schema change
+
+Two of the user's other repos depend on this one, and neither shows up in a grep of this repo:
+
+- **`kuantumk/market_history`** imports this code **in-process** (`mh/engine.py`) from a fresh `origin/main` checkout every day and archives **every master-table column** for three years. A dropped or renamed column **stops its daily run** (it refuses a schema drop without `--allow-schema-change`) and ends that column's archived series. A column whose *values* change — a new window, `min_periods`, fill or unit — passes silently and splices two meanings into one archived series. It also calls `download_yf_price_data`, `calculate_technical_indicators`, `create_master_table(offset, ta, dates)`, each configured screener's `filter_master_table` on a `.fillna(0)` master, `day_flags_from_master`, the `_build_*_snapshot` / `_parabolic_snapshot` / `filter_parabolic_candidates` exporters, `get_tickers_from_nasdaq`, `load_taxonomy` / `validate_path`, `legacy_aliases.normalize_legacy_themes`, the `price_data.lookback_days` config key, and patches module attributes (`PRICE_DATA_FILE`, `SCREENING_OUTPUT_DIR`, `OUTPUT_DIR`, `FUNDAMENTALS_DB`, `PRICE_DATA_TA_FILE`, `TICKER_THEMES_FILE`, `dl.TODAY`). Its `tests/test_engine_contract.py` compares each built tab's top-level keys against this repo's published `docs/data/*.json`.
+- **`kuantumk/winner_research`** reads that archive's columns — `sma50`, `sma100`, `sma200`, `vol_sma50`, `ema10`, `ema20`, `tightness`, `avg_dollar_vol` among them — for its charts, flags, breakout-volume grading and winner liquidity filter. It also copies `report_meta.json`, `si.json`, `market_breadth.json` (including the NCFD/MMFI/MMTW histories), `macro_data.json`, `events.json`, `industry_etf.json` and `etf_data.json` from the last `Daily report <date>` commit, so that commit subject and those files' shapes are part of the contract.
+
+**The rule.** Before any change that adds, drops or renames a master or indicator column, changes how an existing column is computed, changes any name in the lists above, or changes the shape of a `docs/data` file winner_research copies:
+
+1. Clone both repos and grep them for every name you touch (`git clone --depth 1 https://github.com/kuantumk/market_history`; same for `winner_research`).
+2. Run market_history's contract tests with your branch as its engine: `mkdir -p work && ln -sfn <this checkout> work/theme_dashboard`, then from the market_history checkout `<this checkout>/.venv/bin/python -m unittest tests.test_engine_contract tests.test_session tests.test_tags` (add `tests.test_engine_download tests.test_warmup` when the download or indicators change).
+3. Say in the PR description what each repo reads and what changes for it.
+
+**Prefer adding a column to changing an existing one's meaning.** An addition passes market_history without a flag and leaves every existing reader's numbers alone. An addition is still archived forever, so add only what a reader needs. A drop needs the user's sign-off and a coordinated `--allow-schema-change` run in market_history.
+
 ### Key Data Stores
 
 | File | Format | Content |
@@ -299,10 +314,10 @@ rsi        = Wilder RSI(14) of summation
 
 ### Theme Scoring Formula (screened lens — daily report only)
 
-Two-track, implemented in `src/themes/analyze_theme_strength.py` (the earlier strength/confirmation/actionability/regime formula no longer exists in code). This lens feeds only the report's "Market Themes" section — the dashboard Themes tab is the L1 Radar below, and the legacy `themes.json`/`themes_history.json` exports are retired:
+Ranked by VARS, implemented in `src/themes/analyze_theme_strength.py` (the earlier strength/confirmation/actionability/regime formula no longer exists in code). This lens feeds only the report's "Market Themes" section — the dashboard Themes tab is the L1 Radar below, and the legacy `themes.json`/`themes_history.json` exports are retired:
 - **Universe per theme** = tagged members ∩ that day's screened union ∩ master table; min scored breadth 2
-- **Composite (per ticker)** = mean(`rs_sts_pct` clipped 0-100, raw VARS as-is) — missing legs → 50
-- **Theme score** = mean of the top-10 member composites
+- **Score (per ticker)** = raw VARS (ATR-normalised, comparable across tickers as-is). A member with no VARS is listed but not scored, and min scored breadth counts members with VARS
+- **Theme score** = mean VARS of the top-10 members by VARS; the report prints it as *Theme VARS*. It used to average RS_STS% (0-100) with raw VARS (about −13 to +17), which made it RS in all but name and scored a member with no VARS at 50 — changed to VARS alone 2026-10-27 at the user's direction
 - **Demand (per ticker)** = mean(short-interest score, float score via config anchors) — controls within-theme display order only, never the score
 - **Hot threshold**: avg RS_STS% > 70% and breadth ≥ 3 stocks
 

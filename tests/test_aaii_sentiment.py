@@ -122,9 +122,9 @@ class ParseAaiiSentimentTests(unittest.TestCase):
         """`[\\d.]+` matches strings float() rejects.
 
         This must return None, not raise: fetch_aaii_sentiment calls the parse
-        outside its request try, and neither update_breadth_history nor
-        export_all guards the chain, so an escaping ValueError would abort the
-        entire daily export rather than just blanking one tile.
+        outside its request try, and update_breadth_history does not guard the
+        chain, so an escaping ValueError would drop every breadth reading for
+        the day and fail the export run rather than just blanking one tile.
         """
         html = LIVE_MARKUP.replace(
             '<div class="ssv2-snum bull">32.9%</div>',

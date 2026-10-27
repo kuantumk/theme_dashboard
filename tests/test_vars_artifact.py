@@ -68,12 +68,13 @@ class VarsArtifactTests(unittest.TestCase):
             # `newest_session` gates the highlight ladder's short rung, so the
             # double has to accept it or it stops standing in for the real
             # builder. Assert it too: only the newest parquet may read the one
-            # current short-interest figure.
+            # current short-interest figure. `fundamentals` is the table the
+            # exporter loads once and hands to every session.
             seen_newest = {}
 
-            def fake_build_snapshot(csv_file, day_flags, newest_session=False):
-                seen_newest[csv_file.name] = newest_session
-                return snapshots[csv_file.name]
+            def fake_build_snapshot(path, day_flags, newest_session=False, fundamentals=None):
+                seen_newest[path.name] = newest_session
+                return snapshots[path.name]
 
             with (
                 patch.object(export_dashboard_data, "SCREENING_OUTPUT_DIR", screening_dir),

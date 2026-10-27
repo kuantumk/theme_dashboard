@@ -252,8 +252,10 @@ class SingleSourceTests(unittest.TestCase):
 
     def test_every_banded_column_calls_pickband(self):
         code = self._code_outside_registry()
+        # The table tabs share one column spec per banded column (COLUMNS in
+        # app.js), so a band read by five tabs has one call site there.
         expected = {
-            'rs': 3, 'vars': 4, 'inst': 5, 'short': 5, 'pct': 1,
+            'rs': 2, 'vars': 3, 'inst': 1, 'short': 2, 'pct': 1,
             'parabolicAtr': 1, 'macroChange': 2, 'fearGreed': 1,
             'nasiOsc': 1, 'nasiRsi': 1,
         }

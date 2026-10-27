@@ -84,7 +84,8 @@ class ZoneRendererTests(unittest.TestCase):
         self.assertIn('pickBand(COLOR_BANDS.vars', body)
 
     def test_list_tickers_are_real_links_with_the_tier_tint(self):
-        body = _fn('zoneTickerLink')
+        self.assertIn('tickerSpan(', _fn('zoneTickerLink'))
+        body = _fn('tickerSpan')
         for token in ('tn-link', 'hlClass(', 'hlTitle(', 'day-pattern-green', 'data-sym='):
             self.assertIn(token, body)
 

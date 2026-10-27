@@ -86,13 +86,8 @@
     industry: { column: 'vars', dir: 'desc' },
     parabolic: { column: 'atr_multi_50sma', dir: 'desc' },
   };
-  let etfData = [];
-  let industryData = [];
   let parabolicData = [];
-  let volumeHistory = [];
   let parabolicEmptyMessage = 'No parabolic results for this date.';
-  let industryEmptyMessage = 'No industry ETF data available.';
-  let etfEmptyMessage = 'No ETF data available.';
 
   function withCacheBust(url) {
     const separator = url.includes('?') ? '&' : '?';
@@ -116,15 +111,7 @@
     initNasiResize();
     initNasiCrosshair();
     loadNasiData();
-    loadThemeData();
-    loadMomentumData();
-    loadVolumeData();
-    loadVARSData();
-    loadIndustryETFData();
-    loadETFData();
-    loadETFVizData();
-    loadParabolicData();
-    loadSIData();
+    loadTabs();
     loadMacroEvents();
     initTableSort();
   });
@@ -228,16 +215,23 @@
     document.addEventListener('click', (e) => {
       const link = e.target.closest('.tn-link');
       if (!link) return;
+      const tabContent = link.closest('.tab-content');
+      if (!tabContent) return;
+      const tabId = tabContent.id.replace('content-', '');
+
+      // Sync the arrow-key position and the row highlight to the click, so
+      // the next ArrowDown continues from the clicked ticker.
+      const idx = getTickerLinksForTab(tabId).indexOf(link);
+      if (idx >= 0) navIndices[tabId] = idx;
+      tabContent.querySelectorAll('tr.nav-active').forEach(r => r.classList.remove('nav-active'));
+      const row = link.closest('tr');
+      if (row) row.classList.add('nav-active');
 
       const sym = link.dataset.sym;
       const chartSym = link.dataset.chartSym || sym;
       if (!sym) return;
 
-      const tabContent = link.closest('.tab-content');
-      if (!tabContent) return;
-
       // A tab opens the chart only when it has a chart pane to open it in.
-      const tabId = tabContent.id.replace('content-', '');
       if (!document.getElementById(tabId + '-chart-area')) return;
 
       tabContent.querySelectorAll('.tn-link').forEach(l => l.classList.remove('active-ticker'));
@@ -338,7 +332,9 @@
   window.openChart = openChart;
 
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, etfviz: -1, parabolic: -1 };
+  // Arrow-key position per tab; a tab with no entry has no selection yet.
+  // Keyed lazily, so a new tab (SI had none) can never read `undefined`.
+  const navIndices = {};
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -402,7 +398,7 @@
       // the list, or every remaining ticker dimmed — stay put rather than
       // falling back to the boundary, which would select a dimmed ticker.
       const step = e.key === 'ArrowDown' ? 1 : -1;
-      let start = navIndices[tabId];
+      let start = navIndices[tabId] ?? -1;
       // A re-render — time travel to a sparser session, a data reload — can
       // leave the stored index past the end of the new, shorter list. Re-enter
       // from the near edge instead of scanning from out of bounds, which
@@ -432,23 +428,7 @@
       // Open chart
       openChart(tabId, link.dataset.chartSym || sym);
     });
-
-    // Sync nav index when user clicks a ticker
-    document.addEventListener('click', (e) => {
-      const link = e.target.closest('.tn-link');
-      if (!link) return;
-      const tabContent = link.closest('.tab-content');
-      if (!tabContent) return;
-      const tabId = tabContent.id.replace('content-', '');
-      const links = getTickerLinksForTab(tabId);
-      const idx = links.indexOf(link);
-      if (idx >= 0) navIndices[tabId] = idx;
-
-      // Apply row highlight
-      tabContent.querySelectorAll('tr.nav-active').forEach(r => r.classList.remove('nav-active'));
-      const row = link.closest('tr');
-      if (row) row.classList.add('nav-active');
-    });
+    // A ticker click syncs navIndices: see initTickerClicks.
   }
 
   // ── MACRO EVENTS ───────────────────────────────────────
@@ -995,18 +975,10 @@
     });
   }
 
-  // ── THEME DATA + TIME TRAVEL ──────────────────────────
-  let themesHistory = [];    // Array of radar snapshots (Themes tab), newest first
-  let momentumHistory = [];  // Array of momentum snapshots, newest first
-  let varsHistory = [];      // Array of vars snapshots, newest first
-  let parabolicHistory = []; // Array of parabolic snapshots, newest first
-  let siHistory = [];        // Array of SI snapshots, newest first. Grows
-                             // forward only — Finviz publishes current short
-                             // interest, not a per-session series, so there is
-                             // nothing to backfill.
-  let industryHistory = [];  // Array of {report_date, data} snapshots
-  let etfHistory = [];       // Array of {report_date, data} snapshots
-  let etfVizHistory = [];    // Array of {report_date, zone_map} snapshots
+  // ── TIME TRAVEL STATE ─────────────────────────────────
+  // Per-tab sessions live on the TABS registry below. The SI history grows
+  // forward only — Finviz publishes current short interest, not a per-session
+  // series, so there is nothing to backfill.
   let latestSessionDate = null; // report_meta.json's session: the newest any tab holds
   let activeSessionDate = null;
   let hasUserSelectedSession = false;
@@ -1341,276 +1313,185 @@
     cutoffs: () => ({ vol: tickerFilters.vol, adr: tickerFilters.adr }),
   });
 
-  function loadThemeData() {
-    // Load current themes and history in parallel
-    Promise.all([
-      fetch(withCacheBust(THEME_DATA_URL)).then(r => r.json()),
-      fetch(withCacheBust(THEME_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        // Build history: merge current into history (deduplicate by date)
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        themesHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+  // ── TAB REGISTRY ──────────────────────────────────────
+  /* One entry per time-travelled tab, so loading, time travel and the date
+     bars walk one list instead of repeating it by hand.
 
-        // Default to most recent
-        if (!hasUserSelectedSession) {
-          activeSessionDate = themesHistory.length > 0 ? themesHistory[0].report_date : null;
-        }
-        renderAllTimeTravelBars();
-        renderThemes(current);
-        renderZoneMap(current, 'themes');
-      })
-      .catch(err => {
-        console.warn('Theme data not available:', err);
-        document.getElementById('themes-container').innerHTML =
-          '<div class="no-data">Theme data not available.<br>Run the daily workflow to generate data.</div>';
-        const tz = document.getElementById('themeviz-zone');
-        if (tz) tz.innerHTML = '<div class="no-data">Theme data not available.</div>';
-      });
+       currentUrl  the newest session. Small, so it paints first.
+       historyUrl  every session in the 180-day window, up to ~40 MB for the
+                   radar. Fetched only after every tab's current file has
+                   settled, and it never repaints a tab on its own: it redraws
+                   the tab's date bars, and renders the picked session only
+                   when the user picked one before it arrived.
+       list        the list container (a <tbody> when `cols` is set).
+       zone        the tab's zone-map mode in ZONE_MODES, if it has one.
+       bars        every time-travel bar that lists this tab's sessions.
+       render      draws the list for (snapshot, date); the zone map is drawn
+                   by renderTab from the same snapshot.
+       undated     the current file is a bare array with no report_date. Its
+                   session is in the history, which carries the same entry.
+       fallback    where the current rows come from when the JSON is missing.
+       before      awaited alongside the current file.
+
+     Runtime state lives on the entry: `snaps` (newest first), `historyDone`,
+     and `shown`, the date last rendered (null for the default session). */
+  const TABS = [
+    { id: 'themes', label: 'Theme', currentUrl: THEME_DATA_URL, historyUrl: THEME_HISTORY_URL,
+      list: 'themes-container', zone: 'themes', bars: ['time-travel-dates', 'themeviz-tt-dates'],
+      render: renderThemes },
+    { id: 'momentum', label: 'Momentum', currentUrl: MOMENTUM_DATA_URL, historyUrl: MOMENTUM_HISTORY_URL,
+      list: 'momentum-container', zone: 'momentum', bars: ['momentum-tt-dates', 'momentumviz-tt-dates'],
+      render: renderMomentum },
+    { id: 'volume', label: 'Volume', currentUrl: VOLUME_DATA_URL, historyUrl: VOLUME_HISTORY_URL,
+      list: 'volume-container', zone: 'volume', bars: ['volume-tt-dates', 'volumeviz-tt-dates'],
+      render: renderVolume },
+    { id: 'vars', label: 'VARS', currentUrl: VARS_DATA_URL, historyUrl: VARS_HISTORY_URL,
+      list: 'vars-container', zone: 'vars', bars: ['vars-tt-dates', 'varsviz-tt-dates'],
+      render: renderVARS },
+    { id: 'si', label: 'SI', currentUrl: SI_DATA_URL, historyUrl: SI_HISTORY_URL,
+      list: 'si-container', bars: ['si-tt-dates'], render: renderSI },
+    { id: 'parabolic', label: 'Parabolic', currentUrl: PARABOLIC_DATA_URL, historyUrl: PARABOLIC_HISTORY_URL,
+      list: 'parabolic-body', cols: 5, bars: ['parabolic-tt-dates'], render: renderParabolic },
+    { id: 'industry', label: 'Industry ETF', currentUrl: INDUSTRY_ETF_URL, historyUrl: INDUSTRY_ETF_HISTORY_URL,
+      undated: true, fallback: () => fetchCSV(INDUSTRY_SHEET_URL).then(parseIndustryRows),
+      list: 'industry-body', cols: 6, bars: ['industry-tt-dates'],
+      render: (snap, date) => renderEtfSnapshot('industry', snap, date) },
+    { id: 'etf', label: 'ETF', currentUrl: ETF_FALLBACK_URL, historyUrl: ETF_DATA_HISTORY_URL,
+      undated: true, fallback: () => fetchCSV(ETF_SHEET_URL).then(parseETFRows),
+      list: 'etf-body', cols: 6, bars: ['etf-tt-dates'],
+      render: (snap, date) => renderEtfSnapshot('etf', snap, date) },
+    // ETF Viz: the long Lev ETFs on the zone map. Its history grows one entry
+    // per daily run, like the Lev ETF tab's.
+    { id: 'etfviz', label: 'ETF Viz', currentUrl: ETF_VIZ_DATA_URL, historyUrl: ETF_VIZ_HISTORY_URL,
+      zone: 'etf', bars: ['etfviz-tt-dates'], before: loadETFVizData },
+  ];
+
+  function fetchJSON(url, init) {
+    return fetch(withCacheBust(url), init).then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
   }
 
-  function loadMomentumData() {
-    Promise.all([
-      fetch(withCacheBust(MOMENTUM_DATA_URL)).then(r => r.json()),
-      fetch(withCacheBust(MOMENTUM_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        momentumHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        renderAllTimeTravelBars();
-        renderMomentum(current);
-        renderZoneMap(current, 'momentum');
-      })
-      .catch(err => {
-        console.warn('Momentum data not available:', err);
-        document.getElementById('momentum-container').innerHTML =
-          '<div class="no-data">Momentum data not available.<br>Run the daily workflow to generate data.</div>';
-        const mz = document.getElementById('momentumviz-zone');
-        if (mz) mz.innerHTML = '<div class="no-data">Momentum data not available.</div>';
-      });
+  function loadTabs() {
+    TABS.forEach(cfg => { cfg.snaps = []; cfg.historyDone = false; cfg.shown = undefined; });
+    // History waits for every current file, so the multi-megabyte histories
+    // never compete with a first paint for bandwidth or connections.
+    Promise.all(TABS.map(loadTabCurrent)).then(() => TABS.forEach(loadTabHistory));
   }
 
-  function loadVolumeData() {
-    Promise.all([
-      fetch(withCacheBust(VOLUME_DATA_URL)).then(r => r.json()),
-      fetch(withCacheBust(VOLUME_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        volumeHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        renderAllTimeTravelBars();
-        renderVolume(current);
-        renderZoneMap(current, 'volume');
-      })
-      .catch(err => {
-        console.warn('Volume data not available:', err);
-        const c = document.getElementById('volume-container');
-        if (c) c.innerHTML = '<div class="no-data">Volume data not available.<br>Run the daily workflow to generate data.</div>';
-        const vz = document.getElementById('volumeviz-zone');
-        if (vz) vz.innerHTML = '<div class="no-data">Volume data not available.</div>';
-      });
-  }
-
-  function loadVARSData() {
-    Promise.all([
-      fetch(withCacheBust(VARS_DATA_URL)).then(r => r.json()),
-      fetch(withCacheBust(VARS_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        varsHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        renderAllTimeTravelBars();
-        renderVARS(current);
-        renderZoneMap(current, 'vars');
-      })
-      .catch(err => {
-        console.warn('VARS data not available:', err);
-        const c = document.getElementById('vars-container');
-        if (c) c.innerHTML = '<div class="no-data">VARS data not available.<br>Run the daily workflow to generate data.</div>';
-        const vz = document.getElementById('varsviz-zone');
-        if (vz) vz.innerHTML = '<div class="no-data">VARS data not available.</div>';
-      });
-  }
-
-  // ETF Viz: the long Lev ETFs on the zone map. Its history grows one entry
-  // per daily run, like the Lev ETF tab's.
+  // The newest session, for ETF Viz's stale note. Read here, not from another
+  // tab's loader, so it is set before this tab's first render.
   function loadETFVizData() {
-    Promise.all([
-      fetch(withCacheBust(ETF_VIZ_DATA_URL)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
-      fetch(withCacheBust(ETF_VIZ_HISTORY_URL)).then(r => r.json()).catch(() => []),
-      // The newest session, for the stale note. Read here, not from another
-      // tab's loader, so it is set before this tab's first render.
-      fetch(withCacheBust(META_URL)).then(r => r.json()).catch(() => null),
-    ])
-      .then(([current, history, meta]) => {
-        latestSessionDate = (meta && meta.report_date) || null;
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
+    return fetchJSON(META_URL).catch(() => null).then(meta => {
+      latestSessionDate = (meta && meta.report_date) || null;
+    });
+  }
+
+  function loadTabCurrent(cfg) {
+    return Promise.all([fetchJSON(cfg.currentUrl), cfg.before && cfg.before()])
+      .then(([current]) => {
+        const snap = cfg.undated ? { data: current } : current;
+        if (snap && snap.report_date) {
+          cfg.snaps = [snap];
+          // The default session is the newest any tab has finished, whichever
+          // loads first.
+          if (!hasUserSelectedSession && (!activeSessionDate || snap.report_date > activeSessionDate)) {
+            activeSessionDate = snap.report_date;
+          }
         }
-        etfVizHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
         renderAllTimeTravelBars();
-        renderZoneMap(current, 'etf');
+        if (hasUserSelectedSession) showSession(cfg, activeSessionDate);
+        else renderTab(cfg, snap);
       })
       .catch(err => {
-        console.warn('ETF Viz data not available:', err);
-        const vz = document.getElementById('etfviz-zone');
-        if (vz) vz.innerHTML = '<div class="no-data">ETF Viz data not available.<br>Run the daily workflow to generate data.</div>';
+        if (!cfg.fallback) throw err;
+        console.warn(`${cfg.label} JSON not available, trying the sheet:`, err);
+        // The sheet has no history behind it, so there is nothing to time travel.
+        cfg.historyDone = true;
+        return cfg.fallback().then(rows => renderTab(cfg, { data: rows }));
+      })
+      .catch(err => {
+        console.warn(`${cfg.label} data not available:`, err);
+        cfg.historyDone = true;
+        const long = `${cfg.label} data not available.<br>Run the daily workflow to generate data.`;
+        const short = `${cfg.label} data not available.`;
+        showTabMessage(cfg, 'no-data', cfg.cols ? short : long, cfg.list ? short : long);
       });
   }
 
-  function loadSIData() {
-    Promise.all([
-      fetch(withCacheBust(SI_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch(withCacheBust(SI_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
+  function loadTabHistory(cfg) {
+    if (cfg.historyDone) return;
+    fetchJSON(cfg.historyUrl, { priority: 'low' }).catch(() => [])
+      .then(history => {
         const byDate = {};
         (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        siHistory = Object.values(byDate)
+        // The current file wins a tie, as it always has.
+        cfg.snaps.forEach(h => { byDate[h.report_date] = h; });
+        cfg.snaps = Object.values(byDate)
           .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        renderAllTimeTravelBars();
-        renderSI(current);
-      })
-      .catch(err => {
-        console.warn('SI data not available:', err);
-        const c = document.getElementById('si-container');
-        if (c) c.innerHTML = '<div class="no-data">SI data not available.<br>Run the daily workflow to generate data.</div>';
+        cfg.historyDone = true;
+        renderTabBars(cfg);
+        // A session picked while this history was on its way renders now.
+        if (hasUserSelectedSession && cfg.shown !== activeSessionDate) {
+          showSession(cfg, activeSessionDate);
+        }
       });
   }
 
-  function loadParabolicData() {
-    Promise.all([
-      fetch(withCacheBust(PARABOLIC_DATA_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch(withCacheBust(PARABOLIC_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([current, history]) => {
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (current && current.report_date) {
-          byDate[current.report_date] = current;
-        }
-        parabolicHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-        if (!activeSessionDate && parabolicHistory.length > 0) {
-          activeSessionDate = parabolicHistory[0].report_date;
-        }
-        const activeSnap = activeSessionDate
-          ? parabolicHistory.find(h => h.report_date === activeSessionDate)
-          : null;
-        parabolicData = (activeSnap || current || {}).tickers || [];
-        renderAllTimeTravelBars();
-        sortAndRenderParabolic();
-      })
-      .catch(err => {
-        console.warn('Parabolic data not available:', err);
-        document.getElementById('parabolic-body').innerHTML =
-          '<tr><td colspan="5" class="no-data">Parabolic data not available.</td></tr>';
-      });
+  /** Draw one snapshot on the tab's list and its zone map. */
+  function renderTab(cfg, snap, date) {
+    cfg.shown = date || null;
+    if (cfg.render) cfg.render(snap, date);
+    if (cfg.zone) renderZoneMap(snap, cfg.zone, date);
+  }
+
+  /** Render the tab at a picked session. Before the tab's history has landed
+   *  a missing session is not known to be missing, so it reads as loading. */
+  function showSession(cfg, date) {
+    const snap = cfg.snaps.find(h => h.report_date === date);
+    if (!snap && !cfg.historyDone) {
+      cfg.shown = undefined;
+      showTabMessage(cfg, 'loading', `Loading ${escHtml(date)}…`);
+      return;
+    }
+    renderTab(cfg, snap, date);
+  }
+
+  function showTabMessage(cfg, cls, html, zoneHtml = html) {
+    const list = cfg.list && document.getElementById(cfg.list);
+    if (list) {
+      list.innerHTML = cfg.cols
+        ? `<tr><td colspan="${cfg.cols}" class="${cls}">${html}</td></tr>`
+        : `<div class="${cls}">${html}</div>`;
+    }
+    const zone = cfg.zone && document.getElementById(ZONE_MODES[cfg.zone].containerId);
+    if (zone) zone.innerHTML = `<div class="${cls}">${zoneHtml}</div>`;
   }
 
   /** Session dates one tab has data for (newest first). Each bar lists only
    *  its own tab's finished sessions — never a calendar date another tab
    *  wrote first. */
-  function tabSessionDates(...histories) {
-    const dates = new Set();
-    histories.forEach(hist => (hist || []).forEach(h => dates.add(h.report_date)));
-    return [...dates].sort().reverse();
+  function tabSessionDates(snaps) {
+    return [...new Set((snaps || []).map(h => h.report_date))].sort().reverse();
   }
 
+  // Each tab's bar lists only its own history's dates, but the active session
+  // is shared across tabs — after switching tabs the active date can be
+  // missing from the new tab's history. So EVERY tab re-renders: the
+  // renderers show a date-specific empty state when the snapshot is missing,
+  // so stale content never stays on screen.
   function onTimeTravelSelect(date) {
-    // Each tab's bar lists only its own history's dates, but the active
-    // session is shared across tabs — after switching tabs the active date
-    // can be missing from the new tab's history. ALWAYS re-render every
-    // tab — render functions show a date-specific empty state when the snap
-    // is missing so we never leave stale content on screen.
-    //
-    // Themes (L1 Radar)
-    const themeSnap = themesHistory.find(h => h.report_date === date);
-    renderThemes(themeSnap, date);
-    renderZoneMap(themeSnap, 'themes', date);
-    // Momentum 1/3/6
-    const momSnap = momentumHistory.find(h => h.report_date === date);
-    renderMomentum(momSnap, date);
-    renderZoneMap(momSnap, 'momentum', date);
-    // Volume scans
-    const volumeSnap = volumeHistory.find(h => h.report_date === date);
-    renderVolume(volumeSnap, date);
-    renderZoneMap(volumeSnap, 'volume', date);
-    // VARS
-    const varsSnap = varsHistory.find(h => h.report_date === date);
-    renderVARS(varsSnap, date);
-    renderZoneMap(varsSnap, 'vars', date);
-    // Parabolic
-    const parabolicSnap = parabolicHistory.find(h => h.report_date === date);
-    parabolicData = parabolicSnap ? (parabolicSnap.tickers || []) : [];
-    parabolicEmptyMessage = !parabolicSnap && date
-      ? `No parabolic results for ${date}.`
-      : 'No parabolic results for this date.';
-    sortAndRenderParabolic();
-    // SI (heavily shorted, already sold off)
-    renderSI(siHistory.find(h => h.report_date === date), date);
-    // Industry ETFs
-    const indSnap = industryHistory.find(h => h.report_date === date);
-    industryData = indSnap ? indSnap.data : [];
-    industryEmptyMessage = !indSnap && date
-      ? `No industry ETF data for ${date}.`
-      : 'No industry ETF data available.';
-    sortAndRenderIndustry();
-    // Leverage ETFs
-    const etfSnap = etfHistory.find(h => h.report_date === date);
-    etfData = etfSnap ? etfSnap.data : [];
-    etfEmptyMessage = !etfSnap && date
-      ? `No ETF data for ${date}.`
-      : 'No ETF data available.';
-    sortAndRenderETF();
-    // ETF Viz
-    renderZoneMap(etfVizHistory.find(h => h.report_date === date), 'etf', date);
+    TABS.forEach(cfg => showSession(cfg, date));
+  }
+
+  function renderTabBars(cfg) {
+    const dates = tabSessionDates(cfg.snaps);
+    cfg.bars.forEach(id => renderTimeTravelBar(id, dates, onTimeTravelSelect));
   }
 
   function renderAllTimeTravelBars() {
-    const themesDates = tabSessionDates(themesHistory);
-    const momentumDates = tabSessionDates(momentumHistory);
-    const volumeDates = tabSessionDates(volumeHistory);
-    const varsDates = tabSessionDates(varsHistory);
-    renderTimeTravelBar('time-travel-dates', themesDates, onTimeTravelSelect);
-    renderTimeTravelBar('themeviz-tt-dates', themesDates, onTimeTravelSelect);
-    renderTimeTravelBar('momentum-tt-dates', momentumDates, onTimeTravelSelect);
-    renderTimeTravelBar('momentumviz-tt-dates', momentumDates, onTimeTravelSelect);
-    renderTimeTravelBar('volume-tt-dates', volumeDates, onTimeTravelSelect);
-    renderTimeTravelBar('volumeviz-tt-dates', volumeDates, onTimeTravelSelect);
-    renderTimeTravelBar('vars-tt-dates', varsDates, onTimeTravelSelect);
-    renderTimeTravelBar('varsviz-tt-dates', varsDates, onTimeTravelSelect);
-    renderTimeTravelBar('industry-tt-dates', tabSessionDates(industryHistory), onTimeTravelSelect);
-    renderTimeTravelBar('etf-tt-dates', tabSessionDates(etfHistory), onTimeTravelSelect);
-    renderTimeTravelBar('etfviz-tt-dates', tabSessionDates(etfVizHistory), onTimeTravelSelect);
-    renderTimeTravelBar('parabolic-tt-dates', tabSessionDates(parabolicHistory), onTimeTravelSelect);
-    renderTimeTravelBar('si-tt-dates', tabSessionDates(siHistory), onTimeTravelSelect);
+    TABS.forEach(renderTabBars);
   }
 
   /**
@@ -1894,7 +1775,7 @@
   /** A ticker in the states or clusters card: a real .tn-link, so it wears
    *  the day-pattern text, the tier tint and the selection like every tab. */
   function zoneTickerLink(t, metric, bold) {
-    return `<span class="zm-tk${bold ? ' zm-buy' : ''}"><span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(t.ticker + ' · Zone map')}">${escHtml(t.ticker)}</span>${metric ? zoneNum(t, metric) : ''}</span>`;
+    return `<span class="zm-tk${bold ? ' zm-buy' : ''}">${tickerSpan(t, t.ticker + ' · Zone map')}${metric ? zoneNum(t, metric) : ''}</span>`;
   }
 
   /** An off-scale name: a triangle on the nearest edge, pointing outward. */
@@ -2558,266 +2439,205 @@
     window.addEventListener('resize', redrawNasiNow);
   }
 
-  function renderMomentum(data, date) {
-    const container = document.getElementById('momentum-container');
-    if (!container) return;
-
-    if (!data || !data.themes || data.themes.length === 0) {
-      const msg = (date && !data) ? `No momentum data for ${date}.` : 'No momentum stocks found for this date.';
-      container.innerHTML = `<div class="no-data">${msg}</div>`;
-      return;
-    }
-
-    let html = '';
-    data.themes.forEach((theme, idx) => {
-      const count = (theme.tickers || []).length;
-      html += `
-        <div class="theme-block">
-          <div class="theme-header">
-            <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(theme.name)}</span>
-            <span class="theme-score">${count} ticker${count === 1 ? '' : 's'}</span>
-          </div>
-          <div class="theme-body">
-            <table>
-              <thead><tr>
-                <th class="l">Ticker</th>
-                <th>RS%</th>
-                <th>Float(M)</th>
-                <th>EPS%</th>
-                <th>Sales%</th>
-                <th>Inst%</th>
-                <th>Short%</th>
-              </tr></thead>
-              <tbody>
-      `;
-
-      (theme.tickers || []).forEach(t => {
-        const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
-        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = pickBand(COLOR_BANDS.inst, instVal);
-        const shortVal = parseFloat(t.short);
-        const shortClass = pickBand(COLOR_BANDS.short, shortVal);
-        html += `
-                <tr${filterAttrs(t)}>
-                  <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
-                      ${escHtml(t.ticker)}
-                    </span>
-                  </td>
-                  <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.float ?? '—'}</td>
-                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
-                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
-                  <td class="${instClass}">${t.inst ?? '—'}</td>
-                  <td class="${shortClass}">${t.short ?? '—'}</td>
-                </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-    applyTickerFilters();
+  // ── TICKER TABLES ─────────────────────────────────────
+  /** A ticker as a chart link: a real .tn-link carrying the day-pattern text
+   *  colour, the highlight tier and its tooltip. Every table tab and the zone
+   *  map lists draw their tickers through this; the radar chips build their
+   *  own class list (see renderThemes). `sym` is the chart symbol when it
+   *  differs from the printed ticker. */
+  function tickerSpan(t, nm, sym = t.ticker) {
+    return `<span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(sym)}" data-nm="${escAttr(nm)}">${escHtml(t.ticker)}</span>`;
   }
 
-  function renderVolume(data, date) {
-    const container = document.getElementById('volume-container');
-    if (!container) return;
+  function cell(cls, html) {
+    return cls == null ? `<td>${html}</td>` : `<td class="${cls}">${html}</td>`;
+  }
 
-    if (!data || !data.themes || data.themes.length === 0) {
-      const msg = (date && !data) ? `No volume data for ${date}.` : 'No volume leaders found for this date.';
-      container.innerHTML = `<div class="no-data">${msg}</div>`;
-      return;
-    }
+  function plural(n, word) {
+    return `${n} ${word}${n === 1 ? '' : 's'}`;
+  }
 
-    let html = '';
-    data.themes.forEach((theme, idx) => {
-      const tickers = theme.tickers || [];
-      const count = tickers.length;
-      const avgVars = (typeof theme.avg_vars === 'number')
-        ? theme.avg_vars
-        : (count ? tickers.reduce((s, t) => s + (t.vars ?? 0), 0) / count : 0);
-      html += `
-        <div class="theme-block">
-          <div class="theme-header">
-            <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(theme.name)}</span>
-            <span class="theme-score">avg VARS ${avgVars.toFixed(2)} · ${count} ticker${count === 1 ? '' : 's'}</span>
-          </div>
-          <div class="theme-body">
-            <table>
-              <thead><tr>
-                <th class="l">Ticker</th>
-                <th>Scan</th>
-                <th>VARS</th>
-                <th>RS%</th>
-                <th>Float(M)</th>
-                <th>EPS%</th>
-                <th>Sales%</th>
-                <th>Inst%</th>
-                <th>Short%</th>
-              </tr></thead>
-              <tbody>
-      `;
+  /** One decimal, no sign: the SI tab's drawdown columns. */
+  function fmt1(v) {
+    return (typeof v === 'number') ? v.toFixed(1) : '—';
+  }
 
-      tickers.forEach(t => {
-        const varsClass = pickBand(COLOR_BANDS.vars, t.vars);
-        const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
-        const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-        const instClass = pickBand(COLOR_BANDS.inst, instVal);
-        const shortVal = parseFloat(t.short);
-        const shortClass = pickBand(COLOR_BANDS.short, shortVal);
+  function varsAccel(t) {
+    if (typeof t.vars_20ema !== 'number') return '';
+    return t.vars > t.vars_20ema
+      ? '<span class="accel accel-up">▲</span>'
+      : '<span class="accel accel-dn">▼</span>';
+  }
+
+  function varsColumn(withAccel) {
+    return {
+      th: 'VARS',
+      td: t => cell(pickBand(COLOR_BANDS.vars, t.vars),
+        (t.vars ?? 0).toFixed(2) + (withAccel ? varsAccel(t) : '')),
+    };
+  }
+
+  /* Column specs for the ticker tables: a header and a whole cell, so a band
+     colour and the value it colours sit in one place. A column shared by
+     several tabs is defined once here, which is why each COLOR_BANDS table
+     has one pickBand call site rather than one per tab. */
+  const COLUMNS = {
+    scan: {
+      th: 'Scan',
+      td: t => {
         const scan = t.scan || '';
         const days = (typeof t.days_since_hv === 'number') ? `${t.days_since_hv}d` : '';
-        const scanLabel = scan ? (days ? `${scan} · ${days}` : scan) : '—';
-        html += `
-                <tr${filterAttrs(t)}>
-                  <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(theme.name + ' · ' + t.ticker)}">
-                      ${escHtml(t.ticker)}
-                    </span>
-                  </td>
-                  <td class="scan-cell">${escHtml(scanLabel)}</td>
-                  <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}</td>
-                  <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.float ?? '—'}</td>
-                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
-                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
-                  <td class="${instClass}">${t.inst ?? '—'}</td>
-                  <td class="${shortClass}">${t.short ?? '—'}</td>
-                </tr>
-        `;
-      });
+        return cell('scan-cell', escHtml(scan ? (days ? `${scan} · ${days}` : scan) : '—'));
+      },
+    },
+    vars: varsColumn(false),
+    varsAccel: varsColumn(true),
+    rs: { th: 'RS%', td: t => cell(pickBand(COLOR_BANDS.rs, t.rs), t.rs ?? '—') },
+    float: { th: 'Float(M)', td: t => cell(null, t.float ?? '—') },
+    eps: { th: 'EPS%', td: t => cell(pctClass(t.eps), t.eps ?? '—') },
+    sales: { th: 'Sales%', td: t => cell(pctClass(t.sales), t.sales ?? '—') },
+    inst: { th: 'Inst%', td: t => cell(pickBand(COLOR_BANDS.inst, t.inst), t.inst ?? '—') },
+    short: { th: 'Short%', td: t => cell(pickBand(COLOR_BANDS.short, t.short), t.short ?? '—') },
+    // SI tab. SI% matches the Short% banding so one number reads the same on
+    // both tabs.
+    si: { th: 'SI%', td: t => cell(pickBand(COLOR_BANDS.short, t.si), `<strong>${(t.si ?? 0).toFixed(2)}</strong>`) },
+    dd60: { th: 'DD60%', td: t => cell('dn', fmt1(t.dd60)) },
+    drop15: { th: 'Drop15%', td: t => cell('dn', fmt1(t.drop15)) },
+    streak: { th: 'Streak', td: t => cell(null, t.streak ?? '—') },
+    price: { th: 'Price', td: t => cell(null, (typeof t.price === 'number') ? t.price.toFixed(2) : '—') },
+    // Parabolic tab: distance from the 50-day SMA in ATR units.
+    atrMul: {
+      th: 'ATRMul',
+      td: t => {
+        const v = parseFloat(t.atr_multi_50sma);
+        return cell(pickBand(COLOR_BANDS.parabolicAtr, v), `<strong>${isNaN(v) ? '—' : v.toFixed(1) + 'x'}</strong>`);
+      },
+    },
+  };
 
-      html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    });
-
-    container.innerHTML = html;
-    applyTickerFilters();
+  /** One ticker row. `filters` emits the V/A cutoff attributes. */
+  function tableRow(t, nm, columns, filters) {
+    return `<tr${filters ? filterAttrs(t) : ''}><td class="l">${tickerSpan(t, nm)}</td>`
+      + columns.map(c => c.td(t)).join('') + '</tr>';
   }
 
-  function renderVARS(data, date) {
-    const container = document.getElementById('vars-container');
+  /**
+   * The four sectioned table tabs — Momentum, Volume, VARS, SI. One block per
+   * section with a rank, a name, a HOT badge and a meta line; inside it, one
+   * table per leaf, with a leaf subheader where the spec asks for one.
+   *
+   *   noun       "No <noun> data for <date>." when a picked session is missing
+   *   emptyMsg   when the session exists but holds no section
+   *   banner     optional (data) => html above the first section
+   *   section    (entry) => { name, hot, meta, leaves }
+   *   leafMeta   (leaf) => the subheader's score text; omit for no subheaders
+   *   leafHeaders 'always', or 'multi' to skip a lone leaf named like its section
+   *   columns    COLUMNS entries after the Ticker column
+   *   filters    emit V/A attributes and apply the cutoffs
+   */
+  function renderSections(containerId, data, date, spec) {
+    const container = document.getElementById(containerId);
     if (!container) return;
 
     if (!data || !data.themes || data.themes.length === 0) {
-      const msg = (date && !data) ? `No VARS data for ${date}.` : 'No VARS leaders found for this date.';
+      const msg = (date && !data) ? `No ${spec.noun} data for ${date}.` : spec.emptyMsg;
       container.innerHTML = `<div class="no-data">${msg}</div>`;
       return;
     }
 
-    let html = '';
+    const head = '<table><thead><tr><th class="l">Ticker</th>'
+      + spec.columns.map(c => `<th>${c.th}</th>`).join('') + '</tr></thead><tbody>';
+    let html = spec.banner ? spec.banner(data) : '';
     data.themes.forEach((entry, idx) => {
-      // L1 section (nested shape); a legacy flat snapshot entry renders
-      // as a single-leaf section so pre-clustering history still displays.
-      const grp = entry.leaves ? entry : {
-        name: entry.name,
-        score: entry.avg_vars,
-        avg_rs: null,
-        n: (entry.tickers || []).length,
-        hot: false,
-        leaves: [entry],
-      };
-      const meta = [
-        `${entry.leaves ? 'top-5 VARS' : 'avg VARS'} ${(grp.score ?? 0).toFixed(2)}`,
-        (typeof grp.avg_rs === 'number') ? `avg RS ${grp.avg_rs.toFixed(1)}%` : '',
-        `${grp.n} ticker${grp.n === 1 ? '' : 's'}`,
-      ].filter(Boolean).join(' · ');
-      html += `
-        <div class="theme-block">
-          <div class="theme-header${grp.hot ? ' l1-hot' : ''}">
-            <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(grp.name)}${grp.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
-            <span class="theme-score">${meta}</span>
-          </div>
-          <div class="theme-body">
-      `;
-
-      const showLeafHdr = !(grp.leaves.length === 1 && grp.leaves[0].name === grp.name);
-      grp.leaves.forEach(leaf => {
+      const grp = spec.section(entry);
+      const leaves = grp.leaves || [];
+      html += `<div class="theme-block"><div class="theme-header${grp.hot ? ' l1-hot' : ''}">`
+        + `<span class="theme-rank">#${idx + 1}</span>`
+        + `<span class="theme-name">${escHtml(grp.name)}${grp.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>`
+        + `<span class="theme-score">${grp.meta}</span></div><div class="theme-body">`;
+      const showLeafHdr = !!spec.leafMeta && (spec.leafHeaders === 'always'
+        || !(leaves.length === 1 && leaves[0].name === grp.name));
+      leaves.forEach(leaf => {
         const tickers = leaf.tickers || [];
         if (showLeafHdr) {
           const sub = leaf.name.startsWith(grp.name + ' / ')
             ? leaf.name.slice(grp.name.length + 3)
             : leaf.name;
-          html += `
-            <div class="leaf-subheader">
-              <span class="leaf-name">${escHtml(sub)}</span>
-              <span class="leaf-meta">avg VARS ${(leaf.avg_vars ?? 0).toFixed(2)} · ${tickers.length} ticker${tickers.length === 1 ? '' : 's'}</span>
-            </div>
-          `;
+          html += `<div class="leaf-subheader"><span class="leaf-name">${escHtml(sub)}</span>`
+            + `<span class="leaf-meta">${spec.leafMeta(leaf)} · ${plural(tickers.length, 'ticker')}</span></div>`;
         }
-        html += `
-            <table>
-              <thead><tr>
-                <th class="l">Ticker</th>
-                <th>VARS</th>
-                <th>RS%</th>
-                <th>Float(M)</th>
-                <th>EPS%</th>
-                <th>Sales%</th>
-                <th>Inst%</th>
-                <th>Short%</th>
-              </tr></thead>
-              <tbody>
-        `;
-
-        tickers.forEach(t => {
-          const varsClass = pickBand(COLOR_BANDS.vars, t.vars);
-          const rsClass = pickBand(COLOR_BANDS.rs, t.rs);
-          const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-          const instClass = pickBand(COLOR_BANDS.inst, instVal);
-          const shortVal = parseFloat(t.short);
-          const shortClass = pickBand(COLOR_BANDS.short, shortVal);
-          const accel = (typeof t.vars_20ema === 'number')
-            ? (t.vars > t.vars_20ema
-              ? '<span class="accel accel-up">▲</span>'
-              : '<span class="accel accel-dn">▼</span>')
-            : '';
-          html += `
-                <tr${filterAttrs(t)}>
-                  <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
-                      ${escHtml(t.ticker)}
-                    </span>
-                  </td>
-                  <td class="${varsClass}">${(t.vars ?? 0).toFixed(2)}${accel}</td>
-                  <td class="${rsClass}">${t.rs ?? '—'}</td>
-                  <td>${t.float ?? '—'}</td>
-                  <td class="${pctClass(t.eps)}">${t.eps ?? '—'}</td>
-                  <td class="${pctClass(t.sales)}">${t.sales ?? '—'}</td>
-                  <td class="${instClass}">${t.inst ?? '—'}</td>
-                  <td class="${shortClass}">${t.short ?? '—'}</td>
-                </tr>
-          `;
-        });
-
-        html += `
-              </tbody>
-            </table>
-        `;
+        html += head
+          + tickers.map(t => tableRow(t, leaf.name + ' · ' + t.ticker, spec.columns, spec.filters)).join('')
+          + '</tbody></table>';
       });
-
-      html += `
-          </div>
-        </div>
-      `;
+      html += '</div></div>';
     });
 
     container.innerHTML = html;
-    applyTickerFilters();
+    if (spec.filters) applyTickerFilters();
+  }
+
+  /** A flat theme (Momentum, Volume) is a section with one unnamed leaf. */
+  function flatSection(theme, meta) {
+    return { name: theme.name, hot: false, meta, leaves: [theme] };
+  }
+
+  function renderMomentum(data, date) {
+    renderSections('momentum-container', data, date, {
+      noun: 'momentum',
+      emptyMsg: 'No momentum stocks found for this date.',
+      section: theme => flatSection(theme, plural((theme.tickers || []).length, 'ticker')),
+      columns: [COLUMNS.rs, COLUMNS.float, COLUMNS.eps, COLUMNS.sales, COLUMNS.inst, COLUMNS.short],
+      filters: true,
+    });
+  }
+
+  function renderVolume(data, date) {
+    renderSections('volume-container', data, date, {
+      noun: 'volume',
+      emptyMsg: 'No volume leaders found for this date.',
+      section: theme => {
+        const tickers = theme.tickers || [];
+        const count = tickers.length;
+        const avgVars = (typeof theme.avg_vars === 'number')
+          ? theme.avg_vars
+          : (count ? tickers.reduce((s, t) => s + (t.vars ?? 0), 0) / count : 0);
+        return flatSection(theme, `avg VARS ${avgVars.toFixed(2)} · ${plural(count, 'ticker')}`);
+      },
+      columns: [COLUMNS.scan, COLUMNS.vars, COLUMNS.rs, COLUMNS.float, COLUMNS.eps,
+        COLUMNS.sales, COLUMNS.inst, COLUMNS.short],
+      filters: true,
+    });
+  }
+
+  function renderVARS(data, date) {
+    renderSections('vars-container', data, date, {
+      noun: 'VARS',
+      emptyMsg: 'No VARS leaders found for this date.',
+      section: entry => {
+        // L1 section (nested shape); a legacy flat snapshot entry renders
+        // as a single-leaf section so pre-clustering history still displays.
+        const grp = entry.leaves ? entry : {
+          name: entry.name,
+          score: entry.avg_vars,
+          avg_rs: null,
+          n: (entry.tickers || []).length,
+          hot: false,
+          leaves: [entry],
+        };
+        const meta = [
+          `${entry.leaves ? 'top-5 VARS' : 'avg VARS'} ${(grp.score ?? 0).toFixed(2)}`,
+          (typeof grp.avg_rs === 'number') ? `avg RS ${grp.avg_rs.toFixed(1)}%` : '',
+          plural(grp.n, 'ticker'),
+        ].filter(Boolean).join(' · ');
+        return { name: grp.name, hot: grp.hot, meta, leaves: grp.leaves };
+      },
+      leafMeta: leaf => `avg VARS ${(leaf.avg_vars ?? 0).toFixed(2)}`,
+      leafHeaders: 'multi',
+      columns: [COLUMNS.varsAccel, COLUMNS.rs, COLUMNS.float, COLUMNS.eps, COLUMNS.sales,
+        COLUMNS.inst, COLUMNS.short],
+      filters: true,
+    });
   }
 
   /**
@@ -2831,111 +2651,46 @@
    * and never reorders anything.
    */
   function renderSI(data, date) {
-    const container = document.getElementById('si-container');
-    if (!container) return;
-
-    if (!data || !data.themes || data.themes.length === 0) {
-      const msg = (date && !data)
-        ? `No SI data for ${date}.`
-        : 'No heavily shorted names in a drawdown for this date.';
-      container.innerHTML = `<div class="no-data">${msg}</div>`;
-      return;
-    }
-
-    let html = '';
-
-    // The roster's age, shown only when it is not this session's. Step 7b is
-    // non-critical and short_interest.json is committed, so a failed Finviz
-    // fetch leaves the PREVIOUS roster joined to today's prices. Undated reads
-    // as stale. Without this the tab is indistinguishable from a fresh one --
-    // the frozen-NAAIM-tile failure in a new costume.
-    if (data.si_stale) {
-      html += `<div class="si-stale-note">Short interest dated `
-        + `${escHtml(data.si_date || 'unknown')}, not this session `
-        + `(${escHtml(data.report_date || 'unknown')}). Prices below are current.</div>`;
-    }
-
-    data.themes.forEach((grp, idx) => {
-      const meta = [
-        `top-3 SI ${(grp.score ?? 0).toFixed(2)}%`,
-        `${grp.n} ticker${grp.n === 1 ? '' : 's'}`,
-        (typeof grp.radar_rank === 'number') ? `radar #${grp.radar_rank}` : '',
-      ].filter(Boolean).join(' · ');
-      html += `
-        <div class="theme-block">
-          <div class="theme-header${grp.hot ? ' l1-hot' : ''}">
-            <span class="theme-rank">#${idx + 1}</span>
-            <span class="theme-name">${escHtml(grp.name)}${grp.hot ? '<span class="hot-badge">HOT</span>' : ''}</span>
-            <span class="theme-score">${meta}</span>
-          </div>
-          <div class="theme-body">
-      `;
-
-      (grp.leaves || []).forEach(leaf => {
-        const tickers = leaf.tickers || [];
-        const sub = leaf.name.startsWith(grp.name + ' / ')
-          ? leaf.name.slice(grp.name.length + 3)
-          : leaf.name;
-        html += `
-            <div class="leaf-subheader">
-              <span class="leaf-name">${escHtml(sub)}</span>
-              <span class="leaf-meta">top-3 SI ${(leaf.score ?? 0).toFixed(2)}% · ${tickers.length} ticker${tickers.length === 1 ? '' : 's'}</span>
-            </div>
-            <table>
-              <thead><tr>
-                <th class="l">Ticker</th>
-                <th>SI%</th>
-                <th>DD60%</th>
-                <th>Drop15%</th>
-                <th>Streak</th>
-                <th>Price</th>
-                <th>Float(M)</th>
-                <th>Inst%</th>
-              </tr></thead>
-              <tbody>
-        `;
-
-        tickers.forEach(t => {
-          // Matches the VARS tab's Short% banding so one number reads the
-          // same on both tabs.
-          const siClass = pickBand(COLOR_BANDS.short, t.si);
-          const instVal = parseFloat(String(t.inst).replace(/[+%]/g, ''));
-          const instClass = pickBand(COLOR_BANDS.inst, instVal);
-          const fmtPct = (v) => (typeof v === 'number') ? v.toFixed(1) : '—';
-          html += `
-                <tr>
-                  <td class="l">
-                    <span class="tn-link${t.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(t.highlight)}"${hlTitle(t.highlight)} data-sym="${escAttr(t.ticker)}" data-nm="${escAttr(leaf.name + ' · ' + t.ticker)}">
-                      ${escHtml(t.ticker)}
-                    </span>
-                  </td>
-                  <td class="${siClass}"><strong>${(t.si ?? 0).toFixed(2)}</strong></td>
-                  <td class="dn">${fmtPct(t.dd60)}</td>
-                  <td class="dn">${fmtPct(t.drop15)}</td>
-                  <td>${t.streak ?? '—'}</td>
-                  <td>${(typeof t.price === 'number') ? t.price.toFixed(2) : '—'}</td>
-                  <td>${t.float ?? '—'}</td>
-                  <td class="${instClass}">${t.inst ?? '—'}</td>
-                </tr>
-          `;
-        });
-
-        html += `
-              </tbody>
-            </table>
-        `;
-      });
-
-      html += `
-          </div>
-        </div>
-      `;
+    renderSections('si-container', data, date, {
+      noun: 'SI',
+      emptyMsg: 'No heavily shorted names in a drawdown for this date.',
+      // The roster's age, shown only when it is not this session's. Step 7b is
+      // non-critical and short_interest.json is committed, so a failed Finviz
+      // fetch leaves the PREVIOUS roster joined to today's prices. Undated reads
+      // as stale. Without this the tab is indistinguishable from a fresh one --
+      // the frozen-NAAIM-tile failure in a new costume.
+      banner: d => (d.si_stale
+        ? `<div class="si-stale-note">Short interest dated `
+          + `${escHtml(d.si_date || 'unknown')}, not this session `
+          + `(${escHtml(d.report_date || 'unknown')}). Prices below are current.</div>`
+        : ''),
+      section: grp => ({
+        name: grp.name,
+        hot: grp.hot,
+        meta: [
+          `top-3 SI ${(grp.score ?? 0).toFixed(2)}%`,
+          plural(grp.n, 'ticker'),
+          (typeof grp.radar_rank === 'number') ? `radar #${grp.radar_rank}` : '',
+        ].filter(Boolean).join(' · '),
+        leaves: grp.leaves,
+      }),
+      leafMeta: leaf => `top-3 SI ${(leaf.score ?? 0).toFixed(2)}%`,
+      leafHeaders: 'always',
+      columns: [COLUMNS.si, COLUMNS.dd60, COLUMNS.drop15, COLUMNS.streak, COLUMNS.price,
+        COLUMNS.float, COLUMNS.inst],
+      filters: false,
     });
-
-    container.innerHTML = html;
   }
 
   // ── PARABOLIC DATA ────────────────────────────────────
+  function renderParabolic(snap, date) {
+    parabolicData = snap ? (snap.tickers || []) : [];
+    parabolicEmptyMessage = !snap && date
+      ? `No parabolic results for ${date}.`
+      : 'No parabolic results for this date.';
+    sortAndRenderParabolic();
+  }
+
   function sortAndRenderParabolic() {
     const s = sortState.parabolic;
     parabolicData.sort((a, b) => {
@@ -2948,82 +2703,72 @@
     renderParabolicTable();
   }
 
+  const PARABOLIC_COLUMNS = [COLUMNS.float, COLUMNS.inst, COLUMNS.short, COLUMNS.atrMul];
+
   function renderParabolicTable() {
     const tbody = document.getElementById('parabolic-body');
     const countEl = document.getElementById('parabolic-count');
     if (!tbody) return;
 
-    if (countEl) {
-      countEl.textContent = `${parabolicData.length} ticker${parabolicData.length === 1 ? '' : 's'}`;
-    }
+    if (countEl) countEl.textContent = plural(parabolicData.length, 'ticker');
 
     if (!parabolicData.length) {
       tbody.innerHTML = `<tr><td colspan="5" class="no-data">${parabolicEmptyMessage}</td></tr>`;
       return;
     }
 
-    let html = '';
-    parabolicData.forEach(row => {
-      const instVal = parseFloat(String(row.inst).replace(/[+%]/g, ''));
-      const instClass = pickBand(COLOR_BANDS.inst, instVal);
-      const shortVal = parseFloat(row.short);
-      const shortClass = pickBand(COLOR_BANDS.short, shortVal);
-      const atrVal = parseFloat(row.atr_multi_50sma);
-      const atrClass = pickBand(COLOR_BANDS.parabolicAtr, atrVal);
-      const atrStr = isNaN(atrVal) ? '—' : atrVal.toFixed(1) + 'x';
-
-      html += `
-        <tr${filterAttrs(row)}>
-          <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.ticker + ' · Parabolic')}">${escHtml(row.ticker)}</span>
-          </td>
-          <td>${row.float ?? '—'}</td>
-          <td class="${instClass}">${row.inst ?? '—'}</td>
-          <td class="${shortClass}">${row.short ?? '—'}</td>
-          <td class="${atrClass}"><strong>${atrStr}</strong></td>
-        </tr>
-      `;
-    });
-
-    tbody.innerHTML = html;
+    tbody.innerHTML = parabolicData
+      .map(row => tableRow(row, row.ticker + ' · Parabolic', PARABOLIC_COLUMNS, true))
+      .join('');
     applyTickerFilters();
   }
 
-  // ── INDUSTRY ETF DATA ─────────────────────────────────
-  function loadIndustryETFData() {
-    Promise.all([
-      fetch(withCacheBust(INDUSTRY_ETF_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch(withCacheBust(INDUSTRY_ETF_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([data, history]) => {
-        industryData = data;
+  // ── INDUSTRY + LEVERAGE ETF TABLES ────────────────────
+  /* Two tabs, one table shape. Rows sort in place by sortState[kind]. */
+  const ETF_TABLES = {
+    industry: { body: 'industry-body', noun: 'industry ETF', rows: [], empty: 'No industry ETF data available.' },
+    etf: { body: 'etf-body', noun: 'ETF', rows: [], empty: 'No ETF data available.' },
+  };
 
-        // Build history, merge current using activeSessionDate
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (activeSessionDate && data) {
-          byDate[activeSessionDate] = { report_date: activeSessionDate, data };
-        }
-        industryHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
+  function renderEtfSnapshot(kind, snap, date) {
+    const t = ETF_TABLES[kind];
+    t.rows = snap ? (snap.data || []) : [];
+    t.empty = !snap && date ? `No ${t.noun} data for ${date}.` : `No ${t.noun} data available.`;
+    sortAndRenderEtfTable(kind);
+  }
 
-        renderAllTimeTravelBars();
-        sortAndRenderIndustry();
-      })
-      .catch(() => {
-        fetchCSV(INDUSTRY_SHEET_URL)
-          .then(rows => {
-            industryData = parseIndustryRows(rows);
-            sortAndRenderIndustry();
-          })
-          .catch(() => {
-            document.getElementById('industry-body').innerHTML =
-              '<tr><td colspan="6" class="no-data">Industry ETF data not available.</td></tr>';
-          });
-      });
+  function sortAndRenderEtfTable(kind) {
+    const s = sortState[kind];
+    ETF_TABLES[kind].rows.sort((a, b) => {
+      const av = a[s.column] ?? -Infinity;
+      const bv = b[s.column] ?? -Infinity;
+      return s.dir === 'desc' ? bv - av : av - bv;
+    });
+    renderEtfTable(kind);
+  }
+
+  function renderEtfTable(kind) {
+    const t = ETF_TABLES[kind];
+    const tbody = document.getElementById(t.body);
+    if (!t.rows.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="no-data">${t.empty}</td></tr>`;
+      return;
+    }
+    // Industry rows chart their exchange-qualified symbol (display_ticker);
+    // Lev ETF rows carry none and chart the bare ticker.
+    tbody.innerHTML = t.rows.map(row => `
+        <tr>
+          <td class="l">${tickerSpan(row, row.name, row.display_ticker || row.ticker)}</td>
+          <td class="l etf-name">${escHtml(truncate(row.name, 40))}</td>
+          <td class="${pickBand(COLOR_BANDS.vars, row.vars)}"><strong>${row.vars == null ? '—' : row.vars.toFixed(2)}</strong></td>
+          <td class="${pctClass(row.intraday)}">${fmtPct(row.intraday)}</td>
+          <td class="${pctClass(row.daily)}">${fmtPct(row.daily)}</td>
+          <td class="${pctClass(row.monthly)}">${fmtPct(row.monthly)}</td>
+        </tr>`).join('');
   }
 
   function parseIndustryRows(rows) {
+
     const result = [];
     const seen = new Set();
     let currentSection = '';
@@ -3059,78 +2804,6 @@
       });
     });
     return result;
-  }
-
-  function sortAndRenderIndustry() {
-    const s = sortState.industry;
-    industryData.sort((a, b) => {
-      const av = a[s.column] ?? -Infinity;
-      const bv = b[s.column] ?? -Infinity;
-      return s.dir === 'desc' ? bv - av : av - bv;
-    });
-    renderIndustryTable();
-  }
-
-  function renderIndustryTable() {
-    const tbody = document.getElementById('industry-body');
-    if (!industryData.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="no-data">${industryEmptyMessage}</td></tr>`;
-      return;
-    }
-
-    let html = '';
-    industryData.forEach(row => {
-      const varsClass = pickBand(COLOR_BANDS.vars, row.vars);
-      const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
-      html += `
-        <tr>
-          <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.display_ticker || row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
-          </td>
-          <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
-          <td class="${varsClass}"><strong>${varsText}</strong></td>
-          <td class="${pctClass(row.intraday)}">${fmtPct(row.intraday)}</td>
-          <td class="${pctClass(row.daily)}">${fmtPct(row.daily)}</td>
-          <td class="${pctClass(row.monthly)}">${fmtPct(row.monthly)}</td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
-  }
-
-  // ── LEVERAGE ETF DATA ─────────────────────────────────
-  function loadETFData() {
-    Promise.all([
-      fetch(withCacheBust(ETF_FALLBACK_URL)).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch(withCacheBust(ETF_DATA_HISTORY_URL)).then(r => r.json()).catch(() => []),
-    ])
-      .then(([data, history]) => {
-        etfData = data;
-
-        // Build history, merge current using activeSessionDate
-        const byDate = {};
-        (history || []).forEach(h => { byDate[h.report_date] = h; });
-        if (activeSessionDate && data) {
-          byDate[activeSessionDate] = { report_date: activeSessionDate, data };
-        }
-        etfHistory = Object.values(byDate)
-          .sort((a, b) => b.report_date.localeCompare(a.report_date));
-
-        renderAllTimeTravelBars();
-        sortAndRenderETF();
-      })
-      .catch(() => {
-        console.warn('JSON fetch failed, trying CSV fallback');
-        fetchCSV(ETF_SHEET_URL)
-          .then(rows => {
-            etfData = parseETFRows(rows);
-            sortAndRenderETF();
-          })
-          .catch(() => {
-            document.getElementById('etf-body').innerHTML =
-              '<tr><td colspan="6" class="no-data">ETF data not available.</td></tr>';
-          });
-      });
   }
 
   function fetchCSV(url) {
@@ -3172,43 +2845,6 @@
     return parseFloat(val.replace('%', ''));
   }
 
-  function sortAndRenderETF() {
-    const s = sortState.etf;
-    etfData.sort((a, b) => {
-      const av = a[s.column] ?? -Infinity;
-      const bv = b[s.column] ?? -Infinity;
-      return s.dir === 'desc' ? bv - av : av - bv;
-    });
-    renderETFTable();
-  }
-
-  function renderETFTable() {
-    const tbody = document.getElementById('etf-body');
-    if (!etfData.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="no-data">${etfEmptyMessage}</td></tr>`;
-      return;
-    }
-
-    let html = '';
-    etfData.forEach(row => {
-      const varsClass = pickBand(COLOR_BANDS.vars, row.vars);
-      const varsText = row.vars == null ? '—' : row.vars.toFixed(2);
-      html += `
-        <tr>
-          <td class="l">
-            <span class="tn-link${row.ticker_color === 'green' ? ' day-pattern-green' : ''}${hlClass(row.highlight)}"${hlTitle(row.highlight)} data-sym="${escAttr(row.ticker)}" data-nm="${escAttr(row.name)}">${escHtml(row.ticker)}</span>
-          </td>
-          <td class="l" style="font-size:11px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis">${escHtml(truncate(row.name, 40))}</td>
-          <td class="${varsClass}"><strong>${varsText}</strong></td>
-          <td class="${pctClass(row.intraday)}">${fmtPct(row.intraday)}</td>
-          <td class="${pctClass(row.daily)}">${fmtPct(row.daily)}</td>
-          <td class="${pctClass(row.monthly)}">${fmtPct(row.monthly)}</td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
-  }
-
   // ── TABLE SORT (generic for ETF, Industry, and Parabolic) ────
   function initTableSort() {
     document.querySelectorAll('th.sortable').forEach(th => {
@@ -3230,9 +2866,8 @@
         });
         th.classList.add(state.dir === 'desc' ? 'sorted-desc' : 'sorted-asc');
 
-        if (tab === 'industry') sortAndRenderIndustry();
-        else if (tab === 'parabolic') sortAndRenderParabolic();
-        else sortAndRenderETF();
+        if (tab === 'parabolic') sortAndRenderParabolic();
+        else sortAndRenderEtfTable(tab);
       });
     });
   }
@@ -3253,7 +2888,7 @@
   }
 
   function escAttr(str) {
-    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function pctClass(val) {

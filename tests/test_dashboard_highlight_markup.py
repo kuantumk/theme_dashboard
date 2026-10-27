@@ -58,17 +58,26 @@ LAYOUT_PROPS = (
 # the invariants that module pins, for no gain.
 NEW_TIERS = ('hl-short', 'hl-ma-up', 'hl-ma-split')
 
-# The nine list tabs of R12, in render order, and the function that draws each.
+# The two places a ticker's tier class and tooltip are written. The radar chips
+# build their own class list; every other list tab draws its tickers through
+# the shared `tickerSpan` helper.
 RENDER_SITES = (
     'renderThemes',          # Themes — radar chips
-    'renderMomentum',
-    'renderVolume',
-    'renderVARS',
-    'renderSI',
-    'renderParabolicTable',
-    'renderIndustryTable',   # Industry ETFs
-    'renderETFTable',        # Lev ETFs
-    'zoneTickerLink',        # Viz tabs — the lists under each zone map
+    'tickerSpan',            # every other list tab, via the callers below
+)
+
+# The nine list tabs of R12 reach `tickerSpan` through these functions. Each
+# must call it (or the function that does), or its tab renders no tint.
+TICKER_SPAN_ROUTES = (
+    ('renderSections', 'tableRow('),        # Momentum, Volume, VARS, SI
+    ('renderParabolicTable', 'tableRow('),  # Parabolic
+    ('tableRow', 'tickerSpan('),
+    ('renderEtfTable', 'tickerSpan('),      # Industry ETFs and Lev ETFs
+    ('zoneTickerLink', 'tickerSpan('),      # Viz tabs — the lists under each map
+    ('renderMomentum', 'renderSections('),
+    ('renderVolume', 'renderSections('),
+    ('renderVARS', 'renderSections('),
+    ('renderSI', 'renderSections('),
 )
 
 
@@ -354,6 +363,9 @@ class HighlightRenderSiteTests(unittest.TestCase):
             self.assertTrue(emits, f'{name} emits no highlight class')
             names = 'hlTitle(' in body or 'HL_TIER_TIP[' in body
             self.assertTrue(names, f'{name} names no rung in a tooltip')
+        for name, call in TICKER_SPAN_ROUTES:
+            body = _strip_js_comments(_fn_body(name))
+            self.assertIn(call, body, f'{name} no longer reaches tickerSpan via {call}')
 
     def test_the_zone_scatter_emits_no_tier(self):
         """KD2. On the zone map a dot's colour already means its daily zone, so
@@ -489,10 +501,17 @@ class HighlightTooltipTests(unittest.TestCase):
         table = re.search(r'\n    short: \{\n\s*bands: \[\{([^}]*)\}', APP)
         self.assertIsNotNone(table, 'COLOR_BANDS.short moved; re-point this test')
         self.assertIn("at: SHORT_CROWDED_PCT, out: 'up'", table.group(1))
-        sites = re.findall(r'pickBand\(COLOR_BANDS\.short,', APP)
-        self.assertGreaterEqual(
-            len(sites), 5,
-            'a Short% column stopped reading COLOR_BANDS.short; re-point this test')
+        # The five sites share two column specs: Short% (Momentum, Volume,
+        # VARS, Parabolic) and SI% (SI). Each spec reads the table, and each
+        # tab reads its spec.
+        for spec in ('short', 'si'):
+            m = re.search(r'\n    ' + spec + r': \{ th: [^\n]*', APP)
+            self.assertIsNotNone(m, f'COLUMNS.{spec} moved; re-point this test')
+            self.assertIn('pickBand(COLOR_BANDS.short,', m.group(0))
+        for fn in ('renderMomentum', 'renderVolume', 'renderVARS'):
+            self.assertIn('COLUMNS.short', _fn_body(fn), fn)
+        self.assertRegex(APP, r'const PARABOLIC_COLUMNS = \[[^\]]*COLUMNS\.short')
+        self.assertIn('COLUMNS.si', _fn_body('renderSI'))
 
     def test_the_short_tooltip_quotes_the_floor_the_ladder_actually_gates_on(self):
         """The tooltip hand-types the percentage the Python constant decides.

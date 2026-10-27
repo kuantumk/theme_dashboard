@@ -27,7 +27,7 @@ import src.stock_utils as su
 from collections import defaultdict
 from config.settings import CONFIG, SCREENING_OUTPUT_DIR, DATA_DIR, FUNDAMENTALS_DB
 from src.themes.theme_registry import load_ticker_themes
-from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
+from src.themes.theme_taxonomy import build_theme_to_tickers
 
 # ── Config ──────────────────────────────────────────────────────────────
 HOT_THRESHOLD = CONFIG["themes"]["hot_theme_rs_threshold"]
@@ -220,8 +220,7 @@ def analyze_theme_strength(
         print("No ticker themes found")
         return pd.DataFrame()
 
-    theme_groups = load_theme_groups()
-    theme_tickers = build_theme_to_tickers(ticker_themes, theme_groups)
+    theme_tickers = build_theme_to_tickers(ticker_themes)
 
     print(f"Analyzing {len(theme_tickers)} themes (after consolidation)...")
 

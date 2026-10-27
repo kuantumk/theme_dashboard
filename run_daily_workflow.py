@@ -280,8 +280,7 @@ def run_daily_workflow():
         master_df = su.load_df_from_parquet(latest_master)
         theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
 
-        regime = theme_df['regime'].iloc[0] if not theme_df.empty and 'regime' in theme_df.columns else 'N/A'
-        logger.info(f"OK Analyzed {len(theme_df)} themes (regime: {regime})\n")
+        logger.info(f"OK Analyzed {len(theme_df)} themes\n")
 
         # Step 9b: L1 Radar (screener-independent theme-basket scoring)
         radar = None

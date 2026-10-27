@@ -261,7 +261,7 @@ class SingleSourceTests(unittest.TestCase):
             found = len(re.findall(r'pickBand\(COLOR_BANDS\.' + table + r'\b', code))
             self.assertGreaterEqual(found, n, f'COLOR_BANDS.{table}: {found} call sites, expected {n}')
         # The four breadth tiles index the table by key.
-        self.assertGreaterEqual(code.count('pickBand(COLOR_BANDS[key], val)'), 2)
+        self.assertGreaterEqual(code.count('pickBand(COLOR_BANDS[key], val)'), 1)
 
     def test_the_viz_keys_are_generated_not_hand_written(self):
         """Each zone map's key is drawn by legends.js from the same classes the

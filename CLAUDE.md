@@ -29,23 +29,19 @@ uv run python src/indicators/create_technical_indicators.py
 uv run python src/screening/create_master_table.py --days 1
 uv run python src/screening/run_screener.py --screener steady_trend --days 1
 uv run python src/themes/analyze_theme_strength.py
-uv run python src/reporting/generate_daily_report.py
 uv run python src/reporting/export_dashboard_data.py
 
 # Refresh the SI tab source (Finviz short interest; run after the close)
 uv run python -m src.data_collection.fetch_short_interest
 
 # Test a screener against a single ticker
-uv run python src/screening/run_screener.py --screener steady_trend --test --ticker AAPL
+uv run python -m src.screening.run_screener --screener steady_trend --test --ticker AAPL
 
 # Mechanical theme-tag audit (exit 1 on [BUG]; also the tag-audit routine's first step)
 uv run python tools/audit_theme_tags.py
 
 # Run the unit tests
 uv run python -m unittest discover -s tests
-
-# Run scoring backtests
-cd tests && uv run python backtest_theme_scoring.py
 ```
 
 **PR convention** — code-fix PRs do NOT include regenerated `docs/data/*.json` files (the daily workflow rewrites them). After running `uv run python -m src.reporting.export_dashboard_data` locally to verify a fix, reset the noise with `git checkout -- docs/data/` before committing. `screening_output/` is **never committed** — it is per-run local scratch (parquet), regenerated every run and pruned to the newest `screening_output.retention_sessions` (10) per subdir at the tail of `export_all()`.
@@ -317,7 +313,7 @@ Two-track, implemented in `src/themes/analyze_theme_strength.py` (the earlier st
 - **Leaf raw** = mean of top-5 member composites (min breadth 2), then **z-scored across all scored leaves** (session-relative, decompresses ranks)
 - **L1 raw** = mean of its top-5 leaf z-scores. L1s with ≥ 2 scored leaves earn **boost = β·l1_raw** (β = 0.3), added to every leaf (`boosted = z + boost`) and to the L1 itself (`boosted = l1_raw + boost`) — co-firing sub-themes lift the whole L1 (sibling confirmation). Single-leaf L1s get no self-boost; negative l1_raw boosts negatively (symmetric)
 - **Ranks**: leaves ranked globally by boosted score across all L1s; L1s by boosted score. No top-N cap at scoring level
-- **Flows**: step 9b of `run_daily_workflow.py` computes the radar in-process → "📡 L1 Radar" report section (above Market Themes; ignored by `parse_report`). `export_radar` in `export_dashboard_data.py` rebuilds `docs/data/radar.json` (current, uncapped — every scored L1, leaf, **and member ticker**) + `radar_history.json` (180-day window, per-entry L1s capped at `history_l1_limit` and chips at `tickers_per_leaf`, compact JSON) from the per-day master parquet — it runs inside `export_all()` **before** `prune_screening_output`. Only the newest session is built uncapped (`_build_radar_snapshot(..., tickers_per_leaf=None)`); history entries stay capped because that file already carries ~124 sessions at ~15 MB. The dashboard **Themes** tab renders the radar as one block per leaf — a metadata line (global rank, name, `N=`, raw → boosted) above a **full-width wrapping chip row** (screened members highlighted, unscreened dimmed), clamped to `--radar-chip-rows` (2) lines with a measured `+N more` toggle. It is deliberately **not** a table: five columns in a ~250px list panel pushed raw/boosted off-screen and clipped the ticker list. `syncRadarClamps` in `docs/app.js` measures chip `offsetTop` against the clamp — it must run whenever the panel's width changes or the tab first gains a box, so it is called from the tab switch, the resize-handle drag, `window.resize`, and a `ResizeObserver` (the observer alone is not sufficient: it only delivers inside the rendering lifecycle). The **Theme Viz** tab draws the radar snapshot's `zone_map` block, built from the uncapped members of the top 20 leaves (see Zone Map)
+- **Flows**: step 9b of `run_daily_workflow.py` computes the radar in-process → "📡 L1 Radar" report section (above Market Themes; ignored by `parse_report`). `export_radar` in `export_dashboard_data.py` rebuilds `docs/data/radar.json` (current, uncapped — every scored L1, leaf, **and member ticker**) + `radar_history.json` (180-day window, per-entry L1s capped at `history_l1_limit` and chips at `tickers_per_leaf`, compact JSON) from the per-day master parquet — it runs inside `export_all()` **before** `prune_screening_output`. Only the newest session is built uncapped (`_build_radar_snapshot(..., tickers_per_leaf=None)`); history entries stay capped because that file already carries ~124 sessions at ~40 MB (measured 2026-10-27). The dashboard **Themes** tab renders the radar as one block per leaf — a metadata line (global rank, name, `N=`, raw → boosted) above a **full-width wrapping chip row** (screened members highlighted, unscreened dimmed), clamped to `--radar-chip-rows` (2) lines with a measured `+N more` toggle. It is deliberately **not** a table: five columns in a ~250px list panel pushed raw/boosted off-screen and clipped the ticker list. `syncRadarClamps` in `docs/app.js` measures chip `offsetTop` against the clamp — it must run whenever the panel's width changes or the tab first gains a box, so it is called from the tab switch, the resize-handle drag, `window.resize`, and a `ResizeObserver` (the observer alone is not sufficient: it only delivers inside the rendering lifecycle). The **Theme Viz** tab draws the radar snapshot's `zone_map` block, built from the uncapped members of the top 20 leaves (see Zone Map)
 - **Acceptance check**: `uv run python tools/validate_radar.py --episodes tools/radar_episodes.yaml` — three forward-return-verified early-call episodes (single-date form: `--date ... --expect-l1 ... --max-rank N`; add `--sweep` with a local master parquet to grid-search β/top-K/top-M/fast-weight). The original 2026-07-13 Cybersecurity≤3 case is retired — it fails (rank 6) under every tag vintage, see tests/RADAR_BACKTEST_FINDINGS.md §5
 
 ### Tight Range Marker — tight ranges on the Themes tab
@@ -377,7 +373,7 @@ Theme Viz, VARS Viz, Momentum Viz, Volume Viz and ETF Viz each plot their tab's 
 
 `config/theme_taxonomy.yaml` is the canonical taxonomy — a 3-level hierarchy (`L1 / L2 / L3`) where L1 is the trading narrative (e.g. `AI`, `Clean Energy`, `Oil & Gas`). Each ticker in `data/ticker_themes.json` stores 1–3 slash-delimited paths like `"AI / Data Center / Memory"` or `"Space / Launch"`. L2 must be a child of L1; L3 a child of L2.
 
-**Vocabulary — one concept, one name.** **L1** = top hierarchy level (trading narrative, e.g. `AI`); **L2** = sub-segment (`Data Center`); **L3** = specialty (`Memory`); a **leaf** = a full slash path as stored in `ticker_themes.json` (the scoring unit). The radar's per-L1 aggregate is the **L1 score**. The retired synonyms "ecosystem" (radar layer, inherited from the competitor implementation the radar was decoded from) and "family" (VARS-tab layer) must not be reintroduced in code, config, UI, or docs. Persisted-schema note: `radar.json`/`radar_history.json` carry the L1 list under the `l1s` key; entries written before the 2026-07 consolidation used `ecosystems`, and `docs/app.js` + `tools/validate_radar.py` keep a one-line legacy shim until the daily workflow has rewritten both files.
+**Vocabulary — one concept, one name.** **L1** = top hierarchy level (trading narrative, e.g. `AI`); **L2** = sub-segment (`Data Center`); **L3** = specialty (`Memory`); a **leaf** = a full slash path as stored in `ticker_themes.json` (the scoring unit). The radar's per-L1 aggregate is the **L1 score**. The retired synonyms "ecosystem" (radar layer, inherited from the competitor implementation the radar was decoded from) and "family" (VARS-tab layer) must not be reintroduced in code, config, UI, or docs. Persisted-schema note: `radar.json`/`radar_history.json` carry the L1 list under the `l1s` key. Entries written before the 2026-07 consolidation used `ecosystems`; the published files no longer hold any (checked 2026-10-27), so `docs/app.js` reads `l1s` only. `tools/validate_radar.py` keeps its one-line shim because it can read back-dated files.
 
 **Trading-narrative separation**: `Clean Energy` and `Oil & Gas` are sibling L1s, never children of a generic `Energy` node — fuel-cell stocks (BE, FCEL) never share L1 with oilfield-services stocks (PUMP, HAL).
 
@@ -389,11 +385,11 @@ Theme Viz, VARS Viz, Momentum Viz, Volume Viz and ETF Viz each plot their tab's 
 | `data/ticker_themes.json` | `{ticker: ["L1 / L2 / L3"]}` slash-delimited | **Ground truth** for tags |
 | Google Sheet (`google_sheet_gid`) | Free-form labels, often legacy (`"AI - Memory & Storage"`, `"Drones"`, `"Solar"`) | **Human curation input only** — never overrides existing canonical tags |
 
-The Sheet is *not* synced to the new taxonomy. Live code translates its labels through `src/themes/legacy_aliases.py` (which re-exports the migration's `OLD_TO_NEW` map) on every import, then validates each result against the taxonomy. Anything that fails to resolve to a valid path is dropped with a `Sheet alias guard dropped` log line. When you spot one of those, add the new alias to `OLD_TO_NEW` in `tools/migrate_themes.py` — don't edit the Sheet to match.
+The Sheet is *not* synced to the new taxonomy. Live code translates its labels through the `OLD_TO_NEW` table in `src/themes/legacy_aliases.py` (the alias map the May 2026 migration produced; the one-shot migration script itself is deleted) on every import, then validates each result against the taxonomy. Anything that fails to resolve to a valid path is dropped with a `Sheet alias guard dropped` log line. When you spot one of those, add the new alias to `OLD_TO_NEW` — don't edit the Sheet to match. **market_history** maps its pre-taxonomy tags with `normalize_legacy_themes` from the same module, so keep that function.
 
 **`apply_google_sheet_ground_truth` defences** (`src/themes/tag_new_tickers.py`):
-1. Alias-remap every incoming label via `legacy_aliases.normalize_legacy_theme`.
-2. Validate the result against `theme_taxonomy.validate_path`; drop on failure.
+1. Keep a label that is already a valid stored tag; otherwise alias-remap it via `legacy_aliases.normalize_legacy_theme`.
+2. Validate the result with the strict `theme_taxonomy.is_valid_tag` (which also rejects a bare L1 whose L1 has children); drop on failure. The lenient `validate_path` let the Sheet's bare `Space` / `Nuclear` / `Cybersecurity` labels skip their remap and land as bare-L1 tags.
 3. Honour `git_locked_themes: true` — never overwrite a ticker that already has canonical tags. Brand-new tickers and ones whose only existing tag is `Uncategorized`/`Singleton` *do* accept the sheet's value (so onboarding still works). To re-tag an existing canonical ticker, use the explicit CLI (`--paths` is required — the caller supplies the judgment):
    ```bash
    uv run python -m src.themes.retag --ticker NVDA --reason "Announced AI infra pivot" \
@@ -402,7 +398,7 @@ The Sheet is *not* synced to the new taxonomy. Live code translates its labels t
 
 **Display-layer defensive parsing** — `theme_taxonomy.resolve_l1(name)` is a total helper used by `export_dashboard_data.py:_attach_hierarchy`. It recognises canonical paths, known legacy aliases, and unknown `"L1 - rest"` prefixes where the prefix is still a real taxonomy L1 — so a stray legacy label like `"AI - Some New Concept"` still buckets into the AI L1 instead of becoming an orphan. Strict callers (the retag CLI, audit tooling) should still use `validate_path`; `resolve_l1` is for rendering only.
 
-**Bare-L1 paths: when valid** — A one-segment path like `"Quantum Computing"` is valid *only* for L1s with no children in `theme_taxonomy.yaml` (currently `Quantum Computing` and `Singleton`). For any L1 with children — `Space`, `Cybersecurity`, `Nuclear`, `AI`, etc. — a bare-L1 path is a **tagging bug**, even though `validate_path` accepts it (the validator returns True whenever L2 is `None`, regardless of whether the L1 has children). Symptom: the leaf is a bare L1 name in every leaf list and zone-map cluster row.
+**Bare-L1 paths: when valid** — A one-segment path like `"Quantum Computing"` is valid *only* for L1s with no children in `theme_taxonomy.yaml` (currently `Quantum Computing` and `Singleton`). For any L1 with children — `Space`, `Cybersecurity`, `Nuclear`, `AI`, etc. — a bare-L1 path is a **tagging bug**, even though `validate_path` accepts it (the validator returns True whenever L2 is `None`, regardless of whether the L1 has children). Use `is_valid_tag` wherever a tag is written — the Sheet sync and the retag CLI both do. Symptom: the leaf is a bare L1 name in every leaf list and zone-map cluster row.
 
 When auto-tagging, retagging, or hand-editing an L1-with-children ticker, the classifier MUST pick an L2. If no existing L2 fits, add one to `theme_taxonomy.yaml` or fall back to `Singleton`. **Never write a bare-L1 path for an L1 with children.** Audit existing tags with:
 
@@ -422,7 +418,6 @@ for ticker, paths in ticker_themes.items():
 
 **Auto-tagging vs locking** — `git_locked_themes: true` originally short-circuited the (since-removed) 30-day Gemini revalidation loop. After the May 2026 regression (the Sheet sync silently re-introduced 114 legacy labels), the lock also applies to `apply_google_sheet_ground_truth`. Any future code that mutates `data/ticker_themes.json` (new screener, audit job, etc.) MUST consult this flag before overwriting an existing ticker. The retag CLI is the only sanctioned bypass — used by humans and by the tag-audit routine alike.
 
-The old `config/theme_groups.yaml` consolidator is archived as `theme_groups.legacy.yaml` and no longer loaded.
 
 ### Day-pattern Ticker Coloring
 
@@ -581,7 +576,7 @@ These suppress only the EMA/SMA rows while keeping the main series title, OHLC, 
 
 All workflow parameters live in `config/workflow_config.yaml` (lookback windows, RS thresholds, screener list, scoring coefficients, theme settings).
 
-Environment variables (`.env`): `GOOGLE_SHEET_ID` (theme taxonomy sheet), `IBKR_FLEX_TOKEN` (optional).
+Environment variables (`.env`): `GOOGLE_SHEET_ID` (theme taxonomy sheet).
 
 ## CI/CD
 

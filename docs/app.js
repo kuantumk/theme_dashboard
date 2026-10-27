@@ -77,9 +77,6 @@
     'CAPITALCOM:US30YR': 'FRED:DGS30',
   };
 
-  // Active chart per tab
-  let activeCharts = { macro: null, themes: null, momentum: null, momentumviz: null, volume: null, volumeviz: null, vars: null, varsviz: null, industry: null, etf: null, etfviz: null, parabolic: null };
-
   // Sort state per table
   let sortState = {
     etf: { column: 'vars', dir: 'desc' },
@@ -330,15 +327,12 @@
     [200, 600, 1500].forEach(ms => setTimeout(
       () => window.dispatchEvent(new Event('resize')), ms
     ));
-
-    activeCharts[tabId] = sym;
   }
 
-  // Expose globally for inline onclick handlers to work (e.g. from themes tab)
-  window.openChart = openChart;
-
   // ── ARROW KEY NAVIGATION ────────────────────────────────
-  let navIndices = { macro: -1, themes: -1, momentum: -1, momentumviz: -1, volume: -1, volumeviz: -1, vars: -1, varsviz: -1, industry: -1, etf: -1, etfviz: -1, parabolic: -1 };
+  // Selected index per tab, filled on first use. A hand-written key list here
+  // once missed `si`, which left both arrows dead on that tab until a click.
+  const navIndices = {};
 
   function getActiveTabId() {
     const activeBtn = document.querySelector('.tab-btn.active');
@@ -402,7 +396,7 @@
       // the list, or every remaining ticker dimmed — stay put rather than
       // falling back to the boundary, which would select a dimmed ticker.
       const step = e.key === 'ArrowDown' ? 1 : -1;
-      let start = navIndices[tabId];
+      let start = navIndices[tabId] ?? -1;
       // A re-render — time travel to a sparser session, a data reload — can
       // leave the stored index past the end of the new, shorter list. Re-enter
       // from the near edge instead of scanning from out of bounds, which
@@ -676,24 +670,14 @@
           }
         }
 
-        // Render each breadth indicator with history as numbers
+        // The four breadth tiles. The payload also carries each one's recent
+        // `history`, which winner_research reads; the page shows only `current`.
         ['ncfd', 'mmtw', 'mmfi', 'mmth'].forEach(key => {
           const val = data[key]?.current ?? data[key] ?? null;
-          const hist = data[key]?.history ?? (val != null ? [val] : []);
           const valEl = document.getElementById(key + '-value');
-          const histEl = document.getElementById(key + '-history');
-
           if (valEl && val != null) {
             valEl.textContent = val.toFixed(1) + '%';
             valEl.className = 'breadth-value ' + pickBand(COLOR_BANDS[key], val);
-          }
-          if (histEl) {
-            // Only render history if there's more than 1 item, to avoid redundancy
-            if (hist.length > 1) {
-              renderBreadthHistory(key, histEl, hist);
-            } else {
-              histEl.innerHTML = ''; // Hide history if redundant
-            }
           }
         });
       })
@@ -978,20 +962,6 @@
       // Fall back to the newest session, which is also what the removed range
       // line used to convey: how current the data is.
       if (nasiHistory) showNasiReadout(nasiHistory.length - 1);
-    });
-  }
-
-  function renderBreadthHistory(key, el, history) {
-    el.innerHTML = '';
-    const last5 = history.slice(-5);
-    last5.forEach((val, i) => {
-      const span = document.createElement('span');
-      // Same table as the tile itself, so a history number and the headline
-      // figure above it can never tint by different rules.
-      span.className = 'breadth-hist-num ' + pickBand(COLOR_BANDS[key], val);
-      span.textContent = val.toFixed(1);
-      span.title = 'Session ' + (i + 1) + ': ' + val.toFixed(1) + '%';
-      el.appendChild(span);
     });
   }
 
@@ -2289,13 +2259,6 @@
   // mirrors the ranked L1 table: one block per L1, one row per
   // sub-theme with its global rank, N, ticker chips, raw and boosted scores.
 
-  // Legacy pre-L1-rename schema shim: radar snapshots written before the L1
-  // consolidation carry the L1 list under `ecosystems`. Removable once the
-  // daily workflow has rewritten radar.json + radar_history.json with `l1s`.
-  function radarL1s(data) {
-    return (data && (data.l1s || data.ecosystems)) || null;
-  }
-
   // Tight sort state. Off by default and reset on reload, like tickerFilters —
   // the repo uses no browser storage. It re-orders only: no score changes, no
   // ticker is hidden, and the payload is re-read rather than re-scored.
@@ -2357,7 +2320,7 @@
 
     lastThemeSnapshot = data;
     lastThemeDate = date;
-    const l1s = radarL1s(data);
+    const l1s = (data && data.l1s) || null;
     if (!l1s || l1s.length === 0) {
       const msg = (date && !data) ? `No theme data for ${date}.` : 'No theme data for this date.';
       container.innerHTML = `<div class="no-data">${msg}</div>`;
@@ -3237,14 +3200,6 @@
     });
   }
 
-  // ── STATUS UPDATE ─────────────────────────────────────
-  function updateStatus(msg) {
-    const el = document.getElementById('dataStatus');
-    el.textContent = msg;
-    el.style.color = 'var(--green)';
-    el.style.borderColor = 'rgba(0,230,118,0.3)';
-  }
-
   // ── UTILITIES ─────────────────────────────────────────
   function escHtml(str) {
     const div = document.createElement('div');
@@ -3265,14 +3220,6 @@
     const n = parseFloat(val);
     if (isNaN(n)) return '—';
     return (n > 0 ? '+' : '') + n.toFixed(1) + '%';
-  }
-
-  function formatNum(val) {
-    if (val == null) return '—';
-    const n = parseFloat(val);
-    if (isNaN(n)) return '—';
-    if (n >= 1000) return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return n.toFixed(2);
   }
 
   function truncate(str, len) {

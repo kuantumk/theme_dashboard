@@ -179,6 +179,22 @@ class TestTheExchangeFallbackSurvivesBatching(unittest.TestCase):
         self.assertEqual(len(sockets), 1,
                          "the connection was thrown away over a listed answer")
 
+    def test_the_trailing_series_error_does_not_leak_into_the_next_batch(self):
+        """The echo above, when the failing chart is the LAST to finish.
+
+        The batch ends on `symbol_error` and returns before the follow-up
+        `series_error` is read. The exchange-fallback round opens the next
+        batch on the same connection, which then met that stray frame naming a
+        chart it does not own, raised a refusal, and discarded the chunk —
+        losing GNRC and the symbol batched with it on every retry.
+        """
+        script = {"NASDAQ:AAA": ["bars", "series_completed"],
+                  "NASDAQ:GNRC": ["symbol_error", "series_error"],
+                  "NYSE:GNRC": ["bars", "series_completed"]}
+        got, sockets = run_fetch(script, ["NASDAQ:AAA", "GNRC"], batch=2)
+        self.assertEqual(set(got), {"NASDAQ:AAA", "GNRC"})
+        self.assertEqual(len(sockets), 1)
+
     def test_a_ticker_on_no_exchange_is_absent_rather_than_guessed(self):
         script = {f"{ex}:NOPE": ["symbol_error"]
                   for ex in ("NASDAQ", "NYSE", "AMEX")}

@@ -401,6 +401,30 @@ class TestPollOnceEndToEnd(unittest.TestCase):
                 eng.poll_once()
         return eng, eng.build_state()["equity"]
 
+    def test_a_universe_our_floor_emptied_reads_as_a_100pct_drop(self):
+        """The coverage pair is counted after OUR liquidity floor. Counted
+        before it, an average-dollar-volume floor that removed every row left
+        `universe` non-zero, and the page said the board was shut."""
+        from unittest import mock
+
+        from src.bidask.config import load_config
+        from src.bidask.feed import Payload
+        from src.bidask.server import TapeEngine
+
+        _, rows = self.rows()
+        rows["avg_volume"] = 1.0          # $20/day: under every floor
+        payload = Payload(rows=rows, feed="streaming", matched=len(rows),
+                          market_status="market open")
+        with TemporaryDirectory() as tmp:
+            eng = TapeEngine(load_config(), Path(tmp), markets=("equity",))
+            eng.themes = {}
+            with mock.patch("src.bidask.server.fetch", return_value=payload), \
+                 mock.patch.object(TapeEngine, "ensure_profiles", lambda *a: None):
+                eng.poll_once()
+            state = eng.build_state()["equity"]
+        self.assertEqual(state["matched"], 3)
+        self.assertEqual(state["universe"], 0)
+
     def test_the_gate_admits_only_the_unusually_traded_rows(self):
         _, state = self.engine_and_state()
         shown = {m["symbol"] for column in ("strong", "weak")

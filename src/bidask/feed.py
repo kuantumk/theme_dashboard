@@ -37,25 +37,28 @@ unpublished field always fails, but because nothing obliges it to work.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
 from tradingview_screener import Query, col, screeners
 
 from src.bidask.config import cookie_jar
+from src.bidask.session_state import CLOSED, CRYPTO, resolve_session
 
 # Feed reports its own entitlement here: `delayed_streaming_900` unauthenticated
 # (900s = the documented 15-minute delay), `streaming` with a valid cookie pair.
 DELAYED_PREFIX = "delayed"
 
+# Only what something downstream reads. A column selected for nobody is bytes
+# on every poll and, worse, a claim a reader will take at face value.
+#
 # No `bid`/`ask` here, and that is deliberate. The america scanner publishes
 # neither — 3,771 fields in its metainfo and not one is a quote field — but
 # selecting them does not error: every row comes back null, which is
 # indistinguishable from a lost entitlement or a dead feed. The board no longer
 # reads a book at all, so the columns come out rather than sit there returning
-# nulls that a future reader could mistake for a market with no quotes. The
-# crypto list below keeps its pair: that scanner genuinely does publish one.
+# nulls that a future reader could mistake for a market with no quotes.
 #
 # The extended-hours columns are the price references outside the regular
 # session (`src/bidask/session_state.py`) and the live volume numerator for the
@@ -65,45 +68,22 @@ DELAYED_PREFIX = "delayed"
 # the 16:00 print all through the after-hours window and cannot distinguish
 # them. Every one of these was non-null on 100% of rows through the regular
 # session when measured.
+#
+# `relative_volume_10d_calc` is carried as `rvol` for display only and gates
+# nothing; see `grouping.RVOL_FIELD` for why the two names must stay apart.
 EQUITY_COLUMNS = [
-    "name", "close", "open", "change", "change_from_open", "volume",
-    "premarket_change", "premarket_close", "premarket_volume",
-    "postmarket_change", "postmarket_close", "postmarket_volume",
-    "relative_volume_10d_calc", "relative_volume_intraday|5",
-    "market_cap_basic", "sector", "industry",
+    "name", "close", "change", "change_from_open", "volume",
+    "premarket_change", "premarket_volume",
+    "postmarket_change", "postmarket_volume",
+    "relative_volume_10d_calc", "industry",
     "High.1M", "Low.1M", "High.3M", "Low.3M", "High.6M", "Low.6M",
     "price_52_week_high", "price_52_week_low",
-    "update_mode", "last_bar_update_time", "current_session",
+    "update_mode", "current_session",
 ]
 
-# `current_session` reports whether the market is actually trading, which is a
-# different question from `update_mode` (whether our *feed* is real-time). A
-# real-time entitlement on a closed market is still a closed market.
-#
-# `SESSION_STATES` in `src/bidask/session_state.py` reads the same field and
-# must carry the same keys: this table decides what the banner says, that one
-# decides which reference price and volume floor apply. A spelling added here
-# and not there renders a banner for a state the board has no rules for, so
-# `tests/test_bidask_session_state.py` pins the pair.
-SESSION_LABELS = {
-    # `market` is what the feed actually sends while the regular session runs —
-    # verified live, 2026-08-12. `regular` was assumed and never observed; an
-    # unmapped value falls through to the raw string, which then fails the UI's
-    # equality test and renders an open market in the "delayed" style.
-    "market": "market open",
-    "regular": "market open",
-    "extended": "extended hours",
-    "pre_market": "pre-market",
-    "premarket": "pre-market",
-    "post_market": "after hours",
-    "postmarket": "after hours",
-    "out_of_session": "market closed",
-    "holiday": "holiday",
-}
-
 # `24h_close_change|5` is the crypto board's whole price test — that market has
-# no open and no previous close, so `src/bidask/crypto_state.py` reads this one
-# field and labels the side "24h ago".
+# no open and no previous close, so `session_state.REFERENCE_FIELDS[CRYPTO]`
+# reads this one field (as `change_pct`) and labels the side "24h ago".
 #
 # `24h_vol|5` is the genuine 24-hour rolling volume, carried for display. It is
 # NOT what the relative-volume gate divides: `volume` is the UTC-day cumulative
@@ -121,8 +101,8 @@ SESSION_LABELS = {
 # different filter every hour — the exact failure the equity gate was
 # redesigned to escape. The board computes its own ratio instead (KTD2).
 CRYPTO_COLUMNS = [
-    "base_currency", "close", "bid", "ask", "24h_close_change|5", "volume",
-    "24h_vol|5", "high", "low", "update_mode", "last_bar_update_time",
+    "base_currency", "close", "24h_close_change|5", "volume",
+    "24h_vol|5", "update_mode",
 ]
 
 CRYPTO_EXCHANGE = "BINANCE"
@@ -136,13 +116,10 @@ class Payload:
     feed: str = ""
     error: str = ""
     matched: int = 0
+    # What the banner says, and what the board does. Both are read once, here,
+    # from one `session_state.SESSIONS` lookup, so the two cannot disagree.
     market_status: str = ""
-    extra: dict = field(default_factory=dict)
-
-    @property
-    def market_open(self) -> bool:
-        return self.market_status in ("market open", "extended hours",
-                                      "pre-market", "after hours")
+    session_state: str = CLOSED
 
     @property
     def delayed(self) -> bool:
@@ -152,10 +129,6 @@ class Payload:
         cosmetic error, while presenting 15-minute-old prices as live is not.
         """
         return not self.feed or self.feed.startswith(DELAYED_PREFIX)
-
-    @property
-    def ok(self) -> bool:
-        return not self.error and not self.rows.empty
 
 
 def _feed_mode(df: pd.DataFrame) -> str:
@@ -167,15 +140,24 @@ def _feed_mode(df: pd.DataFrame) -> str:
     return str(modes[0]) if len(modes) == 1 else "mixed"
 
 
-def _market_status(df: pd.DataFrame) -> str:
-    """Human-readable trading state, from the feed's own session field."""
+def _session(df: pd.DataFrame) -> tuple:
+    """`(state, banner label)` from the feed's own session field.
+
+    `current_session` reports whether the market is actually trading, which is
+    a different question from `update_mode` (whether our *feed* is real-time).
+    A real-time entitlement on a closed market is still a closed market.
+
+    One value describes the whole response. Reading it per row would let two
+    tickers in one poll be judged against different references and different
+    floors, which no banner on screen would show. An absent reading is a closed
+    board with no label — the UI renders that as "unknown", never as open.
+    """
     if "current_session" not in df.columns:
-        return ""
+        return CLOSED, ""
     values = df["current_session"].dropna().unique().tolist()
     if not values:
-        return ""
-    raw = str(values[0]).strip().lower()
-    return SESSION_LABELS.get(raw, raw.replace("_", " "))
+        return CLOSED, ""
+    return resolve_session(values[0])
 
 
 def _traded_value(df: pd.DataFrame) -> pd.Series:
@@ -243,9 +225,10 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
     # What covers that one is the wording in `web/app.js`: an empty `feed`
     # renders as "feed unknown" rather than "delayed feed", so an absent
     # reading stops accusing a streaming vendor of a stale one.
-    feed, status = _feed_mode(df), _market_status(df)
+    feed, (state, status) = _feed_mode(df), _session(df)
     if df.empty:
-        return Payload(rows=df, feed=feed, matched=matched, market_status=status)
+        return Payload(rows=df, feed=feed, matched=matched, market_status=status,
+                       session_state=state)
 
     # Guarded like the query above, because this block now does work the query
     # used to do. `Value.Traded` was a `.where()` clause, so a bad column came
@@ -254,7 +237,7 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
     # it just withdrew `Value.Traded` — and nothing catches it: not this
     # function, not `poll_once`, only the poll loop's own handler, which prints
     # a type name and backs off without ever calling `write_state`. Every field
-    # on the page then freezes at its last value, `generated_at` included, and
+    # on the page then freezes at its last value, the scan clock included, and
     # both markets lose the cycle because one write covers the whole loop. That
     # is worse than the bug this file was opened to fix: wrong-but-visible
     # pills at least said something was wrong.
@@ -284,8 +267,9 @@ def fetch_equities(cfg, limit: int = 3000) -> Payload:
         df = df[df["dollar_vol"] >= cfg.min_today_dollar_vol]
     except Exception as exc:  # noqa: BLE001 — a dead column must not freeze the page
         return Payload(rows=pd.DataFrame(), feed=feed, error=type(exc).__name__,
-                       matched=matched, market_status=status)
-    return Payload(rows=df, feed=feed, matched=matched, market_status=status)
+                       matched=matched, market_status=status, session_state=state)
+    return Payload(rows=df, feed=feed, matched=matched, market_status=status,
+                   session_state=state)
 
 
 def fetch_crypto(cfg, limit: int = 200) -> Payload:
@@ -303,17 +287,20 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
         return Payload(rows=pd.DataFrame(), error=type(exc).__name__)
 
     # Read once, before any filtering, for the reason `fetch_equities` gives.
-    # Crypto's status is a constant rather than a reading, and withholding a
-    # constant because a response came back empty is the same asymmetry.
+    # Crypto's status and state are constants rather than readings — this
+    # scanner sends no `current_session` — and withholding a constant because a
+    # response came back empty is the same asymmetry.
     feed = _feed_mode(df)
     if df.empty:
-        return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
+        return Payload(rows=df, feed=feed, matched=matched, market_status="24/7",
+                       session_state=CRYPTO)
 
     # Some venue rows carry a null base_currency; without this they surface as a
     # literal "nan" ticker in the UI.
     df = df[df["base_currency"].notna()]
     if df.empty:
-        return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
+        return Payload(rows=df, feed=feed, matched=matched, market_status="24/7",
+                       session_state=CRYPTO)
     df = df.drop_duplicates(subset="base_currency", keep="first").copy()
     df["symbol"] = df["base_currency"]
     # The instrument behind the display symbol. Ordering by 24-hour volume puts
@@ -324,8 +311,7 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
     df["feed_symbol"] = df["ticker"] if "ticker" in df.columns else df["symbol"]
     df["change_pct"] = df["24h_close_change|5"]
     # Crypto has no session-scoped average-volume field and no auction windows,
-    # so the equity liquidity gate does not apply. `high`/`low` are 24h rolling
-    # rather than session extremes — see A3 in the plan.
+    # so the equity liquidity gate does not apply.
     df["avg_volume"] = None
     df["rvol"] = None
     # ⛔ MEASURED 2026-09-17 19:03 UTC, 13 of 13 rows: crypto `volume` is the
@@ -348,7 +334,8 @@ def fetch_crypto(cfg, limit: int = 200) -> Payload:
     if "24h_vol|5" in df.columns:
         vol_24h = pd.to_numeric(df["24h_vol|5"], errors="coerce")
         df["vol_24h"] = vol_24h.astype(object).where(vol_24h.notna(), None)
-    return Payload(rows=df, feed=feed, matched=matched, market_status="24/7")
+    return Payload(rows=df, feed=feed, matched=matched, market_status="24/7",
+                       session_state=CRYPTO)
 
 
 def fetch(market: str, cfg, limit: Optional[int] = None) -> Payload:

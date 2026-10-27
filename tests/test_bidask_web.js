@@ -50,6 +50,22 @@ test('59-row prefix does not inflate the last group score or reorder it', () => 
   assert.ok(!html.includes('5.00</span>'));
 });
 
+test('one large group does not consume the whole column', () => {
+  // The server publishes every member, so the per-group cap is the browser's.
+  // Without it a 70-member industry bucket spends the 60-row budget alone and
+  // every other narrative vanishes.
+  const p = page();
+  const big = { name: 'Biotechnology', score: 4.5, roster: 70,
+    members: Array.from({length:70}, (_, i) => member(`B${i}`, 4)) };
+  const small = { name: 'Semiconductors', score: 1.5, roster: 5,
+    members: Array.from({length:5}, (_, i) => member(`S${i}`, 1)) };
+  const html = render(p, [big, small]);
+  assert.ok(html.includes('Biotechnology'));
+  assert.ok(html.includes('Semiconductors'));
+  assert.equal((html.match(/class="chip"/g) || []).length, scoring.max_rows_per_group + 5);
+  assert.equal(p.get('strong-meta').className, 'column-meta hiding');
+});
+
 test('filters recover previously hidden groups and remove singleton breadth', () => {
   const p = page();
   p.get('min-volume').value = '10'; // 10,000 shares

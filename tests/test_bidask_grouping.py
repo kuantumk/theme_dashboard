@@ -8,14 +8,9 @@ intensity, and an additive share term carries breadth.
 """
 
 import unittest
-from types import SimpleNamespace
 
-from config.settings import CONFIG
 from src.bidask.config import load_config
 from src.bidask.grouping import (
-    DEFAULT_BREADTH_COEF,
-    DEFAULT_BREADTH_MIN_MEMBERS,
-    DEFAULT_RVOL_CAP,
     RVOL_FIELD,
     SIDE_STRONG,
     SIDE_WEAK,
@@ -49,14 +44,8 @@ def row(symbol, rvol, *, sides=(SIDE_STRONG,), **meta):
 
 
 def stub_cfg(**knobs):
-    """A config carrying the scoring knobs explicitly, caps at their defaults."""
-    base = {"max_rows_per_column": CFG.max_rows_per_column,
-            "max_rows_per_group": CFG.max_rows_per_group,
-            "group_rvol_cap": DEFAULT_RVOL_CAP,
-            "group_breadth_coef": DEFAULT_BREADTH_COEF,
-            "group_breadth_min_members": DEFAULT_BREADTH_MIN_MEMBERS}
-    base.update(knobs)
-    return SimpleNamespace(**base)
+    """The shipped config with some scoring knobs overridden."""
+    return load_config(knobs)
 
 
 class TestGrouping(unittest.TestCase):
@@ -101,25 +90,27 @@ class TestGrouping(unittest.TestCase):
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         self.assertEqual(cols["strong"][0]["name"], UNCLASSIFIED_GROUP)
 
-    def test_one_large_group_does_not_consume_the_whole_column(self):
-        # Regression: the column budget was decremented by each group's full
-        # member count in score order, so a 70-member industry bucket took every
-        # slot and every other narrative vanished.
+    def test_the_payload_carries_every_group_and_every_member(self):
+        """The browser applies the display caps, after its sliders.
+
+        It recomputes a filtered group's score from the members still visible,
+        so a server-side cap would hide exactly the inputs it needs. The caps
+        themselves are pinned in `tests/test_bidask_web.js`.
+        """
         big = [row(f"B{i}", 4.0, industry="Biotechnology") for i in range(70)]
         small = [row(f"S{i}", 1.0, industry="Semiconductors") for i in range(5)]
         rows = big + small
         cols = build_columns(rows, THEMES, CFG, universe=rows)
-        names = [g["name"] for g in cols["strong"]]
-        self.assertIn("Biotechnology", names)
-        self.assertIn("Semiconductors", names)
-        for group in cols["strong"]:
-            self.assertLessEqual(len(group["members"]), CFG.max_rows_per_group)
+        sizes = {g["name"]: len(g["members"]) for g in cols["strong"]}
+        self.assertEqual(sizes, {"Biotechnology": 70, "Semiconductors": 5})
 
-    def test_column_cap_still_bounds_total_rows(self):
-        rows = [row(f"T{i}", 3.0, industry=f"Ind{i // 3}") for i in range(120)]
-        cols = build_columns(rows, THEMES, CFG, universe=rows)
-        total = sum(len(g["members"]) for g in cols["strong"])
-        self.assertLessEqual(total, CFG.max_rows_per_column)
+    def test_the_display_caps_travel_with_the_columns(self):
+        rows = [row("NVDA", 3.0)]
+        scoring = build_columns(rows, THEMES, CFG, universe=rows)["scoring"]
+        self.assertEqual(scoring["max_rows_per_column"], CFG.max_rows_per_column)
+        self.assertEqual(scoring["max_rows_per_group"], CFG.max_rows_per_group)
+        flat = build_columns(rows, {}, CFG, grouped=False, universe=rows)["scoring"]
+        self.assertEqual(flat["max_rows_per_group"], CFG.max_rows_per_column)
 
 
 class TestSideAssignment(unittest.TestCase):
@@ -175,10 +166,10 @@ class TestThemeScore(unittest.TestCase):
                 row("XC", 1.0, industry="Alpha")]
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         score = cols["strong"][0]["score"]
-        intensity = (DEFAULT_RVOL_CAP + 1.0 + 1.0) / 3
-        self.assertAlmostEqual(score, intensity + DEFAULT_BREADTH_COEF, places=4)
+        intensity = (CFG.group_rvol_cap + 1.0 + 1.0) / 3
+        self.assertAlmostEqual(score, intensity + CFG.group_breadth_coef, places=4)
         # Capping the mean instead reads 5.0 — one member carrying two others.
-        self.assertLess(score, DEFAULT_RVOL_CAP)
+        self.assertLess(score, CFG.group_rvol_cap)
 
     def test_only_the_top_three_members_carry_the_intensity(self):
         """A fourth, quieter member must not drag the leaders' mean down."""
@@ -196,7 +187,7 @@ class TestThemeScore(unittest.TestCase):
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         self.assertEqual(len(cols["strong"]), 1)
         self.assertAlmostEqual(cols["strong"][0]["score"],
-                               4.0 + DEFAULT_BREADTH_COEF, places=4)
+                               4.0 + CFG.group_breadth_coef, places=4)
 
     def test_a_single_member_group_is_not_excluded(self):
         rows = [row("XA", 4.0, industry="Alpha")]
@@ -211,7 +202,7 @@ class TestThemeScore(unittest.TestCase):
                  "industry": "Alpha"}]
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         score = cols["strong"][0]["score"]
-        self.assertAlmostEqual(score, (4.0 + 0.0) / 2 + DEFAULT_BREADTH_COEF,
+        self.assertAlmostEqual(score, (4.0 + 0.0) / 2 + CFG.group_breadth_coef,
                                places=4)
 
     def test_the_cap_comes_from_config(self):
@@ -246,9 +237,9 @@ class TestBreadthTerm(unittest.TestCase):
         quiet = [row(f"YQ{i}", 0.2, industry="Bravo") for i in range(6)]
         cols = build_columns(qualifying, THEMES, CFG, universe=qualifying + quiet)
         scores = {g["name"]: g["score"] for g in cols["strong"]}
-        self.assertAlmostEqual(scores["Alpha"], 3.0 + DEFAULT_BREADTH_COEF, places=4)
+        self.assertAlmostEqual(scores["Alpha"], 3.0 + CFG.group_breadth_coef, places=4)
         self.assertAlmostEqual(scores["Bravo"],
-                               3.0 + DEFAULT_BREADTH_COEF * 0.25, places=4)
+                               3.0 + CFG.group_breadth_coef * 0.25, places=4)
 
     def test_an_industry_fallback_group_gets_a_denominator(self):
         """Untagged buckets have no taxonomy roster; the universe is the only one."""
@@ -257,7 +248,7 @@ class TestBreadthTerm(unittest.TestCase):
         quiet = [row(f"ZQ{i}", 0.2, industry="Semiconductors") for i in range(2)]
         cols = build_columns(qualifying, THEMES, CFG, universe=qualifying + quiet)
         self.assertAlmostEqual(cols["strong"][0]["score"],
-                               3.0 + DEFAULT_BREADTH_COEF * 0.5, places=4)
+                               3.0 + CFG.group_breadth_coef * 0.5, places=4)
 
     def test_a_group_below_the_minimum_scores_no_breadth_at_all(self):
         """Share alone hands a one-member group the maximum."""
@@ -302,7 +293,7 @@ class TestBreadthTerm(unittest.TestCase):
         group = next(g for g in cols["strong"] if g["name"] == MEMORY)
         self.assertEqual([m["symbol"] for m in group["members"]], ["TWIN", "PEER"])
         self.assertAlmostEqual(group["score"],
-                               2.5 + DEFAULT_BREADTH_COEF * 0.5, places=4)
+                               2.5 + CFG.group_breadth_coef * 0.5, places=4)
 
 
 class TestBothColumnsSortDescending(unittest.TestCase):
@@ -333,8 +324,9 @@ class TestBothColumnsSortDescending(unittest.TestCase):
         self.assertEqual([m["symbol"] for m in cols["weak"][0]["members"]],
                          ["WB", "WA"])
 
-    def test_the_weak_column_truncates_its_quietest_themes(self):
-        """The inverted sort dropped exactly the rows this column is for."""
+    def test_the_weak_column_leads_with_its_loudest_themes(self):
+        """The inverted sort put the quietest themes first, so the browser's
+        column budget was spent before it reached the rows this column is for."""
         rows = []
         for i in range(30):
             for j in range(3):
@@ -342,15 +334,16 @@ class TestBothColumnsSortDescending(unittest.TestCase):
                                 sides=(SIDE_WEAK,), industry=f"Ind{i:02d}"))
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         shown = [g["name"] for g in cols["weak"]]
-        self.assertEqual(shown[0], "Ind29")
-        self.assertNotIn("Ind00", shown)
+        self.assertEqual(shown, [f"Ind{i:02d}" for i in range(29, -1, -1)])
 
 
 class TestTruncationIsReported(unittest.TestCase):
-    """The column cap drops most of the board, and used to do so silently.
+    """The browser's column cap drops most of the board, and used to do so
+    silently.
 
     Measured 2026-08-14: 13 of 124 strong groups and 111 of 367 in-play tickers
     reached the screen, and nothing on the page said anything had been dropped.
+    The server publishes the totals; the page counts what it shows.
     """
 
     def test_only_totals_are_published(self):
@@ -367,23 +360,22 @@ class TestTruncationIsReported(unittest.TestCase):
         self.assertEqual(meta["groups_total"], len(cols["strong"]))
         self.assertEqual(meta["tickers_total"], 1)
 
-    def test_dropped_groups_are_counted(self):
+    def test_every_group_is_counted(self):
         # 20 industries of 5 members each is 100 rows against a 60-row budget.
         rows = [row(f"T{i}", 4.0 - (i % 5) * 0.1, industry=f"Ind{i // 5}")
                 for i in range(100)]
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         meta = cols["truncated"]["strong"]
         self.assertEqual(meta["groups_total"], 20)
-        self.assertLess(len(cols["strong"]), meta["groups_total"])
+        self.assertEqual(len(cols["strong"]), meta["groups_total"])
 
-    def test_dropped_tickers_are_counted_distinctly(self):
+    def test_tickers_are_counted_distinctly(self):
         rows = [row(f"T{i}", 3.0, industry=f"Ind{i // 5}") for i in range(100)]
         cols = build_columns(rows, THEMES, CFG, universe=rows)
         meta = cols["truncated"]["strong"]
         self.assertEqual(meta["tickers_total"], 100)
-        rendered = {m["symbol"] for g in cols["strong"] for m in g["members"]}
-        self.assertLessEqual(len(rendered), CFG.max_rows_per_column)
-        self.assertLess(len(rendered), meta["tickers_total"])
+        published = {m["symbol"] for g in cols["strong"] for m in g["members"]}
+        self.assertEqual(len(published), meta["tickers_total"])
 
     def test_a_dual_role_ticker_counts_once(self):
         """DUAL sits in two theme leaves; it is still one ticker."""
@@ -406,8 +398,7 @@ class TestTruncationIsReported(unittest.TestCase):
         cols = build_columns(rows, {}, CFG, grouped=False, universe=rows)
         meta = cols["truncated"]["strong"]
         self.assertEqual(meta["tickers_total"], 80)
-        self.assertEqual(len(cols["strong"][0]["members"]),
-                         CFG.max_rows_per_column)
+        self.assertEqual(len(cols["strong"][0]["members"]), 80)
 
 
 class TestCryptoPath(unittest.TestCase):
@@ -421,9 +412,9 @@ class TestCryptoPath(unittest.TestCase):
     def test_the_flat_group_scores_on_the_same_capped_mean(self):
         rows = [row("BTC", 40.0), row("ETH", 1.0), row("SOL", 1.0)]
         cols = build_columns(rows, {}, CFG, grouped=False, universe=rows)
-        intensity = (DEFAULT_RVOL_CAP + 1.0 + 1.0) / 3
+        intensity = (CFG.group_rvol_cap + 1.0 + 1.0) / 3
         self.assertAlmostEqual(cols["strong"][0]["score"],
-                               intensity + DEFAULT_BREADTH_COEF, places=4)
+                               intensity + CFG.group_breadth_coef, places=4)
 
     def test_flat_members_run_highest_first(self):
         rows = [row("ETH", 1.0), row("BTC", 4.0), row("SOL", 2.0)]
@@ -432,22 +423,7 @@ class TestCryptoPath(unittest.TestCase):
                          ["BTC", "SOL", "ETH"])
 
 
-class TestConfigDefaultsMatchTheYaml(unittest.TestCase):
-    """`BidAskConfig` does not carry these three knobs yet.
-
-    `grouping` reads them off the config object when present and falls back to
-    its own named defaults otherwise. Pin the two together or the shipped YAML
-    and the running board drift apart with nothing on screen to show it.
-    """
-
-    def test_defaults_equal_the_shipped_yaml(self):
-        block = CONFIG.get("bidask") or {}
-        self.assertAlmostEqual(float(block["group_rvol_cap"]), DEFAULT_RVOL_CAP)
-        self.assertAlmostEqual(float(block["group_breadth_coef"]),
-                               DEFAULT_BREADTH_COEF)
-        self.assertEqual(int(block["group_breadth_min_members"]),
-                         DEFAULT_BREADTH_MIN_MEMBERS)
-
+class TestShippedScoringBalance(unittest.TestCase):
     def test_the_breadth_term_cannot_out_rank_a_capped_leader(self):
         """The shipped balance: intensity-led, breadth as the tiebreak.
 
@@ -456,8 +432,7 @@ class TestConfigDefaultsMatchTheYaml(unittest.TestCase):
         that span restores the breadth-swamps-intensity failure the summed
         margin had.
         """
-        self.assertLess(DEFAULT_BREADTH_COEF, DEFAULT_RVOL_CAP)
-
+        self.assertLess(CFG.group_breadth_coef, CFG.group_rvol_cap)
 
 class TestExtremeBadge(unittest.TestCase):
     def test_above_52_week_high_badges_52w_not_1m(self):

@@ -77,7 +77,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
-from src.bidask.session_state import MARKET, POST_MARKET, PRE_MARKET
+from src.bidask.session_state import CRYPTO, MARKET, POST_MARKET, PRE_MARKET
 from src.bidask.tvbars import fetch_bars
 
 ET = ZoneInfo("America/New_York")
@@ -94,12 +94,6 @@ SESSION_MINUTES = SESSION_CLOSE_MIN - SESSION_OPEN_MIN  # 960
 # floor schedule below — never as the anchor of the measure itself.
 REGULAR_OPEN_MIN = 9 * 60 + 30   # 09:30 ET
 REGULAR_CLOSE_MIN = 16 * 60      # 16:00 ET
-
-# The crypto board's schedule key. It is deliberately NOT a session state:
-# crypto trades continuously and `session_state.py` is the equity path, which
-# is why that module does not carry this name. It exists here so one gate
-# mechanism covers both markets — a flat floor is a one-band schedule.
-CRYPTO = "crypto"
 
 BAR_MINUTES = 5
 BARS_PER_SESSION = SESSION_MINUTES // BAR_MINUTES  # 192
@@ -145,11 +139,11 @@ class MarketGrid:
     fail-closed rules in `rvol_at_time` are the part that must never diverge.
 
     `core_*` bounds the window whose bars decide completeness, and doubles as
-    the window `extended_volume_is_dead` treats as "inside". For equities that
-    is the regular session, so a day of pre-market zeros is still caught. For
-    crypto the core is the whole day, so nothing sits outside it and that check
-    has nothing to report — which is correct, since the chart socket is the
-    only crypto bar source and it carries real volume in every bar.
+    the window the dead-extended-volume check treats as "inside". For equities
+    that is the regular session, so a day of pre-market zeros is still caught.
+    For crypto the core is the whole day, so nothing sits outside it and that
+    check has nothing to report — which is correct, since the chart socket is
+    the only crypto bar source and it carries real volume in every bar.
     """
 
     tz: ZoneInfo
@@ -162,19 +156,6 @@ class MarketGrid:
     @property
     def slots(self) -> int:
         return self.minutes // BAR_MINUTES
-
-    def minute_of_day(self, stamp) -> int:
-        """`stamp`'s minute of day in this grid's own timezone.
-
-        A stamp with no timezone is read as already local to this grid, which
-        is how the whole module treated bar indexes before a second grid
-        existed. Converting a naive stamp instead would raise on the poll path.
-        """
-        local = stamp.astimezone(self.tz) if stamp.tzinfo is not None else stamp
-        return local.hour * 60 + local.minute
-
-    def is_core(self, minute_of_day: int) -> bool:
-        return self.core_open_min <= minute_of_day < self.core_close_min
 
 
 EQUITY_GRID = MarketGrid(
@@ -222,13 +203,6 @@ SCHEDULE_ORIGIN_MIN = {
     # Continuous, so the anchor is the only origin there is.
     CRYPTO: CRYPTO_ANCHOR_MIN,        # 00:00 UTC
 }
-
-# `config.py` cannot import this module — it sits upstream of `tvbars`, which
-# reaches `tvsocket`, which imports `config` for its cookie jar — so it carries
-# its own copy of these keys. `tests/test_bidask_rvol_at_time.py` pins the two
-# equal, the same way `feed.SESSION_LABELS` and `session_state.SESSION_STATES`
-# are pinned.
-SCHEDULE_STATES = tuple(SCHEDULE_ORIGIN_MIN)
 
 # Version 4 preserves fractional volumes, keys curves by feed instrument,
 # and excludes sessions with explicit invalid volume. Older caches cannot
@@ -309,16 +283,14 @@ def rvol_at_time(volume_so_far, profile, elapsed_minutes: float,
 def _grid_minutes(index, grid: MarketGrid):
     """Each bar's local minute of day and its local calendar day, as arrays.
 
-    ⛔ One timezone conversion per FRAME, not one per bar. The scalar
-    `grid.minute_of_day` calls `astimezone` on every stamp, which at the real
-    warm-up size — 1,800 symbols x 2,496 bars — is 4.5 million Python-level
-    conversions and measured 33.25s of a warm-up whose download is heading for
-    49s. The arithmetic below is identical; only the loop is gone.
+    ⛔ One timezone conversion per FRAME, not one per bar. The retired scalar
+    form called `astimezone` on every stamp, which at the real warm-up size —
+    1,800 symbols x 2,496 bars — is 4.5 million Python-level conversions and
+    measured 33.25s of a warm-up whose download is heading for 49s.
 
     ⛔ The day key is built from the LOCAL year, month and day rather than from
     a normalised timestamp, so a DST boundary cannot move a bar into its
-    neighbour's day. A naive index is read as already local to this grid, which
-    is how `MarketGrid.minute_of_day` treats a naive stamp.
+    neighbour's day. A naive index is read as already local to this grid.
     """
     import pandas as pd
 
@@ -341,24 +313,13 @@ def _day_label(key: int) -> str:
 def _core_mask(minute, grid: MarketGrid):
     """Which bars fall inside the window that decides completeness.
 
-    The array form of `MarketGrid.is_core`, and the ONLY spelling of that test
-    on the vectorised path. It replaced the scalar `_is_extended`, whose sole
-    callers were the two loops below — two inline copies of one predicate is
-    how a grid's core window comes to mean two different things.
+    The ONLY spelling of that test. Two inline copies of one predicate is how a
+    grid's core window comes to mean two different things.
     """
     return (minute >= grid.core_open_min) & (minute < grid.core_close_min)
 
 
 def _extended_is_dead(minute, volume, grid: MarketGrid) -> bool:
-    """`extended_volume_is_dead`, over arrays the caller already built."""
-    extended = ~_core_mask(minute, grid)
-    if not extended.any():
-        return False
-    outside = volume[extended]
-    return not bool(np.any(np.isfinite(outside) & (outside > 0)))
-
-
-def extended_volume_is_dead(frame, grid: MarketGrid = EQUITY_GRID) -> bool:
     """True when extended-hours bars exist and not one carries real volume.
 
     This is the yfinance shape, and it is the one failure that must never
@@ -371,15 +332,16 @@ def extended_volume_is_dead(frame, grid: MarketGrid = EQUITY_GRID) -> bool:
     the source is broken.
 
     On the crypto grid the core window is the whole day, so no bar is ever
-    outside it, `seen` stays False and this returns False for every frame. That
-    is the right answer rather than a gap: crypto bars come only from the chart
-    socket, which carries real volume — measured 2026-09-17, zero zero-volume
-    bars across 60 symbols — and there is no extended window to be dead.
+    outside it and this is False for every frame. That is the right answer
+    rather than a gap: crypto bars come only from the chart socket, which
+    carries real volume — measured 2026-09-17, zero zero-volume bars across 60
+    symbols — and there is no extended window to be dead.
     """
-    if frame is None or len(frame) == 0:
+    extended = ~_core_mask(minute, grid)
+    if not extended.any():
         return False
-    minute, _day = _grid_minutes(frame.index, grid)
-    return _extended_is_dead(minute, frame["Volume"].to_numpy(dtype=float), grid)
+    outside = volume[extended]
+    return not bool(np.any(np.isfinite(outside) & (outside > 0)))
 
 
 def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
@@ -395,7 +357,7 @@ def build_profiles(bars_by_symbol: dict, sessions: int = DEFAULT_SESSIONS,
     to catch.
 
     A symbol whose extended-hours bars all read zero is omitted entirely rather
-    than given a regular-session-only curve; see `extended_volume_is_dead`.
+    than given a regular-session-only curve; see `_extended_is_dead`.
 
     ⛔ Days are cut in the GRID's timezone, not the frame's. `tvbars` hands
     back an ET-indexed frame for both markets, so grouping on the raw index

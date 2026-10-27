@@ -773,7 +773,7 @@
               <div class="lg-sub"><h4>MMFI</h4>${bandTable(Object.assign({ range: [0, 100] }, B.mmfi), pct1)}</div>
               <div class="lg-sub"><h4>MMTW</h4>${bandTable(Object.assign({ range: [0, 100] }, B.mmtw), pct1)}</div>
               <div class="lg-sub"><h4>MMTH</h4>${bandTable(Object.assign({ range: [0, 100] }, B.mmth), pct1)}</div></div>
-              <p>The small history numbers under a tile use the rule of that tile. NAAIM and AAII are never tinted: no threshold for them is calibrated here.</p>`,
+              <p>NAAIM and AAII are never tinted: no threshold for them is calibrated here.</p>`,
           },
           {
             id: 'nasi', title: 'NASI — McClellan Summation and its RSI',

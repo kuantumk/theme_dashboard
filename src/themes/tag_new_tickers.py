@@ -83,14 +83,17 @@ def _canonicalize_sheet_themes(raw_themes: Iterable[str]) -> tuple[List[str], Li
 
     Returns ``(canonical_paths, dropped_labels)``.
 
-    Each raw label is normalised through the legacy alias table; the result is
-    then validated against the canonical taxonomy. Labels that resolve to a
-    valid taxonomy path are kept (deduplicated, preserving order). Labels that
-    are already canonical paths are kept as-is. Everything else is dropped and
-    reported back to the caller for logging.
+    A label that is already a valid stored tag is kept as-is; otherwise it is
+    normalised through the legacy alias table and the result validated. The
+    check is the strict :func:`is_valid_tag`, not ``validate_path``: some
+    alias keys are bare L1s with children (``Space``, ``Nuclear``,
+    ``Cybersecurity``), which ``validate_path`` accepts, so their remap never
+    ran and the bare L1 was written as a tag. Labels that resolve are kept
+    (deduplicated, preserving order); everything else is dropped and reported
+    back to the caller for logging.
     """
     from src.themes.legacy_aliases import normalize_legacy_theme
-    from src.themes.theme_taxonomy import load_taxonomy, validate_path
+    from src.themes.theme_taxonomy import is_valid_tag, load_taxonomy
 
     taxonomy = load_taxonomy()
     canonical: List[str] = []
@@ -100,14 +103,8 @@ def _canonicalize_sheet_themes(raw_themes: Iterable[str]) -> tuple[List[str], Li
     for raw in normalize_theme_list(raw_themes):
         if raw in GENERIC_THEMES:
             continue
-        # First try: is the sheet label already a canonical taxonomy path?
-        candidate = raw if validate_path(raw, taxonomy) else None
-        # Second try: is it a known legacy label?
-        if candidate is None:
-            mapped = normalize_legacy_theme(raw)
-            if mapped and validate_path(mapped, taxonomy):
-                candidate = mapped
-        if candidate is None:
+        candidate = raw if is_valid_tag(raw, taxonomy) else normalize_legacy_theme(raw)
+        if not candidate or not is_valid_tag(candidate, taxonomy):
             dropped.append(raw)
             continue
         if candidate in seen:

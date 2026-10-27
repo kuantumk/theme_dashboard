@@ -37,8 +37,8 @@ class NaNRSTest(unittest.TestCase):
         expected_count = int(90.0 > MOMENTUM_THRESHOLD) + int(80.0 > MOMENTUM_THRESHOLD)
         self.assertEqual(m['high_momentum_count'], expected_count)
         self.assertAlmostEqual(m['high_momentum_pct'], expected_count / 2 * 100)
-        # NaN-RS member composites with the neutral default, not 0
-        self.assertAlmostEqual(m['ticker_scores']['CCC'], (MISSING_DEFAULT + 20.0) / 2)
+        # A NaN-RS member is still scored on its VARS
+        self.assertAlmostEqual(m['ticker_scores']['CCC'], 20.0)
 
     def test_all_nan_rs_falls_back_to_neutral(self):
         master = make_master([
@@ -52,6 +52,34 @@ class NaNRSTest(unittest.TestCase):
         self.assertEqual(m['high_momentum_count'], 0)
         self.assertEqual(m['high_momentum_pct'], 0.0)
         self.assertFalse(np.isnan(m['avg_rs_sts']))
+
+
+class VarsRankingTest(unittest.TestCase):
+    def test_theme_score_is_the_mean_vars_of_its_leaders(self):
+        master = make_master([
+            {'ticker': 'AAA', 'rs_sts_pct': 99.0, 'vars': 2.0},
+            {'ticker': 'BBB', 'rs_sts_pct': 10.0, 'vars': 8.0},
+        ])
+        m = calculate_theme_metrics('AI / Test', ['AAA', 'BBB'], master, fundamentals={})
+        # RS no longer enters the score: 99 RS does not lift it.
+        self.assertAlmostEqual(m['score'], 5.0)
+
+    def test_a_member_without_vars_is_not_scored_at_the_old_default_of_50(self):
+        master = make_master([
+            {'ticker': 'AAA', 'vars': 3.0},
+            {'ticker': 'BBB', 'vars': 1.0},
+            {'ticker': 'NEW', 'vars': np.nan},
+        ])
+        m = calculate_theme_metrics('AI / Test', ['AAA', 'BBB', 'NEW'], master, fundamentals={})
+        self.assertAlmostEqual(m['score'], 2.0)
+        self.assertNotIn('NEW', m['ticker_scores'])
+
+    def test_breadth_counts_members_with_vars(self):
+        master = make_master([
+            {'ticker': 'AAA', 'vars': 3.0},
+            {'ticker': 'NEW', 'vars': np.nan},
+        ])
+        self.assertIsNone(calculate_theme_metrics('AI / Test', ['AAA', 'NEW'], master, fundamentals={}))
 
 
 if __name__ == '__main__':

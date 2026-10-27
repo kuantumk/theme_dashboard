@@ -123,8 +123,9 @@ two-axis score against an independent series pulled them apart.
 
 ## Examples
 
-`tools/probe_bidask.py` (an early prototype, not the shipped classifier) has
-both halves of the trap in eight lines:
+`tools/probe_bidask.py` (an early prototype, not the shipped classifier;
+deleted 2026-10-27 with the other Highs/Lows research tools, see `git log --
+tools/probe_bidask.py`) had both halves of the trap in eight lines:
 
 ```python
 rate = pd.Series({s: ask_hits[s] / scored[s] for s in syms})
@@ -139,21 +140,19 @@ The target is a last-to-last move, and the interpretation is inverted: a low
 correlation is read as evidence the measure carries independent information,
 when a rule that reads a per-ticker constant scores low for exactly the opposite
 reason. Applied to the classifier as it then shipped, that reading would have
-called `-0.009` a success. The probe itself still runs — it reads the crypto
-scanner's own `bid`/`ask`, which that market genuinely serves — so the trap is
-live code, not history.
+called `-0.009` a success.
 
-Two validators in this repo already do it correctly and are worth copying
-rather than rewriting:
+Two validators did it correctly and are worth copying rather than rewriting:
 
 - `tools/validate_radar.py` scores against named episodes with verified forward
   returns, and asserts a rank threshold rather than a correlation.
-- `tools/backtest_hl_rule.py` correlates a simulated prediction against an
-  external `OBSERVED` dataset that the simulation never reads.
+- `tools/backtest_hl_rule.py` (deleted 2026-10-27; recover it from git history)
+  correlated a simulated prediction against an external `OBSERVED` dataset that
+  the simulation never read.
 
-`tests/backtest_theme_scoring.py:689` compares an old and a new formula to each
-other. That answers "did the ranking change", not "is either correct", and
-should not be read as an accuracy check.
+The retired `tests/backtest_theme_scoring.py` compared an old and a new formula
+to each other. That answers "did the ranking change", not "is either correct",
+and should not be read as an accuracy check.
 
 ## Related
 

@@ -161,7 +161,7 @@ When running interactively, stop at the PR. When running as the weekday routine,
 ## Anti-patterns
 
 - **Don't run between 1:30 PM and ~5:00 PM PT on weekdays** — the daily-screening workflow starts at 1:30 PM PT and its results commit lands 4:01–4:57 PM PT (observed range); racing it means rebasing against a moving main and auditing a half-updated worklist. The routine is scheduled at 5:30 PM PT for this reason.
-- **Don't bulk-rewrite after a taxonomy edit** — that's `tools/migrate_themes.py`. This skill is for ongoing quality, not migration.
+- **Don't bulk-rewrite after a taxonomy edit.** This skill is for ongoing quality, not migration; a taxonomy rename is a deliberate one-off change made with the retag CLI (the May 2026 migration script is deleted — it rebuilt tags from a stale snapshot and ignored `git_locked_themes`).
 - **Don't bypass the retag CLI** by hand-editing `data/ticker_themes.json`. The CLI validates against the taxonomy and appends an audit trail; hand-edits do neither.
 - **Don't `--paths` your way around a bare-L1 finding** without picking a real L2. If no existing L2 fits, add one to `theme_taxonomy.yaml` first, then retag.
 - **Don't churn Singletons.** `Singleton`-only tickers are excluded from `[UNTAGGED]` on purpose — they were deliberately classified. Only the capped, evidence-based rescue pass in Phase 4 revisits them.

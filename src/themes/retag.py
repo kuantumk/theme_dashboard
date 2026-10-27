@@ -30,14 +30,16 @@ if str(ROOT) not in sys.path:
 
 from config.settings import THEME_REVIEW_STATE_FILE  # noqa: E402
 from src.themes.theme_registry import load_ticker_themes, save_ticker_themes  # noqa: E402
-from src.themes.theme_taxonomy import load_taxonomy, validate_path  # noqa: E402
+from src.themes.theme_taxonomy import is_valid_tag, load_taxonomy  # noqa: E402
 
 
 def _validate(paths: List[str]) -> None:
     taxonomy = load_taxonomy()
-    invalid = [p for p in paths if not validate_path(p, taxonomy)]
+    invalid = [p for p in paths if not is_valid_tag(p, taxonomy)]
     if invalid:
-        raise SystemExit(f"Invalid path(s) not in taxonomy: {invalid}")
+        raise SystemExit(
+            f"Invalid path(s): {invalid} — not in the taxonomy, or a bare L1 "
+            "whose L1 has children (pick an L2)")
 
 
 def _append_audit_entry(ticker: str, old_paths: List[str], new_paths: List[str], reason: str) -> None:

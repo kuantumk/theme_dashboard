@@ -191,8 +191,18 @@ class WriteTests(unittest.TestCase):
         self.assertEqual(written["date"], "2026-09-10")
         self.assertEqual(written["rows"], [{"ticker": "AAA"}])
 
-    def test_stamps_the_callers_dict_so_it_can_report_what_it_wrote(self):
+    def test_an_empty_roster_is_not_written(self):
         payload = {"date": "", "filters": {}, "rows": []}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "si.json"
+            out.write_text('{"date": "2026-09-09", "rows": [{"ticker": "OLD"}]}', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                si.write_short_interest(payload, "2026-09-10", out)
+            self.assertIn("2026-09-09", out.read_text(encoding="utf-8"))
+
+    def test_stamps_the_callers_dict_so_it_can_report_what_it_wrote(self):
+        payload = {"date": "", "filters": {}, "rows": [{"ticker": "AAA"}]}
 
         with tempfile.TemporaryDirectory() as tmp:
             si.write_short_interest(payload, "2026-09-10", Path(tmp) / "si.json")

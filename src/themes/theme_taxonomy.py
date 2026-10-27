@@ -17,16 +17,19 @@ from typing import Dict, List, Optional, Tuple
 
 import yaml
 
-from config.settings import CONFIG
+from config.settings import CONFIG, PROJECT_ROOT
 
 PATH_SEP = " / "
 
 
 def _config_path() -> Path:
+    # Anchored to the project root so the taxonomy loads from any working
+    # directory: a bare relative path read as {} from tests/, and lru_cache
+    # then kept that empty taxonomy for the life of the process.
     rel = CONFIG.get("themes", {}).get("scoring", {}).get(
         "theme_taxonomy_file", "config/theme_taxonomy.yaml"
     )
-    return Path(rel)
+    return PROJECT_ROOT / rel
 
 
 @lru_cache(maxsize=1)
@@ -65,10 +68,6 @@ def split_path(path: str) -> Tuple[str, Optional[str], Optional[str]]:
     l2 = parts[1] if len(parts) > 1 else None
     l3 = parts[2] if len(parts) > 2 else None
     return l1, l2, l3
-
-
-def get_l1(path: str) -> str:
-    return split_path(path)[0]
 
 
 def resolve_l1(name: str, taxonomy: Optional[Dict[str, dict]] = None) -> str:
@@ -122,12 +121,6 @@ def resolve_l1(name: str, taxonomy: Optional[Dict[str, dict]] = None) -> str:
     return head
 
 
-def get_leaf(path: str) -> str:
-    """Return the most specific component of the path."""
-    parts = path.split(PATH_SEP)
-    return parts[-1].strip() if parts else path
-
-
 def validate_path(path: str, taxonomy: Optional[Dict[str, dict]] = None) -> bool:
     """Validate a slash-delimited theme path against the taxonomy."""
     if taxonomy is None:
@@ -148,29 +141,23 @@ def validate_path(path: str, taxonomy: Optional[Dict[str, dict]] = None) -> bool
     return l3 in l3_children
 
 
-def list_all_paths(taxonomy: Optional[Dict[str, dict]] = None) -> List[str]:
-    """Return every valid leaf path in the taxonomy (deepest available level)."""
+def is_valid_tag(path: str, taxonomy: Optional[Dict[str, dict]] = None) -> bool:
+    """Strict form of :func:`validate_path` for writing tags.
+
+    ``validate_path`` accepts a bare L1 whatever its children. As a stored tag
+    a bare L1 is valid only for an L1 with no children (``Quantum Computing``,
+    ``Singleton``); for any other L1 it is the bare-L1 tagging bug.
+    """
     if taxonomy is None:
         taxonomy = load_taxonomy()
-    out: List[str] = []
-    for l1, l1_node in taxonomy.items():
-        l2_children = _children(l1_node)
-        if not l2_children:
-            out.append(l1)
-            continue
-        for l2, l2_node in l2_children.items():
-            l3_children = _children(l2_node)
-            if not l3_children:
-                out.append(f"{l1}{PATH_SEP}{l2}")
-                continue
-            for l3 in l3_children:
-                out.append(f"{l1}{PATH_SEP}{l2}{PATH_SEP}{l3}")
-    return out
+    if not validate_path(path, taxonomy):
+        return False
+    l1, l2, _ = split_path(path)
+    return l2 is not None or not _children(taxonomy[l1])
 
 
 def build_theme_to_tickers(
     ticker_themes: Dict[str, List[str]],
-    taxonomy: Optional[Dict[str, dict]] = None,  # noqa: ARG001 — kept for API parity
 ) -> Dict[str, List[str]]:
     """Build ``{theme_path: [tickers]}`` from ``{ticker: [theme_paths]}``.
 
@@ -183,36 +170,3 @@ def build_theme_to_tickers(
         for path in paths:
             out[path].append(ticker)
     return {k: sorted(v) for k, v in out.items()}
-
-
-def build_l1_to_tickers(
-    ticker_themes: Dict[str, List[str]],
-) -> Dict[str, List[str]]:
-    """Build ``{L1: [tickers]}`` for hub-node rendering. Tickers appear once
-    per distinct L1 they touch."""
-    out: Dict[str, set] = defaultdict(set)
-    for ticker, paths in ticker_themes.items():
-        for path in paths:
-            out[get_l1(path)].add(ticker)
-    return {k: sorted(v) for k, v in out.items()}
-
-
-def build_l1_to_leaf_themes(
-    ticker_themes: Dict[str, List[str]],
-) -> Dict[str, List[str]]:
-    """Build ``{L1: [leaf_paths sorted]}`` — used to render is-a edges between
-    leaf nodes and their L1 hub in the network visualization."""
-    out: Dict[str, set] = defaultdict(set)
-    for paths in ticker_themes.values():
-        for path in paths:
-            out[get_l1(path)].add(path)
-    return {k: sorted(v) for k, v in out.items()}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Backward-compatibility shims for code that still calls the old API
-# ─────────────────────────────────────────────────────────────────────────────
-def load_theme_groups(path: Optional[str] = None) -> Dict[str, dict]:
-    """Deprecated — returns an empty dict. Old prefix/consume rules are gone;
-    the taxonomy file is the consolidation."""
-    return {}

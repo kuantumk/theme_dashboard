@@ -24,10 +24,9 @@ import numpy as np
 import pandas as pd
 
 import src.stock_utils as su
-from collections import defaultdict
-from config.settings import CONFIG, SCREENING_OUTPUT_DIR, DATA_DIR, FUNDAMENTALS_DB
+from config.settings import CONFIG, SCREENING_OUTPUT_DIR, FUNDAMENTALS_DB
 from src.themes.theme_registry import load_ticker_themes
-from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
+from src.themes.theme_taxonomy import build_theme_to_tickers
 
 # ── Config ──────────────────────────────────────────────────────────────
 HOT_THRESHOLD = CONFIG["themes"]["hot_theme_rs_threshold"]
@@ -77,19 +76,6 @@ def _is_missing(v) -> bool:
     return v is None or (isinstance(v, float) and np.isnan(v))
 
 
-def _rs_score(rs) -> float:
-    if _is_missing(rs):
-        return MISSING_DEFAULT
-    return float(np.clip(rs, 0, 100))
-
-
-def _vars_score(vars_raw) -> float:
-    """Raw VARS — volatility-adjusted, comparable across tickers, used as-is."""
-    if _is_missing(vars_raw):
-        return MISSING_DEFAULT
-    return float(vars_raw)
-
-
 def _si_score(si_pct) -> float:
     """Short interest (%) → 0-100 via piecewise anchors. Missing → 50."""
     if _is_missing(si_pct):
@@ -109,25 +95,9 @@ def _float_score(shares_float) -> float:
     return float(np.clip(np.interp(fl_m, _FL_X, _FL_Y), _FL_Y.min(), _FL_Y.max()))
 
 
-def _ticker_composite(rs, vars_raw) -> float:
-    """Strength composite — equal-weighted RS and VARS."""
-    return (_rs_score(rs) + _vars_score(vars_raw)) / 2.0
-
-
 def _ticker_demand(si, fl) -> float:
     """Demand composite — equal-weighted short interest and float."""
     return (_si_score(si) + _float_score(fl)) / 2.0
-
-
-# ── Theme grouping (legacy helper kept for backward compat) ─────────────
-
-def group_tickers_by_theme(ticker_themes: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """Reverse mapping: theme -> list of tickers (no consolidation)."""
-    theme_tickers = defaultdict(list)
-    for ticker, themes in ticker_themes.items():
-        for theme in themes:
-            theme_tickers[theme].append(ticker)
-    return dict(theme_tickers)
 
 
 # ── Core scoring ────────────────────────────────────────────────────────
@@ -139,7 +109,14 @@ def calculate_theme_metrics(
     fundamentals: Dict[str, Dict[str, Optional[float]]],
     screened_tickers: Optional[set] = None,
 ) -> Optional[Dict]:
-    """Per-ticker equal-weighted composite, theme score = mean of top-N composites."""
+    """Theme score = mean VARS of the top-N members by VARS.
+
+    Ranked by VARS alone. It used to average RS_STS% (0-100) with raw VARS
+    (roughly -13 to +17), so the score was RS in all but name, and a member
+    with no VARS took the neutral default of 50 — far above any real VARS.
+    VARS is ATR-normalised and comparable across tickers as-is; a member
+    without one is listed but not scored.
+    """
     scoring_tickers = list(set(tickers) & screened_tickers) if screened_tickers is not None else list(tickers)
     theme_df = master_df[master_df['ticker'].isin(scoring_tickers)]
 
@@ -149,26 +126,21 @@ def calculate_theme_metrics(
     if full_breadth < MIN_BREADTH:
         return None
 
-    # Per-ticker composite for every surviving member
     rs_col = theme_df['rs_sts_pct'].values
     vars_col = theme_df['vars'].values if 'vars' in theme_df.columns else np.full(full_breadth, np.nan)
     tickers_arr = theme_df['ticker'].values
 
-    composites = []
-    demands = []
-    for i, tk in enumerate(tickers_arr):
-        f = fundamentals.get(tk, {})
-        composites.append(_ticker_composite(rs_col[i], vars_col[i]))
-        demands.append(_ticker_demand(f.get('si'), f.get('fl')))
+    ticker_scores = {tk: float(v) for tk, v in zip(tickers_arr, vars_col) if not _is_missing(v)}
+    ticker_demands = {
+        tk: float(_ticker_demand(fundamentals.get(tk, {}).get('si'), fundamentals.get(tk, {}).get('fl')))
+        for tk in tickers_arr
+    }
+    if len(ticker_scores) < MIN_BREADTH:
+        return None
 
-    ticker_scores = {tk: float(c) for tk, c in zip(tickers_arr, composites)}
-    ticker_demands = {tk: float(d) for tk, d in zip(tickers_arr, demands)}
-
-    # Theme score = mean of top-N composites (strongest tickers).
-    ranked_by_composite = sorted(ticker_scores.items(), key=lambda kv: -kv[1])
-    top_n = ranked_by_composite[:MAX_SCORING_TICKERS]
+    top_n = sorted(ticker_scores.values(), reverse=True)[:MAX_SCORING_TICKERS]
     breadth = len(top_n)
-    theme_score = float(np.mean([c for _, c in top_n]))
+    theme_score = float(np.mean(top_n))
 
     # Reporting fields kept for daily report + downstream compat.
     # rs_sts_pct can be NaN (young IPOs lack the full RS lookback) — aggregate
@@ -194,8 +166,6 @@ def calculate_theme_metrics(
     return {
         'theme': theme,
         'score': theme_score,
-        'strength_score': theme_score,  # alias for legacy consumers
-        'final_score': theme_score,     # alias for legacy consumers
         'avg_rs_sts': avg_rs,
         'median_rs_sts': median_rs,
         'breadth': breadth,
@@ -220,8 +190,7 @@ def analyze_theme_strength(
         print("No ticker themes found")
         return pd.DataFrame()
 
-    theme_groups = load_theme_groups()
-    theme_tickers = build_theme_to_tickers(ticker_themes, theme_groups)
+    theme_tickers = build_theme_to_tickers(ticker_themes)
 
     print(f"Analyzing {len(theme_tickers)} themes (after consolidation)...")
 
@@ -248,10 +217,6 @@ def analyze_theme_strength(
     return theme_df
 
 
-def get_hot_themes(theme_df: pd.DataFrame) -> pd.DataFrame:
-    return theme_df[theme_df['is_hot']]
-
-
 if __name__ == '__main__':
     master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
     if not master_files:
@@ -269,5 +234,5 @@ if __name__ == '__main__':
         if not theme_df.empty:
             print(f"Hot themes (RS > {HOT_THRESHOLD}%): {theme_df['is_hot'].sum()}\n")
             pd.options.display.float_format = '{:.1f}'.format
-            print("Top 15 themes by score:")
+            print("Top 15 themes by VARS score:")
             print(theme_df[['theme', 'score', 'avg_rs_sts', 'breadth']].head(15).to_string())

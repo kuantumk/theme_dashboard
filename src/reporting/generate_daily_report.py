@@ -8,18 +8,13 @@ Combines all data sources:
 - Fundamental data
 """
 
-import json
 import pandas as pd
 import sqlite3
-from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Set
-from glob import glob
 
-import src.stock_utils as su
-from src.themes.analyze_theme_strength import analyze_theme_strength
 from src.themes.theme_registry import load_ticker_themes
-from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB, SCREENING_OUTPUT_DIR
+from config.settings import CONFIG, REPORTS_DIR, FUNDAMENTALS_DB
 
 OUTPUT_DIR = REPORTS_DIR
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -100,7 +95,7 @@ def generate_executive_summary(master_df: pd.DataFrame, theme_df: pd.DataFrame, 
     hot_themes = theme_df[theme_df['is_hot']].shape[0] if 'is_hot' in theme_df.columns else 0
 
     return f"""## Executive Summary
-- **Total stocks screened**: {total_stocks}
+- **Stocks in the master table**: {total_stocks}
 - **Hot themes identified**: {hot_themes} (avg RS_STS% > {CONFIG['themes']['hot_theme_rs_threshold']}%)
 - **Untagged tickers awaiting audit**: {len(untagged_tickers)}{' (' + ', '.join(untagged_tickers[:15]) + (', ...' if len(untagged_tickers) > 15 else '') + ')' if untagged_tickers else ''}
 """
@@ -167,7 +162,7 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
 
     for idx, (_, theme_row) in enumerate(hot_themes.head(10).iterrows(), 1):
         theme_name = theme_row['theme']
-        score = theme_row['strength_score']
+        score = theme_row['score']
         avg_rs = theme_row['avg_rs_sts']
         median_rs = theme_row['median_rs_sts']
         breadth = theme_row['breadth']
@@ -177,7 +172,7 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
         # Emoji based on rank
         rank_emoji = '🚀' if idx <= 3 else '⭐' if idx <= 5 else '💫'
 
-        section += f"### {idx}. {theme_name} - Theme Score: {score:.1f} {rank_emoji}\n\n"
+        section += f"### {idx}. {theme_name} - Theme VARS: {score:.2f} {rank_emoji}\n\n"
         section += f"**Theme Metrics**:\n"
         section += f"- Avg RS_STS%: {avg_rs:.1f}% | Median: {median_rs:.1f}%\n"
         section += f"- Stocks: {breadth} | High Momentum (RS>{CONFIG['themes']['high_momentum_threshold']}%): {momentum_count} ({momentum_pct:.0f}%)\n\n"
@@ -204,13 +199,13 @@ def generate_hot_themes_section(theme_df: pd.DataFrame, master_df: pd.DataFrame)
                 lambda t: fundamentals.get(t, {}).get('inst_trans')
             )
 
-            # Sort by per-ticker demand (within-theme display order), composite as tiebreaker
+            # Sort by per-ticker demand (within-theme display order), VARS as tiebreaker
             score_map = theme_row.get('ticker_scores', {}) or {}
             demand_map = theme_row.get('ticker_demands', {}) or {}
-            theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
+            theme_stocks_df['_vars'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
             theme_stocks_df['_demand'] = theme_stocks_df['ticker'].map(demand_map).fillna(0.0)
             theme_stocks_df = theme_stocks_df.sort_values(
-                ['_demand', '_composite'], ascending=[False, False]
+                ['_demand', '_vars'], ascending=[False, False]
             )
 
             section += "**Top Stocks**:\n\n"
@@ -283,14 +278,14 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_count += 1
 
         # Metrics
-        score = theme_row['strength_score']
+        score = theme_row['score']
         avg_rs = theme_row['avg_rs_sts']
 
         # Emoji
         rank_emoji = '🔥' if theme_row.get('is_hot', False) else '⚡'
 
         section += f"### {theme_count}. {theme_name} {rank_emoji}\n"
-        section += f"**Theme Score**: {score:.1f} | **Avg RS**: {avg_rs:.1f}%\n\n"
+        section += f"**Theme VARS**: {score:.2f} | **Avg RS**: {avg_rs:.1f}%\n\n"
 
         # Create table for these stocks
         theme_stocks_df = screened_df[screened_df['ticker'].isin(active_theme_tickers)].copy()
@@ -302,14 +297,14 @@ def generate_theme_report_section(theme_df: pd.DataFrame, master_df: pd.DataFram
         theme_stocks_df['inst_trans'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('inst_trans'))
         theme_stocks_df['short_interest'] = theme_stocks_df['ticker'].map(lambda t: fundamentals.get(t, {}).get('short_interest'))
 
-        # Sort by per-ticker demand (within-theme display order), composite as tiebreaker
+        # Sort by per-ticker demand (within-theme display order), VARS as tiebreaker
         MAX_TICKERS_PER_THEME = DASHBOARD_TICKERS_PER_THEME
         score_map = theme_row.get('ticker_scores', {}) or {}
         demand_map = theme_row.get('ticker_demands', {}) or {}
-        theme_stocks_df['_composite'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
+        theme_stocks_df['_vars'] = theme_stocks_df['ticker'].map(score_map).fillna(0.0)
         theme_stocks_df['_demand'] = theme_stocks_df['ticker'].map(demand_map).fillna(0.0)
         theme_stocks_df = theme_stocks_df.sort_values(
-            ['_demand', '_composite'], ascending=[False, False]
+            ['_demand', '_vars'], ascending=[False, False]
         )
         total_in_theme = len(theme_stocks_df)
         theme_stocks_display = theme_stocks_df.head(MAX_TICKERS_PER_THEME)
@@ -475,40 +470,3 @@ def save_report(report: str, date_str: str):
     print(f"OK Report saved to {filename}")
     return filename
 
-
-if __name__ == '__main__':
-    # Load latest master table
-    master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
-    if master_files:
-        latest_master = master_files[-1]
-        print(f"Loading {latest_master}")
-
-        master_df = su.load_df_from_parquet(latest_master)
-        date_str = Path(latest_master).stem.replace('master_', '')
-
-        # Mock market breadth
-        market_breadth = {
-            'ncfd': 65.2,
-            'mmfi': 58.7,
-            'timestamp': datetime.now().isoformat()
-        }
-
-        # Analyze themes
-        theme_df = analyze_theme_strength(master_df, market_breadth)
-
-        # Generate report
-        report = generate_daily_report(
-            date_str=date_str,
-            master_df=master_df,
-            theme_df=theme_df,
-            market_breadth=market_breadth,
-            untagged_tickers=[]
-        )
-
-        # Save report
-        save_report(report, date_str)
-
-        print("\nReport preview (first 2000 chars):")
-        print(report[:2000])
-    else:
-        print("No master tables found")

@@ -137,6 +137,15 @@ class TestLiquidity(unittest.TestCase):
         self.assertEqual(out["symbol"].tolist(), ["RICH"])
         self.assertEqual(out.iloc[0]["avg_dollar_vol"], 100_000_000)
 
+    def test_a_text_cell_fails_its_row_instead_of_raising(self):
+        # astype(float) raised on one bad vendor cell and froze both tabs.
+        df = frame([
+            {"symbol": "RICH", "close": 100.0, "avg_volume": 1_000_000},
+            {"symbol": "JUNK", "close": 100.0, "avg_volume": "n/a"},
+        ])
+        out = apply_liquidity(df, CFG)
+        self.assertEqual(out["symbol"].tolist(), ["RICH"])
+
     def test_missing_avg_volume_skips_the_floor(self):
         # Crypto carries no average-volume field; rows must not be dropped as if
         # they had failed the floor.

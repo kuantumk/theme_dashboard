@@ -190,7 +190,13 @@ def write_short_interest(payload: Dict, report_date: str, out_file=None) -> Path
 
     The stamp lands on the caller's dict rather than a copy so the caller can
     report the date it just wrote.
+
+    Raises ``ValueError`` on an empty roster and writes nothing. A fresh-dated
+    empty file would blank the SI tab with no stale banner; keeping the last
+    roster lets its own older date trip ``si_stale`` instead.
     """
+    if not payload.get("rows"):
+        raise ValueError("SI screen returned no rows; keeping the previous roster")
     out = Path(out_file) if out_file is not None else SHORT_INTEREST_FILE
     out.parent.mkdir(parents=True, exist_ok=True)
     payload["date"] = report_date
@@ -211,7 +217,11 @@ def main(argv=None) -> int:
         logger.error("Short interest fetch failed: %s", exc)
         return 1
 
-    out = write_short_interest(payload, latest_session_date(), args.out)
+    try:
+        out = write_short_interest(payload, latest_session_date(), args.out)
+    except ValueError as exc:
+        logger.error("%s", exc)
+        return 1
     print(f"   -> {out} ({len(payload['rows'])} tickers, date {payload['date']})")
     return 0
 

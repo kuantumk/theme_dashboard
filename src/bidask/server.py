@@ -318,8 +318,11 @@ class TapeEngine:
                     else:
                         self.profile_status[market] += "; retrying missing instruments"
                         defer()
-                    if save_profiles(profiles, self.out_path.parent, session_date,
-                                     market=market, grid=grid):
+                    # Only when this pass fetched something. A permanently
+                    # unresolvable instrument retries all session, and each
+                    # empty retry used to rewrite the 2.3 MB cache unchanged.
+                    if built and save_profiles(profiles, self.out_path.parent, session_date,
+                                               market=market, grid=grid):
                         prune_cache(self.out_path.parent, session_date, market=market)
             except Exception as exc:  # the poll loop must survive warm-up failure
                 with self._profile_lock:
@@ -421,6 +424,10 @@ class TapeEngine:
             # breadth term would rank nothing.
             universe = build_universe(payload.rows, self.cfg, market=market)
             self.pregate[market] = universe.to_dict("records")
+            # Counted after OUR floors, so a 100% drop at the average-dollar-
+            # volume floor reads as one (emptyReason's matched-vs-universe
+            # branch) rather than falling through to "the board is shut".
+            self.universe[market] = len(universe)
 
             # Warm baselines for the liquidity-filtered set, not the raw
             # response. A row below the dollar-volume floor can never reach a

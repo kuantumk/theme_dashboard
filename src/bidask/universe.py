@@ -155,7 +155,11 @@ def apply_liquidity(df: pd.DataFrame, cfg) -> pd.DataFrame:
         return df
     out = df.copy()
     if "avg_volume" in out.columns and out["avg_volume"].notna().any():
-        out["avg_dollar_vol"] = out["avg_volume"].astype(float) * out["close"].astype(float)
+        # Coerced, not cast: one text cell in a vendor column made astype
+        # raise, which escaped poll_once and froze BOTH tabs. A coerced NaN
+        # fails the floor below, which is the fail-closed reading.
+        out["avg_dollar_vol"] = (pd.to_numeric(out["avg_volume"], errors="coerce")
+                                 * pd.to_numeric(out["close"], errors="coerce"))
         out = out[out["avg_dollar_vol"] >= cfg.min_avg_dollar_vol]
     else:
         # Crypto carries no average-volume field; the floor cannot be applied

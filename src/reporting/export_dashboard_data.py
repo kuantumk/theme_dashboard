@@ -339,8 +339,14 @@ def fetch_yahoo_macro_data():
         return None
 
 
-def update_breadth_history():
-    """Update market breadth history with the latest reading."""
+def update_breadth_history(session_date=None):
+    """Update market breadth history with the latest reading.
+
+    ``session_date`` keys the NCFD/MMFI/MMTW/MMTH histories: each session holds
+    one reading, and a re-run of the same session replaces it. Defaults to
+    today.
+    """
+    session = session_date or date.today().isoformat()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     current = {}
@@ -358,25 +364,26 @@ def update_breadth_history():
         with open(BREADTH_HISTORY_FILE, 'r') as f:
             history = json.load(f)
 
-    # Update each breadth indicator from the daily breadth file
+    # One reading per indicator per session. barchart.com via Playwright is the
+    # primary source; the step-3 scrape in BREADTH_FILE fills only the keys it
+    # missed. Both used to append, and the two scrapers round differently, so
+    # every run wrote a near-duplicate pair (MMFI 33.2, 33.21) into the history
+    # winner_research's backtests read. `as_of` lets a re-run of the same
+    # session replace its reading rather than append a second one.
+    barchart_data = fetch_barchart_breadth() or {}
     for key in ['ncfd', 'mmfi', 'mmtw', 'mmth']:
-        if key in current:
-            val = current[key]
-            hist = history.get(key, {}).get('history', [])
-            if not hist or hist[-1] != val:
-                hist.append(val)
-            history[key] = {'current': val, 'history': hist[-5:]}
-
-    # Fetch NCFD/MMFI/MMTW/MMTH from barchart.com (Playwright required)
-    barchart_data = fetch_barchart_breadth()
-    if barchart_data:
-        for key in ['ncfd', 'mmfi', 'mmtw', 'mmth']:
-            if key in barchart_data and barchart_data[key] is not None:
-                val = barchart_data[key]
-                hist = history.get(key, {}).get('history', [])
-                if not hist or hist[-1] != val:
-                    hist.append(val)
-                history[key] = {'current': val, 'history': hist[-5:]}
+        val = barchart_data.get(key)
+        if val is None:
+            val = current.get(key)
+        if val is None:
+            continue
+        entry = history.get(key, {})
+        hist = list(entry.get('history', []))
+        if hist and entry.get('as_of') == session:
+            hist[-1] = val
+        else:
+            hist.append(val)
+        history[key] = {'current': val, 'history': hist[-5:], 'as_of': session}
 
     # CNN Fear & Greed
     fng = fetch_cnn_fear_greed()
@@ -1182,8 +1189,13 @@ def _update_history_file(history_file, report_date, entry):
         try:
             with open(history_file, 'r', encoding='utf-8') as f:
                 history = json.load(f)
-        except (json.JSONDecodeError, ValueError):
-            history = []
+        except (json.JSONDecodeError, ValueError) as e:
+            # These files grow forward only and cannot be rebuilt (SI, ETF
+            # Viz, the ETF tabs). Replacing an unreadable one with a one-entry
+            # file would publish the loss, so leave it untouched for repair.
+            print(f"   !! WARNING: {history_file} is unreadable ({e}); NOT updated. "
+                  "Restore it from git history.")
+            return
 
     # Replace existing entry for same date, or append
     history = [h for h in history if h.get('report_date') != report_date]
@@ -1195,10 +1207,14 @@ def _update_history_file(history_file, report_date, entry):
     if cutoff is not None:
         history = [h for h in history if h.get('report_date', '') >= cutoff]
 
-    with open(history_file, 'w', encoding='utf-8') as f:
+    # Write-then-rename, so an interrupted run cannot leave a truncated file.
+    tmp = history_file.with_name(history_file.name + '.tmp')
+    with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(history, f, indent=2)
+    tmp.replace(history_file)
     dates = [h['report_date'] for h in history]
-    print(f"   -> {history_file} (history: {', '.join(dates)})")
+    span = f"{len(dates)} sessions, {dates[-1]} -> {dates[0]}" if dates else "empty"
+    print(f"   -> {history_file} (history: {span})")
 
 
 def update_etf_history(report_date, etf_data, industry_data):
@@ -1688,7 +1704,7 @@ def _build_momentum_136_snapshot(csv_file, day_flags, newest_session=False):
     }
 
     # Reverse to theme -> tickers; empty groups dict skips consolidation/removal (preserves singletons)
-    theme_to_tickers = build_theme_to_tickers(filtered_map, {})
+    theme_to_tickers = build_theme_to_tickers(filtered_map)
 
     # Single-shot fundamentals lookup
     fundamentals = {}
@@ -2568,7 +2584,7 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
     import sqlite3
     import pandas as pd
     from src.themes.theme_registry import load_ticker_themes
-    from src.themes.theme_taxonomy import build_theme_to_tickers, load_theme_groups
+    from src.themes.theme_taxonomy import build_theme_to_tickers
 
     # Union the two scans for this date; tag each ticker with its source scan(s).
     frames = []
@@ -2600,9 +2616,7 @@ def _build_volume_snapshot(date_str, day_flags, newest_session=False):
         t: ticker_themes.get(t) or ['Uncategorized']
         for t in screener_tickers
     }
-    # Apply theme_groups consolidation (mirrors the VARS tab).
-    theme_groups = load_theme_groups()
-    theme_to_tickers = build_theme_to_tickers(filtered_map, theme_groups)
+    theme_to_tickers = build_theme_to_tickers(filtered_map)
 
     # Single-shot fundamentals lookup
     fundamentals = {}
@@ -3038,7 +3052,7 @@ def export_all():
 
     # 2. Update market breadth history
     print("\n2. Updating market breadth history")
-    update_breadth_history()
+    update_breadth_history(theme_data.get('report_date') if theme_data else None)
 
     # 3. Fetch leverage ETF data
     print("\n3. Fetching leverage ETF data")

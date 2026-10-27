@@ -282,6 +282,10 @@ class _Connection:
         self._interval = interval
         self._bars = bars
         self._socket = _open_socket(token)
+        # Charts this connection has deleted. A batch can end on a chart's
+        # first answer before its echo arrives; the echo then reaches the next
+        # batch and must be recognised as stale rather than as a refusal.
+        self._retired: set = set()
 
     def close(self) -> None:
         try:
@@ -359,7 +363,7 @@ class _Connection:
                 # one bare ticker take every symbol batched with it down. The
                 # sequential drain returned on the first frame and never met
                 # this; a batch keeps reading, so it has to ignore the echo.
-                if chart in done:
+                if chart in done or chart in self._retired:
                     continue
                 if method in NOT_LISTED_METHODS or method in REFUSAL_METHODS:
                     if chart not in collected:
@@ -377,6 +381,7 @@ class _Connection:
                         reasons[chart] = "completed"
                         done.add(chart)
 
+        self._retired.update(charts)
         for chart in charts:
             try:
                 self._socket.send(encode("chart_delete_session", [chart]))

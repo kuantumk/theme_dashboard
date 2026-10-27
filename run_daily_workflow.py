@@ -4,38 +4,41 @@ Main daily workflow orchestrator.
 Runs the complete stock screening pipeline:
 1. Download price data
 2. Calculate technical indicators
-3. Scrape market breadth
-4. Create master table (with RS_STS%)
+3. Scrape market breadth (3b: Nasdaq McClellan Summation Index)
+4. Create master tables (with RS_STS%)
 5. Run all screeners
 6. Consolidate results
-7. Fetch fundamentals for screened tickers
+7. Fetch fundamentals for screened tickers (7b: short interest)
 8. Sync Google Sheet ground truth + surface untagged tickers
-9. Analyze theme strength
+9. Analyze theme strength (9b: L1 radar)
 10. Generate daily report
+
+A critical step that fails stops the workflow (exit 1); a non-critical one
+logs a warning and the workflow carries on without its output.
 
 LLM theme classification is NOT part of this pipeline: the weekday Claude Code
 audit routine (.claude/routines/theme_tag_audit.md) tags the untagged tickers
 surfaced by step 8 and merges the result back to main.
 """
 
-import os
-import sys
-import subprocess
-from pathlib import Path
-from datetime import datetime
-import logging
 import json
-from glob import glob
-import pandas as pd
+import logging
+import os
+import subprocess
+import sys
+from datetime import datetime
 
-from config.settings import CONFIG, PROJECT_ROOT, LOG_DIR, SCREENING_OUTPUT_DIR, DATA_DIR
+from config.settings import (
+    BREADTH_FILE, CONFIG, DATA_DIR, LOG_DIR, PROJECT_ROOT, SCREENING_OUTPUT_DIR,
+)
 import src.stock_utils as su
-from src.data_collection.scrape_market_breadth import get_market_breadth
+from src.data_collection.barchart_breadth import get_market_breadth, write_market_breadth
 from src.data_collection.fetch_fundamental_data import batch_fetch_fundamentals
 from src.data_collection.fetch_short_interest import (
     fetch_short_interest,
     write_short_interest,
 )
+from src.screening.run_screener import master_files_by_date
 from src.themes.tag_new_tickers import sync_screened_ticker_themes
 from src.themes.analyze_theme_strength import analyze_theme_strength
 from src.themes.l1_score import compute_radar
@@ -53,56 +56,62 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+# `--days 130` (~180 calendar days of trading sessions) so the back-dated
+# master and screener parquet always carry today's full indicator schema AND
+# span the full time-travel window (THEMES_HISTORY_DAYS = 180). The exporter
+# prunes anything older than 180 calendar days, so the few extra sessions are
+# padding that keeps the window full.
+HISTORY_SESSIONS = '130'
 
-def run_script(script_path: str, args: list = None, description: str = None):
-    """Run a Python script as a subprocess."""
-    if description:
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: {description}")
-        logger.info(f"{'='*80}")
 
-    cmd = [sys.executable, '-u', script_path]
-    if args:
-        cmd.extend(args)
+class StepFailed(RuntimeError):
+    """A critical step failed; the workflow stops."""
 
+
+def run_script(script_path, args=()):
+    """Run a pipeline script as a subprocess, streaming its output into the log.
+
+    stdout and stderr are merged and logged line by line as they arrive, so a
+    long step shows progress and a failure keeps its traceback. Raises
+    ``subprocess.CalledProcessError`` on a non-zero exit.
+    """
+    cmd = [sys.executable, '-u', script_path, *args]
     logger.info(f"Running: {' '.join(cmd)}")
+    env = os.environ.copy()
+    env['PYTHONPATH'] = str(PROJECT_ROOT)
+    # tqdm redraws with '\r', which a line reader turns into one line per
+    # redraw; one progress line per 30s is plenty in a log.
+    env.setdefault('TQDM_MININTERVAL', '30')
+    with subprocess.Popen(cmd, cwd=PROJECT_ROOT, env=env, text=True, bufsize=1,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
+        for line in proc.stdout:
+            line = line.rstrip()
+            if line:
+                logger.info(f"  | {line}")
+        returncode = proc.wait()
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, cmd)
 
+
+def run_step(description, action, *, critical=True, default=None):
+    """Run one workflow step under a banner.
+
+    A critical step that raises stops the workflow (``StepFailed``). A
+    non-critical one logs a warning and returns ``default`` instead.
+    """
+    logger.info('=' * 80)
+    logger.info(f"STEP: {description}")
+    logger.info('=' * 80)
     try:
-        env = os.environ.copy()
-        env['PYTHONPATH'] = str(PROJECT_ROOT)
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=PROJECT_ROOT,
-            env=env
-        )
-
-        if result.stdout:
-            logger.info(f"STDOUT: {result.stdout}")
-
-        logger.info(f"OK {script_path} completed\n")
-        return result
-
-    except subprocess.CalledProcessError as e:
-        logger.error(f"FAILED {script_path} (exit code {e.returncode})")
-        if e.stdout:
-            logger.error(f"STDOUT: {e.stdout}")
-        if e.stderr:
-            logger.error(f"STDERR: {e.stderr}")
-
-        # Non-critical steps can fail without aborting
-        if script_path in ['src/data_collection/fetch_fundamental_data.py',
-                           'src/data_collection/scrape_market_breadth.py',
-                           'src/data_collection/compute_nasi.py']:
-            logger.warning(f"Non-critical step failed, continuing...")
-            return False
-        else:
-            logger.error(f"Critical step failed, aborting workflow")
-            raise
-    return False
+        result = action()
+    except Exception as e:
+        if critical:
+            logger.error(f"FAILED {description}: {e}")
+            raise StepFailed(description) from e
+        logger.warning(f"Non-critical step failed, continuing: {description}: {e}")
+        return default
+    logger.info(f"OK {description}\n")
+    return result
 
 
 def consolidate_screener_results(date_str: str):
@@ -136,189 +145,110 @@ def consolidate_screener_results(date_str: str):
     return all_tickers
 
 
+def scrape_breadth():
+    """Step 3: one barchart.com scrape, written to BREADTH_FILE for the report and the export."""
+    breadth = get_market_breadth()
+    write_market_breadth(breadth, BREADTH_FILE)
+    logger.info(f"Market breadth: {breadth}")
+    return breadth
+
+
+def latest_master():
+    """``(date_str, path)`` of the newest master table."""
+    masters = master_files_by_date(SCREENING_OUTPUT_DIR / 'master')
+    if not masters:
+        raise FileNotFoundError("No master files found")
+    date_str = list(masters)[-1]
+    return date_str, masters[date_str]
+
+
+def fetch_and_write_short_interest(date_str):
+    # The screen carries a Current Volume leg, so it must run after the
+    # close: before the open it returns an empty table.
+    payload = fetch_short_interest()
+    write_short_interest(payload, date_str)
+    logger.info(f"Short interest: {len(payload['rows'])} tickers")
+
+
 def run_daily_workflow():
-    """Execute the complete daily workflow."""
+    """Execute the complete daily workflow. Returns True on success."""
     start_time = datetime.now()
     logger.info(f"\n{'#'*80}")
     logger.info(f"# DAILY STOCK SCREENING WORKFLOW - {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info(f"{'#'*80}\n")
 
     try:
-        # Step 1: Download price data
-        run_script(
-            'src/data_collection/download_price_daily.py',
-            description="Download daily price data from Yahoo Finance"
-        )
+        run_step("1. Download daily price data from Yahoo Finance",
+                 lambda: run_script('src/data_collection/download_price_daily.py'))
+        run_step("2. Calculate technical indicators",
+                 lambda: run_script('src/indicators/create_technical_indicators.py'))
+        market_breadth = run_step("3. Scrape market breadth (barchart.com)",
+                                  scrape_breadth, critical=False, default={})
+        # Its own ticker universe (breadth needs the ETFs that
+        # `get_tickers_from_nasdaq` drops) and its own cached A/D history, so
+        # a failure here cannot affect screening.
+        run_step("3b. Compute Nasdaq McClellan Summation Index + RSI(14)",
+                 lambda: run_script('src/data_collection/compute_nasi.py'), critical=False)
+        run_step(f"4. Create master tables with RS_STS% ({HISTORY_SESSIONS} sessions)",
+                 lambda: run_script('src/screening/create_master_table.py',
+                                    ['--days', HISTORY_SESSIONS]))
+        run_step(f"5. Run all screeners ({HISTORY_SESSIONS} sessions)",
+                 lambda: run_script('src/screening/run_screener.py',
+                                    ['--all', '--days', HISTORY_SESSIONS]))
 
-        # Step 2: Calculate technical indicators
-        run_script(
-            'src/indicators/create_technical_indicators.py',
-            description="Calculate technical indicators"
-        )
+        date_str, master_path = latest_master()
+        all_tickers = run_step("6. Consolidate screener results",
+                               lambda: consolidate_screener_results(date_str))
 
-        # Step 3: Scrape market breadth
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Scrape market breadth indicators")
-        logger.info(f"{'='*80}")
+        run_step(f"7. Fetch fundamental data for {len(all_tickers)} screened tickers",
+                 lambda: batch_fetch_fundamentals(list(all_tickers)), critical=False)
+        # Nothing downstream reads the SI file except the SI export, which
+        # skips cleanly when it is absent.
+        run_step("7b. Fetch short interest (SI tab)",
+                 lambda: fetch_and_write_short_interest(date_str), critical=False)
 
-        market_breadth = get_market_breadth()
-
-        # Save market breadth to temp file for report generator
-        temp_breadth_file = PROJECT_ROOT / 'data' / 'market_breadth_latest.json'
-        temp_breadth_file.parent.mkdir(exist_ok=True)
-        with temp_breadth_file.open('w') as f:
-            json.dump(market_breadth, f)
-
-        logger.info(f"OK Market breadth saved\n")
-
-        # Step 3b: Nasdaq McClellan Summation Index + RSI(14).
-        # Non-critical: it has its own ticker universe (breadth needs the ETFs
-        # that `get_tickers_from_nasdaq` deliberately drops) and its own cached
-        # advance/decline history, so a failure here cannot affect screening.
-        run_script(
-            'src/data_collection/compute_nasi.py',
-            description="Compute Nasdaq McClellan Summation Index + RSI(14)"
-        )
-
-        # Step 4: Create master table (includes RS_STS% calculation).
-        # `--days 130` (~180 calendar days of trading sessions) so historical
-        # master CSVs always carry today's full indicator schema AND span the
-        # full time-travel retention window (THEMES_HISTORY_DAYS = 180). When a
-        # new column like `vars` is added, every dropdown session gets backfilled
-        # in one workflow run rather than accumulating naturally. The exporter
-        # prunes anything older than 180 calendar days, so a few extra sessions
-        # here are harmless padding that guarantees the window is always full.
-        run_script(
-            'src/screening/create_master_table.py',
-            args=['--days', '130'],
-            description="Create master table with RS_STS% (130 sessions ~ 180 calendar days for time-travel history)"
-        )
-
-        # Step 5: Run all screeners (`--days 130` so dashboard time-travel
-        # has a full ~180-calendar-day history per screener every run, not just today).
-        for screener in CONFIG['screeners']:
-            run_script(
-                'src/screening/run_screener.py',
-                args=['--screener', screener, '--days', '130'],
-                description=f"Run {screener} screener (130 sessions ~ 180 calendar days)"
-            )
-
-        # Step 6: Consolidate screener results
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Consolidate screener results")
-        logger.info(f"{'='*80}")
-
-        # Get today's date from latest master file
-        master_files = sorted(glob(str(SCREENING_OUTPUT_DIR / 'master' / 'master_*.parquet')))
-        if not master_files:
-            raise FileNotFoundError("No master files found")
-
-        latest_master = Path(master_files[-1])
-        date_str = latest_master.stem.replace('master_', '')
-
-        all_tickers = consolidate_screener_results(date_str)
-
-        # Step 7: Fetch fundamentals for screened tickers
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Fetch fundamental data for screened tickers")
-        logger.info(f"{'='*80}")
-
-        screened_list = list(all_tickers)
-        logger.info(f"Fetching fundamentals for {len(screened_list)} screened tickers...")
-        try:
-            batch_fetch_fundamentals(screened_list)
-            logger.info(f"OK Fundamental data fetch complete\n")
-        except Exception as e:
-            logger.warning(f"Fundamental data fetch failed: {e}")
-            logger.warning("Continuing workflow without fundamentals...")
-
-        # Step 7b: Fetch short interest for the SI tab.
-        #
-        # Sits here because it is the workflow's other Finviz call, and it must
-        # run after the close: the screen carries a Current Volume leg, so
-        # before the open it returns an empty table.
-        #
-        # Non-critical. Nothing downstream reads this file except the SI
-        # export, which skips cleanly when it is absent.
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Fetch short interest (SI tab)")
-        logger.info(f"{'='*80}")
-        try:
-            si_payload = fetch_short_interest()
-            write_short_interest(si_payload, date_str)
-            logger.info(f"OK Short interest: {len(si_payload['rows'])} tickers\n")
-        except Exception as e:
-            logger.warning(f"Short interest fetch failed: {e}")
-            logger.warning("Continuing workflow without SI data...")
-
-        # Step 8: Sync Google Sheet ground truth + surface untagged tickers
-        # (LLM classification happens in the weekday audit routine, not here.)
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Sync Sheet ground truth + surface untagged tickers")
-        logger.info(f"{'='*80}")
-
-        sync_result = None
-        untagged_tickers = []
-        try:
-            sync_result = sync_screened_ticker_themes(all_tickers)
-            untagged_tickers = sync_result.untagged_tickers
+        # LLM classification happens in the weekday audit routine, not here.
+        sync_result = run_step("8. Sync Sheet ground truth + surface untagged tickers",
+                               lambda: sync_screened_ticker_themes(all_tickers),
+                               critical=False)
+        untagged_tickers = sync_result.untagged_tickers if sync_result else []
+        if sync_result:
             logger.info(
-                "Theme sync complete "
-                f"({len(sync_result.google_sheet_updates)} sheet updates, "
+                f"Theme sync: {len(sync_result.google_sheet_updates)} sheet updates, "
                 f"{len(sync_result.profile_candidates)} profiles warmed, "
-                f"{len(untagged_tickers)} untagged awaiting routine)\n"
+                f"{len(untagged_tickers)} untagged awaiting routine"
             )
-        except Exception as e:
-            logger.error(f"Theme sync FAILED: {e}")
-            logger.warning("Continuing workflow with existing themes...")
 
-        # Step 9: Analyze theme strength
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Analyze theme strength")
-        logger.info(f"{'='*80}")
+        master_df = su.load_df_from_parquet(master_path)
+        theme_df = run_step("9. Analyze theme strength",
+                            lambda: analyze_theme_strength(master_df, market_breadth,
+                                                           screened_tickers=all_tickers))
+        logger.info(f"Analyzed {len(theme_df)} themes")
 
-        master_df = su.load_df_from_parquet(latest_master)
-        theme_df = analyze_theme_strength(master_df, market_breadth, screened_tickers=all_tickers)
-
-        logger.info(f"OK Analyzed {len(theme_df)} themes\n")
-
-        # Step 9b: L1 Radar (screener-independent theme-basket scoring)
         radar = None
         if CONFIG.get('radar', {}).get('enabled', True):
-            logger.info(f"{'='*80}")
-            logger.info(f"STEP: Compute L1 radar")
-            logger.info(f"{'='*80}")
-            try:
-                radar = compute_radar(master_df, screened_tickers=all_tickers)
-                n_l1s = len(radar['l1s']) if radar else 0
-                logger.info(f"OK Radar scored {n_l1s} L1s\n")
-            except Exception as e:
-                logger.warning(f"L1 radar failed: {e}")
-                logger.warning("Continuing workflow without radar section...")
+            radar = run_step("9b. Compute L1 radar",
+                             lambda: compute_radar(master_df, screened_tickers=all_tickers),
+                             critical=False)
+            if radar:
+                logger.info(f"Radar scored {len(radar['l1s'])} L1s")
 
-        # Step 10: Generate daily report
-        logger.info(f"{'='*80}")
-        logger.info(f"STEP: Generate daily report")
-        logger.info(f"{'='*80}")
+        report_file = run_step("10. Generate daily report", lambda: save_report(
+            generate_daily_report(
+                date_str=date_str,
+                master_df=master_df,
+                theme_df=theme_df,
+                market_breadth=market_breadth,
+                screened_tickers=all_tickers,
+                untagged_tickers=untagged_tickers,
+                radar=radar,
+            ),
+            date_str,
+        ))
 
-        report = generate_daily_report(
-            date_str=date_str,
-            master_df=master_df,
-            theme_df=theme_df,
-            market_breadth=market_breadth,
-            screened_tickers=all_tickers,
-            untagged_tickers=untagged_tickers,
-            radar=radar
-        )
-
-        report_file = save_report(report, date_str)
-
-        # Summary
-        end_time = datetime.now()
-        duration = (end_time - start_time).total_seconds()
-
+        duration = (datetime.now() - start_time).total_seconds()
         logger.info(f"\n{'#'*80}")
-        logger.info(f"# WORKFLOW COMPLETE")
+        logger.info("# WORKFLOW COMPLETE")
         logger.info(f"{'#'*80}")
         logger.info(f"Duration: {duration:.1f} seconds")
         logger.info(f"Report: {report_file}")
@@ -328,12 +258,11 @@ def run_daily_workflow():
         if sync_result:
             logger.info(f"Sync audit: {sync_result.audit_report_path}")
         logger.info(f"{'#'*80}\n")
-
         return True
 
     except Exception as e:
         logger.error(f"\n{'='*80}")
-        logger.error(f"WORKFLOW FAILED")
+        logger.error("WORKFLOW FAILED")
         logger.error(f"{'='*80}")
         logger.error(f"Error: {e}", exc_info=True)
         return False

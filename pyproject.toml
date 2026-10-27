@@ -24,9 +24,6 @@ dependencies = [
     "tabulate>=0.9.0",
     # Browser automation (market breadth scraping)
     "playwright",
-    # Selenium fallback for market breadth
-    "selenium",
-    "webdriver-manager",
     "tradingview-screener>=3.2.1",
     # TradingView chart websocket (src/bidask/tvbars.py, framed by tvsocket.py).
     # The screener REST API serves no intraday bars, and the chart socket is the

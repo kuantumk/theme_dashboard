@@ -3,6 +3,11 @@
 # Data fetching
 price_data:
   lookback_days: 500
+  # Step 1 raises, leaving the previous price file in place, when fewer than
+  # this share of the requested tickers came back (each empty or failed
+  # 200-ticker batch is retried once first). A partial yfinance outage would
+  # otherwise publish a thinned universe on every tab.
+  min_coverage: 0.9
 
 # Screening output retention (local scratch; regenerated each run, never committed)
 screening_output:
@@ -20,8 +25,12 @@ rs_score:
 
 # Market breadth
 market_breadth:
+  # Scraped once per run by step 3 (src/data_collection/barchart_breadth.py,
+  # headless Chromium via Playwright) into data/market_breadth_latest.json.
   ncfd_url: "https://www.barchart.com/stocks/quotes/$NCFD/overview"
   mmfi_url: "https://www.barchart.com/stocks/quotes/$MMFI/overview"
+  mmtw_url: "https://www.barchart.com/stocks/quotes/$MMTW/overview"
+  mmth_url: "https://www.barchart.com/stocks/quotes/$MMTH/overview"
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
   aaii_url: "https://www.aaii.com/sentimentsurvey"
   # AAII sits behind a bot manager that rejects the truncated user_agent above

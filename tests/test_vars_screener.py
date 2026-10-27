@@ -15,6 +15,10 @@ def _row(**overrides):
         'vars': 5.0,
     }
     base.update(overrides)
+    # The screener reads the partial-window twins, which equal the originals
+    # once a ticker has half the window.
+    for col in ('avg_dollar_vol', 'vol_sma50', 'adr_pct'):
+        base[f'{col}_partial'] = base[col]
     return base
 
 

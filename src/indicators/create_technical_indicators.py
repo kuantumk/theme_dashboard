@@ -15,17 +15,25 @@ import src.stock_utils as su
 from config.settings import CONFIG, PRICE_DATA_FILE, PRICE_DATA_TA_FILE
 
 
+def compute_atr14(high, low, close):
+    """14-period Average True Range (simple mean of the true range, min_periods=1).
+
+    The one definition shared by the stock pipeline, SPY's VARS baseline and
+    the ETF recompute in export_dashboard_data.fetch_etf_metrics.
+    """
+    prev_close = close.shift(1)
+    tr = pd.concat([high - low, (high - prev_close).abs(), (low - prev_close).abs()],
+                   axis=1).max(axis=1)
+    return tr.rolling(window=14, min_periods=1).mean()
+
+
 def compute_spy_cum_norm_100(spy_df):
     """Return the 100-session rolling sum of SPY's ATR14-normalized daily change.
 
     Shared by stock VARS (calculate_technical_indicators) and ETF VARS
     (export_dashboard_data.fetch_etf_metrics) so the baseline can't drift.
     """
-    high_low = spy_df['high'] - spy_df['low']
-    high_prev = (spy_df['high'] - spy_df['close'].shift(1)).abs()
-    low_prev = (spy_df['low'] - spy_df['close'].shift(1)).abs()
-    tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
-    atr14 = tr.rolling(window=14, min_periods=1).mean()
+    atr14 = compute_atr14(spy_df['high'], spy_df['low'], spy_df['close'])
     norm_change = (spy_df['close'] - spy_df['close'].shift(1)) / atr14
     return norm_change.rolling(window=100, min_periods=1).sum()
 
@@ -568,6 +576,40 @@ def compute_max_down_streak(close, lookback=DROP_LOOKBACK):
 
 VOL_SPIKE_WINDOW = '365D'  # trailing 1-year (calendar) lookback for volume-spike detection
 
+# Bars a new listing needs before its partial-window columns read anything.
+# Chosen, not measured: enough that one opening-day print is not the average.
+PARTIAL_MIN_BARS = 5
+PARTIAL_SMA_WINDOWS = (25, 30, 50, 100, 200)
+
+
+def compute_partial_windows(daily, min_bars=PARTIAL_MIN_BARS):
+    """Screener-only twins of the moving averages and liquidity averages,
+    defined from `min_bars` bars instead of half the window.
+
+    A new listing has no `sma200` until bar 100, no `vol_sma50` until bar 25
+    and no `avg_dollar_vol` / `adr_pct` until bar 10. The screeners read a
+    zero-filled master, so those NaNs became 0: the moving-average legs passed
+    without testing anything and the liquidity floors failed, which kept an
+    IPO off every screener for its first 10-25 sessions. These columns use
+    whatever bars exist instead.
+
+    They are NEW columns rather than a lower `min_periods` on the originals
+    because market_history archives the originals and winner_research reads
+    them (charts, flags, grading, its liquidity filter); see "Downstream
+    repos" in CLAUDE.md. Once a ticker has half the window, each twin equals
+    its original exactly, so only young listings screen differently.
+    """
+    out = {}
+    close = daily['close']
+    for n in PARTIAL_SMA_WINDOWS:
+        out[f'sma{n}_partial'] = close.rolling(window=n, min_periods=min_bars).mean()
+    out['vol_sma50_partial'] = daily['volume'].rolling(window=50, min_periods=min_bars).mean()
+    out['avg_dollar_vol_partial'] = (
+        (daily['volume'] * close).rolling(window=20, min_periods=min_bars).mean())
+    out['adr_pct_partial'] = (
+        (daily['high'] / daily['low']).rolling(window=20, min_periods=min_bars).mean() - 1)
+    return out
+
 
 def _days_since_window_high(series, index, window=VOL_SPIKE_WINDOW):
     """Calendar days since the most recent bar that printed a high of the trailing ``window``.
@@ -668,12 +710,13 @@ def calculate_technical_indicators():
             # ADR%
             daily['adr_pct'] = (daily['high'] / daily['low']).rolling(window=20, min_periods=10).mean() - 1
 
+            # Partial-window twins the screeners read, so a new listing is
+            # judged on the bars it has. See compute_partial_windows.
+            for col, series in compute_partial_windows(daily).items():
+                daily[col] = series
+
             # ATR14 (14-period Average True Range)
-            high_low = daily['high'] - daily['low']
-            high_prev = (daily['high'] - daily['close'].shift(1)).abs()
-            low_prev = (daily['low'] - daily['close'].shift(1)).abs()
-            tr = pd.concat([high_low, high_prev, low_prev], axis=1).max(axis=1)
-            daily['atr14'] = tr.rolling(window=14, min_periods=1).mean()
+            daily['atr14'] = compute_atr14(daily['high'], daily['low'], daily['close'])
             daily['atr_pct'] = daily['atr14'] / daily['close']
 
             # ATR multiple from the 50-day SMA, matching Project608 parash logic.
@@ -716,9 +759,10 @@ def calculate_technical_indicators():
             for col in tr.columns:
                 daily[col] = tr[col]
 
-            # Coiled-theme reusable setup features.
-            # Retained so the standalone `coiled_theme` screener (kept but no longer
-            # in the daily workflow) still has its time-series inputs precomputed.
+            # Setup features first built for the retired `coiled_theme` screener.
+            # Nothing in this repo gates on them any more, but market_history
+            # archives every master column, so dropping them is a schema change
+            # (see "Downstream repos" in CLAUDE.md).
             daily['range_pct'] = (daily['high'] - daily['low']) / daily['close']
             daily['range10_pct'] = (
                 daily['high'].rolling(window=10, min_periods=5).max()

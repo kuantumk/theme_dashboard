@@ -21,9 +21,9 @@ def _gates():
 def filter_master_table(master_df):
     g = _gates()
     return (
-        (master_df['avg_dollar_vol'] >= g['min_avg_dollar_vol']) &
-        (master_df['vol_sma50'] >= g['min_vol_sma50']) &
+        (master_df['avg_dollar_vol_partial'] >= g['min_avg_dollar_vol']) &
+        (master_df['vol_sma50_partial'] >= g['min_vol_sma50']) &
         (master_df['close'] > g['min_close']) &
-        (master_df['adr_pct'] >= g['min_adr_pct']) &
+        (master_df['adr_pct_partial'] >= g['min_adr_pct']) &
         (master_df['vars'] > g['min_vars'])
     )

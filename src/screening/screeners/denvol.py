@@ -12,12 +12,12 @@ def filter_master_table(master_df):
         ) &
 
         # ADR %
-        (master_df['adr_pct'] >= 0.04) &
+        (master_df['adr_pct_partial'] >= 0.04) &
 
         # price
         (
             (master_df['close'] >= 2.0) &
-            (master_df['close'] >= master_df['sma200'])
+            (master_df['close'] >= master_df['sma200_partial'])
         ) &
 
         # calendar days since max up volume happened

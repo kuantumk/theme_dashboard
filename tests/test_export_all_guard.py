@@ -79,7 +79,7 @@ class FundamentalsLookupTests(unittest.TestCase):
             db = Path(tmp) / 'fundamentals.db'
             conn = sqlite3.connect(db)
             conn.execute('CREATE TABLE fundamentals (ticker TEXT, shares_float REAL, '
-                         'eps_growth_yoy REAL, sales_growth_yoy REAL, short_interest REAL, '
+                         'eps_growth_qq REAL, sales_growth_qq REAL, short_interest REAL, '
                          'inst_transactions REAL)')
             conn.executemany('INSERT INTO fundamentals VALUES (?, ?, ?, ?, ?, ?)', [
                 ('AAA', 1e7, 15.0, 20.0, 25.0, 1.5),
@@ -91,7 +91,7 @@ class FundamentalsLookupTests(unittest.TestCase):
                 everything = ex._load_fundamentals_for_tickers()
                 some = ex._load_fundamentals_for_tickers(['aaa'])
         self.assertEqual(everything['AAA'], {
-            'shares_float': 1e7, 'eps_growth_yoy': 15.0, 'sales_growth_yoy': 20.0,
+            'shares_float': 1e7, 'eps_growth_qq': 15.0, 'sales_growth_qq': 20.0,
             'short_interest': 25.0, 'inst_transactions': 1.5,
         })
         self.assertEqual(set(everything), {'AAA', 'BBB'})

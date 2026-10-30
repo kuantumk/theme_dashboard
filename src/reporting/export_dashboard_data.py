@@ -1603,8 +1603,8 @@ def _screener_ticker_rows(df, fundamentals, newest_session, lead=None):
             'dollar_vol': dollar_vol,
             'adr_pct': adr_pct,
             'float': _fmt_float_m(f.get('shares_float')),
-            'eps': _fmt_growth(f.get('eps_growth_yoy')),
-            'sales': _fmt_growth(f.get('sales_growth_yoy')),
+            'eps': _fmt_growth(f.get('eps_growth_qq')),
+            'sales': _fmt_growth(f.get('sales_growth_qq')),
             'inst': _fmt_inst(f.get('inst_transactions')),
             'short': round(float(short_val), 1) if short_val is not None else None,
             'highlight': _highlight_from_row(
@@ -2444,7 +2444,7 @@ def _int_or_none(value):
 
 
 #: The `fundamentals.db` columns the payload rows read, in SELECT order.
-FUNDAMENTALS_COLUMNS = ('shares_float', 'eps_growth_yoy', 'sales_growth_yoy',
+FUNDAMENTALS_COLUMNS = ('shares_float', 'eps_growth_qq', 'sales_growth_qq',
                         'short_interest', 'inst_transactions')
 
 

@@ -553,10 +553,24 @@ def compute_down_streak(close):
     Display only. Never gate on it: a name that fell 40% in three gap-downs
     carries a streak of 1 and is exactly what the SI tab is looking for.
     """
-    down = close.diff() < 0
-    # Each unbroken run of down days shares one (~down).cumsum() group id, so
-    # a cumulative sum inside the group counts that run and resets after it.
-    return down.groupby((~down).cumsum()).cumsum().astype(int)
+    return _run_length(close.diff() < 0)
+
+
+def _run_length(flag):
+    """Consecutive True values ending at each bar."""
+    # Each unbroken run shares one (~flag).cumsum() group id, so a cumulative
+    # sum inside the group counts that run and resets after it.
+    return flag.groupby((~flag).cumsum()).cumsum().astype(int)
+
+
+def compute_trend_streaks(high, low):
+    """``(higher_low_streak, lower_high_streak)``: consecutive sessions ending
+    at each bar whose low is above, or whose high is below, the session before.
+
+    A tie breaks the streak, because the trending screener asks for every low
+    to be higher than the previous low (and every high lower).
+    """
+    return _run_length(low.diff() > 0), _run_length(high.diff() < 0)
 
 
 def compute_max_down_streak(close, lookback=DROP_LOOKBACK):
@@ -781,6 +795,11 @@ def calculate_technical_indicators():
             # minimum is not interchangeable with today's bar.
             daily['drop_15d'] = compute_drop_15d(daily['close'])
             daily['max_down_streak'] = compute_max_down_streak(daily['close'])
+
+            # Trending screener legs.
+            daily['higher_low_streak'], daily['lower_high_streak'] = compute_trend_streaks(
+                daily['high'], daily['low'])
+            daily['perf_1w'] = daily['close'] / daily['close'].shift(5) - 1
             daily['nr7'] = daily['range_pct'] <= daily['range_pct'].rolling(window=7, min_periods=7).min()
             daily['nr20'] = daily['range_pct'] <= daily['range_pct'].rolling(window=20, min_periods=20).min()
 

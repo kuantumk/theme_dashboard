@@ -37,7 +37,8 @@ def master(date_str, seed):
                 'perf_1mo', 'perf_3mo', 'perf_6mo', 'up_dollar_vol_max'):
         df[col] = rng.uniform(0, 2, n) * (df['close'] if col[0] in 'smep' else 1)
     for col in ('c0_c30_rank', 'c0_c60_rank', 'c0_c90_rank', 'c0_c120_rank',
-                'days_since_highest_volume', 'days_since_up_vol_max', 'days_since_vol_max'):
+                'days_since_highest_volume', 'days_since_up_vol_max', 'days_since_vol_max',
+                'higher_low_streak', 'lower_high_streak'):
         df[col] = rng.integers(0, 100, n).astype(float)
     df['up_dollar_vol_max'] *= 1e8
     df.iloc[::7, df.columns.get_loc('sma200')] = np.nan   # zero-filled for the screeners

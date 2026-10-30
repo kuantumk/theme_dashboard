@@ -1239,7 +1239,7 @@
      tests/test_dashboard_zone_map_markup.py pins each value to the config. */
   const ZONE_RULES = {
     bandLow: -0.5,
-    bandHigh: 1.0,
+    bandHigh: 2.0,
     weeklyLow: 0.0,
     weeklyHigh: 4.0,
     xRange: [-2.0, 5.0],

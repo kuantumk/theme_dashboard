@@ -36,10 +36,10 @@ class ClassifyZoneTests(unittest.TestCase):
     CASES = [
         (0.0, 2.0, 'band', 'normal', 'buy_area'),
         (-0.5, 0.0, 'band', 'normal', 'buy_area'),      # both lower limits are inclusive
-        (1.0, 4.0, 'band', 'normal', 'buy_area'),       # both upper limits are inclusive
+        (2.0, 4.0, 'band', 'normal', 'buy_area'),       # both upper limits are inclusive
         (0.0, 4.01, 'band', 'extended', 'buy_stretched'),
-        (1.01, 2.0, 'above', 'normal', 'above'),
-        (2.0, 5.0, 'above', 'extended', 'extended'),
+        (2.01, 2.0, 'above', 'normal', 'above'),
+        (3.0, 5.0, 'above', 'extended', 'extended'),
         (-0.51, 2.0, 'under', 'normal', 'under_daily'),
         (-1.0, 6.0, 'under', 'extended', 'under_daily'),
         (0.0, -0.01, 'band', 'below', 'weekly_broken'),

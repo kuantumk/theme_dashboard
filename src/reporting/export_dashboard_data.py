@@ -1251,7 +1251,7 @@ ZONE_MAP_DEFAULTS = {
     'min_adr_pct': 0.04,
     'top_leaves': 20,
     'band_low': -0.5,
-    'band_high': 1.0,
+    'band_high': 2.0,
     'weekly_low': 0.0,
     'weekly_high': 4.0,
     'x_range': [-2.0, 5.0],

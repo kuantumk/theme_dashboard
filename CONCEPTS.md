@@ -169,7 +169,7 @@ The state marking a stock as being at a low-risk entry point right now — contr
 The picture on the four Viz tabs. Each ticker sits at two distances, both in daily ATR: across, the close against the daily EMA20; up, the close against the weekly EMA20. The position sorts each name into one of seven states, and the names are then grouped by leaf.
 
 ### Buy area
-On the zone map, the daily band (−0.5 to +1 ATR from the daily EMA20) with the weekly between 0 and +4 ATR. It is a display zone, not a measured signal: no forward return has been tested for it.
+On the zone map, the daily band (−0.5 to +2 ATR from the daily EMA20) with the weekly between 0 and +4 ATR. It is a display zone, not a measured signal: no forward return has been tested for it.
 
 ---
 

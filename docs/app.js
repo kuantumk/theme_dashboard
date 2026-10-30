@@ -19,6 +19,8 @@
   const VARS_HISTORY_URL = 'data/vars_history.json';
   const SI_DATA_URL = 'data/si.json';
   const SI_HISTORY_URL = 'data/si_history.json';
+  const TRENDING_DATA_URL = 'data/trending.json';
+  const TRENDING_HISTORY_URL = 'data/trending_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
@@ -1121,7 +1123,7 @@
       bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
       otherwise: 'neu', missing: 'neu',
     },
-    // Signed percent columns: EPS%, Sales%, Intra%, Daily%, Monthly%.
+    // Signed percent columns: EPS%, Sales%, 1W%, Intra%, Daily%, Monthly%.
     pct: {
       bands: [{ op: '>', at: 0, out: 'up' }, { op: '<', at: 0, out: 'dn' }],
       otherwise: 'neu', missing: 'neu',
@@ -1332,6 +1334,8 @@
     // per daily run, like the Lev ETF tab's.
     { id: 'etfviz', label: 'ETF Viz', currentUrl: ETF_VIZ_DATA_URL, historyUrl: ETF_VIZ_HISTORY_URL,
       zone: 'etf', bars: ['etfviz-tt-dates'], before: loadETFVizData },
+    { id: 'trending', label: 'Trending', currentUrl: TRENDING_DATA_URL, historyUrl: TRENDING_HISTORY_URL,
+      list: 'trending-container', bars: ['trending-tt-dates'], render: renderTrending },
   ];
 
   function fetchJSON(url, init) {
@@ -2466,6 +2470,9 @@
     drop15: { th: 'Drop15%', td: t => cell('dn', fmt1(t.drop15)) },
     streak: { th: 'Streak', td: t => cell(null, t.streak ?? '—') },
     price: { th: 'Price', td: t => cell(null, (typeof t.price === 'number') ? t.price.toFixed(2) : '—') },
+    // Trending tab: rank by 1-week return across the whole side.
+    rank: { th: '#', td: t => cell(null, t.rank ?? '—') },
+    perf1w: { th: '1W%', td: t => cell(pctClass(t.perf_1w), fmtPct(t.perf_1w)) },
     // Parabolic tab: distance from the 50-day SMA in ATR units.
     atrMul: {
       th: 'ATRMul',
@@ -2641,6 +2648,54 @@
         COLUMNS.float, COLUMNS.inst],
       filters: false,
     });
+  }
+
+  /**
+   * Render the Trending tab: a Down Trending and an Up Trending block, each
+   * holding VARS-style L1 sections. The server ranks every ticker by 1-week
+   * return within its side (worst first going down, best first going up) and
+   * orders sections and leaves by their best-ranked member. Streak is the run
+   * of lower highs (down) or higher lows (up) ending at this session.
+   */
+  const TREND_SIDES = [
+    { key: 'down', title: 'Down Trending', empty: 'No down-trending stocks for this date.' },
+    { key: 'up', title: 'Up Trending', empty: 'No up-trending stocks for this date.' },
+  ];
+
+  function renderTrending(data, date) {
+    const container = document.getElementById('trending-container');
+    if (!container) return;
+    if (!data) {
+      container.innerHTML = `<div class="no-data">No trending data for ${escHtml(date || 'this date')}.</div>`;
+      return;
+    }
+    container.innerHTML = TREND_SIDES.map(side => {
+      const tickers = new Set((data[side.key] || []).flatMap(grp =>
+        grp.leaves.flatMap(leaf => leaf.tickers.map(t => t.ticker))));
+      return `<div class="trend-side"><div class="trend-side-title">${side.title}`
+        + `<span class="trend-side-count">${plural(tickers.size, 'ticker')}</span></div>`
+        + `<div id="trending-${side.key}"></div></div>`;
+    }).join('');
+    TREND_SIDES.forEach(side => renderSections(`trending-${side.key}`,
+      { themes: data[side.key] }, date, {
+        noun: 'trending',
+        emptyMsg: side.empty,
+        section: grp => ({
+          name: grp.name,
+          hot: false,
+          meta: [
+            `best #${grp.best_rank}`,
+            `avg 1W ${fmtPct(grp.avg_perf_1w)}`,
+            plural(grp.n, 'ticker'),
+          ].join(' · '),
+          leaves: grp.leaves,
+        }),
+        leafMeta: leaf => `avg 1W ${fmtPct(leaf.avg_perf_1w)}`,
+        leafHeaders: 'multi',
+        columns: [COLUMNS.rank, COLUMNS.perf1w, COLUMNS.streak, COLUMNS.vars, COLUMNS.rs,
+          COLUMNS.float, COLUMNS.short],
+        filters: false,
+      }));
   }
 
   // ── PARABOLIC DATA ────────────────────────────────────

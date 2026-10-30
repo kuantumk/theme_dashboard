@@ -1831,6 +1831,119 @@ def export_vars(day_flags_by_date, fundamentals=None):
     return current
 
 
+# ── Trending tab (runs of higher lows / lower highs) ─────────────────────────
+
+def _trending_side(rows, theme_to_tickers, ascending):
+    """L1 sections for one side of the Trending tab.
+
+    Every ticker gets a rank by 1-week return across the whole side: best
+    first on the up side (`ascending` False), worst first on the down side.
+    Leaves and L1 sections then sort by their best-ranked member, so the
+    rank 1 ticker always heads the first section. Uncategorized and
+    Singleton sort last. There is no breadth minimum: the screener is the
+    whole filter, and a one-name L1 is still a trending stock.
+    """
+    ranked = sorted(rows.values(), key=lambda td: td['perf_1w'], reverse=not ascending)
+    for rank, td in enumerate(ranked, 1):
+        td['rank'] = rank
+
+    leaf_list = []
+    for name, tickers in theme_to_tickers.items():
+        members = sorted((rows[t] for t in tickers if t in rows), key=lambda td: td['rank'])
+        if members:
+            leaf_list.append({
+                'name': name,
+                'avg_perf_1w': round(sum(td['perf_1w'] for td in members) / len(members), 1),
+                'tickers': members,
+            })
+    _attach_hierarchy(leaf_list)
+
+    leaves_by_l1 = {}
+    for leaf in leaf_list:
+        leaves_by_l1.setdefault(leaf['l1'], []).append(leaf)
+
+    l1_list = []
+    for l1, leaves in leaves_by_l1.items():
+        leaves.sort(key=lambda lf: lf['tickers'][0]['rank'])
+        # Unique members — a dual-tagged ticker may sit in two leaves of one L1
+        members = list({td['ticker']: td for leaf in leaves for td in leaf['tickers']}.values())
+        l1_list.append({
+            'name': l1,
+            'best_rank': leaves[0]['tickers'][0]['rank'],
+            'avg_perf_1w': round(sum(td['perf_1w'] for td in members) / len(members), 1),
+            'n': len(members),
+            'leaves': leaves,
+        })
+    l1_list.sort(key=lambda grp: (grp['name'] in CATCHALL_THEMES, grp['best_rank']))
+    return l1_list
+
+
+def _build_trending_snapshot(path, day_flags, newest_session=False, fundamentals=None):
+    """Build a single Trending snapshot dict from one screener parquet.
+
+    `down` and `up` each hold L1 sections of leaf tables, laid out like the
+    VARS tab; see `_trending_side` for the order. A ticker in both a run of
+    higher lows and a run of lower highs is listed on both sides.
+    Returns the JSON dict or None if the parquet is empty.
+
+    `newest_session` and `fundamentals` are as in `_build_momentum_136_snapshot`.
+    """
+    from src.screening.screeners.trending import trend_sides
+
+    df = su.load_df_from_parquet(path).fillna(0)
+    if df.empty:
+        return None
+
+    session_date = str(df['date'].iloc[0]) if 'date' in df.columns else ''
+    screener_tickers = df['ticker'].astype(str).str.upper().tolist()
+    _, theme_to_tickers = _screener_theme_buckets(screener_tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(screener_tickers)
+
+    def lead_for(streak_col):
+        return lambda row, _t: {
+            'perf_1w': round(float(row.get('perf_1w', 0) or 0) * 100, 1),
+            'streak': int(row.get(streak_col, 0) or 0),
+            **_vars_fields(row),
+        }
+
+    up, down = trend_sides(df)
+    snapshot = {'report_date': session_date}
+    for side, mask, streak_col, ascending in (
+            ('down', down, 'lower_high_streak', True),
+            ('up', up, 'higher_low_streak', False)):
+        rows = _screener_ticker_rows(
+            df[mask], fundamentals, newest_session, lead=lead_for(streak_col))
+        if day_flags:
+            enrich_with_ticker_color(list(rows.values()), day_flags)
+        snapshot[side] = _trending_side(rows, theme_to_tickers, ascending)
+    return snapshot
+
+
+def export_trending(day_flags_by_date, fundamentals=None):
+    """Export Trending — rebuilds the full retention-window history every run."""
+    files = (SCREENING_OUTPUT_DIR / 'trending').glob('trending_*.parquet')
+    sessions = [(f.stem.replace('trending_', ''), f) for f in files]
+    if not sessions:
+        print("   No trending parquet found, skipping trending export")
+        return None
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers()
+
+    def build(date_str, path, newest_session):
+        return _build_trending_snapshot(
+            path, day_flags_by_date.get(date_str, {}),
+            newest_session=newest_session, fundamentals=fundamentals)
+
+    def count(side):
+        return len({td['ticker'] for grp in side for leaf in grp['leaves']
+                    for td in leaf['tickers']})
+
+    return _export_session_history(
+        sessions, build, OUTPUT_DIR, 'trending',
+        lambda cur: f"{count(cur['down'])} down, {count(cur['up'])} up")
+
+
 # ── SI tab (heavily shorted names that have already sold off) ───────────────
 
 def _finite(value):
@@ -2784,6 +2897,9 @@ def export_all():
 
     print("\n1d. Exporting vars data")
     step('vars', export_vars, day_flags_by_date, fundamentals=fundamentals)
+
+    print("\n1d2. Exporting trending data")
+    step('trending', export_trending, day_flags_by_date, fundamentals=fundamentals)
 
     print("\n1e. Exporting parabolic data")
     step('parabolic', export_parabolic, fundamentals=fundamentals)

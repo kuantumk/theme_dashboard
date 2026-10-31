@@ -24,8 +24,13 @@ jobs:
   # A scheduled run is the late backup for the on-time dispatch. Skip it when
   # a run of this workflow created after today's 13:00 PT close has already
   # succeeded. The concurrency group makes this run wait for an in-flight
-  # dispatch, so the check sees that run's result. Any API failure runs the
-  # pipeline: a duplicate run costs time, a skipped one costs a session.
+  # dispatch, but it releases this run the moment that dispatch ends, before
+  # the API reports the dispatch as finished. On 2026-10-26 the lookup ran 2 s
+  # after the dispatch ended, found no success, and the run republished an
+  # older session. So the check reads every earlier run's state and waits
+  # while one still shows as unfinished. Any API failure, or a run that stays
+  # unfinished for 5 minutes, runs the pipeline: a duplicate run costs time,
+  # a skipped one costs a session.
   guard:
     runs-on: ubuntu-latest
     permissions:
@@ -51,20 +56,31 @@ jobs:
           close = datetime.combine(datetime.now(pt).date(), time(13), pt)
           print(close.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
           ')
-          if ! done_ids=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/daily-screening.yml/runs?status=success&created=>=${since}" \
-              --jq '.workflow_runs[].id'); then
-            echo "::warning::Run lookup failed; running the pipeline."
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ -n "${done_ids}" ]; then
-            echo "Run(s) created since ${since} already succeeded: ${done_ids//$'\n'/ }. Skipping."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "No successful run since ${since}. Running the pipeline."
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
+          # Runs created after this one are queued behind it, so only
+          # lower ids can have finished.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if ! runs=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/workflows/daily-screening.yml/runs?created=>=${since}" \
+                --jq ".workflow_runs[] | select(.id < ${GITHUB_RUN_ID}) | \"\(.id) \(.status) \(.conclusion)\""); then
+              echo "::warning::Run lookup failed; running the pipeline."
+              echo "run=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            done_ids=$(awk '$2 == "completed" && $3 == "success" {print $1}' <<< "${runs}")
+            if [ -n "${done_ids}" ]; then
+              echo "Run(s) created since ${since} already succeeded: ${done_ids//$'\n'/ }. Skipping."
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            unfinished=$(awk 'NF && $2 != "completed" {print $1}' <<< "${runs}")
+            if [ -z "${unfinished}" ]; then
+              break
+            fi
+            echo "Run(s) ${unfinished//$'\n'/ } still show as unfinished (check ${attempt}); checking again in 30 s."
+            sleep 30
+          done
+          echo "No successful run since ${since}. Running the pipeline."
+          echo "run=true" >> "$GITHUB_OUTPUT"
 
   run-screening:
     needs: guard

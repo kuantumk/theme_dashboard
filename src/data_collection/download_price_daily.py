@@ -54,6 +54,57 @@ def _download_batch(tickers, escaped, start_date, end_date):
     return found
 
 
+def _bar_from_hourly(hourly):
+    """One session's open/high/low/close from its regular-hours hourly bars."""
+    hourly = hourly.dropna(subset=['close'])
+    if hourly.empty:
+        return None
+    return {'open': hourly['open'].iloc[0], 'high': hourly['high'].max(),
+            'low': hourly['low'].min(), 'close': hourly['close'].iloc[-1]}
+
+
+def fill_blank_bars_from_hourly(price_data_dict, session):
+    """Rebuild `session`'s prices from hourly bars where the daily bar has none.
+
+    From the end of after-hours trading (8 PM ET) Yahoo serves the newest
+    daily bar with volume but no prices for about 80 minutes; the hourly
+    bars keep them. Measured on 2026-10-30 over 200 tickers, the rebuilt
+    close is the last regular-hours trade, not the closing auction: median
+    0.035% and at most 0.75% off the official close. The next run downloads
+    the whole history again, so the official bar replaces it a day later.
+
+    Returns ``(filled, blank)``: how many tickers were rebuilt, of how many
+    had no prices. Volume stays as Yahoo sent it.
+    """
+    session = pd.Timestamp(session)
+    blank = [t for t, df in price_data_dict.items()
+             if session in df.index and pd.isna(df.at[session, 'close'])]
+    filled = 0
+    for i in range(0, len(blank), BATCH_SIZE):
+        chunk = blank[i:i+BATCH_SIZE]
+        escaped = [t.replace('.', '-') for t in chunk]
+        try:
+            hourly = yf.download(tickers=escaped, start=session.date(),
+                                 end=(session + pd.Timedelta(days=1)).date(),
+                                 interval='1h', group_by='ticker',
+                                 threads=True, progress=False)
+        except Exception as e:
+            print(f"  Hourly batch {i // BATCH_SIZE} failed: {e}")
+            continue
+        if hourly.empty or not isinstance(hourly.columns, pd.MultiIndex):
+            continue
+        symbols = set(hourly.columns.get_level_values(0))
+        for ticker, escaped_ticker in zip(chunk, escaped):
+            if escaped_ticker not in symbols:
+                continue
+            frame = hourly[escaped_ticker].rename(columns=str.lower)
+            bar = _bar_from_hourly(frame)
+            if bar:
+                price_data_dict[ticker].loc[session, list(bar)] = list(bar.values())
+                filled += 1
+    return filled, len(blank)
+
+
 def download_yf_price_data(start_date, end_date, min_coverage=None):
     """
     Download price history data from Yahoo Finance.
@@ -158,6 +209,12 @@ def download_yf_price_data(start_date, end_date, min_coverage=None):
             f"Only {success_count}/{len(tickers)} tickers downloaded "
             f"({success_count / len(tickers):.1%}, minimum {min_coverage:.0%}); "
             f"{PRICE_DATA_FILE} left unchanged.")
+
+    session = price_data_dict['SPY'].index[-1]
+    filled, blank = fill_blank_bars_from_hourly(price_data_dict, session)
+    if blank:
+        print(f"Daily bars for {session.date()} had no prices for {blank} tickers; "
+              f"rebuilt {filled} from hourly bars.")
 
     su.pickle_object_to_file(price_data_dict, PRICE_DATA_FILE)
 

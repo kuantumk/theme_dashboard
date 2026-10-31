@@ -17,6 +17,11 @@ fundamental_data:
   cache_days: 7
   rate_limit_seconds: 2
   max_retries: 3
+  # Finviz rejects market_breadth.user_agent (no Chrome/ token) with 403.
+  # Measured 2026-10-30 on a GitHub runner: 403 on quote and screener pages
+  # with that string, 200 with this one. It emptied the Float, EPS, Sales,
+  # Inst and Short columns from 2026-09-30 on.
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
 # RS calculation
 rs_score:

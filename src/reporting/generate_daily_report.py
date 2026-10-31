@@ -33,7 +33,7 @@ def load_fundamentals(tickers: List[str]) -> Dict[str, Dict]:
 
     placeholders = ','.join(['?'] * len(tickers))
     cursor.execute(f'''
-        SELECT ticker, shares_float, eps_growth_yoy, sales_growth_yoy,
+        SELECT ticker, shares_float, eps_growth_qq, sales_growth_qq,
                short_interest, inst_transactions
         FROM fundamentals
         WHERE ticker IN ({placeholders})

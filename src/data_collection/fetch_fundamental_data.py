@@ -30,14 +30,20 @@ def init_database():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # A cache from before the switch to Q/Q growth holds "EPS this Y" values.
+    # Within its 7-day TTL it would publish them as EPS Q/Q, so drop it.
+    columns = {row[1] for row in cursor.execute('PRAGMA table_info(fundamentals)')}
+    if columns and 'eps_growth_qq' not in columns:
+        cursor.execute('DROP TABLE fundamentals')
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS fundamentals (
             ticker TEXT PRIMARY KEY,
             market_cap REAL,
             shares_float REAL,
             pe_ratio REAL,
-            eps_growth_yoy REAL,
-            sales_growth_yoy REAL,
+            eps_growth_qq REAL,
+            sales_growth_qq REAL,
             short_interest REAL,
             inst_ownership REAL,
             inst_transactions REAL,
@@ -81,7 +87,7 @@ def parse_snapshot_tables(soup: BeautifulSoup) -> Dict[str, str]:
     Finviz renders the quote snapshot as SEVERAL
     <table class="snapshot-table2"> blocks (one per column group), not a
     single table. soup.find() would grab only the first block (Index..IPO)
-    and miss Shs Float / P/E / EPS this Y / Sales Q/Q / Short Float /
+    and miss Shs Float / P/E / EPS Q/Q / Sales Q/Q / Short Float /
     Inst Own / Inst Trans. Merge the pairs from every block.
 
     This is the one parser for the quote page. finvizfinance's
@@ -105,7 +111,7 @@ def get_fundamental_data(ticker: str) -> Optional[Dict]:
     """Fetch fundamental data for a single ticker from finviz."""
     url = f"https://finviz.com/quote.ashx?t={ticker}"
     headers = {
-        'User-Agent': CONFIG["market_breadth"]["user_agent"]
+        'User-Agent': CONFIG["fundamental_data"]["user_agent"]
     }
 
     for attempt in range(MAX_RETRIES):
@@ -122,8 +128,8 @@ def get_fundamental_data(ticker: str) -> Optional[Dict]:
                 'market_cap': parse_finviz_value(data_dict.get('Market Cap')),
                 'shares_float': parse_finviz_value(data_dict.get('Shs Float')),
                 'pe_ratio': parse_finviz_value(data_dict.get('P/E')),
-                'eps_growth_yoy': parse_finviz_value(data_dict.get('EPS this Y', data_dict.get('EPS next 5Y'))),
-                'sales_growth_yoy': parse_finviz_value(data_dict.get('Sales Q/Q', data_dict.get('Sales Y/Y TTM'))),
+                'eps_growth_qq': parse_finviz_value(data_dict.get('EPS Q/Q')),
+                'sales_growth_qq': parse_finviz_value(data_dict.get('Sales Q/Q', data_dict.get('Sales Y/Y TTM'))),
                 'short_interest': parse_finviz_value(data_dict.get('Short Float')),
                 'inst_ownership': parse_finviz_value(data_dict.get('Inst Own')),
                 'inst_transactions': parse_finviz_value(data_dict.get('Inst Trans')),
@@ -155,8 +161,8 @@ def save_to_database(ticker: str, fundamentals: Dict):
         fundamentals.get('market_cap'),
         fundamentals.get('shares_float'),
         fundamentals.get('pe_ratio'),
-        fundamentals.get('eps_growth_yoy'),
-        fundamentals.get('sales_growth_yoy'),
+        fundamentals.get('eps_growth_qq'),
+        fundamentals.get('sales_growth_qq'),
         fundamentals.get('short_interest'),
         fundamentals.get('inst_ownership'),
         fundamentals.get('inst_transactions'),
@@ -193,8 +199,8 @@ def get_cached_fundamentals(tickers: List[str], max_age_days: int = None) -> Dic
             'market_cap': row[1],
             'shares_float': row[2],
             'pe_ratio': row[3],
-            'eps_growth_yoy': row[4],
-            'sales_growth_yoy': row[5],
+            'eps_growth_qq': row[4],
+            'sales_growth_qq': row[5],
             'short_interest': row[6],
             'inst_ownership': row[7],
             'inst_transactions': row[8],

@@ -100,8 +100,8 @@ def _fundamentals_db(path):
     conn = sqlite3.connect(path)
     conn.execute(
         'CREATE TABLE fundamentals ('
-        'ticker TEXT, shares_float REAL, eps_growth_yoy REAL, '
-        'sales_growth_yoy REAL, short_interest REAL, inst_transactions REAL)'
+        'ticker TEXT, shares_float REAL, eps_growth_qq REAL, '
+        'sales_growth_qq REAL, short_interest REAL, inst_transactions REAL)'
     )
     conn.executemany(
         'INSERT INTO fundamentals VALUES (?, ?, ?, ?, ?, ?)',

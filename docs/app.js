@@ -102,6 +102,7 @@
     initMarketStatus();
     initTabs();
     initTickerClicks();
+    initChartInterval();
     initZoneMaps();
     initTickerFilters();
     initResizablePanels();
@@ -170,6 +171,7 @@
         if (btn.dataset.tab === 'cot') redrawCotNow();
         // A zone map rendered on a hidden tab draws once the tab has a width.
         redrawZoneMapsNow();
+        refreshChartInterval(btn.dataset.tab);
       });
     });
   }
@@ -247,10 +249,35 @@
     });
   }
 
+  // The header D/W toggle sets the timeframe every chart opens in, so a
+  // weekly read survives clicking through a list. The widget's own interval
+  // buttons change only the chart on screen.
+  let chartInterval = 'D';
+  // Per tab: the symbol on its chart and the interval it was drawn in.
+  const openCharts = {};
+
+  function initChartInterval() {
+    const buttons = document.querySelectorAll('.chart-tf-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        chartInterval = btn.dataset.interval;
+        buttons.forEach(b => b.classList.toggle('active', b === btn));
+        refreshChartInterval(getActiveTabId());
+      });
+    });
+  }
+
+  // Hidden tabs redraw when they are next shown, not all at once on a toggle.
+  function refreshChartInterval(tabId) {
+    const chart = openCharts[tabId];
+    if (chart && chart.interval !== chartInterval) openChart(tabId, chart.sym);
+  }
+
   function openChart(tabId, sym) {
     const areaEl = document.getElementById(tabId + '-chart-area');
 
     if (!areaEl) return;
+    openCharts[tabId] = { sym, interval: chartInterval };
 
     const containerId = 'tv_container_' + tabId;
     // Pin the widget container with absolute positioning so it always fills
@@ -263,7 +290,7 @@
       new TradingView.widget({
         "autosize": true,
         "symbol": sym,
-        "interval": "D",
+        "interval": chartInterval,
         "timezone": "Etc/UTC",
         "theme": "dark",
         "style": "1",

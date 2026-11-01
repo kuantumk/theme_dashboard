@@ -47,6 +47,8 @@
       <button class="tab-btn" data-tab="varsviz" id="tab-varsviz">VARS Viz</button>
       <button class="tab-btn" data-tab="momentum" id="tab-momentum">Momentum</button>
       <button class="tab-btn" data-tab="momentumviz" id="tab-momentumviz">Momentum Viz</button>
+      <button class="tab-btn" data-tab="ema20" id="tab-ema20">20EMA</button>
+      <button class="tab-btn" data-tab="ema20viz" id="tab-ema20viz">20EMA Viz</button>
       <button class="tab-btn" data-tab="volume" id="tab-volume">Volume</button>
       <button class="tab-btn" data-tab="volumeviz" id="tab-volumeviz">Volume Viz</button>
       <button class="tab-btn" data-tab="industry" id="tab-industry">Industry</button>
@@ -623,6 +625,56 @@
       <div class="resize-handle" data-panel="momentumviz"></div>
       <div class="right-panel" id="momentumviz-right">
         <div class="chart-area" id="momentumviz-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 10/20 EMA · 50/200 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: 20EMA ═════════════════════════════════════ -->
+    <!-- No V/A cutoffs: the setups carry their own floor ($100M or 2M shares,
+         4% ADR), and the dollar cutoff would dim the names admitted on shares. -->
+    <div class="tab-content" id="content-ema20">
+      <div class="left-panel" id="ema20-left">
+        <div class="time-travel-bar">
+          <div class="time-travel-dates" id="ema20-tt-dates"></div>
+        </div>
+        <div id="ema20-container">
+          <div class="loading">Loading 20EMA data...</div>
+        </div>
+      </div>
+      <div class="resize-handle" data-panel="ema20"></div>
+      <div class="right-panel" id="ema20-right">
+        <div class="chart-area" id="ema20-chart-area">
+          <div class="chart-placeholder">
+            <div class="placeholder-icon">📈</div>
+            <div>Click any ticker to open chart</div>
+            <div class="placeholder-sub">MA: 10/20 EMA · 50/200 SMA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: 20EMA VIZ ════════════════════════════════ -->
+    <!-- One map per side: the map's states read from a long's point of view. -->
+    <div class="tab-content" id="content-ema20viz">
+      <div class="left-panel viz-left" id="ema20viz-left">
+        <div class="time-travel-bar">
+          <div class="time-travel-dates" id="ema20viz-tt-dates"></div>
+        </div>
+        <div class="trend-side-title">Short</div>
+        <div class="zone-map" id="ema20viz-short-zone"></div>
+        <div class="trend-side-title zm-side-title">Long</div>
+        <div class="zone-map" id="ema20viz-long-zone"></div>
+        <!-- Drawn by legends.js from ZONE_RULES, the same limits the map uses. -->
+        <div class="themeviz-legend" data-viz-legend="zone"></div>
+      </div>
+      <div class="resize-handle" data-panel="ema20viz"></div>
+      <div class="right-panel" id="ema20viz-right">
+        <div class="chart-area" id="ema20viz-chart-area">
           <div class="chart-placeholder">
             <div class="placeholder-icon">📈</div>
             <div>Click any ticker to open chart</div>

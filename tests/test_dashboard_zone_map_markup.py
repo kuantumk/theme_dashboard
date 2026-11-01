@@ -103,13 +103,18 @@ class ZoneRendererTests(unittest.TestCase):
         self.assertIn("'.zm-state-list, .zm-leaf-list'", nav)
         for key in ('ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'):
             self.assertIn(key, nav)
-        # The position is the link, since a ticker repeats across cards.
-        self.assertIn('el._zmNavLink = link', nav)
-        self.assertIn('selectZoneTicker(mode', nav)
+        # The position is the link, since a ticker repeats across cards. It is
+        # kept per tab, because 20EMA Viz walks two maps as one list of rows.
+        self.assertIn('zoneNavLink[tabId] = link', nav)
+        self.assertIn('zoneMapsOf(tabId)', nav)
+        self.assertIn('selectZoneTicker(tabId', nav)
         self.assertIn('openChart(tabId', nav)
         keys = _fn('initArrowKeyNav')
         self.assertLess(keys.index('zoneArrowNav(tabId, e.key)'), keys.index('getTickerLinksForTab(tabId)'))
-        self.assertIn('el._zmNavLink = pt ? null : link', _fn('initZoneMaps'))
+        self.assertIn('zoneNavLink[cfg.tabId] = pt ? null : link', _fn('initZoneMaps'))
+
+    def test_a_selection_on_one_map_clears_the_other(self):
+        self.assertIn('zoneMapsOf(tabId).forEach', _fn('selectZoneTicker'))
 
     def test_the_lists_carry_no_card_titles(self):
         """The user asked for both titles to go: they had no use."""
@@ -191,6 +196,27 @@ class ZoneMarkupTests(unittest.TestCase):
         ids = [b[0] for b in buttons]
         self.assertEqual(ids.index('etf') + 1, ids.index('etfviz'))
         self.assertEqual('ETF Viz', dict(buttons)['etfviz'])
+
+    def test_the_20ema_tabs_sit_right_of_momentum_viz(self):
+        buttons = re.findall(r'data-tab="(\w+)"[^>]*>([^<]+)</button>', HTML)
+        ids = [b[0] for b in buttons]
+        self.assertEqual(ids[ids.index('momentumviz') + 1:ids.index('momentumviz') + 3],
+                         ['ema20', 'ema20viz'])
+        self.assertEqual('20EMA', dict(buttons)['ema20'])
+        self.assertEqual('20EMA Viz', dict(buttons)['ema20viz'])
+
+    def test_20ema_viz_draws_one_map_per_side(self):
+        """The map's states read from a long's point of view, so the shorts
+        get their own map rather than sharing one labelled "buy area"."""
+        block = HTML.split('id="content-ema20viz"')[1].split('class="tab-content"')[0]
+        for side in ('short', 'long'):
+            self.assertIn(f'id="ema20viz-{side}-zone"', block)
+            self.assertRegex(APP, rf"ema20{side}:\s*\{{[^}}]*containerId: 'ema20viz-{side}-zone'"
+                                  rf"[^}}]*key: 'zone_map_{side}'")
+        self.assertIn('data-viz-legend="zone"', block)
+        self.assertIn("zone: ['ema20short', 'ema20long']", APP)
+        self.assertIn("snap[cfg.key || 'zone_map']", _fn('renderZoneMap'))
+        self.assertIn('id="ema20viz-chart-area"', HTML)
 
     def test_etf_mode_prints_vars(self):
         self.assertRegex(

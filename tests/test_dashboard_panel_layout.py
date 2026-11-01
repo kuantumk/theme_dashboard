@@ -45,6 +45,7 @@ PER_TAB_WIDTHS = {
     "#momentum-left": 440,
     "#si-left": 505,
     "#trending-left": 490,
+    "#ema20-left": 530,
 }
 
 RESPONSIVE_BREAKPOINT = "max-width: 1100px"

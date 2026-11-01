@@ -6,7 +6,7 @@ Runs the complete stock screening pipeline:
 2. Calculate technical indicators
 3. Scrape market breadth (3b: Nasdaq McClellan Summation Index; 3c: CFTC COT)
 4. Create master tables (with RS_STS%)
-5. Run all screeners
+5. Run all screeners (5b: EMA20 cross setups)
 6. Consolidate results
 7. Fetch fundamentals for screened tickers (7b: short interest)
 8. Sync Google Sheet ground truth + surface untagged tickers
@@ -127,8 +127,10 @@ def consolidate_screener_results(date_str: str):
     """
     logger.info("Consolidating screener results...")
 
+    # The 20EMA setups are not a master-table filter, so they are not in
+    # `screeners`, but their names need fundamentals and theme tags too.
     all_tickers = su.union_tickers_for_date(
-        date_str, CONFIG['screeners'], root=SCREENING_OUTPUT_DIR
+        date_str, CONFIG['screeners'] + ['ema20'], root=SCREENING_OUTPUT_DIR
     )
 
     union_file = DATA_DIR / 'screened_union.json'
@@ -199,6 +201,11 @@ def run_daily_workflow():
         run_step(f"5. Run all screeners ({HISTORY_SESSIONS} sessions)",
                  lambda: run_script('src/screening/run_screener.py',
                                     ['--all', '--days', HISTORY_SESSIONS]))
+        # Non-critical: only the 20EMA tab reads it, and a missing session
+        # adds nothing to the screened union.
+        run_step(f"5b. Find EMA20 cross setups ({HISTORY_SESSIONS} sessions)",
+                 lambda: run_script('src/screening/ema20_setups.py',
+                                    ['--days', HISTORY_SESSIONS]), critical=False)
 
         date_str, master_path = latest_master()
         all_tickers = run_step("6. Consolidate screener results",

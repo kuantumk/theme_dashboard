@@ -835,7 +835,7 @@
       },
       {
         id: 'zone', title: 'Zone map (Viz tabs)',
-        intro: 'The five Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20. ETF Viz plots only long ETFs, with a lower dollar-volume floor than the other Viz tabs.',
+        intro: 'The six Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20. ETF Viz plots only long ETFs, with a lower dollar-volume floor than the other Viz tabs. 20EMA Viz draws one map for its shorts and one for its longs.',
         cards: [
           {
             id: 'zone-dots', title: 'Dot colour — the daily zone',

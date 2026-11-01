@@ -1833,29 +1833,25 @@ def export_vars(day_flags_by_date, fundamentals=None):
 
 # ── Trending tab (runs of higher lows / lower highs) ─────────────────────────
 
-def _trending_side(rows, theme_to_tickers, ascending):
-    """L1 sections for one side of the Trending tab.
+def _ranked_sections(rows, theme_to_tickers, order, summary=None):
+    """L1 sections of leaf tables, with every ticker ranked across the list.
 
-    Every ticker gets a rank by 1-week return across the whole side: best
-    first on the up side (`ascending` False), worst first on the down side.
+    `order` is the sort key, best first; each row gets its `rank` from it.
     Leaves and L1 sections then sort by their best-ranked member, so the
     rank 1 ticker always heads the first section. Uncategorized and
-    Singleton sort last. There is no breadth minimum: the screener is the
-    whole filter, and a one-name L1 is still a trending stock.
+    Singleton sort last. There is no breadth minimum: the screen is the
+    whole filter, and a one-name L1 still holds a setup. `summary(members)`
+    returns a tab's own fields for each leaf and section.
     """
-    ranked = sorted(rows.values(), key=lambda td: td['perf_1w'], reverse=not ascending)
-    for rank, td in enumerate(ranked, 1):
+    summary = summary or (lambda _members: {})
+    for rank, td in enumerate(sorted(rows.values(), key=order), 1):
         td['rank'] = rank
 
     leaf_list = []
     for name, tickers in theme_to_tickers.items():
         members = sorted((rows[t] for t in tickers if t in rows), key=lambda td: td['rank'])
         if members:
-            leaf_list.append({
-                'name': name,
-                'avg_perf_1w': round(sum(td['perf_1w'] for td in members) / len(members), 1),
-                'tickers': members,
-            })
+            leaf_list.append({'name': name, **summary(members), 'tickers': members})
     _attach_hierarchy(leaf_list)
 
     leaves_by_l1 = {}
@@ -1870,12 +1866,22 @@ def _trending_side(rows, theme_to_tickers, ascending):
         l1_list.append({
             'name': l1,
             'best_rank': leaves[0]['tickers'][0]['rank'],
-            'avg_perf_1w': round(sum(td['perf_1w'] for td in members) / len(members), 1),
+            **summary(members),
             'n': len(members),
             'leaves': leaves,
         })
     l1_list.sort(key=lambda grp: (grp['name'] in CATCHALL_THEMES, grp['best_rank']))
     return l1_list
+
+
+def _trending_side(rows, theme_to_tickers, ascending):
+    """L1 sections for one side of the Trending tab, ranked by 1-week return:
+    best first on the up side (`ascending` False), worst first going down."""
+    sign = 1 if ascending else -1
+    return _ranked_sections(
+        rows, theme_to_tickers, lambda td: sign * td['perf_1w'],
+        lambda members: {'avg_perf_1w': round(
+            sum(td['perf_1w'] for td in members) / len(members), 1)})
 
 
 def _build_trending_snapshot(path, day_flags, newest_session=False, fundamentals=None):
@@ -1942,6 +1948,90 @@ def export_trending(day_flags_by_date, fundamentals=None):
     return _export_session_history(
         sessions, build, OUTPUT_DIR, 'trending',
         lambda cur: f"{count(cur['down'])} down, {count(cur['up'])} up")
+
+
+# ── 20EMA tab (EMA20 cross setups, src/screening/ema20_setups.py) ───────────
+
+#: Per side: the sort key (best first) and the side's own row fields.
+_EMA20_SIDES = {
+    'short': (lambda td: (-td['lead'], td['ticker']), lambda row: {
+        'lead': int(row.get('lead', 0) or 0),
+        'gap': round(float(row.get('gap', 0) or 0), 2),
+    }),
+    'long': (lambda td: (-td['theme_size'], -td['rs20'], td['ticker']), lambda row: {
+        'theme_size': int(row.get('theme_size', 0) or 0),
+        'rs20': round(float(row.get('rs20', 0) or 0) * 100),
+    }),
+}
+
+
+def _build_ema20_snapshot(path, day_flags, newest_session=False, fundamentals=None):
+    """Build a single 20EMA snapshot dict from one `ema20_<date>.parquet`.
+
+    `short` and `long` each hold L1 sections of leaf tables, laid out like
+    the Trending tab: shorts ranked by how long the stock led before it lost
+    EMA20, longs by how many names in their theme are setting up, then by
+    20-session strength. `zone_map_short` and `zone_map_long` plot each side
+    on its own map, because the map's states read from a long's point of
+    view: a short sitting just under EMA20 is in the "buy area".
+    Returns the JSON dict or None if the parquet is empty.
+
+    `newest_session` and `fundamentals` are as in `_build_momentum_136_snapshot`.
+    """
+    df = su.load_df_from_parquet(path).fillna(0)
+    if df.empty:
+        return None
+
+    session_date = str(df['date'].iloc[0])
+    tickers = df['ticker'].astype(str).str.upper().unique().tolist()
+    ticker_themes, theme_to_tickers = _screener_theme_buckets(tickers)
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers(tickers)
+    master = _load_zone_master(session_date)
+    # The setups pass their own volume floor, which admits names under the
+    # map's $100M on 2M shares a day, so the map adds no second floor.
+    zone_cfg = {**zone_map_config(), 'min_avg_dollar_vol': 0}
+
+    snapshot = {'report_date': session_date}
+    for side, (order, fields) in _EMA20_SIDES.items():
+        rows = _screener_ticker_rows(
+            df[df['side'] == side], fundamentals, newest_session,
+            lead=lambda row, _t, fields=fields: {
+                **fields(row),
+                'off_high': round(float(row.get('off_high', 0) or 0) * 100, 1),
+                'days': int(row.get('days', 0) or 0),
+                **_vars_fields(row),
+            })
+        if day_flags:
+            enrich_with_ticker_color(list(rows.values()), day_flags)
+        snapshot[side] = _ranked_sections(rows, theme_to_tickers, order)
+        snapshot[f'zone_map_{side}'] = build_zone_map(
+            rows.values(), master, ticker_themes, zone_cfg)
+    return snapshot
+
+
+def export_ema20(day_flags_by_date, fundamentals=None):
+    """Export 20EMA — rebuilds the full retention-window history every run."""
+    files = (SCREENING_OUTPUT_DIR / 'ema20').glob('ema20_*.parquet')
+    sessions = [(f.stem.replace('ema20_', ''), f) for f in files]
+    if not sessions:
+        print("   No ema20 parquet found, skipping 20EMA export")
+        return None
+    if fundamentals is None:
+        fundamentals = _load_fundamentals_for_tickers()
+
+    def build(date_str, path, newest_session):
+        return _build_ema20_snapshot(
+            path, day_flags_by_date.get(date_str, {}),
+            newest_session=newest_session, fundamentals=fundamentals)
+
+    def count(side):
+        return len({td['ticker'] for grp in side for leaf in grp['leaves']
+                    for td in leaf['tickers']})
+
+    return _export_session_history(
+        sessions, build, OUTPUT_DIR, 'ema20',
+        lambda cur: f"{count(cur['short'])} short, {count(cur['long'])} long")
 
 
 # ── SI tab (heavily shorted names that have already sold off) ───────────────
@@ -2900,6 +2990,9 @@ def export_all():
 
     print("\n1d2. Exporting trending data")
     step('trending', export_trending, day_flags_by_date, fundamentals=fundamentals)
+
+    print("\n1d3. Exporting 20EMA data")
+    step('ema20', export_ema20, day_flags_by_date, fundamentals=fundamentals)
 
     print("\n1e. Exporting parabolic data")
     step('parabolic', export_parabolic, fundamentals=fundamentals)

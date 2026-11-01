@@ -306,7 +306,7 @@ body {
    renderTimeTravelBar goes back up.
 
    This is the default for tabs whose table fits it — Themes, Parabolic, and
-   the five Viz tabs. The six list-heavy tabs override it below with a width
+   the six Viz tabs. The list-heavy tabs override it below with a width
    measured from their own table; that block is the one to re-measure when a
    column is added.
 
@@ -343,6 +343,7 @@ body {
      Momentum (7 col)   389px  ->  440px
      Trending (8 col)   418px  ->  490px   (Float/Short read — in that
                                              sample; real figures widen it)
+     20EMA    (8 col)   472px  ->  530px   (same, Float/Short read —)
 
    Sized per tab rather than one shared width because column counts genuinely
    differ — a single value big enough for Volume would cost Momentum ~170px of
@@ -360,7 +361,7 @@ body {
    overflows and the Inst% column is clipped off the right edge with no
    scrollbar to reveal it. It still clears the 385px bar floor.
 
-   Tabs absent here (Themes, Parabolic, the five Viz tabs) use the shared
+   Tabs absent here (Themes, Parabolic, the six Viz tabs) use the shared
    default above — Parabolic's 5-column table measures 286px and Themes renders
    chips, not a table. tests/test_dashboard_panel_layout.py pins these values
    and the 385px time-travel-bar floor they all clear. */
@@ -371,6 +372,7 @@ body {
 #momentum-left { width: 440px; }
 #si-left { width: 505px; }
 #trending-left { width: 490px; }
+#ema20-left { width: 530px; }
 
 /* SI tab: the roster-age warning. Amber, not red -- a one-session-old short
    interest roster is still worth reading, which is why the tab publishes it
@@ -864,6 +866,11 @@ tr.filtered-out:hover td {
 .trend-side-count {
   font-size: 11px;
   font-weight: 300;
+}
+
+/* 20EMA Viz: the second side's title, below the first side's map. */
+.zm-side-title {
+  margin-top: 24px;
 }
 
 .theme-header.l1-hot {
@@ -1471,7 +1478,7 @@ tbody tr.nav-active {
 }
 
 /* ═══════════════════════════════════════════════════════
-   ZONE MAP — the five Viz tabs
+   ZONE MAP — the six Viz tabs
    Every colour is an existing token. The three daily-zone classes
    (zm-under / zm-band / zm-above) paint the dots, the zone backgrounds,
    the cluster bar segments and the state rows. A rail is grey, never a

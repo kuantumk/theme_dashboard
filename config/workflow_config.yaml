@@ -116,6 +116,31 @@ trending_screener:
   min_vol_sma50: 800000         # 50-day avg share volume
   min_streak: 6                 # sessions in a row, each low above (or high below) the one before
 
+# 20EMA tab (src/screening/ema20_setups.py, workflow step 5b). A setup starts
+# when a close crosses EMA20 and lives while EMA10 stays crossed the same way.
+# Lengths are in sessions, distances in ATR14, fractions as decimals. Chosen on
+# one year of data (2025-10 to 2026-10); see the module docstring.
+ema20_tab:
+  min_avg_dollar_vol: 100000000 # liquid: 20-day avg dollar volume, OR
+  min_avg_volume: 2000000       # 20-day avg share volume
+  min_adr_pct: 0.04             # 20-day ADR%
+  min_price: 5.0
+  prior_sessions: 10            # the cross needs prior_min of these closes on the other side
+  prior_min: 6
+  overshoot_atr: 0.5            # a close this far back through EMA20 ends the setup
+  pre_cross_sessions: 15        # ends a setup whose EMAs have not crossed by then
+  pullback_atr: 0.25            # long: low within this of EMA10
+  short_zone_atr: 0.25          # short: high within this of EMA20
+  short_min_drawdown: 0.25      # short: at least this far below the lead_window high
+  short_min_lead_sessions: 40   # short: sessions in the top decile before the cross
+  lead_window: 126              # sessions: the leadership count and the high
+  lead_return_sessions: 63      # leadership reads this return
+  lead_pct: 0.9                 # top decile
+  long_max_drawdown: 0.15       # long: within this of the lead_window high
+  long_min_rs20: 0.7            # long: 20-session return percentile
+  long_fresh_sessions: 20       # long: theme members count while their setup is this young
+  long_min_theme_names: 3       # long: companies of one L2 theme setting up
+
 # Zone map — the four Viz tabs (Theme, VARS, Momentum, Volume). Each ticker is
 # plotted by (close - daily EMA20) / ATR14 across and (close - weekly EMA20) /
 # ATR14 up. The server assigns every zone and state; docs/app.js ZONE_RULES

@@ -21,6 +21,8 @@
   const SI_HISTORY_URL = 'data/si_history.json';
   const TRENDING_DATA_URL = 'data/trending.json';
   const TRENDING_HISTORY_URL = 'data/trending_history.json';
+  const EMA20_DATA_URL = 'data/ema20.json';
+  const EMA20_HISTORY_URL = 'data/ema20_history.json';
   const PARABOLIC_DATA_URL = 'data/parabolic.json';
   const PARABOLIC_HISTORY_URL = 'data/parabolic_history.json';
   const INDUSTRY_ETF_HISTORY_URL = 'data/industry_etf_history.json';
@@ -1294,7 +1296,8 @@
                    the tab's date bars, and renders the picked session only
                    when the user picked one before it arrived.
        list        the list container (a <tbody> when `cols` is set).
-       zone        the tab's zone-map mode in ZONE_MODES, if it has one.
+       zone        the tab's zone-map mode in ZONE_MODES, if it has one, or
+                   a list of modes when its Viz tab draws one map per side.
        bars        every time-travel bar that lists this tab's sessions.
        render      draws the list for (snapshot, date); the zone map is drawn
                    by renderTab from the same snapshot.
@@ -1312,6 +1315,9 @@
     { id: 'momentum', label: 'Momentum', currentUrl: MOMENTUM_DATA_URL, historyUrl: MOMENTUM_HISTORY_URL,
       list: 'momentum-container', zone: 'momentum', bars: ['momentum-tt-dates', 'momentumviz-tt-dates'],
       render: renderMomentum },
+    { id: 'ema20', label: '20EMA', currentUrl: EMA20_DATA_URL, historyUrl: EMA20_HISTORY_URL,
+      list: 'ema20-container', zone: ['ema20short', 'ema20long'],
+      bars: ['ema20-tt-dates', 'ema20viz-tt-dates'], render: renderEma20 },
     { id: 'volume', label: 'Volume', currentUrl: VOLUME_DATA_URL, historyUrl: VOLUME_HISTORY_URL,
       list: 'volume-container', zone: 'volume', bars: ['volume-tt-dates', 'volumeviz-tt-dates'],
       render: renderVolume },
@@ -1411,11 +1417,15 @@
       });
   }
 
-  /** Draw one snapshot on the tab's list and its zone map. */
+  function tabZoneModes(cfg) {
+    return [].concat(cfg.zone || []);
+  }
+
+  /** Draw one snapshot on the tab's list and its zone maps. */
   function renderTab(cfg, snap, date) {
     cfg.shown = date || null;
     if (cfg.render) cfg.render(snap, date);
-    if (cfg.zone) renderZoneMap(snap, cfg.zone, date);
+    tabZoneModes(cfg).forEach(mode => renderZoneMap(snap, mode, date));
   }
 
   /** Render the tab at a picked session. Before the tab's history has landed
@@ -1437,8 +1447,10 @@
         ? `<tr><td colspan="${cfg.cols}" class="${cls}">${html}</td></tr>`
         : `<div class="${cls}">${html}</div>`;
     }
-    const zone = cfg.zone && document.getElementById(ZONE_MODES[cfg.zone].containerId);
-    if (zone) zone.innerHTML = `<div class="${cls}">${zoneHtml}</div>`;
+    tabZoneModes(cfg).forEach(mode => {
+      const zone = document.getElementById(ZONE_MODES[mode].containerId);
+      if (zone) zone.innerHTML = `<div class="${cls}">${zoneHtml}</div>`;
+    });
   }
 
   /** Session dates one tab has data for (newest first). Each bar lists only
@@ -1550,7 +1562,7 @@
     onSelect(date);
   }
 
-  // ── ZONE MAP — the five Viz tabs ───────────────────────────────────
+  // ── ZONE MAP — the six Viz tabs ────────────────────────────────────
   // Each ticker sits at (close vs the daily EMA20, close vs the weekly
   // EMA20), both in daily ATR14. The server decides every zone and state
   // (export_dashboard_data.build_zone_map); this code only draws. It paints
@@ -1563,7 +1575,19 @@
     momentum: { containerId: 'momentumviz-zone', tabId: 'momentumviz', metric: 'rs' },
     volume: { containerId: 'volumeviz-zone', tabId: 'volumeviz', metric: 'vars' },
     etf: { containerId: 'etfviz-zone', tabId: 'etfviz', metric: 'vars' },
+    // 20EMA Viz draws one map per side; `key` names the snapshot block.
+    ema20short: { containerId: 'ema20viz-short-zone', tabId: 'ema20viz', metric: 'vars', key: 'zone_map_short' },
+    ema20long: { containerId: 'ema20viz-long-zone', tabId: 'ema20viz', metric: 'vars', key: 'zone_map_long' },
   };
+
+  /** Every zone map container on one tab: two on 20EMA Viz, one elsewhere. */
+  function zoneMapsOf(tabId) {
+    return Object.values(ZONE_MODES).filter(m => m.tabId === tabId)
+      .map(m => document.getElementById(m.containerId)).filter(Boolean);
+  }
+
+  // The list link the arrow keys last reached, per tab.
+  const zoneNavLink = {};
 
   const ZONE_METRIC = {
     vars: { key: 'vars', label: 'VARS', digits: 1 },
@@ -2025,7 +2049,7 @@
       el.innerHTML = `<div class="no-data">No data for ${escHtml(date || 'this session')}.</div>`;
       return;
     }
-    const zm = snap.zone_map;
+    const zm = snap[cfg.key || 'zone_map'];
     if (!zm) {
       el.innerHTML = '<div class="no-data">Zone map data arrives with the next daily run.</div>';
       return;
@@ -2055,36 +2079,37 @@
   }
 
   /** Mark one ticker selected on the dot and on every list link of the tab. */
-  function selectZoneTicker(mode, sym) {
-    const el = document.getElementById(ZONE_MODES[mode].containerId);
-    if (!el) return;
+  function selectZoneTicker(tabId, sym) {
     const q = CSS.escape(sym);
-    // A redraw reads this, so the selection survives a divider drag.
-    el._zmSel = sym;
-    el.querySelectorAll('.zm-pt.zm-sel').forEach(g => g.classList.remove('zm-sel'));
-    el.querySelectorAll(`.zm-pt[data-zm-sym="${q}"]`).forEach(g => g.classList.add('zm-sel'));
-    el.querySelectorAll('.tn-link.active-ticker').forEach(l => l.classList.remove('active-ticker'));
-    el.querySelectorAll(`.tn-link[data-sym="${q}"]`).forEach(l => l.classList.add('active-ticker'));
+    zoneMapsOf(tabId).forEach(el => {
+      // A redraw reads this, so the selection survives a divider drag.
+      el._zmSel = sym;
+      el.querySelectorAll('.zm-pt.zm-sel').forEach(g => g.classList.remove('zm-sel'));
+      el.querySelectorAll(`.zm-pt[data-zm-sym="${q}"]`).forEach(g => g.classList.add('zm-sel'));
+      el.querySelectorAll('.tn-link.active-ticker').forEach(l => l.classList.remove('active-ticker'));
+      el.querySelectorAll(`.tn-link[data-sym="${q}"]`).forEach(l => l.classList.add('active-ticker'));
+    });
   }
 
   /** Arrow keys on a zone map's lists. Left and right step along one row;
    *  up and down jump to the first name of the next row. A ticker repeats
    *  across the states and clusters cards, so the position is the link
-   *  element, not the symbol. Returns false when the tab has no zone map. */
+   *  element, not the symbol. A tab with two maps walks them as one list of
+   *  rows, top map first. Returns false when the tab has no zone map. */
   function zoneArrowNav(tabId, key) {
-    const mode = Object.keys(ZONE_MODES).find(m => ZONE_MODES[m].tabId === tabId);
-    const el = mode && document.getElementById(ZONE_MODES[mode].containerId);
-    if (!el) return false;
-    const rows = Array.from(el.querySelectorAll('.zm-state-list, .zm-leaf-list'))
+    const els = zoneMapsOf(tabId);
+    if (!els.length) return false;
+    const rows = els.flatMap(el => Array.from(el.querySelectorAll('.zm-state-list, .zm-leaf-list')))
       .map(r => Array.from(r.querySelectorAll('.tn-link')))
       .filter(r => r.length);
     if (!rows.length) return true;
 
     // A re-render or a dot click leaves no stored link in the lists, so
     // re-enter at the first link of the selected symbol.
-    let cur = el._zmNavLink;
-    if (!cur || !el.contains(cur)) {
-      cur = el._zmSel ? el.querySelector(`.tn-link[data-sym="${CSS.escape(el._zmSel)}"]`) : null;
+    let cur = zoneNavLink[tabId];
+    if (!cur || !els.some(el => el.contains(cur))) {
+      const sel = els[0]._zmSel;
+      cur = sel ? els.map(el => el.querySelector(`.tn-link[data-sym="${CSS.escape(sel)}"]`)).find(Boolean) : null;
     }
     let r = cur ? rows.findIndex(row => row.includes(cur)) : -1;
     let i = r >= 0 ? rows[r].indexOf(cur) : -1;
@@ -2102,15 +2127,15 @@
     }
 
     const link = rows[r][i];
-    el._zmNavLink = link;
-    selectZoneTicker(mode, link.dataset.sym);
+    zoneNavLink[tabId] = link;
+    selectZoneTicker(tabId, link.dataset.sym);
     link.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     openChart(tabId, link.dataset.sym);
     return true;
   }
 
   function initZoneMaps() {
-    Object.entries(ZONE_MODES).forEach(([mode, cfg]) => {
+    Object.values(ZONE_MODES).forEach(cfg => {
       const el = document.getElementById(cfg.containerId);
       if (!el) return;
       el.addEventListener('click', e => {
@@ -2118,12 +2143,12 @@
         const link = e.target.closest('.tn-link');
         const sym = pt ? pt.dataset.zmSym : link ? link.dataset.sym : null;
         if (!sym) return;
-        el._zmNavLink = pt ? null : link;
+        zoneNavLink[cfg.tabId] = pt ? null : link;
         // A list link is a .tn-link, so initTickerClicks opens its chart.
         // A dot is not, so this handler opens the chart for it.
         if (pt) openChart(cfg.tabId, sym);
         // After initTickerClicks has cleared and set its single link.
-        setTimeout(() => selectZoneTicker(mode, sym), 0);
+        setTimeout(() => selectZoneTicker(cfg.tabId, sym), 0);
       });
       // Backstop only, the same lesson as syncRadarClamps: the observer
       // delivers inside the rendering lifecycle, so the drag, resize and
@@ -2473,6 +2498,16 @@
     // Trending tab: rank by 1-week return across the whole side.
     rank: { th: '#', td: t => cell(null, t.rank ?? '—') },
     perf1w: { th: '1W%', td: t => cell(pctClass(t.perf_1w), fmtPct(t.perf_1w)) },
+    // 20EMA tab.
+    lead: { th: 'Lead', title: 'Sessions in the top 10% of 3-month returns over the 6 months before it lost EMA20',
+      td: t => cell(null, t.lead ?? '—') },
+    gap: { th: 'Hi-EMA20', title: "Today's high minus EMA20, in ATR",
+      td: t => cell(null, (typeof t.gap === 'number') ? t.gap.toFixed(2) : '—') },
+    themeSize: { th: 'Theme', title: 'Companies in its L2 theme with a long setup no older than 20 sessions',
+      td: t => cell(null, t.theme_size ?? '—') },
+    rs20: { th: 'RS20', title: 'Percentile of the 20-session return', td: t => cell(null, t.rs20 ?? '—') },
+    offHigh: { th: 'OffHi%', title: 'Below the 6-month high', td: t => cell('dn', fmt1(t.off_high)) },
+    days: { th: 'Days', title: 'Sessions since the close crossed EMA20', td: t => cell(null, t.days ?? '—') },
     // Parabolic tab: distance from the 50-day SMA in ATR units.
     atrMul: {
       th: 'ATRMul',
@@ -2514,7 +2549,8 @@
     }
 
     const head = '<table><thead><tr><th class="l">Ticker</th>'
-      + spec.columns.map(c => `<th>${c.th}</th>`).join('') + '</tr></thead><tbody>';
+      + spec.columns.map(c => `<th${c.title ? ` title="${escAttr(c.title)}"` : ''}>${c.th}</th>`).join('')
+      + '</tr></thead><tbody>';
     let html = spec.banner ? spec.banner(data) : '';
     data.themes.forEach((entry, idx) => {
       const grp = spec.section(entry);
@@ -2662,40 +2698,73 @@
     { key: 'up', title: 'Up Trending', empty: 'No up-trending stocks for this date.' },
   ];
 
-  function renderTrending(data, date) {
-    const container = document.getElementById('trending-container');
+  /** The Trending and 20EMA tabs: one titled block per side, each holding
+   *  L1 sections of leaf tables. `spec(side)` is renderSections' spec. */
+  function renderSidedSections(prefix, sides, data, date, noun, spec) {
+    const container = document.getElementById(`${prefix}-container`);
     if (!container) return;
     if (!data) {
-      container.innerHTML = `<div class="no-data">No trending data for ${escHtml(date || 'this date')}.</div>`;
+      container.innerHTML = `<div class="no-data">No ${noun} data for ${escHtml(date || 'this date')}.</div>`;
       return;
     }
-    container.innerHTML = TREND_SIDES.map(side => {
+    container.innerHTML = sides.map(side => {
       const tickers = new Set((data[side.key] || []).flatMap(grp =>
         grp.leaves.flatMap(leaf => leaf.tickers.map(t => t.ticker))));
       return `<div class="trend-side"><div class="trend-side-title">${side.title}`
         + `<span class="trend-side-count">${plural(tickers.size, 'ticker')}</span></div>`
-        + `<div id="trending-${side.key}"></div></div>`;
+        + `<div id="${prefix}-${side.key}"></div></div>`;
     }).join('');
-    TREND_SIDES.forEach(side => renderSections(`trending-${side.key}`,
-      { themes: data[side.key] }, date, {
-        noun: 'trending',
-        emptyMsg: side.empty,
-        section: grp => ({
-          name: grp.name,
-          hot: false,
-          meta: [
-            `best #${grp.best_rank}`,
-            `avg 1W ${fmtPct(grp.avg_perf_1w)}`,
-            plural(grp.n, 'ticker'),
-          ].join(' · '),
-          leaves: grp.leaves,
-        }),
-        leafMeta: leaf => `avg 1W ${fmtPct(leaf.avg_perf_1w)}`,
-        leafHeaders: 'multi',
-        columns: [COLUMNS.rank, COLUMNS.perf1w, COLUMNS.streak, COLUMNS.vars, COLUMNS.rs,
-          COLUMNS.float, COLUMNS.short],
-        filters: false,
-      }));
+    sides.forEach(side => renderSections(`${prefix}-${side.key}`,
+      { themes: data[side.key] }, date, { noun, emptyMsg: side.empty, filters: false, ...spec(side) }));
+  }
+
+  function renderTrending(data, date) {
+    renderSidedSections('trending', TREND_SIDES, data, date, 'trending', () => ({
+      section: grp => ({
+        name: grp.name,
+        hot: false,
+        meta: [
+          `best #${grp.best_rank}`,
+          `avg 1W ${fmtPct(grp.avg_perf_1w)}`,
+          plural(grp.n, 'ticker'),
+        ].join(' · '),
+        leaves: grp.leaves,
+      }),
+      leafMeta: leaf => `avg 1W ${fmtPct(leaf.avg_perf_1w)}`,
+      leafHeaders: 'multi',
+      columns: [COLUMNS.rank, COLUMNS.perf1w, COLUMNS.streak, COLUMNS.vars, COLUMNS.rs,
+        COLUMNS.float, COLUMNS.short],
+    }));
+  }
+
+  /**
+   * Render the 20EMA tab: a Short and a Long block (src/screening/ema20_setups.py).
+   * Every name is listed the session before it can trigger. Shorts are former
+   * leaders that lost EMA20 and came back up to it, ranked by how long they
+   * led; longs pulled back to EMA10 in a theme where several names set up at
+   * once, ranked by that count.
+   */
+  const EMA20_SIDES = [
+    { key: 'short', title: 'Short', empty: 'No short setups for this date.',
+      columns: [COLUMNS.rank, COLUMNS.lead, COLUMNS.offHigh, COLUMNS.gap, COLUMNS.days,
+        COLUMNS.price, COLUMNS.float, COLUMNS.short] },
+    { key: 'long', title: 'Long', empty: 'No long setups for this date.',
+      columns: [COLUMNS.rank, COLUMNS.themeSize, COLUMNS.rs20, COLUMNS.offHigh, COLUMNS.days,
+        COLUMNS.price, COLUMNS.float, COLUMNS.short] },
+  ];
+
+  function renderEma20(data, date) {
+    renderSidedSections('ema20', EMA20_SIDES, data, date, '20EMA', side => ({
+      section: grp => ({
+        name: grp.name,
+        hot: false,
+        meta: `best #${grp.best_rank} · ${plural(grp.n, 'ticker')}`,
+        leaves: grp.leaves,
+      }),
+      leafMeta: leaf => `best #${leaf.tickers[0].rank}`,
+      leafHeaders: 'multi',
+      columns: side.columns,
+    }));
   }
 
   // ── PARABOLIC DATA ────────────────────────────────────

@@ -177,6 +177,63 @@ si_tab:
   top_k_si: 3                   # member SI values averaged into an L1 score
   hot_radar_rank: 10            # radar L1 rank at or better than this earns HOT
 
+# COT tab — CFTC Commitments of Traders, legacy futures-only report, one weekly
+# chart per market (src/data_collection/fetch_cot.py). Markets are matched by
+# CFTC contract code, never by name: the CFTC renames contracts (NYMEX crude is
+# "WTI-PHYSICAL" now), and a name match goes quietly stale when it does.
+# The list order is the dropdown order.
+#
+# Crowding score = percentile rank (0-100) of the non-commercial net as a share
+# of open interest, inside the plotted window. ⛔ The tag thresholds are a
+# display choice: nothing here measures whether a tag predicts a move.
+cot:
+  url: "https://publicreporting.cftc.gov/resource/6dca-aqww.json"
+  window_weeks: 156             # plotted weeks, and the window the scores rank in
+  min_weeks_for_score: 52       # fewer reported weeks than this: no score, no tags
+  extreme_pct: 10               # score >= 100 - this or <= this is an extreme
+  default_market: "209742"
+  markets:
+    - {code: "13874A", name: "S&P 500 E-mini"}
+    - {code: "209742", name: "Nasdaq E-mini"}
+    - {code: "239742", name: "Russell E-mini"}
+    - {code: "043602", name: "US 10Y Note"}
+    - {code: "133741", name: "Bitcoin"}
+    - {code: "146021", name: "Ether Cash"}
+    - {code: "067651", name: "Crude Oil (WTI, NYMEX)"}
+    - {code: "023651", name: "Natural Gas"}
+    - {code: "088691", name: "Gold"}
+    - {code: "084691", name: "Silver"}
+    - {code: "085692", name: "Copper"}
+    - {code: "192651", name: "Steel"}
+    - {code: "191693", name: "Aluminum"}
+    - {code: "133742", name: "Micro Bitcoin"}
+    - {code: "146022", name: "Micro Ether"}
+    - {code: "042601", name: "US 2Y Note"}
+    - {code: "044601", name: "US 5Y Note"}
+    - {code: "020601", name: "US 30Y Bond"}
+    - {code: "134741", name: "SOFR (3-month)"}
+    - {code: "045601", name: "Fed Funds"}
+    - {code: "098662", name: "USD Index"}
+    - {code: "099741", name: "Euro FX"}
+    - {code: "097741", name: "Japanese Yen"}
+    - {code: "096742", name: "British Pound"}
+    - {code: "092741", name: "Swiss Franc"}
+    - {code: "090741", name: "Canadian Dollar"}
+    - {code: "095741", name: "Mexican Peso"}
+    - {code: "1170E1", name: "VIX"}
+    - {code: "12460+", name: "DJIA Consolidated"}
+    - {code: "13874C", name: "E-mini S&P Financial"}
+    - {code: "13874E", name: "E-mini S&P Health Care"}
+    - {code: "13874F", name: "E-mini S&P Industrial"}
+    - {code: "13874H", name: "E-mini S&P Materials"}
+    - {code: "13874J", name: "E-mini S&P Utilities"}
+    - {code: "244042", name: "MSCI EM Index"}
+    - {code: "067411", name: "WTI Crude (ICE Europe)"}
+    - {code: "06765A", name: "WTI Financial (NYMEX)"}
+    - {code: "06765T", name: "Brent Last Day (NYMEX)"}
+    - {code: "111659", name: "Gasoline RBOB"}
+    - {code: "058644", name: "Lumber"}
+
 # Tight range (TR) — the detector behind the Themes tab's tight marker and the
 # violet highlight rung. Source: the canonical "Tight Range (TR)" note, v2.1.
 #

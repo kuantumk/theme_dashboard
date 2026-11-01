@@ -805,6 +805,35 @@
         ],
       },
       {
+        id: 'cot', title: 'COT tab',
+        intro: `Weekly CFTC positioning for one futures market. Each bar is a net position (long minus short); the three nets add to zero. The crowding score ranks the non-commercial net, as a share of open interest, inside the last ${R.cotWindowWeeks} weeks.`,
+        cards: [
+          {
+            id: 'cot-series', title: 'Bars and line — who holds the position',
+            sample: '<span class="cot-key"><i class="cot-swatch cot-nc"></i></span>',
+            where: ['cot'],
+            body: keyList([
+              ['<i class="cot-swatch cot-nc"></i>', 'Non-commercial: large speculators, such as funds.'],
+              ['<i class="cot-swatch cot-cm"></i>', 'Commercial: hedgers, such as producers and dealers.'],
+              ['<i class="cot-swatch cot-sm"></i>', 'Small trader: positions under the CFTC reporting level.'],
+              ['<svg width="16" height="8"><path class="cot-oi" d="M0,4L16,4"/><circle class="cot-oi" cx="8" cy="4" r="2"/></svg>', 'Open interest, on the right axis. The legend row above the chart keys it as <i class="cot-swatch cot-oi-key"></i>.'],
+              ['<svg width="12" height="14"><line class="cot-cross" x1="6" x2="6" y1="0" y2="14"/></svg>', 'Yellow line and <span class="cot-ro-date">date</span>: the week under the pointer. The cards show that week.'],
+            ]),
+          },
+          {
+            id: 'cot-tags', title: 'Badge and tags — crowding',
+            sample: '<span class="cot-badge cot-fade">FADE RISK</span>',
+            where: ['cot'],
+            body: `${keyList([
+              ['<span class="cot-tag cot-crowd">Crowded long</span>', `Crowding score ${100 - R.cotExtremePct} or higher. <b>Crowded short</b>: ${R.cotExtremePct} or lower.`],
+              ['<span class="cot-badge cot-fade">FADE RISK</span>', 'Crowded, and the non-commercial net moved against the crowd this week.'],
+              ['<span class="cot-badge cot-extended">EXTENDED</span>', 'Crowded, and the crowd still grew this week.'],
+              ['<span class="cot-tag">Commercials bearish</span>', `The commercial net, as a share of open interest, ranks ${R.cotExtremePct} or lower in the window. <b>Bullish</b>: ${100 - R.cotExtremePct} or higher.`],
+            ])}<p>These thresholds are a display choice. Nothing here measures whether a tag predicts a move.</p>`,
+          },
+        ],
+      },
+      {
         id: 'zone', title: 'Zone map (Viz tabs)',
         intro: 'The six Viz tabs place each ticker by two distances, both in daily ATR14. Across: the close against the daily EMA20. Up: the close against the weekly EMA20. ETF Viz plots only long ETFs, with a lower dollar-volume floor than the other Viz tabs. 20EMA Viz draws one map for its shorts and one for its longs.',
         cards: [

@@ -4,7 +4,7 @@ Main daily workflow orchestrator.
 Runs the complete stock screening pipeline:
 1. Download price data
 2. Calculate technical indicators
-3. Scrape market breadth (3b: Nasdaq McClellan Summation Index)
+3. Scrape market breadth (3b: Nasdaq McClellan Summation Index; 3c: CFTC COT)
 4. Create master tables (with RS_STS%)
 5. Run all screeners
 6. Consolidate results
@@ -189,6 +189,10 @@ def run_daily_workflow():
         # a failure here cannot affect screening.
         run_step("3b. Compute Nasdaq McClellan Summation Index + RSI(14)",
                  lambda: run_script('src/data_collection/compute_nasi.py'), critical=False)
+        # The CFTC reports weekly, so most runs rewrite the same weeks. A failed
+        # fetch leaves the last cot.json, whose report date the tab prints.
+        run_step("3c. Fetch CFTC Commitments of Traders (COT tab)",
+                 lambda: run_script('src/data_collection/fetch_cot.py'), critical=False)
         run_step(f"4. Create master tables with RS_STS% ({HISTORY_SESSIONS} sessions)",
                  lambda: run_script('src/screening/create_master_table.py',
                                     ['--days', HISTORY_SESSIONS]))

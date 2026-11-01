@@ -324,6 +324,10 @@ class ServerRuleMirrorTests(unittest.TestCase):
         self.assertIsNotNone(m, 'the VARS HOT member minimum moved; re-point this test')
         self.assertEqual(int(m.group(1)), int(self._rule('varsHotMinMembers')))
 
+    def test_cot_rules_match_config(self):
+        self.assertEqual(float(CONFIG['cot']['extreme_pct']), float(self._rule('cotExtremePct')))
+        self.assertEqual(int(CONFIG['cot']['window_weeks']), int(self._rule('cotWindowWeeks')))
+
 
 if __name__ == '__main__':
     unittest.main()

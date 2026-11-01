@@ -7,7 +7,7 @@
   <title>Market Monitor</title>
   <meta name="description"
     content="Real-time market dashboard with macro overview, stock themes, industry ETFs, and leveraged ETF tracking.">
-  <link rel="stylesheet" href="style.css?v=20261013">
+  <link rel="stylesheet" href="style.css?v=20261101">
 </head>
 
 <body>
@@ -40,6 +40,7 @@
     <!-- ══ TAB BAR ═══════════════════════════════════════ -->
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="macro" id="tab-macro">Overview</button>
+      <button class="tab-btn" data-tab="cot" id="tab-cot">COT</button>
       <button class="tab-btn" data-tab="themes" id="tab-themes">Themes</button>
       <button class="tab-btn" data-tab="themeviz" id="tab-themeviz">Theme Viz</button>
       <button class="tab-btn" data-tab="vars" id="tab-vars">VARS</button>
@@ -421,6 +422,52 @@
             <div class="placeholder-sub">MA: 10/20 EMA · 50/200 SMA</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: COT ═════════════════════════════════════ -->
+    <!-- One full-width page: weekly CFTC positioning for one futures market at
+         a time. app.js draws it from data/cot.json (src/data_collection/fetch_cot.py). -->
+    <div class="tab-content" id="content-cot">
+      <div class="cot-page">
+        <div class="cot-head">
+          <select class="cot-select" id="cot-select" aria-label="COT market"></select>
+          <span class="cot-badge" id="cot-badge" hidden></span>
+          <span class="cot-tag cot-crowd" id="cot-crowd"></span>
+          <span class="cot-tag" id="cot-score"></span>
+          <span class="cot-tag" id="cot-comm"></span>
+          <span class="cot-date" id="cot-date">&mdash;</span>
+        </div>
+        <div class="cot-summary" id="cot-summary">Loading COT data...</div>
+        <div class="cot-cards">
+          <div class="cot-card">
+            <div class="cot-card-lbl">Non-commercial</div>
+            <div class="cot-card-val" id="cot-nc-val">&mdash;</div>
+            <div class="cot-card-sub" id="cot-nc-sub">&mdash;</div>
+          </div>
+          <div class="cot-card">
+            <div class="cot-card-lbl">Commercial</div>
+            <div class="cot-card-val" id="cot-cm-val">&mdash;</div>
+            <div class="cot-card-sub" id="cot-cm-sub">&mdash;</div>
+          </div>
+          <div class="cot-card">
+            <div class="cot-card-lbl">Small trader</div>
+            <div class="cot-card-val" id="cot-sm-val">&mdash;</div>
+            <div class="cot-card-sub" id="cot-sm-sub">&mdash;</div>
+          </div>
+        </div>
+        <div class="cot-legend">
+          <span class="cot-key"><i class="cot-swatch cot-nc"></i>Non-commercial</span>
+          <span class="cot-key"><i class="cot-swatch cot-cm"></i>Commercial</span>
+          <span class="cot-key"><i class="cot-swatch cot-sm"></i>Small trader</span>
+          <span class="cot-key"><i class="cot-swatch cot-oi-key"></i>Open interest</span>
+          <span class="cot-readout">
+            <span class="cot-ro-date" id="cot-ro-date">&mdash;</span>
+            <span class="cot-ro-lbl">OI</span>
+            <span class="cot-ro-val" id="cot-ro-oi">&mdash;</span>
+          </span>
+        </div>
+        <svg class="cot-chart" id="cot-chart" role="img" aria-label="COT net positions and open interest"></svg>
       </div>
     </div>
 
@@ -885,8 +932,8 @@
 
   </div> <!-- Enclosing app-wrap -->
 
-  <script src="app.js?v=20261013"></script>
-  <script src="legends.js?v=20261013"></script>
+  <script src="app.js?v=20261101"></script>
+  <script src="legends.js?v=20261101"></script>
 </body>
 
 </html>

@@ -29,6 +29,7 @@
   const ETF_VIZ_HISTORY_URL = 'data/etf_viz_history.json';
   const BREADTH_DATA_URL = 'data/market_breadth.json';
   const NASI_DATA_URL = 'data/nasi.json';
+  const COT_DATA_URL = 'data/cot.json';
   // Oversold line for OUR series. Not portable from a vendor's chart: RSI at the
   // floor is a ratio between a decayed memory of the last rally and the current
   // decline, so it shifts with issue coverage. Calibrated 2026-08 against
@@ -110,6 +111,8 @@
     initNasiResize();
     initNasiCrosshair();
     loadNasiData();
+    initCot();
+    loadCotData();
     loadTabs();
     loadMacroEvents();
     initTableSort();
@@ -161,6 +164,8 @@
         applyTickerFilters();
         // Radar chips can only be measured once the tab has a box.
         if (btn.dataset.tab === 'themes') syncRadarClampsNow();
+        // The COT chart sizes itself from its box, which a hidden tab lacks.
+        if (btn.dataset.tab === 'cot') redrawCotNow();
         // A zone map rendered on a hidden tab draws once the tab has a width.
         redrawZoneMapsNow();
       });
@@ -377,6 +382,16 @@
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       const tabId = getActiveTabId();
+      // The COT tab has no tickers: Up and Down step through its markets.
+      // preventDefault also stops a focused market <select> from taking the
+      // same key, which would move two markets per press.
+      if (tabId === 'cot') {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          stepCotMarket(e.key === 'ArrowDown' ? 1 : -1);
+        }
+        return;
+      }
       if (zoneArrowNav(tabId, e.key)) {
         e.preventDefault();
         return;
@@ -423,6 +438,257 @@
       openChart(tabId, link.dataset.chartSym || sym);
     });
     // A ticker click syncs navIndices: see initTickerClicks.
+  }
+
+  // ── COT (CFTC Commitments of Traders) ─────────────────
+  // data/cot.json holds one weekly series per market: open interest and three
+  // net positions (non-commercial, commercial, small trader) that add to zero.
+  // The crowding tags and the summary come from fetch_cot.py; this code only
+  // draws them.
+  let cotData = null;
+  let cotIndex = 0;
+  // Week index under the pointer; -1 shows the newest week.
+  let cotHover = -1;
+  // Bar centres (CSS px) of the last render, for pointer -> week.
+  let cotXs = null;
+  // renderCotChart clears the SVG on every redraw, so this is reassigned there.
+  let cotCross = null;
+
+  const COT_DAY_MS = 864e5;
+  // A previous report further back than this is a gap, not last week. Matches
+  // MAX_WEEK_GAP_DAYS in fetch_cot.py.
+  const COT_MAX_GAP_DAYS = 10;
+
+  function loadCotData() {
+    fetch(withCacheBust(COT_DATA_URL))
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!data || !data.markets || !data.markets.length) {
+          document.getElementById('cot-summary').textContent = 'COT data arrives with the next daily run.';
+          return;
+        }
+        cotData = data;
+        document.getElementById('cot-select').innerHTML = data.markets
+          .map((m, i) => `<option value="${i}">${escHtml(m.name)}</option>`).join('');
+        const def = data.markets.findIndex(m => m.code === data.default_market);
+        showCotMarket(def >= 0 ? def : 0);
+      })
+      .catch(err => console.error('Error loading COT:', err));
+  }
+
+  function initCot() {
+    const select = document.getElementById('cot-select');
+    const svg = document.getElementById('cot-chart');
+    if (!select || !svg) return;
+    select.addEventListener('change', () => showCotMarket(Number(select.value)));
+    svg.addEventListener('mousemove', e => {
+      const i = cotWeekAt(svg, e.clientX);
+      if (i !== cotHover) { cotHover = i; showCotWeek(); }
+    });
+    svg.addEventListener('mouseleave', () => { cotHover = -1; showCotWeek(); });
+    window.addEventListener('resize', redrawCotNow);
+    if (typeof ResizeObserver === 'undefined') return;
+    let last = '';
+    new ResizeObserver(entries => {
+      const r = entries[0].contentRect;
+      const key = Math.round(r.width) + 'x' + Math.round(r.height);
+      if (key === last) return;
+      last = key;
+      redrawCotNow();
+    }).observe(svg);
+  }
+
+  function stepCotMarket(step) {
+    if (!cotData) return;
+    const i = cotIndex + step;
+    if (i < 0 || i >= cotData.markets.length) return;
+    showCotMarket(i);
+  }
+
+  function showCotMarket(i) {
+    cotIndex = i;
+    cotHover = -1;
+    const m = cotData.markets[i];
+    const s = m.signal || {};
+    document.getElementById('cot-select').value = String(i);
+
+    const badge = document.getElementById('cot-badge');
+    badge.hidden = !s.state;
+    badge.textContent = s.state === 'fade' ? 'FADE RISK' : 'EXTENDED';
+    badge.className = 'cot-badge ' + (s.state === 'fade' ? 'cot-fade' : 'cot-extended');
+    setCotTag('cot-crowd', s.crowd ? `Crowded ${s.crowd}` : '');
+    setCotTag('cot-score', `Crowding score: ${s.score == null ? '—' : s.score}`);
+    setCotTag('cot-comm', s.commercials ? `Commercials ${s.commercials}` : '');
+    document.getElementById('cot-summary').textContent = s.summary || '';
+
+    const newest = m.dates[m.dates.length - 1];
+    document.getElementById('cot-date').textContent =
+      `${fmtCotDate(newest, 'long')} · ${cotAge(newest)}`;
+
+    redrawCotNow();
+    showCotWeek();
+  }
+
+  function setCotTag(id, text) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.hidden = !text;
+  }
+
+  // Report dates are calendar dates. Formatting them in UTC keeps a viewer
+  // west of Greenwich from reading Tuesday's report as Monday's.
+  function fmtCotDate(iso, style) {
+    const d = new Date(iso + 'T00:00:00Z');
+    if (style === 'long') {
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    }
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+      + " '" + String(d.getUTCFullYear()).slice(2);
+  }
+
+  function cotAge(iso) {
+    const now = new Date();
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = Math.round((today - Date.parse(iso + 'T00:00:00Z')) / COT_DAY_MS);
+    if (days <= 0) return 'today';
+    return days === 1 ? '1 day old' : `${days} days old`;
+  }
+
+  function fmtCotNum(v) {
+    const a = Math.abs(v);
+    if (a >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+    return String(Math.round(v));
+  }
+
+  function fmtCotSigned(v) {
+    return (v > 0 ? '+' : '') + fmtCotNum(v);
+  }
+
+  // The cards, readout and crosshair for the hovered week, or the newest one.
+  function showCotWeek() {
+    if (!cotData) return;
+    const m = cotData.markets[cotIndex];
+    const i = cotHover >= 0 ? cotHover : m.dates.length - 1;
+    const prev = i > 0 && (Date.parse(m.dates[i]) - Date.parse(m.dates[i - 1])) / COT_DAY_MS <= COT_MAX_GAP_DAYS
+      ? i - 1 : -1;
+    ['nc', 'cm', 'sm'].forEach(key => {
+      const v = m[key][i];
+      const wow = prev >= 0 ? fmtCotSigned(v - m[key][prev]) : '—';
+      document.getElementById(`cot-${key}-val`).textContent = fmtCotNum(v);
+      document.getElementById(`cot-${key}-sub`).textContent =
+        `${(100 * v / m.oi[i]).toFixed(1)}% OI · ${wow} WoW`;
+    });
+    document.getElementById('cot-ro-date').textContent = fmtCotDate(m.dates[i], 'long');
+    document.getElementById('cot-ro-oi').textContent = m.oi[i].toLocaleString('en-US');
+
+    if (cotCross && cotXs) {
+      const x = cotXs[i].toFixed(1);
+      cotCross.setAttribute('x1', x);
+      cotCross.setAttribute('x2', x);
+      cotCross.setAttribute('visibility', cotHover >= 0 ? 'visible' : 'hidden');
+    }
+  }
+
+  function cotWeekAt(svg, clientX) {
+    if (!cotXs || !cotXs.length) return -1;
+    const x = clientX - svg.getBoundingClientRect().left;
+    let best = 0;
+    cotXs.forEach((cx, i) => { if (Math.abs(cx - x) < Math.abs(cotXs[best] - x)) best = i; });
+    return best;
+  }
+
+  function redrawCotNow() {
+    if (cotData) renderCotChart(cotData.markets[cotIndex]);
+  }
+
+  function renderCotChart(m) {
+    const svg = document.getElementById('cot-chart');
+    if (!svg) return;
+    svg.innerHTML = '';
+    cotCross = null;
+    cotXs = null;
+    const W = svg.clientWidth, H = svg.clientHeight;
+    if (!W || !H) return;   // hidden tab: the tab switch redraws it
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    const pad = { l: 64, r: 80, t: 10, b: 28 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    // Every market shares one time axis, so a thin contract that skipped
+    // weeks shows the gaps instead of squeezing its bars together.
+    const t0 = Date.parse(cotData.window_start);
+    const weeks = Math.round((Date.parse(cotData.report_date) - t0) / (7 * COT_DAY_MS)) + 1;
+    const slot = pw / weeks;
+    const slotOf = d => Math.round((Date.parse(d) - t0) / (7 * COT_DAY_MS));
+    cotXs = m.dates.map(d => pad.l + (slotOf(d) + 0.5) * slot);
+
+    // Stacked from zero, commercial first: the three nets add to zero, so the
+    // positive and negative stacks are mirror heights.
+    const order = ['cm', 'sm', 'nc'];
+    let top = 1;
+    m.dates.forEach((_, i) => {
+      let up = 0, dn = 0;
+      order.forEach(k => { const v = m[k][i]; if (v > 0) up += v; else dn -= v; });
+      top = Math.max(top, up, dn);
+    });
+    const range = top * 1.04;
+    const y = v => pad.t + ph / 2 - (v / range) * (ph / 2);
+    const oiTop = Math.max(1, ...m.oi);
+    const yOi = v => pad.t + ph - (v / (oiTop * 1.04)) * ph;
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const add = (tag, attrs, text) => {
+      const el = document.createElementNS(ns, tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      if (text != null) el.textContent = text;
+      svg.appendChild(el);
+      return el;
+    };
+
+    [top, top / 2, 0, -top / 2, -top].forEach(v => {
+      add('line', { x1: pad.l, x2: W - pad.r, y1: y(v), y2: y(v), class: v === 0 ? 'cot-zero' : 'cot-grid' });
+      add('text', { x: pad.l - 8, y: y(v) + 4, 'text-anchor': 'end', class: 'cot-axis' }, fmtCotNum(v));
+    });
+    [oiTop, oiTop / 2, 0].forEach(v => {
+      add('text', { x: W - pad.r + 8, y: yOi(v) + 4, class: 'cot-axis' }, fmtCotNum(v));
+    });
+    const every = Math.max(1, Math.ceil(weeks / Math.max(2, Math.floor(pw / 90))));
+    for (let k = 0; k < weeks; k += every) {
+      const iso = new Date(t0 + k * 7 * COT_DAY_MS).toISOString().slice(0, 10);
+      add('text', { x: pad.l + (k + 0.5) * slot, y: H - 8, 'text-anchor': 'middle', class: 'cot-axis' },
+        fmtCotDate(iso, 'short'));
+    }
+
+    const bw = Math.max(1, slot * 0.72);
+    m.dates.forEach((_, i) => {
+      let up = 0, dn = 0;
+      order.forEach(k => {
+        const v = m[k][i];
+        if (!v) return;
+        const from = v > 0 ? up : dn;
+        const to = from + v;
+        if (v > 0) up = to; else dn = to;
+        add('rect', {
+          x: (cotXs[i] - bw / 2).toFixed(1), width: bw.toFixed(1),
+          y: Math.min(y(from), y(to)).toFixed(1), height: Math.abs(y(to) - y(from)).toFixed(1),
+          class: 'cot-' + k,
+        });
+      });
+    });
+
+    // The open-interest line breaks across a reporting gap rather than
+    // drawing a straight segment through weeks that have no report.
+    let d = '';
+    m.oi.forEach((v, i) => {
+      const gap = i > 0 && (Date.parse(m.dates[i]) - Date.parse(m.dates[i - 1])) / COT_DAY_MS > COT_MAX_GAP_DAYS;
+      d += `${i === 0 || gap ? 'M' : 'L'}${cotXs[i].toFixed(1)},${yOi(v).toFixed(1)}`;
+    });
+    add('path', { d, class: 'cot-oi' });
+    m.oi.forEach((v, i) => add('circle', { cx: cotXs[i].toFixed(1), cy: yOi(v).toFixed(1), r: 2, class: 'cot-oi' }));
+
+    // Crosshair last, so it draws over the bars.
+    cotCross = add('line', { x1: 0, x2: 0, y1: pad.t, y2: pad.t + ph, class: 'cot-cross', visibility: 'hidden' });
+    showCotWeek();
   }
 
   // ── MACRO EVENTS ───────────────────────────────────────
@@ -1218,6 +1484,9 @@
     varsHotRs: 70,            // vars_tab.hot_rs_threshold
     varsHotMinMembers: 3,     // export_dashboard_data._build_vars_snapshot
     siHotRadarRank: 10,       // si_tab.hot_radar_rank
+    // COT tab tags (config/workflow_config.yaml `cot:`).
+    cotExtremePct: 10,        // cot.extreme_pct
+    cotWindowWeeks: 156,      // cot.window_weeks
   };
 
   /* US equity session windows in ET minutes after midnight, for the header

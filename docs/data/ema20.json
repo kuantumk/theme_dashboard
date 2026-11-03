@@ -1,45 +1,108 @@
 {
-  "report_date": "2026-11-02",
+  "report_date": "2026-11-03",
   "short": [
     {
-      "name": "Fintech & Crypto",
+      "name": "AI",
       "best_rank": 1,
-      "n": 1,
+      "n": 2,
       "leaves": [
         {
-          "name": "Fintech & Crypto / Consumer Finance",
+          "name": "AI / Semiconductor Equipment",
           "tickers": [
             {
-              "ticker": "DAVE",
-              "lead": 56,
-              "gap": -0.09,
-              "off_high": -29.8,
-              "days": 6,
-              "vars": 0.13,
-              "vars_20ema": 2.02,
-              "rs": 30.8,
-              "price": 321.88,
-              "dollar_vol": 100442021,
-              "adr_pct": 0.0596,
-              "float": "10.1",
-              "eps": "-21",
-              "sales": "30",
-              "inst": "+14.2",
-              "short": 23.5,
-              "highlight": "tight",
+              "ticker": "AEHR",
+              "lead": 67,
+              "gap": -0.15,
+              "off_high": -55.8,
+              "days": 20,
+              "vars": -4.18,
+              "vars_20ema": -4.29,
+              "rs": 46.2,
+              "price": 65.11,
+              "dollar_vol": 200231687,
+              "adr_pct": 0.1002,
+              "float": "31.1",
+              "eps": "402",
+              "sales": "201",
+              "inst": "+4.2",
+              "short": 18.1,
+              "highlight": null,
               "rank": 1
             }
           ],
-          "l1": "Fintech & Crypto",
-          "l2": "Consumer Finance",
+          "l1": "AI",
+          "l2": "Semiconductor Equipment",
+          "l3": null
+        },
+        {
+          "name": "AI / Data Center / Cloud & Hyperscalers",
+          "tickers": [
+            {
+              "ticker": "WULF",
+              "lead": 42,
+              "gap": -0.12,
+              "off_high": -58.0,
+              "days": 29,
+              "vars": -9.54,
+              "vars_20ema": -9.54,
+              "rs": 50.0,
+              "price": 12.53,
+              "dollar_vol": 554314533,
+              "adr_pct": 0.0917,
+              "float": "348.8",
+              "eps": "-3974",
+              "sales": "-6",
+              "inst": "+25.6",
+              "short": 36.7,
+              "highlight": "short",
+              "rank": 4
+            }
+          ],
+          "l1": "AI",
+          "l2": "Data Center",
+          "l3": "Cloud & Hyperscalers"
+        }
+      ]
+    },
+    {
+      "name": "Specialty Chemicals",
+      "best_rank": 2,
+      "n": 1,
+      "leaves": [
+        {
+          "name": "Specialty Chemicals / Specialty Materials",
+          "tickers": [
+            {
+              "ticker": "CC",
+              "lead": 58,
+              "gap": 2.06,
+              "off_high": -48.6,
+              "days": 118,
+              "vars": -11.22,
+              "vars_20ema": -11.79,
+              "rs": 53.8,
+              "price": 13.09,
+              "dollar_vol": 31054481,
+              "adr_pct": 0.0406,
+              "float": "149.1",
+              "eps": "224",
+              "sales": "3",
+              "inst": "+3.4",
+              "short": 10.0,
+              "highlight": null,
+              "rank": 2
+            }
+          ],
+          "l1": "Specialty Chemicals",
+          "l2": "Specialty Materials",
           "l3": null
         }
       ]
     },
     {
       "name": "Biotech",
-      "best_rank": 2,
-      "n": 2,
+      "best_rank": 3,
+      "n": 1,
       "leaves": [
         {
           "name": "Biotech / Drug Delivery",
@@ -47,22 +110,23 @@
             {
               "ticker": "LQDA",
               "lead": 48,
-              "gap": 1.06,
-              "off_high": -55.3,
-              "days": 0,
-              "vars": -4.57,
-              "vars_20ema": -2.74,
-              "rs": 65.4,
-              "price": 41.85,
-              "dollar_vol": 173647845,
-              "adr_pct": 0.0859,
+              "gap": 0.49,
+              "off_high": -54.9,
+              "days": 1,
+              "vars": -4.85,
+              "vars_20ema": -2.94,
+              "rs": 69.2,
+              "price": 42.2,
+              "dollar_vol": 171381846,
+              "adr_pct": 0.0831,
               "float": "77.5",
               "eps": "252",
               "sales": "1843",
               "inst": "+14.4",
               "short": 22.3,
               "highlight": "short",
-              "rank": 2
+              "ticker_color": "green",
+              "rank": 3
             }
           ],
           "l1": "Biotech",
@@ -75,160 +139,63 @@
             {
               "ticker": "LQDA",
               "lead": 48,
-              "gap": 1.06,
-              "off_high": -55.3,
-              "days": 0,
-              "vars": -4.57,
-              "vars_20ema": -2.74,
-              "rs": 65.4,
-              "price": 41.85,
-              "dollar_vol": 173647845,
-              "adr_pct": 0.0859,
+              "gap": 0.49,
+              "off_high": -54.9,
+              "days": 1,
+              "vars": -4.85,
+              "vars_20ema": -2.94,
+              "rs": 69.2,
+              "price": 42.2,
+              "dollar_vol": 171381846,
+              "adr_pct": 0.0831,
               "float": "77.5",
               "eps": "252",
               "sales": "1843",
               "inst": "+14.4",
               "short": 22.3,
               "highlight": "short",
-              "rank": 2
+              "ticker_color": "green",
+              "rank": 3
             }
           ],
           "l1": "Biotech",
           "l2": "Respiratory",
           "l3": null
-        },
+        }
+      ]
+    },
+    {
+      "name": "Fintech & Crypto",
+      "best_rank": 4,
+      "n": 1,
+      "leaves": [
         {
-          "name": "Biotech / Rare Disease",
+          "name": "Fintech & Crypto / Crypto / Generalist",
           "tickers": [
             {
-              "ticker": "TVTX",
-              "lead": 45,
-              "gap": 0.2,
-              "off_high": -28.3,
-              "days": 34,
-              "vars": -2.04,
-              "vars_20ema": 0.13,
-              "rs": 7.7,
-              "price": 49.26,
-              "dollar_vol": 108364970,
-              "adr_pct": 0.0457,
-              "float": "91.5",
-              "eps": "-160",
-              "sales": "48",
-              "inst": "+4.8",
-              "short": 11.9,
-              "highlight": null,
+              "ticker": "WULF",
+              "lead": 42,
+              "gap": -0.12,
+              "off_high": -58.0,
+              "days": 29,
+              "vars": -9.54,
+              "vars_20ema": -9.54,
+              "rs": 50.0,
+              "price": 12.53,
+              "dollar_vol": 554314533,
+              "adr_pct": 0.0917,
+              "float": "348.8",
+              "eps": "-3974",
+              "sales": "-6",
+              "inst": "+25.6",
+              "short": 36.7,
+              "highlight": "short",
               "rank": 4
             }
           ],
-          "l1": "Biotech",
-          "l2": "Rare Disease",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Industrials",
-      "best_rank": 3,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Industrials / Engineering & Construction",
-          "tickers": [
-            {
-              "ticker": "MTZ",
-              "lead": 48,
-              "gap": 0.96,
-              "off_high": -56.1,
-              "days": 85,
-              "vars": -10.93,
-              "vars_20ema": -13.14,
-              "rs": 50.0,
-              "price": 193.77,
-              "dollar_vol": 307076220,
-              "adr_pct": 0.0547,
-              "float": "63.2",
-              "eps": "-8",
-              "sales": "30",
-              "inst": "+2.4",
-              "short": 7.1,
-              "highlight": null,
-              "rank": 3
-            }
-          ],
-          "l1": "Industrials",
-          "l2": "Engineering & Construction",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Clean Energy",
-      "best_rank": 3,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Clean Energy / Grid Infrastructure",
-          "tickers": [
-            {
-              "ticker": "MTZ",
-              "lead": 48,
-              "gap": 0.96,
-              "off_high": -56.1,
-              "days": 85,
-              "vars": -10.93,
-              "vars_20ema": -13.14,
-              "rs": 50.0,
-              "price": 193.77,
-              "dollar_vol": 307076220,
-              "adr_pct": 0.0547,
-              "float": "63.2",
-              "eps": "-8",
-              "sales": "30",
-              "inst": "+2.4",
-              "short": 7.1,
-              "highlight": null,
-              "rank": 3
-            }
-          ],
-          "l1": "Clean Energy",
-          "l2": "Grid Infrastructure",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Telecom",
-      "best_rank": 3,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Telecom / 5G Infrastructure",
-          "tickers": [
-            {
-              "ticker": "MTZ",
-              "lead": 48,
-              "gap": 0.96,
-              "off_high": -56.1,
-              "days": 85,
-              "vars": -10.93,
-              "vars_20ema": -13.14,
-              "rs": 50.0,
-              "price": 193.77,
-              "dollar_vol": 307076220,
-              "adr_pct": 0.0547,
-              "float": "63.2",
-              "eps": "-8",
-              "sales": "30",
-              "inst": "+2.4",
-              "short": 7.1,
-              "highlight": null,
-              "rank": 3
-            }
-          ],
-          "l1": "Telecom",
-          "l2": "5G Infrastructure",
-          "l3": null
+          "l1": "Fintech & Crypto",
+          "l2": "Crypto",
+          "l3": "Generalist"
         }
       ]
     }
@@ -257,74 +224,73 @@
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "DAVE",
-        "d_daily": -0.98,
-        "d_weekly": -0.66,
-        "zone_daily": "under",
+        "ticker": "AEHR",
+        "d_daily": -0.31,
+        "d_weekly": -2.11,
+        "zone_daily": "band",
         "zone_weekly": "below",
-        "state": "under_both",
-        "vars": 0.13,
-        "rs": 30.8,
-        "tight": true,
-        "tight_len": 6,
-        "highlight": "tight",
+        "state": "weekly_broken",
+        "vars": -4.18,
+        "rs": 46.2,
+        "tight": false,
+        "tight_len": null,
+        "highlight": null,
         "ticker_color": null,
         "leaves": [
-          "Fintech & Crypto / Consumer Finance"
+          "AI / Semiconductor Equipment"
+        ]
+      },
+      {
+        "ticker": "CC",
+        "d_daily": -0.39,
+        "d_weekly": -3.91,
+        "zone_daily": "band",
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -11.22,
+        "rs": 53.8,
+        "tight": false,
+        "tight_len": null,
+        "highlight": null,
+        "ticker_color": null,
+        "leaves": [
+          "Specialty Chemicals / Specialty Materials"
         ]
       },
       {
         "ticker": "LQDA",
-        "d_daily": -0.03,
-        "d_weekly": -3.43,
+        "d_daily": 0.08,
+        "d_weekly": -4.18,
         "zone_daily": "band",
         "zone_weekly": "below",
         "state": "weekly_broken",
-        "vars": -4.57,
-        "rs": 65.4,
+        "vars": -4.85,
+        "rs": 69.2,
         "tight": false,
         "tight_len": null,
         "highlight": "short",
-        "ticker_color": null,
+        "ticker_color": "green",
         "leaves": [
           "Biotech / Drug Delivery",
           "Biotech / Respiratory"
         ]
       },
       {
-        "ticker": "MTZ",
-        "d_daily": 0.2,
-        "d_weekly": -4.58,
+        "ticker": "WULF",
+        "d_daily": -0.16,
+        "d_weekly": -2.49,
         "zone_daily": "band",
         "zone_weekly": "below",
         "state": "weekly_broken",
-        "vars": -10.93,
+        "vars": -9.54,
         "rs": 50.0,
         "tight": false,
         "tight_len": null,
-        "highlight": null,
+        "highlight": "short",
         "ticker_color": null,
         "leaves": [
-          "Industrials / Engineering & Construction",
-          "Clean Energy / Grid Infrastructure",
-          "Telecom / 5G Infrastructure"
-        ]
-      },
-      {
-        "ticker": "TVTX",
-        "d_daily": -1.27,
-        "d_weekly": -1.94,
-        "zone_daily": "under",
-        "zone_weekly": "below",
-        "state": "under_both",
-        "vars": -2.04,
-        "rs": 7.7,
-        "tight": false,
-        "tight_len": null,
-        "highlight": null,
-        "ticker_color": null,
-        "leaves": [
-          "Biotech / Rare Disease"
+          "AI / Data Center / Cloud & Hyperscalers",
+          "Fintech & Crypto / Crypto / Generalist"
         ]
       }
     ]
@@ -336,26 +302,55 @@
       "n": 1,
       "leaves": [
         {
+          "name": "Software & Internet / BPO & IT Services",
+          "tickers": [
+            {
+              "ticker": "EPAM",
+              "theme_size": 3,
+              "rs20": 95,
+              "off_high": -5.3,
+              "days": 18,
+              "vars": 8.23,
+              "vars_20ema": 4.57,
+              "rs": 92.3,
+              "price": 138.17,
+              "dollar_vol": 128521106,
+              "adr_pct": 0.043,
+              "float": "49.8",
+              "eps": "27",
+              "sales": "5",
+              "inst": "+0.2",
+              "short": 12.9,
+              "highlight": "ma_up",
+              "ticker_color": "green",
+              "rank": 1
+            }
+          ],
+          "l1": "Software & Internet",
+          "l2": "BPO & IT Services",
+          "l3": null
+        },
+        {
           "name": "Software & Internet / SaaS & Vertical",
           "tickers": [
             {
-              "ticker": "ASAN",
-              "theme_size": 4,
-              "rs20": 92,
-              "off_high": -9.6,
-              "days": 20,
-              "vars": 4.02,
-              "vars_20ema": 4.33,
-              "rs": 76.9,
-              "price": 11.06,
-              "dollar_vol": 47930300,
-              "adr_pct": 0.0534,
-              "float": "89.0",
-              "eps": "17",
-              "sales": "10",
-              "inst": "+3.3",
-              "short": 21.3,
-              "highlight": "tight",
+              "ticker": "EPAM",
+              "theme_size": 3,
+              "rs20": 95,
+              "off_high": -5.3,
+              "days": 18,
+              "vars": 8.23,
+              "vars_20ema": 4.57,
+              "rs": 92.3,
+              "price": 138.17,
+              "dollar_vol": 128521106,
+              "adr_pct": 0.043,
+              "float": "49.8",
+              "eps": "27",
+              "sales": "5",
+              "inst": "+0.2",
+              "short": 12.9,
+              "highlight": "ma_up",
               "ticker_color": "green",
               "rank": 1
             }
@@ -391,19 +386,20 @@
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "ASAN",
-        "d_daily": 0.48,
-        "d_weekly": 2.58,
+        "ticker": "EPAM",
+        "d_daily": 1.27,
+        "d_weekly": 3.13,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 4.02,
-        "rs": 76.9,
-        "tight": true,
-        "tight_len": 3,
-        "highlight": "tight",
+        "vars": 8.23,
+        "rs": 92.3,
+        "tight": false,
+        "tight_len": null,
+        "highlight": "ma_up",
         "ticker_color": "green",
         "leaves": [
+          "Software & Internet / BPO & IT Services",
           "Software & Internet / SaaS & Vertical"
         ]
       }

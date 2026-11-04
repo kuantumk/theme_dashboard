@@ -1,5 +1,495 @@
 [
   {
+    "report_date": "2026-11-04",
+    "zone_map": {
+      "params": {
+        "min_avg_dollar_vol": 20000000,
+        "min_adr_pct": 0.04,
+        "top_leaves": 20,
+        "band_low": -0.5,
+        "band_high": 2.0,
+        "weekly_low": 0.0,
+        "weekly_high": 4.0,
+        "x_range": [
+          -2.0,
+          5.0
+        ],
+        "y_range": [
+          -4.0,
+          8.0
+        ]
+      },
+      "n_candidates": 47,
+      "n_floor_dropped": 20,
+      "n_no_weekly": 0,
+      "n_no_daily": 0,
+      "tickers": [
+        {
+          "ticker": "AMDL",
+          "d_daily": -1.78,
+          "d_weekly": -1.5,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -2.3,
+          "rs": 7.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Chips & Processors"
+          ]
+        },
+        {
+          "ticker": "AMZU",
+          "d_daily": 1.28,
+          "d_weekly": 0.87,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": -1.75,
+          "rs": 100.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Software & Internet / E-commerce",
+            "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "BITX",
+          "d_daily": -0.39,
+          "d_weekly": 0.57,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 6.04,
+          "rs": 11.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Fintech & Crypto / Crypto / Bitcoin Proxy"
+          ]
+        },
+        {
+          "ticker": "BOIL",
+          "d_daily": -1.7,
+          "d_weekly": -5.21,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -9.37,
+          "rs": 11.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Oil & Gas / LNG & Natural Gas"
+          ]
+        },
+        {
+          "ticker": "CONL",
+          "d_daily": -1.39,
+          "d_weekly": -3.55,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -3.98,
+          "rs": 11.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Fintech & Crypto / Crypto / Generalist"
+          ]
+        },
+        {
+          "ticker": "CRWG",
+          "d_daily": -2.83,
+          "d_weekly": -8.6,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -11.5,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "DPST",
+          "d_daily": 1.42,
+          "d_weekly": 0.75,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": -2.93,
+          "rs": 96.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_split",
+          "ticker_color": null,
+          "leaves": []
+        },
+        {
+          "ticker": "ETHU",
+          "d_daily": 0.11,
+          "d_weekly": -0.01,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": 8.81,
+          "rs": 37.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Fintech & Crypto / Crypto / Generalist"
+          ]
+        },
+        {
+          "ticker": "FBL",
+          "d_daily": -1.41,
+          "d_weekly": -1.41,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": 1.57,
+          "rs": 22.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Software & Internet / Social & Communication",
+            "AI / Software & Analytics"
+          ]
+        },
+        {
+          "ticker": "GGLL",
+          "d_daily": -2.66,
+          "d_weekly": -4.85,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -10.35,
+          "rs": 15.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Software & Internet / Ads & Marketing Tech",
+            "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "GUSH",
+          "d_daily": -2.66,
+          "d_weekly": -1.12,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": 3.05,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Oil & Gas / E&P"
+          ]
+        },
+        {
+          "ticker": "INTW",
+          "d_daily": -4.24,
+          "d_weekly": -6.36,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -9.97,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Chips & Processors"
+          ]
+        },
+        {
+          "ticker": "LABU",
+          "d_daily": 0.95,
+          "d_weekly": 0.77,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 3.53,
+          "rs": 93.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_split",
+          "ticker_color": null,
+          "leaves": [
+            "Biotech"
+          ]
+        },
+        {
+          "ticker": "MSFU",
+          "d_daily": 1.8,
+          "d_weekly": 3.63,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 8.77,
+          "rs": 100.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_up",
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Cloud & Hyperscalers",
+            "Software & Internet / SaaS & Vertical"
+          ]
+        },
+        {
+          "ticker": "MSTU",
+          "d_daily": -0.24,
+          "d_weekly": -1.22,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": 0.5,
+          "rs": 31.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Fintech & Crypto / Crypto / Bitcoin Proxy"
+          ]
+        },
+        {
+          "ticker": "MULL",
+          "d_daily": -2.49,
+          "d_weekly": -3.3,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -6.92,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Memory"
+          ]
+        },
+        {
+          "ticker": "NAIL",
+          "d_daily": 2.93,
+          "d_weekly": 1.58,
+          "zone_daily": "above",
+          "zone_weekly": "normal",
+          "state": "above",
+          "vars": -2.91,
+          "rs": 100.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_up",
+          "ticker_color": null,
+          "leaves": []
+        },
+        {
+          "ticker": "NBIL",
+          "d_daily": -2.52,
+          "d_weekly": -5.87,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -8.93,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "NUGT",
+          "d_daily": 0.03,
+          "d_weekly": -1.81,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -1.54,
+          "rs": 37.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "Metals & Mining / Gold"
+          ]
+        },
+        {
+          "ticker": "NVDL",
+          "d_daily": -2.28,
+          "d_weekly": -2.6,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -4.21,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Chips & Processors"
+          ]
+        },
+        {
+          "ticker": "PLTU",
+          "d_daily": -1.81,
+          "d_weekly": -0.65,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": 3.11,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Software & Analytics"
+          ]
+        },
+        {
+          "ticker": "SMCX",
+          "d_daily": -2.26,
+          "d_weekly": -4.19,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -3.83,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Components"
+          ]
+        },
+        {
+          "ticker": "SNXX",
+          "d_daily": -3.03,
+          "d_weekly": -6.06,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -10.15,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Memory"
+          ]
+        },
+        {
+          "ticker": "SOXL",
+          "d_daily": -2.41,
+          "d_weekly": -4.15,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -9.4,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Chips & Processors"
+          ]
+        },
+        {
+          "ticker": "TQQQ",
+          "d_daily": -1.55,
+          "d_weekly": -1.8,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -5.76,
+          "rs": 7.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": []
+        },
+        {
+          "ticker": "TSLL",
+          "d_daily": -0.17,
+          "d_weekly": -0.05,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -3.02,
+          "rs": 70.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_up",
+          "ticker_color": null,
+          "leaves": [
+            "Robotics / Industrial Automation",
+            "EV & Autonomous / EV Manufacturers"
+          ]
+        },
+        {
+          "ticker": "WDCX",
+          "d_daily": -2.16,
+          "d_weekly": -6.03,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -9.12,
+          "rs": 0.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Memory"
+          ]
+        }
+      ],
+      "n_no_bars": 0,
+      "n_short": 25,
+      "n_excluded": 2,
+      "unmapped": []
+    }
+  },
+  {
     "report_date": "2026-11-03",
     "zone_map": {
       "params": {

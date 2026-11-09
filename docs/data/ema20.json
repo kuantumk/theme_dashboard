@@ -1,103 +1,59 @@
 {
-  "report_date": "2026-11-06",
+  "report_date": "2026-11-09",
   "short": [
     {
-      "name": "Cybersecurity",
-      "best_rank": 1,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Cybersecurity / Generalist",
-          "tickers": [
-            {
-              "ticker": "BB",
-              "lead": 73,
-              "gap": 0.37,
-              "off_high": -35.7,
-              "days": 5,
-              "vars": 2.22,
-              "vars_20ema": 0.52,
-              "rs": 69.2,
-              "price": 8.74,
-              "dollar_vol": 114906042,
-              "adr_pct": 0.0658,
-              "float": "585.3",
-              "eps": "146",
-              "sales": "26",
-              "inst": "+11.1",
-              "short": 6.0,
-              "highlight": null,
-              "ticker_color": "green",
-              "rank": 1
-            }
-          ],
-          "l1": "Cybersecurity",
-          "l2": "Generalist",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "EV & Autonomous",
-      "best_rank": 1,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "EV & Autonomous / ADAS & LiDAR",
-          "tickers": [
-            {
-              "ticker": "BB",
-              "lead": 73,
-              "gap": 0.37,
-              "off_high": -35.7,
-              "days": 5,
-              "vars": 2.22,
-              "vars_20ema": 0.52,
-              "rs": 69.2,
-              "price": 8.74,
-              "dollar_vol": 114906042,
-              "adr_pct": 0.0658,
-              "float": "585.3",
-              "eps": "146",
-              "sales": "26",
-              "inst": "+11.1",
-              "short": 6.0,
-              "highlight": null,
-              "ticker_color": "green",
-              "rank": 1
-            }
-          ],
-          "l1": "EV & Autonomous",
-          "l2": "ADAS & LiDAR",
-          "l3": null
-        }
-      ]
-    },
-    {
       "name": "AI",
-      "best_rank": 2,
-      "n": 1,
+      "best_rank": 1,
+      "n": 4,
       "leaves": [
+        {
+          "name": "AI / Data Center / Chips & Processors",
+          "tickers": [
+            {
+              "ticker": "SITM",
+              "lead": 56,
+              "gap": -0.15,
+              "off_high": -48.1,
+              "days": 22,
+              "vars": -6.06,
+              "vars_20ema": -6.03,
+              "rs": 34.6,
+              "price": 457.05,
+              "dollar_vol": 374406438,
+              "adr_pct": 0.0798,
+              "float": "22.7",
+              "eps": "145",
+              "sales": "257",
+              "inst": "-2.2",
+              "short": 6.8,
+              "highlight": null,
+              "rank": 1
+            }
+          ],
+          "l1": "AI",
+          "l2": "Data Center",
+          "l3": "Chips & Processors"
+        },
         {
           "name": "AI / Data Center / Power & Cooling",
           "tickers": [
             {
-              "ticker": "WOLF",
-              "lead": 55,
-              "gap": -0.02,
-              "off_high": -70.6,
-              "days": 19,
-              "vars": -1.81,
-              "vars_20ema": -5.03,
-              "rs": 50.0,
-              "price": 23.79,
-              "dollar_vol": 91355482,
-              "adr_pct": 0.1016,
-              "float": "34.9",
-              "eps": "35",
-              "sales": "-24",
-              "inst": "+54.4",
-              "short": 78.4,
+              "ticker": "NVTS",
+              "lead": 54,
+              "gap": 0.71,
+              "off_high": -72.0,
+              "days": 23,
+              "vars": -8.74,
+              "vars_20ema": -9.89,
+              "rs": 69.2,
+              "price": 9.58,
+              "dollar_vol": 137173249,
+              "adr_pct": 0.0816,
+              "float": "233.0",
+              "eps": "-57",
+              "sales": "38",
+              "inst": "+10.1",
+              "short": 21.9,
               "highlight": "short",
               "rank": 2
             }
@@ -105,41 +61,97 @@
           "l1": "AI",
           "l2": "Data Center",
           "l3": "Power & Cooling"
+        },
+        {
+          "name": "AI / Data Center / Cloud & Hyperscalers",
+          "tickers": [
+            {
+              "ticker": "WULF",
+              "lead": 42,
+              "gap": 0.26,
+              "off_high": -58.5,
+              "days": 33,
+              "vars": -10.43,
+              "vars_20ema": -9.69,
+              "rs": 50.0,
+              "price": 12.38,
+              "dollar_vol": 668140312,
+              "adr_pct": 0.1112,
+              "float": "348.8",
+              "eps": "97",
+              "sales": "51",
+              "inst": "+26.3",
+              "short": 36.7,
+              "highlight": "short",
+              "rank": 3
+            }
+          ],
+          "l1": "AI",
+          "l2": "Data Center",
+          "l3": "Cloud & Hyperscalers"
+        },
+        {
+          "name": "AI / Data Center / Optics",
+          "tickers": [
+            {
+              "ticker": "VIAV",
+              "lead": 40,
+              "gap": -0.11,
+              "off_high": -44.4,
+              "days": 20,
+              "vars": -5.3,
+              "vars_20ema": -5.78,
+              "rs": 34.6,
+              "price": 31.98,
+              "dollar_vol": 217164716,
+              "adr_pct": 0.0823,
+              "float": "242.9",
+              "eps": "397",
+              "sales": "57",
+              "inst": "+8.0",
+              "short": 4.9,
+              "highlight": null,
+              "rank": 4
+            }
+          ],
+          "l1": "AI",
+          "l2": "Data Center",
+          "l3": "Optics"
         }
       ]
     },
     {
-      "name": "Quantum Computing",
+      "name": "Fintech & Crypto",
       "best_rank": 3,
       "n": 1,
       "leaves": [
         {
-          "name": "Quantum Computing",
+          "name": "Fintech & Crypto / Crypto / Generalist",
           "tickers": [
             {
-              "ticker": "IONQ",
-              "lead": 40,
-              "gap": 0.16,
-              "off_high": -55.7,
-              "days": 22,
-              "vars": -4.17,
-              "vars_20ema": -7.53,
-              "rs": 61.5,
-              "price": 32.62,
-              "dollar_vol": 782187610,
-              "adr_pct": 0.0784,
-              "float": "422.9",
-              "eps": "138",
-              "sales": "336",
-              "inst": "+1.0",
-              "short": 11.3,
-              "highlight": null,
+              "ticker": "WULF",
+              "lead": 42,
+              "gap": 0.26,
+              "off_high": -58.5,
+              "days": 33,
+              "vars": -10.43,
+              "vars_20ema": -9.69,
+              "rs": 50.0,
+              "price": 12.38,
+              "dollar_vol": 668140312,
+              "adr_pct": 0.1112,
+              "float": "348.8",
+              "eps": "97",
+              "sales": "51",
+              "inst": "+26.3",
+              "short": 36.7,
+              "highlight": "short",
               "rank": 3
             }
           ],
-          "l1": "Quantum Computing",
-          "l2": null,
-          "l3": null
+          "l1": "Fintech & Crypto",
+          "l2": "Crypto",
+          "l3": "Generalist"
         }
       ]
     }
@@ -162,55 +174,20 @@
         8.0
       ]
     },
-    "n_candidates": 3,
+    "n_candidates": 4,
     "n_floor_dropped": 0,
     "n_no_weekly": 0,
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "BB",
-        "d_daily": 0.09,
-        "d_weekly": 0.68,
+        "ticker": "NVTS",
+        "d_daily": 0.49,
+        "d_weekly": -2.27,
         "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 2.22,
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -8.74,
         "rs": 69.2,
-        "tight": false,
-        "tight_len": null,
-        "highlight": null,
-        "ticker_color": "green",
-        "leaves": [
-          "Cybersecurity / Generalist",
-          "EV & Autonomous / ADAS & LiDAR"
-        ]
-      },
-      {
-        "ticker": "IONQ",
-        "d_daily": 0.16,
-        "d_weekly": -2.63,
-        "zone_daily": "band",
-        "zone_weekly": "below",
-        "state": "weekly_broken",
-        "vars": -4.17,
-        "rs": 61.5,
-        "tight": false,
-        "tight_len": null,
-        "highlight": null,
-        "ticker_color": null,
-        "leaves": [
-          "Quantum Computing"
-        ]
-      },
-      {
-        "ticker": "WOLF",
-        "d_daily": -0.16,
-        "d_weekly": -2.03,
-        "zone_daily": "band",
-        "zone_weekly": "below",
-        "state": "weekly_broken",
-        "vars": -1.81,
-        "rs": 50.0,
         "tight": false,
         "tight_len": null,
         "highlight": "short",
@@ -218,149 +195,184 @@
         "leaves": [
           "AI / Data Center / Power & Cooling"
         ]
+      },
+      {
+        "ticker": "SITM",
+        "d_daily": -0.43,
+        "d_weekly": -2.25,
+        "zone_daily": "band",
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -6.06,
+        "rs": 34.6,
+        "tight": false,
+        "tight_len": null,
+        "highlight": null,
+        "ticker_color": null,
+        "leaves": [
+          "AI / Data Center / Chips & Processors"
+        ]
+      },
+      {
+        "ticker": "VIAV",
+        "d_daily": -0.21,
+        "d_weekly": -1.6,
+        "zone_daily": "band",
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -5.3,
+        "rs": 34.6,
+        "tight": false,
+        "tight_len": null,
+        "highlight": null,
+        "ticker_color": null,
+        "leaves": [
+          "AI / Data Center / Optics"
+        ]
+      },
+      {
+        "ticker": "WULF",
+        "d_daily": 0.06,
+        "d_weekly": -2.15,
+        "zone_daily": "band",
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -10.43,
+        "rs": 50.0,
+        "tight": false,
+        "tight_len": null,
+        "highlight": "short",
+        "ticker_color": null,
+        "leaves": [
+          "AI / Data Center / Cloud & Hyperscalers",
+          "Fintech & Crypto / Crypto / Generalist"
+        ]
       }
     ]
   },
   "long": [
     {
-      "name": "MedTech",
-      "best_rank": 1,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "MedTech / Surgical & Devices",
-          "tickers": [
-            {
-              "ticker": "GKOS",
-              "theme_size": 3,
-              "rs20": 97,
-              "off_high": -12.1,
-              "days": 20,
-              "vars": 13.75,
-              "vars_20ema": 8.61,
-              "rs": 80.8,
-              "price": 224.41,
-              "dollar_vol": 410331597,
-              "adr_pct": 0.0543,
-              "float": "56.9",
-              "eps": "112",
-              "sales": "58",
-              "inst": "+3.1",
-              "short": 7.6,
-              "highlight": "ma_up",
-              "ticker_color": "green",
-              "rank": 1
-            }
-          ],
-          "l1": "MedTech",
-          "l2": "Surgical & Devices",
-          "l3": null
-        }
-      ]
-    },
-    {
       "name": "Biotech",
       "best_rank": 1,
-      "n": 1,
+      "n": 2,
       "leaves": [
         {
-          "name": "Biotech / Ophthalmology",
+          "name": "Biotech / Rare Disease",
           "tickers": [
             {
-              "ticker": "GKOS",
-              "theme_size": 3,
-              "rs20": 97,
-              "off_high": -12.1,
-              "days": 20,
-              "vars": 13.75,
-              "vars_20ema": 8.61,
-              "rs": 80.8,
-              "price": 224.41,
-              "dollar_vol": 410331597,
-              "adr_pct": 0.0543,
-              "float": "56.9",
-              "eps": "112",
-              "sales": "58",
-              "inst": "+3.1",
-              "short": 7.6,
-              "highlight": "ma_up",
-              "ticker_color": "green",
+              "ticker": "IRON",
+              "theme_size": 6,
+              "rs20": 96,
+              "off_high": -4.4,
+              "days": 15,
+              "vars": 0.11,
+              "vars_20ema": -1.11,
+              "rs": 96.2,
+              "price": 81.26,
+              "dollar_vol": 124943571,
+              "adr_pct": 0.0549,
+              "float": "28.1",
+              "eps": "14",
+              "sales": null,
+              "inst": "+3.3",
+              "short": 26.5,
+              "highlight": "tight",
               "rank": 1
             }
           ],
           "l1": "Biotech",
-          "l2": "Ophthalmology",
+          "l2": "Rare Disease",
           "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Software & Internet",
-      "best_rank": 2,
-      "n": 1,
-      "leaves": [
+        },
         {
-          "name": "Software & Internet / Streaming",
+          "name": "Biotech / Neuroscience",
           "tickers": [
             {
-              "ticker": "LION",
-              "theme_size": 3,
-              "rs20": 96,
-              "off_high": -14.7,
-              "days": 13,
-              "vars": -2.3,
-              "vars_20ema": -4.04,
+              "ticker": "TGTX",
+              "theme_size": 4,
+              "rs20": 82,
+              "off_high": -0.3,
+              "days": 10,
+              "vars": 3.98,
+              "vars_20ema": 5.11,
               "rs": 100.0,
-              "price": 14.24,
-              "dollar_vol": 49981047,
-              "adr_pct": 0.0512,
-              "float": "202.6",
-              "eps": "87",
-              "sales": "41",
-              "inst": "+1.5",
-              "short": 6.5,
-              "highlight": "ma_up",
-              "rank": 2
+              "price": 63.38,
+              "dollar_vol": 108171150,
+              "adr_pct": 0.0517,
+              "float": "141.6",
+              "eps": "-86",
+              "sales": "61",
+              "inst": "+3.3",
+              "short": 20.9,
+              "highlight": "short",
+              "rank": 3
             }
           ],
-          "l1": "Software & Internet",
-          "l2": "Streaming",
+          "l1": "Biotech",
+          "l2": "Neuroscience",
+          "l3": null
+        },
+        {
+          "name": "Biotech / Immunology",
+          "tickers": [
+            {
+              "ticker": "TGTX",
+              "theme_size": 4,
+              "rs20": 82,
+              "off_high": -0.3,
+              "days": 10,
+              "vars": 3.98,
+              "vars_20ema": 5.11,
+              "rs": 100.0,
+              "price": 63.38,
+              "dollar_vol": 108171150,
+              "adr_pct": 0.0517,
+              "float": "141.6",
+              "eps": "-86",
+              "sales": "61",
+              "inst": "+3.3",
+              "short": 20.9,
+              "highlight": "short",
+              "rank": 3
+            }
+          ],
+          "l1": "Biotech",
+          "l2": "Immunology",
           "l3": null
         }
       ]
     },
     {
       "name": "Industrials",
-      "best_rank": 3,
+      "best_rank": 2,
       "n": 1,
       "leaves": [
         {
-          "name": "Industrials / Wood Products",
+          "name": "Industrials / Heavy Machinery & Components",
           "tickers": [
             {
-              "ticker": "LPX",
-              "theme_size": 3,
-              "rs20": 87,
-              "off_high": -9.7,
-              "days": 18,
-              "vars": 1.26,
-              "vars_20ema": -1.49,
-              "rs": 92.3,
-              "price": 75.36,
-              "dollar_vol": 107044880,
-              "adr_pct": 0.0405,
-              "float": "68.9",
-              "eps": "156",
-              "sales": "4",
-              "inst": "+3.3",
-              "short": 13.1,
+              "ticker": "HRI",
+              "theme_size": 5,
+              "rs20": 95,
+              "off_high": -4.5,
+              "days": 13,
+              "vars": 0.94,
+              "vars_20ema": -0.67,
+              "rs": 88.5,
+              "price": 167.18,
+              "dollar_vol": 117751507,
+              "adr_pct": 0.0668,
+              "float": "32.7",
+              "eps": "245",
+              "sales": "5",
+              "inst": "+4.6",
+              "short": 9.0,
               "highlight": "ma_up",
-              "ticker_color": "green",
-              "rank": 3
+              "rank": 2
             }
           ],
           "l1": "Industrials",
-          "l2": "Wood Products",
+          "l2": "Heavy Machinery & Components",
           "l3": null
         }
       ]
@@ -390,55 +402,55 @@
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "GKOS",
-        "d_daily": 1.41,
-        "d_weekly": 3.39,
+        "ticker": "HRI",
+        "d_daily": 1.4,
+        "d_weekly": 1.84,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 13.75,
-        "rs": 80.8,
-        "tight": false,
-        "tight_len": null,
-        "highlight": "ma_up",
-        "ticker_color": "green",
-        "leaves": [
-          "MedTech / Surgical & Devices",
-          "Biotech / Ophthalmology"
-        ]
-      },
-      {
-        "ticker": "LION",
-        "d_daily": 2.72,
-        "d_weekly": 2.95,
-        "zone_daily": "above",
-        "zone_weekly": "normal",
-        "state": "above",
-        "vars": -2.3,
-        "rs": 100.0,
+        "vars": 0.94,
+        "rs": 88.5,
         "tight": false,
         "tight_len": null,
         "highlight": "ma_up",
         "ticker_color": null,
         "leaves": [
-          "Software & Internet / Streaming"
+          "Industrials / Heavy Machinery & Components"
         ]
       },
       {
-        "ticker": "LPX",
-        "d_daily": 0.81,
-        "d_weekly": 1.09,
+        "ticker": "IRON",
+        "d_daily": 1.3,
+        "d_weekly": 2.22,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 1.26,
-        "rs": 92.3,
+        "vars": 0.11,
+        "rs": 96.2,
+        "tight": true,
+        "tight_len": 10,
+        "highlight": "tight",
+        "ticker_color": null,
+        "leaves": [
+          "Biotech / Rare Disease"
+        ]
+      },
+      {
+        "ticker": "TGTX",
+        "d_daily": 1.7,
+        "d_weekly": 2.84,
+        "zone_daily": "band",
+        "zone_weekly": "normal",
+        "state": "buy_area",
+        "vars": 3.98,
+        "rs": 100.0,
         "tight": false,
         "tight_len": null,
-        "highlight": "ma_up",
-        "ticker_color": "green",
+        "highlight": "short",
+        "ticker_color": null,
         "leaves": [
-          "Industrials / Wood Products"
+          "Biotech / Neuroscience",
+          "Biotech / Immunology"
         ]
       }
     ]

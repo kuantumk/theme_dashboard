@@ -331,6 +331,7 @@
         },
         "overrides": {
           "scalesProperties.scaleSeriesOnly": true,
+          "scalesProperties.showPrePostMarketPriceLabel": false,
           "paneProperties.legendProperties.showStudyTitles": false,
           "paneProperties.legendProperties.showStudyValues": false,
           "paneProperties.legendProperties.showStudyArguments": false

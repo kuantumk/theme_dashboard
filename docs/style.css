@@ -1476,10 +1476,10 @@ tbody tr.nav-active {
    VIZ TABS — panel
    ═══════════════════════════════════════════════════════ */
 
-/* 1:1 with the chart by default. The 4px resize handle sits between the two
-   panes, so each pane gets half of the rest: 50% minus half the handle. */
+/* 2:3 with the chart by default. The 4px resize handle sits between the two
+   panes, so the zone map gets 2/5 of the rest: 40% minus 2/5 of the handle. */
 .viz-left {
-  width: calc(50% - 2px);
+  width: calc(40% - 1.6px);
   display: flex;
   flex-direction: column;
   overflow-y: auto;

@@ -1,33 +1,53 @@
 {
-  "report_date": "2026-11-16",
+  "report_date": "2026-11-17",
   "short": [
     {
       "name": "Cybersecurity",
       "best_rank": 1,
-      "n": 1,
+      "n": 2,
       "leaves": [
         {
           "name": "Cybersecurity / Generalist",
           "tickers": [
             {
+              "ticker": "RPD",
+              "lead": 63,
+              "gap": -0.1,
+              "off_high": -26.6,
+              "days": 5,
+              "vars": 10.77,
+              "vars_20ema": 11.75,
+              "rs": 30.8,
+              "price": 13.63,
+              "dollar_vol": 33631666,
+              "adr_pct": 0.0879,
+              "float": "65.4",
+              "eps": "-67",
+              "sales": "-3",
+              "inst": "+10.1",
+              "short": 10.5,
+              "highlight": "tight",
+              "rank": 1
+            },
+            {
               "ticker": "BB",
               "lead": 62,
-              "gap": 0.07,
-              "off_high": -35.4,
-              "days": 0,
-              "vars": -0.93,
-              "vars_20ema": 0.54,
-              "rs": 61.5,
-              "price": 8.78,
-              "dollar_vol": 118517941,
-              "adr_pct": 0.0653,
+              "gap": 0.14,
+              "off_high": -40.0,
+              "days": 1,
+              "vars": -3.09,
+              "vars_20ema": 0.19,
+              "rs": 26.9,
+              "price": 8.16,
+              "dollar_vol": 116054838,
+              "adr_pct": 0.0649,
               "float": "585.3",
               "eps": "146",
               "sales": "26",
               "inst": "+11.2",
               "short": 6.5,
-              "highlight": "tight",
-              "rank": 1
+              "highlight": null,
+              "rank": 2
             }
           ],
           "l1": "Cybersecurity",
@@ -38,7 +58,7 @@
     },
     {
       "name": "EV & Autonomous",
-      "best_rank": 1,
+      "best_rank": 2,
       "n": 1,
       "leaves": [
         {
@@ -47,22 +67,22 @@
             {
               "ticker": "BB",
               "lead": 62,
-              "gap": 0.07,
-              "off_high": -35.4,
-              "days": 0,
-              "vars": -0.93,
-              "vars_20ema": 0.54,
-              "rs": 61.5,
-              "price": 8.78,
-              "dollar_vol": 118517941,
-              "adr_pct": 0.0653,
+              "gap": 0.14,
+              "off_high": -40.0,
+              "days": 1,
+              "vars": -3.09,
+              "vars_20ema": 0.19,
+              "rs": 26.9,
+              "price": 8.16,
+              "dollar_vol": 116054838,
+              "adr_pct": 0.0649,
               "float": "585.3",
               "eps": "146",
               "sales": "26",
               "inst": "+11.2",
               "short": 6.5,
-              "highlight": "tight",
-              "rank": 1
+              "highlight": null,
+              "rank": 2
             }
           ],
           "l1": "EV & Autonomous",
@@ -72,8 +92,43 @@
       ]
     },
     {
+      "name": "Real Estate",
+      "best_rank": 3,
+      "n": 1,
+      "leaves": [
+        {
+          "name": "Real Estate / Tech-Enabled Brokerage",
+          "tickers": [
+            {
+              "ticker": "COMP",
+              "lead": 46,
+              "gap": 0.69,
+              "off_high": -27.9,
+              "days": 0,
+              "vars": -2.99,
+              "vars_20ema": -0.4,
+              "rs": 80.8,
+              "price": 9.81,
+              "dollar_vol": 148134168,
+              "adr_pct": 0.0557,
+              "float": "701.3",
+              "eps": "988",
+              "sales": "111",
+              "inst": "+8.3",
+              "short": 7.0,
+              "highlight": "ma_up",
+              "rank": 3
+            }
+          ],
+          "l1": "Real Estate",
+          "l2": "Tech-Enabled Brokerage",
+          "l3": null
+        }
+      ]
+    },
+    {
       "name": "Biotech",
-      "best_rank": 2,
+      "best_rank": 4,
       "n": 1,
       "leaves": [
         {
@@ -82,23 +137,22 @@
             {
               "ticker": "TVTX",
               "lead": 45,
-              "gap": -0.15,
-              "off_high": -27.7,
-              "days": 44,
-              "vars": -4.69,
-              "vars_20ema": -1.83,
-              "rs": 57.7,
-              "price": 49.71,
-              "dollar_vol": 113058651,
-              "adr_pct": 0.0501,
+              "gap": -0.07,
+              "off_high": -25.7,
+              "days": 45,
+              "vars": -4.0,
+              "vars_20ema": -2.04,
+              "rs": 100.0,
+              "price": 51.1,
+              "dollar_vol": 111250650,
+              "adr_pct": 0.0509,
               "float": "93.2",
               "eps": "-357",
               "sales": "36",
               "inst": "+9.8",
               "short": 10.3,
               "highlight": null,
-              "ticker_color": "green",
-              "rank": 2
+              "rank": 4
             }
           ],
           "l1": "Biotech",
@@ -126,23 +180,23 @@
         8.0
       ]
     },
-    "n_candidates": 2,
+    "n_candidates": 4,
     "n_floor_dropped": 0,
     "n_no_weekly": 0,
     "n_no_daily": 0,
     "tickers": [
       {
         "ticker": "BB",
-        "d_daily": -0.13,
-        "d_weekly": 0.64,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": -0.93,
-        "rs": 61.5,
-        "tight": true,
-        "tight_len": 3,
-        "highlight": "tight",
+        "d_daily": -1.02,
+        "d_weekly": -0.3,
+        "zone_daily": "under",
+        "zone_weekly": "below",
+        "state": "under_both",
+        "vars": -3.09,
+        "rs": 26.9,
+        "tight": false,
+        "tight_len": null,
+        "highlight": null,
         "ticker_color": null,
         "leaves": [
           "Cybersecurity / Generalist",
@@ -150,18 +204,52 @@
         ]
       },
       {
-        "ticker": "TVTX",
-        "d_daily": -0.64,
-        "d_weekly": -1.38,
-        "zone_daily": "under",
+        "ticker": "COMP",
+        "d_daily": -0.05,
+        "d_weekly": -0.37,
+        "zone_daily": "band",
         "zone_weekly": "below",
-        "state": "under_both",
-        "vars": -4.69,
-        "rs": 57.7,
+        "state": "weekly_broken",
+        "vars": -2.99,
+        "rs": 80.8,
+        "tight": false,
+        "tight_len": null,
+        "highlight": "ma_up",
+        "ticker_color": null,
+        "leaves": [
+          "Real Estate / Tech-Enabled Brokerage"
+        ]
+      },
+      {
+        "ticker": "RPD",
+        "d_daily": -0.76,
+        "d_weekly": 0.84,
+        "zone_daily": "under",
+        "zone_weekly": "normal",
+        "state": "under_daily",
+        "vars": 10.77,
+        "rs": 30.8,
+        "tight": true,
+        "tight_len": 10,
+        "highlight": "tight",
+        "ticker_color": null,
+        "leaves": [
+          "Cybersecurity / Generalist"
+        ]
+      },
+      {
+        "ticker": "TVTX",
+        "d_daily": -0.1,
+        "d_weekly": -0.87,
+        "zone_daily": "band",
+        "zone_weekly": "below",
+        "state": "weekly_broken",
+        "vars": -4.0,
+        "rs": 100.0,
         "tight": false,
         "tight_len": null,
         "highlight": null,
-        "ticker_color": "green",
+        "ticker_color": null,
         "leaves": [
           "Biotech / Rare Disease"
         ]
@@ -172,41 +260,90 @@
     {
       "name": "Software & Internet",
       "best_rank": 1,
-      "n": 1,
+      "n": 2,
       "leaves": [
         {
           "name": "Software & Internet / Ads & Marketing Tech",
           "tickers": [
             {
-              "ticker": "ZETA",
+              "ticker": "U",
               "theme_size": 6,
-              "rs20": 79,
-              "off_high": -7.6,
-              "days": 5,
-              "vars": 12.13,
-              "vars_20ema": 8.97,
+              "rs20": 96,
+              "off_high": -7.2,
+              "days": 9,
+              "vars": 10.08,
+              "vars_20ema": 8.08,
               "rs": 88.5,
-              "price": 35.87,
-              "dollar_vol": 184168400,
-              "adr_pct": 0.0537,
-              "float": "227.9",
-              "eps": "987",
-              "sales": "46",
-              "inst": "-0.2",
-              "short": 7.3,
-              "highlight": "ma_up",
+              "price": 50.36,
+              "dollar_vol": 622461884,
+              "adr_pct": 0.0582,
+              "float": "361.2",
+              "eps": "183",
+              "sales": "32",
+              "inst": "+5.8",
+              "short": 8.6,
+              "highlight": "tight",
               "rank": 1
+            },
+            {
+              "ticker": "MGNI",
+              "theme_size": 6,
+              "rs20": 94,
+              "off_high": -4.6,
+              "days": 8,
+              "vars": 7.29,
+              "vars_20ema": 7.3,
+              "rs": 92.3,
+              "price": 28.41,
+              "dollar_vol": 72222568,
+              "adr_pct": 0.0451,
+              "float": "140.2",
+              "eps": "72",
+              "sales": "14",
+              "inst": "+5.3",
+              "short": 6.3,
+              "highlight": "tight",
+              "ticker_color": "green",
+              "rank": 2
             }
           ],
           "l1": "Software & Internet",
           "l2": "Ads & Marketing Tech",
+          "l3": null
+        },
+        {
+          "name": "Software & Internet / Gaming",
+          "tickers": [
+            {
+              "ticker": "U",
+              "theme_size": 6,
+              "rs20": 96,
+              "off_high": -7.2,
+              "days": 9,
+              "vars": 10.08,
+              "vars_20ema": 8.08,
+              "rs": 88.5,
+              "price": 50.36,
+              "dollar_vol": 622461884,
+              "adr_pct": 0.0582,
+              "float": "361.2",
+              "eps": "183",
+              "sales": "32",
+              "inst": "+5.8",
+              "short": 8.6,
+              "highlight": "tight",
+              "rank": 1
+            }
+          ],
+          "l1": "Software & Internet",
+          "l2": "Gaming",
           "l3": null
         }
       ]
     },
     {
       "name": "Travel & Leisure",
-      "best_rank": 2,
+      "best_rank": 3,
       "n": 1,
       "leaves": [
         {
@@ -214,23 +351,24 @@
           "tickers": [
             {
               "ticker": "ULCC",
-              "theme_size": 5,
+              "theme_size": 3,
               "rs20": 99,
-              "off_high": -6.6,
-              "days": 14,
-              "vars": -1.02,
-              "vars_20ema": -0.36,
-              "rs": 92.3,
-              "price": 7.97,
-              "dollar_vol": 29623219,
-              "adr_pct": 0.0925,
+              "off_high": -9.4,
+              "days": 15,
+              "vars": -0.88,
+              "vars_20ema": -0.41,
+              "rs": 84.6,
+              "price": 7.73,
+              "dollar_vol": 30150651,
+              "adr_pct": 0.0885,
               "float": "98.4",
               "eps": "-34",
               "sales": "53",
               "inst": "+13.8",
               "short": 23.3,
               "highlight": "tight",
-              "rank": 2
+              "ticker_color": "green",
+              "rank": 3
             }
           ],
           "l1": "Travel & Leisure",
@@ -241,80 +379,52 @@
     },
     {
       "name": "Biotech",
-      "best_rank": 3,
-      "n": 3,
+      "best_rank": 4,
+      "n": 2,
       "leaves": [
-        {
-          "name": "Biotech / Oncology / Oncolytic Viruses",
-          "tickers": [
-            {
-              "ticker": "REPL",
-              "theme_size": 4,
-              "rs20": 99,
-              "off_high": -9.1,
-              "days": 15,
-              "vars": 4.61,
-              "vars_20ema": 3.48,
-              "rs": 80.8,
-              "price": 21.41,
-              "dollar_vol": 62913254,
-              "adr_pct": 0.0855,
-              "float": "89.2",
-              "eps": "40",
-              "sales": null,
-              "inst": "+17.4",
-              "short": 27.6,
-              "highlight": "tight",
-              "ticker_color": "green",
-              "rank": 3
-            }
-          ],
-          "l1": "Biotech",
-          "l2": "Oncology",
-          "l3": "Oncolytic Viruses"
-        },
         {
           "name": "Biotech / Immunology",
           "tickers": [
             {
               "ticker": "TGTX",
-              "theme_size": 4,
-              "rs20": 90,
+              "theme_size": 3,
+              "rs20": 91,
               "off_high": -7.8,
-              "days": 15,
-              "vars": 3.51,
-              "vars_20ema": 4.41,
-              "rs": 84.6,
-              "price": 62.74,
-              "dollar_vol": 127420439,
-              "adr_pct": 0.0553,
+              "days": 16,
+              "vars": 2.83,
+              "vars_20ema": 4.26,
+              "rs": 92.3,
+              "price": 62.71,
+              "dollar_vol": 129913615,
+              "adr_pct": 0.0549,
               "float": "139.9",
               "eps": "-85",
               "sales": "61",
               "inst": "+4.5",
               "short": 20.6,
               "highlight": "tight",
-              "rank": 5
+              "ticker_color": "green",
+              "rank": 4
             },
             {
               "ticker": "ROIV",
               "theme_size": 3,
-              "rs20": 81,
-              "off_high": -9.2,
-              "days": 18,
-              "vars": 2.92,
-              "vars_20ema": 4.81,
-              "rs": 76.9,
-              "price": 38.6,
-              "dollar_vol": 332541326,
-              "adr_pct": 0.0412,
+              "rs20": 87,
+              "off_high": -8.9,
+              "days": 19,
+              "vars": 3.05,
+              "vars_20ema": 4.65,
+              "rs": 84.6,
+              "price": 38.71,
+              "dollar_vol": 342533729,
+              "adr_pct": 0.0414,
               "float": "525.9",
               "eps": "-72",
               "sales": "2136",
               "inst": "+4.2",
               "short": 8.7,
-              "highlight": "ma_up",
-              "rank": 8
+              "highlight": "tight",
+              "rank": 5
             }
           ],
           "l1": "Biotech",
@@ -326,132 +436,28 @@
           "tickers": [
             {
               "ticker": "TGTX",
-              "theme_size": 4,
-              "rs20": 90,
+              "theme_size": 3,
+              "rs20": 91,
               "off_high": -7.8,
-              "days": 15,
-              "vars": 3.51,
-              "vars_20ema": 4.41,
-              "rs": 84.6,
-              "price": 62.74,
-              "dollar_vol": 127420439,
-              "adr_pct": 0.0553,
+              "days": 16,
+              "vars": 2.83,
+              "vars_20ema": 4.26,
+              "rs": 92.3,
+              "price": 62.71,
+              "dollar_vol": 129913615,
+              "adr_pct": 0.0549,
               "float": "139.9",
               "eps": "-85",
               "sales": "61",
               "inst": "+4.5",
               "short": 20.6,
               "highlight": "tight",
-              "rank": 5
+              "ticker_color": "green",
+              "rank": 4
             }
           ],
           "l1": "Biotech",
           "l2": "Neuroscience",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Defense & Aerospace",
-      "best_rank": 4,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Defense & Aerospace / Commercial Aerospace / MRO",
-          "tickers": [
-            {
-              "ticker": "SARO",
-              "theme_size": 4,
-              "rs20": 96,
-              "off_high": -13.2,
-              "days": 20,
-              "vars": -0.64,
-              "vars_20ema": -2.51,
-              "rs": 84.6,
-              "price": 27.45,
-              "dollar_vol": 105296603,
-              "adr_pct": 0.0436,
-              "float": "241.9",
-              "eps": "38",
-              "sales": "4",
-              "inst": "+2.1",
-              "short": 11.4,
-              "highlight": "tight",
-              "rank": 4
-            }
-          ],
-          "l1": "Defense & Aerospace",
-          "l2": "Commercial Aerospace",
-          "l3": "MRO"
-        }
-      ]
-    },
-    {
-      "name": "Industrials",
-      "best_rank": 6,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Industrials / Heavy Machinery & Components",
-          "tickers": [
-            {
-              "ticker": "HRI",
-              "theme_size": 3,
-              "rs20": 96,
-              "off_high": -8.9,
-              "days": 18,
-              "vars": -0.06,
-              "vars_20ema": -0.28,
-              "rs": 65.4,
-              "price": 159.79,
-              "dollar_vol": 110684687,
-              "adr_pct": 0.0662,
-              "float": "32.7",
-              "eps": "245",
-              "sales": "5",
-              "inst": "-0.3",
-              "short": 9.4,
-              "highlight": "ma_up",
-              "rank": 6
-            }
-          ],
-          "l1": "Industrials",
-          "l2": "Heavy Machinery & Components",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Fintech & Crypto",
-      "best_rank": 7,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Fintech & Crypto / Consumer Finance",
-          "tickers": [
-            {
-              "ticker": "MDLN",
-              "theme_size": 3,
-              "rs20": 81,
-              "off_high": -10.3,
-              "days": 9,
-              "vars": 1.05,
-              "vars_20ema": 0.14,
-              "rs": 80.8,
-              "price": 39.15,
-              "dollar_vol": 400169604,
-              "adr_pct": 0.0425,
-              "float": "510.6",
-              "eps": "-46",
-              "sales": "10",
-              "inst": "+5.4",
-              "short": 7.4,
-              "highlight": "tight",
-              "rank": 7
-            }
-          ],
-          "l1": "Fintech & Crypto",
-          "l2": "Consumer Finance",
           "l3": null
         }
       ]
@@ -475,146 +481,96 @@
         8.0
       ]
     },
-    "n_candidates": 8,
+    "n_candidates": 5,
     "n_floor_dropped": 0,
     "n_no_weekly": 0,
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "HRI",
-        "d_daily": 0.35,
-        "d_weekly": 1.34,
+        "ticker": "MGNI",
+        "d_daily": 1.36,
+        "d_weekly": 3.24,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": -0.06,
-        "rs": 65.4,
-        "tight": false,
-        "tight_len": null,
-        "highlight": "ma_up",
-        "ticker_color": null,
-        "leaves": [
-          "Industrials / Heavy Machinery & Components"
-        ]
-      },
-      {
-        "ticker": "MDLN",
-        "d_daily": 0.75,
-        "d_weekly": 1.16,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 1.05,
-        "rs": 80.8,
+        "vars": 7.29,
+        "rs": 92.3,
         "tight": true,
-        "tight_len": 3,
-        "highlight": "tight",
-        "ticker_color": null,
-        "leaves": [
-          "Fintech & Crypto / Consumer Finance"
-        ]
-      },
-      {
-        "ticker": "REPL",
-        "d_daily": 1.48,
-        "d_weekly": 3.96,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 4.61,
-        "rs": 80.8,
-        "tight": true,
-        "tight_len": 4,
+        "tight_len": 7,
         "highlight": "tight",
         "ticker_color": "green",
         "leaves": [
-          "Biotech / Oncology / Oncolytic Viruses"
+          "Software & Internet / Ads & Marketing Tech"
         ]
       },
       {
         "ticker": "ROIV",
-        "d_daily": 0.25,
-        "d_weekly": 1.66,
+        "d_daily": 0.28,
+        "d_weekly": 1.69,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 2.92,
-        "rs": 76.9,
-        "tight": false,
-        "tight_len": null,
-        "highlight": "ma_up",
+        "vars": 3.05,
+        "rs": 84.6,
+        "tight": true,
+        "tight_len": 3,
+        "highlight": "tight",
         "ticker_color": null,
         "leaves": [
           "Biotech / Immunology"
         ]
       },
       {
-        "ticker": "SARO",
-        "d_daily": 1.46,
-        "d_weekly": 1.78,
+        "ticker": "TGTX",
+        "d_daily": 0.58,
+        "d_weekly": 2.13,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": -0.64,
-        "rs": 84.6,
+        "vars": 2.83,
+        "rs": 92.3,
         "tight": true,
         "tight_len": 7,
         "highlight": "tight",
-        "ticker_color": null,
-        "leaves": [
-          "Defense & Aerospace / Commercial Aerospace / MRO"
-        ]
-      },
-      {
-        "ticker": "TGTX",
-        "d_daily": 0.65,
-        "d_weekly": 2.15,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 3.51,
-        "rs": 84.6,
-        "tight": true,
-        "tight_len": 6,
-        "highlight": "tight",
-        "ticker_color": null,
+        "ticker_color": "green",
         "leaves": [
           "Biotech / Neuroscience",
           "Biotech / Immunology"
         ]
       },
       {
-        "ticker": "ULCC",
-        "d_daily": 1.4,
-        "d_weekly": 2.36,
+        "ticker": "U",
+        "d_daily": 1.11,
+        "d_weekly": 2.68,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": -1.02,
-        "rs": 92.3,
+        "vars": 10.08,
+        "rs": 88.5,
         "tight": true,
-        "tight_len": 5,
+        "tight_len": 9,
         "highlight": "tight",
         "ticker_color": null,
         "leaves": [
-          "Travel & Leisure / Airlines / Ultra-Low-Cost"
+          "Software & Internet / Gaming",
+          "Software & Internet / Ads & Marketing Tech"
         ]
       },
       {
-        "ticker": "ZETA",
-        "d_daily": 0.99,
-        "d_weekly": 2.86,
+        "ticker": "ULCC",
+        "d_daily": 1.0,
+        "d_weekly": 2.14,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 12.13,
-        "rs": 88.5,
-        "tight": false,
-        "tight_len": null,
-        "highlight": "ma_up",
-        "ticker_color": null,
+        "vars": -0.88,
+        "rs": 84.6,
+        "tight": true,
+        "tight_len": 8,
+        "highlight": "tight",
+        "ticker_color": "green",
         "leaves": [
-          "Software & Internet / Ads & Marketing Tech"
+          "Travel & Leisure / Airlines / Ultra-Low-Cost"
         ]
       }
     ]

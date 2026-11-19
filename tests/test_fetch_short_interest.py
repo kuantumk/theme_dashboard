@@ -1,18 +1,17 @@
 """Guards for the SI tab's Finviz collection step.
 
-Three failure modes are pinned here, all of them silent in production.
+Each failure pinned here is silent in production: step 7b is non-critical, so
+a broken fetch keeps the workflow green and the tab shows an old roster.
 
-**Ticker corruption.** Measured 2026-09-10, 231 of 231 Ownership rows arrived
-with the first character doubled. Unrepaired, every downstream master-table
-join misses and the tab exports nothing — indistinguishable from a market with
-no heavily shorted names.
+**A page with no screener data.** Finviz moved the screener to a React page
+whose rows live only in an embedded JSON block. A parser that finds nothing
+must raise, not report an empty market.
 
-**A 200 that parses to nothing.** The same shape that hid the NAAIM breakage
-for weeks. A fetch failure and an empty parse must log differently.
+**The User-Agent.** Finviz answers 403 to an old Chrome agent. That blocked
+this step from 2026-09-29 to 2026-11-18.
 
-**The order key.** `'Float Short'` is the column name but not a valid sort key;
-`finvizfinance` raises `ValueError` listing the real names. The screener quietly
-returning an unsorted page would not be caught by eye.
+**Paging.** The page holds 20 rows; the screen held 252 on 2026-11-18. Reading
+one page drops most of the roster with nothing on screen to say so.
 """
 
 import json
@@ -21,162 +20,92 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import pandas as pd
-
 from src.data_collection import fetch_short_interest as si
 
 
-def _frame(**overrides):
-    base = {
-        "Ticker": ["AAA", "BBB"],
-        "Short Float": ["40.00%", "15.00%"],
-        "Float": [1.0e6, 2.0e6],
-        "Market Cap": [1.0e9, 2.0e9],
-        "Inst Trans": [0.0123, -0.0456],
-        "Price": [10.0, 20.0],
-    }
-    base.update(overrides)
-    return pd.DataFrame(base)
+def _row(ticker, short, **numbers):
+    base = {"shortInterestShare": short, "sharesFloat": 35.33,
+            "marketCap": 1220.5, "instTrans": 62.2, "price": 22.78}
+    base.update(numbers)
+    return {"text": {"ticker": ticker}, "numbers": base}
 
 
-class ParseShortFloatTests(unittest.TestCase):
-    def test_parses_a_percent_string(self):
-        self.assertAlmostEqual(si.parse_short_float("70.54%"), 70.54)
+def _page(rows, total=None, page_size=20):
+    data = {"rows": rows, "totalCount": len(rows) if total is None else total,
+            "firstRow": 0, "pageSize": page_size}
+    props = json.dumps({"url": "/screener/stocks", "data": data})
+    return ('<html><script type="application/json" data-ssr-props="ssr-island-1">'
+            f"{props}</script></html>")
 
-    def test_parses_a_bare_number(self):
-        self.assertAlmostEqual(si.parse_short_float("12.3"), 12.3)
 
-    def test_returns_none_for_placeholders(self):
-        for raw in ("-", "", "  ", None, float("nan")):
-            with self.subTest(raw=raw):
-                self.assertIsNone(si.parse_short_float(raw))
+class ParsePageTests(unittest.TestCase):
+    def test_reads_the_embedded_rows(self):
+        data = si.parse_screener_page(_page([_row("WOLF", 82.1)], total=252))
+        self.assertEqual(data["totalCount"], 252)
+        self.assertEqual(data["rows"][0]["text"]["ticker"], "WOLF")
 
-    def test_returns_none_for_junk(self):
-        self.assertIsNone(si.parse_short_float("n/a"))
+    def test_a_page_with_no_screener_data_raises(self):
+        with self.assertRaises(ValueError):
+            si.parse_screener_page("<html><div class='fv-table_row'></div></html>")
 
 
 class BuildRowsTests(unittest.TestCase):
-    def test_drops_rows_with_no_short_interest(self):
-        rows = si.build_rows(_frame(**{"Short Float": ["15.00%", "-"]}))
+    def test_scales_float_and_market_cap_from_millions(self):
+        row = si.build_rows([_row("WOLF", 82.08)])[0]
+        self.assertAlmostEqual(row["float_shares"], 35.33e6)
+        self.assertAlmostEqual(row["market_cap"], 1220.5e6)
 
-        self.assertEqual([r["ticker"] for r in rows], ["AAA"])
-        self.assertAlmostEqual(rows[0]["si"], 15.0)
+    def test_keeps_percent_fields_as_percents(self):
+        row = si.build_rows([_row("WOLF", 82.08, instTrans=62.21)])[0]
+        self.assertAlmostEqual(row["si"], 82.08)
+        self.assertAlmostEqual(row["inst_trans"], 62.21)
+
+    def test_drops_rows_with_no_short_interest(self):
+        rows = si.build_rows([_row("AAA", None), _row("BBB", 15.0)])
+        self.assertEqual([r["ticker"] for r in rows], ["BBB"])
 
     def test_sorts_by_short_interest_descending(self):
-        rows = si.build_rows(_frame(
-            Ticker=["LOW", "HIGH"], **{"Short Float": ["12.00%", "40.00%"]}
-        ))
-
+        rows = si.build_rows([_row("LOW", 11.0), _row("HIGH", 40.0)])
         self.assertEqual([r["ticker"] for r in rows], ["HIGH", "LOW"])
 
-    def test_carries_the_columns_the_tab_renders(self):
-        row = si.build_rows(_frame())[0]
-
-        self.assertEqual(row["ticker"], "AAA")
-        self.assertAlmostEqual(row["si"], 40.0)
-        self.assertAlmostEqual(row["float_shares"], 1.0e6)
-        self.assertAlmostEqual(row["market_cap"], 1.0e9)
-        self.assertAlmostEqual(row["inst_trans"], 1.23)
-        self.assertAlmostEqual(row["price"], 10.0)
-
-    def test_uppercases_tickers(self):
-        rows = si.build_rows(_frame(Ticker=["aaa", "bbb"]))
-
-        self.assertEqual([r["ticker"] for r in rows], ["aaa".upper(), "bbb".upper()])
-
-    def test_tolerates_a_missing_optional_column(self):
-        frame = _frame().drop(columns=["Inst Trans"])
-
-        self.assertIsNone(si.build_rows(frame)[0]["inst_trans"])
-
-    def test_scales_inst_trans_from_a_fraction_to_a_percent(self):
-        """The screener returns a fraction; the quote page, fundamentals.db
-        and every other consumer here use percent.
-
-        Verified 2026-09-10 against both sources: WOLF reads 0.4804 on the
-        screener and 48.04 on its quote page; BTDR 0.373 against 37.3.
-        """
-        row = si.build_rows(_frame(**{"Inst Trans": [0.4804, 0.373]}))[0]
-
-        self.assertAlmostEqual(row["inst_trans"], 48.04)
-
-    def test_short_interest_is_not_scaled(self):
-        """Short Float is already a percent on both sources."""
-        self.assertAlmostEqual(si.build_rows(_frame())[0]["si"], 40.0)
-
-    def test_empty_frame_yields_no_rows(self):
-        self.assertEqual(si.build_rows(pd.DataFrame()), [])
-
-
-class FilterTests(unittest.TestCase):
-    def test_filters_match_the_source_screener_url(self):
-        """f=sh_avgvol_o1000,sh_curvol_o750,sh_price_o10,sh_short_o10,
-        ta_volatility_mo4"""
-        self.assertEqual(si.SI_FILTERS, {
-            "Average Volume": "Over 1M",
-            "Current Volume": "Over 750K",
-            "Price": "Over $10",
-            "Float Short": "Over 10%",
-            "Volatility": "Month - Over 4%",
-        })
-
-    def test_order_key_is_the_sortable_name_not_the_column_name(self):
-        """'Float Short' is the column; 'Short Interest Share' is the sort key.
-
-        finvizfinance raises ValueError on the column name, which would abort
-        the whole step.
-        """
-        self.assertEqual(si.SI_ORDER, "Short Interest Share")
+    def test_a_missing_optional_field_is_none(self):
+        raw = _row("AAA", 20.0)
+        del raw["numbers"]["instTrans"]
+        self.assertIsNone(si.build_rows([raw])[0]["inst_trans"])
 
 
 class FetchTests(unittest.TestCase):
-    def _view(self, frame, repaired=2):
-        view = mock.MagicMock()
-        view.screener_view.return_value = frame
-        view.tickers_repaired = repaired
-        return view
+    def _fetch(self, pages):
+        get = mock.Mock(side_effect=pages)
+        with mock.patch.object(si, "_get_page", get), \
+                mock.patch.object(si.time, "sleep"):
+            return si.fetch_short_interest(), get
 
-    def test_returns_rows_and_echoes_the_filters(self):
-        view = self._view(_frame())
-        with mock.patch.object(si, "_make_view", return_value=view):
-            out = si.fetch_short_interest()
+    def test_reads_every_page(self):
+        first = [_row(f"A{i}", 50.0 - i) for i in range(20)]
+        second = [_row("LAST", 10.5)]
+        out, get = self._fetch([_page(first, total=21), _page(second, total=21)])
 
-        self.assertEqual(len(out["rows"]), 2)
-        self.assertEqual(out["filters"], si.SI_FILTERS)
-        view.set_filter.assert_called_once_with(filters_dict=si.SI_FILTERS)
+        self.assertEqual(len(out["rows"]), 21)
+        self.assertEqual([c.args[0] for c in get.call_args_list], [1, 21])
 
-    def test_sorts_descending_by_short_interest_share(self):
-        view = self._view(_frame())
-        with mock.patch.object(si, "_make_view", return_value=view):
-            si.fetch_short_interest()
-
-        _, kwargs = view.screener_view.call_args
-        self.assertEqual(kwargs["order"], "Short Interest Share")
-        self.assertFalse(kwargs["ascend"])
-
-    def test_a_200_that_parses_to_nothing_warns_distinctly(self):
-        """An empty parse is an upstream-shape signal, not a quiet market.
-
-        Conflating it with a fetch failure is exactly what hid the NAAIM
-        breakage.
-        """
-        view = self._view(pd.DataFrame(), repaired=0)
-        with mock.patch.object(si, "_make_view", return_value=view):
-            with self.assertLogs(si.logger, level="WARNING") as logs:
-                out = si.fetch_short_interest()
+    def test_an_empty_screen_warns(self):
+        with self.assertLogs(si.logger, level="WARNING") as logs:
+            out, _ = self._fetch([_page([])])
 
         self.assertEqual(out["rows"], [])
         self.assertTrue(any("no rows" in m.lower() for m in logs.output))
 
-    def test_zero_repairs_on_a_non_empty_table_warns(self):
-        """Every row arrived corrupted when this was measured. Zero repairs
-        means Finviz changed the ticker cell again."""
-        view = self._view(_frame(), repaired=0)
-        with mock.patch.object(si, "_make_view", return_value=view):
-            with self.assertLogs(si.logger, level="WARNING") as logs:
-                si.fetch_short_interest()
+    def test_requests_the_screen_with_the_configured_user_agent(self):
+        response = mock.Mock(text=_page([]))
+        with mock.patch.object(si.requests, "get", return_value=response) as get:
+            si._get_page(1)
 
-        self.assertTrue(any("repair" in m.lower() for m in logs.output))
+        _, kwargs = get.call_args
+        self.assertEqual(kwargs["headers"]["User-Agent"],
+                         si.CONFIG["fundamental_data"]["user_agent"])
+        self.assertEqual(kwargs["params"]["f"], si.SI_FILTERS)
+        self.assertEqual(kwargs["params"]["o"], "-shortinterestshare")
 
 
 class WriteTests(unittest.TestCase):
@@ -192,7 +121,7 @@ class WriteTests(unittest.TestCase):
         self.assertEqual(written["rows"], [{"ticker": "AAA"}])
 
     def test_an_empty_roster_is_not_written(self):
-        payload = {"date": "", "filters": {}, "rows": []}
+        payload = {"date": "", "filters": "", "rows": []}
 
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "si.json"
@@ -202,7 +131,7 @@ class WriteTests(unittest.TestCase):
             self.assertIn("2026-09-09", out.read_text(encoding="utf-8"))
 
     def test_stamps_the_callers_dict_so_it_can_report_what_it_wrote(self):
-        payload = {"date": "", "filters": {}, "rows": [{"ticker": "AAA"}]}
+        payload = {"date": "", "filters": "", "rows": [{"ticker": "AAA"}]}
 
         with tempfile.TemporaryDirectory() as tmp:
             si.write_short_interest(payload, "2026-09-10", Path(tmp) / "si.json")

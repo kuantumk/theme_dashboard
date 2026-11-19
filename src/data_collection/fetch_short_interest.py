@@ -2,127 +2,113 @@
 
 Feeds the dashboard's SI tab. Writes ``data/short_interest.json``.
 
-The Ownership view (``v=131``) carries ``Short Float`` in the screener table
-itself, alongside float, market cap and institutional transactions. So one
-screener call answers the whole question. Reading the same figures from
-per-ticker quote pages, the way ``fetch_fundamental_data`` does, would cost
-231 requests at the rate limit and add nothing.
+The Ownership view (``v=131``) carries short float, float, market cap and
+institutional transactions in the screener itself, so one screen answers the
+whole question. Reading the same figures from per-ticker quote pages, the way
+``fetch_fundamental_data`` does, would cost about 250 requests at the rate
+limit and add nothing.
 
-⛔ The ticker column arrives corrupted and must be repaired. Finviz's
-2026-07-15 redesign put a logo avatar in the ticker cell whose one-letter
-fallback span sits before the symbol, so ``OKLO`` parses as ``OOKLO``.
-Measured 2026-09-10 on this exact screener: **231 of 231 rows** were wrong.
-Unrepaired, every master-table join misses and the tab publishes nothing,
-which is indistinguishable from a market holding no shorted names. Do not
-un-double the first character — see CLAUDE.md.
+⛔ Read the JSON the page embeds, not its HTML grid. By 2026-11-18 Finviz
+served the screener as a React island: the rows are ``<div>`` cells and the
+page has no ``<table>`` and no ``pageSelect``. finvizfinance 1.3.0 parses that
+page as "No ticker found." The same page carries every row as numbers in
+``<script type="application/json" data-ssr-props=...>``, with clean tickers,
+so the doubled-first-letter avatar repair that the HTML once needed is gone.
+
+⛔ Finviz answers 403 to an old Chrome User-Agent. finvizfinance's Chrome/81
+agent blocked this step from 2026-09-29. Send ``fundamental_data.user_agent``.
 
 ⛔ ``Current Volume`` makes this screen time-of-day dependent. Before the open
-no ticker has 750K of current volume, so the call returns an empty table. The
-daily workflow runs at 1:30 PM Pacific, after the close, where current volume
-is the full session. Keep this step inside that workflow.
+no ticker has 750K of current volume, so the screen is empty. The daily
+workflow runs after the close, where current volume is the full session. Keep
+this step inside that workflow.
 """
 
 import argparse
 import json
 import logging
+import re
 import sys
+import time
 from datetime import date
 from glob import glob
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import pandas as pd
+import requests
 
-from config.settings import SCREENING_OUTPUT_DIR, SHORT_INTEREST_FILE
-from src.data_collection.finviz_ticker_repair import make_ticker_repair_view
+from config.settings import CONFIG, SCREENING_OUTPUT_DIR, SHORT_INTEREST_FILE
 
 logger = logging.getLogger(__name__)
 
-try:
-    from finvizfinance.screener.ownership import Ownership
-    FINVIZ_AVAILABLE = True
-except ImportError:  # pragma: no cover - exercised only without the dependency
-    FINVIZ_AVAILABLE = False
+SCREENER_URL = "https://finviz.com/screener/stocks"
 
-# The five legs of the source screener URL:
-#   f=sh_avgvol_o1000,sh_curvol_o750,sh_price_o10,sh_short_o10,ta_volatility_mo4
-SI_FILTERS = {
-    "Average Volume": "Over 1M",
-    "Current Volume": "Over 750K",
-    "Price": "Over $10",
-    "Float Short": "Over 10%",
-    "Volatility": "Month - Over 4%",
-}
+# Average volume > 1M, current volume > 750K, price > $10, short float > 10%,
+# monthly volatility > 4%. Sorted by short float, highest first.
+SI_FILTERS = "sh_avgvol_o1000,sh_curvol_o750,sh_price_o10,sh_short_o10,ta_volatility_mo4"
+SI_ORDER = "-shortinterestshare"
 
-# `o=-shortinterestshare` in the URL. "Float Short" is the COLUMN name and is
-# not a valid sort key — finvizfinance raises ValueError listing the real ones,
-# which would abort the step.
-SI_ORDER = "Short Interest Share"
+# Stops a page that never ends from looping forever. The screen returned 252
+# rows on 2026-11-18, 13 pages of 20.
+MAX_PAGES = 50
 
-# Screener columns -> (payload key, scale). Anything absent becomes None
-# rather than failing the whole fetch: a view gaining or losing a column must
-# not blank the tab.
-#
-# ⛔ The screener returns Inst Trans as a FRACTION while the quote page — and
-# therefore fundamentals.db and every other consumer in this repo — returns a
-# percent. Verified 2026-09-10 against both sources: WOLF reads 0.4804 here and
-# 48.04 there; BTDR 0.373 against 37.3. Short Float needs no scaling, it is
-# already a percent on both. Left unscaled, a +48% institutional move renders
-# as "+0.5" and looks like a rounding artefact rather than a wrong unit.
+_PROPS_RE = re.compile(
+    r'<script type="application/json" data-ssr-props="[^"]*">(.*?)</script>', re.S
+)
+
+# Payload key -> (field in the row's ``numbers``, scale). Finviz gives float
+# and market cap in millions. Short float and Inst Trans are already percents.
+# A missing field becomes None rather than failing the fetch.
 _COLUMNS = {
-    "float_shares": ("Float", 1.0),
-    "market_cap": ("Market Cap", 1.0),
-    "inst_trans": ("Inst Trans", 100.0),
-    "price": ("Price", 1.0),
+    "float_shares": ("sharesFloat", 1e6),
+    "market_cap": ("marketCap", 1e6),
+    "inst_trans": ("instTrans", 1.0),
+    "price": ("price", 1.0),
 }
 
 
-def parse_short_float(value) -> Optional[float]:
-    """Parse a Finviz short-float cell (``'70.54%'``) to a float percent.
+def parse_screener_page(html: str) -> Dict:
+    """Return the ``data`` block (``rows``, ``totalCount``, ``pageSize``).
 
-    Returns None for the placeholder dash, blanks and anything unparseable, so
-    a row with no reading is dropped rather than scored as zero.
+    Raises ``ValueError`` when the page carries no screener data. That is a
+    change in page shape, and it must not read as a quiet market.
     """
-    if value is None:
-        return None
-    text = str(value).strip()
-    if not text or text == "-" or text.lower() in ("nan", "n/a"):
-        return None
-    try:
-        return float(text.rstrip("%"))
-    except ValueError:
-        return None
-
-
-def _optional(row, column) -> Optional[float]:
-    if column not in row:
-        return None
-    value = row[column]
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def build_rows(table: pd.DataFrame) -> List[Dict]:
-    """Turn the screener frame into payload rows, sorted by short interest.
-
-    Rows with no parseable short interest are dropped — that is the one column
-    this tab cannot do without.
-    """
-    if table is None or table.empty or "Ticker" not in table.columns:
-        return []
-
-    rows = []
-    for _, row in table.iterrows():
-        si_value = parse_short_float(row.get("Short Float"))
-        if si_value is None:
+    for match in _PROPS_RE.finditer(html):
+        try:
+            props = json.loads(match.group(1))
+        except json.JSONDecodeError:
             continue
-        entry = {"ticker": str(row["Ticker"]).strip().upper(), "si": si_value}
-        for key, (column, scale) in _COLUMNS.items():
-            value = _optional(row, column)
+        data = props.get("data") if isinstance(props, dict) else None
+        if isinstance(data, dict) and isinstance(data.get("rows"), list):
+            return data
+    raise ValueError(
+        "Finviz screener page has no data-ssr-props rows; the page changed shape"
+    )
+
+
+def _number(numbers: Dict, field: str) -> Optional[float]:
+    value = numbers.get(field)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value) if value == value else None
+
+
+def build_rows(raw_rows: List[Dict]) -> List[Dict]:
+    """Turn screener rows into payload rows, sorted by short interest.
+
+    Rows with no short float are dropped: that is the one figure this tab
+    cannot do without.
+    """
+    rows = []
+    for raw in raw_rows:
+        ticker = str((raw.get("text") or {}).get("ticker") or "").strip().upper()
+        numbers = raw.get("numbers") or {}
+        si_value = _number(numbers, "shortInterestShare")
+        if not ticker or si_value is None:
+            continue
+        entry = {"ticker": ticker, "si": round(si_value, 2)}
+        for key, (field, scale) in _COLUMNS.items():
+            value = _number(numbers, field)
             entry[key] = None if value is None else value * scale
         rows.append(entry)
 
@@ -130,47 +116,50 @@ def build_rows(table: pd.DataFrame) -> List[Dict]:
     return rows
 
 
-def _make_view():
-    """Build the repair-wrapped Ownership view. Patched in tests."""
-    if not FINVIZ_AVAILABLE:
-        raise RuntimeError("finvizfinance is not installed")
-    return make_ticker_repair_view(Ownership)()
+def _get_page(first_row: int) -> str:
+    """Fetch one screener page. ``first_row`` is 1-based, like Finviz's ``r``."""
+    response = requests.get(
+        SCREENER_URL,
+        params={"v": "131", "f": SI_FILTERS, "o": SI_ORDER, "r": str(first_row)},
+        headers={"User-Agent": CONFIG["fundamental_data"]["user_agent"]},
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.text
 
 
 def fetch_short_interest() -> Dict:
-    """Run the screener once and return ``{date, filters, rows}``.
+    """Read every page of the screen and return ``{date, filters, rows}``.
 
     ``date`` is left empty here and stamped by :func:`write_short_interest`,
     so the caller decides which session this belongs to.
     """
-    view = _make_view()
-    view.set_filter(filters_dict=SI_FILTERS)
-    table = view.screener_view(order=SI_ORDER, ascend=False, verbose=0)
+    pause = CONFIG["fundamental_data"].get("rate_limit_seconds", 2)
+    raw_rows: List[Dict] = []
+    total = None
+    for page in range(MAX_PAGES):
+        if page:
+            time.sleep(pause)
+        data = parse_screener_page(_get_page(len(raw_rows) + 1))
+        total = data.get("totalCount")
+        raw_rows.extend(data["rows"])
+        if not data["rows"] or (isinstance(total, int) and len(raw_rows) >= total):
+            break
 
-    rows = build_rows(table)
-    repaired = getattr(view, "tickers_repaired", 0)
+    if isinstance(total, int) and len(raw_rows) < total:
+        logger.warning("SI screen returned %d of %d rows", len(raw_rows), total)
 
+    rows = build_rows(raw_rows)
     if not rows:
-        # A 200 that parses to nothing is an upstream-shape signal, not a quiet
-        # market. Conflating the two is what let the NAAIM tile sit stale.
         logger.warning(
             "Finviz returned no rows for the SI screen. Either the market has "
-            "no qualifying names, or the Ownership view changed shape. Check "
-            "the screener before assuming a quiet day."
-        )
-    elif not repaired:
-        # Every row was corrupted when this was measured. Zero repairs against
-        # a populated table means the ticker cell changed again.
-        logger.warning(
-            "Repaired 0 of %d tickers. Every row needed repair when this was "
-            "measured (2026-09-10), so Finviz has likely changed the ticker "
-            "cell. Verify the symbols before trusting this run.",
-            len(rows),
+            "no qualifying names, or the row fields changed. Check the "
+            "screener before assuming a quiet day."
         )
     else:
-        logger.info("SI screen: %d rows, %d tickers repaired", len(rows), repaired)
+        logger.info("SI screen: %d rows", len(rows))
 
-    return {"date": "", "filters": dict(SI_FILTERS), "rows": rows}
+    return {"date": "", "filters": SI_FILTERS, "rows": rows}
 
 
 def latest_session_date() -> str:

@@ -2478,7 +2478,8 @@ def export_radar(day_flags_by_date, root=None, out_dir=None, fundamentals=None):
     # Short interest loads once, outside the session loop — the loop runs about
     # 124 times and Finviz publishes one current figure, not a series. The
     # radar's universe is every tagged ticker, so that is the key set to ask
-    # for; `fundamentals.db` holds the screened union, and the rest miss.
+    # for; `fundamentals.db` holds the tickers screened in the last
+    # `cache_days` days, and the rest miss.
     if fundamentals is None:
         from src.themes.theme_registry import load_ticker_themes
         fundamentals = _load_fundamentals_for_tickers(load_ticker_themes().keys())
@@ -2655,7 +2656,8 @@ def _load_fundamentals_for_tickers(tickers=None):
     """``{TICKER: {column: value}}`` from `fundamentals.db`, or ``{}``.
 
     `tickers=None` reads the whole table, which is how an exporter loads it
-    once per run: the table holds the screened union only, and Finviz
+    once per run: the table holds the tickers screened in the last
+    `fundamental_data.cache_days` days (step 7 deletes older rows), and Finviz
     publishes one current figure per ticker rather than a series.
 
     Guarded: a missing, locked or malformed database logs a warning and reads

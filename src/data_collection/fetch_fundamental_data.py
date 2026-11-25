@@ -215,6 +215,16 @@ def batch_fetch_fundamentals(tickers: List[str], refresh_stale: bool = True):
     """Batch fetch fundamentals for multiple tickers with caching."""
     init_database()
 
+    # CI keeps this file between runs, and the exporters read every row with
+    # no age check. Without this delete, a ticker that left the screens would
+    # keep its last figures for good. A failed refetch then reads as missing,
+    # not as stale.
+    cutoff = datetime.now(timezone.utc) - timedelta(days=CACHE_DAYS)
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute('DELETE FROM fundamentals WHERE last_updated < ?', (cutoff,))
+    conn.commit()
+    conn.close()
+
     cached = get_cached_fundamentals(tickers) if refresh_stale else {}
 
     to_fetch = [t for t in tickers if t not in cached]

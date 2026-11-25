@@ -182,23 +182,23 @@ jobs:
         run: |
           echo "::error::Daily workflow failed! Check logs for details."
 
-  # Deploy dashboard to GitHub Pages after successful screening
-  deploy-pages:
+  # The Pages upload and the deploy are two jobs, not two steps of one job.
+  # actions/deploy-pages looks up the artifact once, with no retry, and a
+  # just-finalized artifact is missing from the run's artifact list for a
+  # short time (actions/deploy-pages#451). With both steps in one job the
+  # lookup came about 0.45 s after the upload, and on 2026-11-24 it found no
+  # artifact on two attempts in a row. The start of a new job puts tens of
+  # seconds between the upload and the lookup.
+  build-pages:
     needs: run-screening
     if: always() && needs.run-screening.result == 'success'
     runs-on: ubuntu-24.04
 
-    # Least privilege for the deploy job. actions:write lets the cleanup step
-    # below delete a stale Pages artifact left behind by a re-run.
+    # actions:write lets the cleanup step below delete a stale Pages artifact.
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      pages: read
       actions: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -210,11 +210,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # Re-running the failed deploy-pages job leaves the previous attempt's
-      # "github-pages" artifact attached to the run, so actions/deploy-pages
-      # finds two and aborts ("Multiple artifacts named github-pages ...
-      # Artifact count is 2"). Delete any leftover from an earlier attempt so
-      # the re-run uploads exactly one artifact and succeeds.
+      # A re-run of this job leaves the previous attempt's "github-pages"
+      # artifact attached to the run, so actions/deploy-pages finds two and
+      # aborts ("Multiple artifacts named github-pages ... Artifact count is
+      # 2"). Delete any leftover from an earlier attempt so the re-run uploads
+      # exactly one artifact. A re-run of deploy-pages alone reuses this job's
+      # artifact and needs no cleanup.
       - name: Remove stale Pages artifact from earlier run attempts
         if: fromJSON(github.run_attempt) > 1
         env:
@@ -232,6 +233,19 @@ jobs:
         with:
           path: 'docs'
 
+  deploy-pages:
+    needs: build-pages
+    runs-on: ubuntu-24.04
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

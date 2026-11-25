@@ -104,6 +104,19 @@ jobs:
           uv sync --locked
           uv run playwright install --with-deps chromium
 
+      # data/fundamentals.db is gitignored, so without this cache every run
+      # starts empty and step 7 fetches every screened ticker from Finviz at
+      # 2 s each: about 30 minutes for 800 tickers. A cache entry cannot be
+      # overwritten, so each run saves under its own key and restores the
+      # newest earlier one. The 7-day TTL in fetch_fundamental_data decides
+      # which rows are fetched again.
+      - name: Restore Finviz fundamentals cache
+        uses: actions/cache@v4
+        with:
+          path: data/fundamentals.db
+          key: fundamentals-db-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: fundamentals-db-
+
       - name: Run daily workflow
         env:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}

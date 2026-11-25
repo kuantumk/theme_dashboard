@@ -91,5 +91,30 @@ class OldCacheTests(unittest.TestCase):
                 self.assertEqual(ffd.get_cached_fundamentals(["AAA"]), {})
 
 
+class ExpiredRowTests(unittest.TestCase):
+    def test_a_fetch_run_deletes_rows_past_the_ttl(self) -> None:
+        # The exporters read rows with no age check, so a row for a ticker
+        # that left the screens must not outlive the TTL.
+        old = datetime(2026, 8, 1, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "fundamentals.db"
+            with patch.object(ffd, "DB_PATH", db), \
+                    patch.object(ffd, "get_fundamental_data", return_value={"short_interest": 3.0}), \
+                    patch.object(ffd.time, "sleep"):
+                ffd.init_database()
+                ffd.save_to_database("GONE", {"short_interest": 25.0})
+                conn = sqlite3.connect(db)
+                conn.execute("UPDATE fundamentals SET last_updated = ?", (old,))
+                conn.commit()
+                conn.close()
+
+                ffd.batch_fetch_fundamentals(["NEW"])
+
+                conn = sqlite3.connect(db)
+                tickers = [row[0] for row in conn.execute("SELECT ticker FROM fundamentals")]
+                conn.close()
+        self.assertEqual(tickers, ["NEW"])
+
+
 if __name__ == "__main__":
     unittest.main()

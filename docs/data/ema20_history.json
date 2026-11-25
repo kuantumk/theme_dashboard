@@ -1,5 +1,344 @@
 [
   {
+    "report_date": "2026-11-25",
+    "short": [
+      {
+        "name": "AI",
+        "best_rank": 1,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "AI / Drug Discovery",
+            "tickers": [
+              {
+                "ticker": "ABSI",
+                "lead": 85,
+                "gap": 0.23,
+                "off_high": -28.3,
+                "days": 9,
+                "vars": 2.8,
+                "vars_20ema": 2.55,
+                "rs": 46.2,
+                "price": 9.0,
+                "dollar_vol": 44215817,
+                "adr_pct": 0.108,
+                "float": "149.1",
+                "eps": "3",
+                "sales": "-20",
+                "inst": "+0.8",
+                "short": 23.9,
+                "highlight": "short",
+                "ticker_color": "green",
+                "rank": 1
+              }
+            ],
+            "l1": "AI",
+            "l2": "Drug Discovery",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "Biotech",
+        "best_rank": 1,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Biotech / Drug Discovery Platform",
+            "tickers": [
+              {
+                "ticker": "ABSI",
+                "lead": 85,
+                "gap": 0.23,
+                "off_high": -28.3,
+                "days": 9,
+                "vars": 2.8,
+                "vars_20ema": 2.55,
+                "rs": 46.2,
+                "price": 9.0,
+                "dollar_vol": 44215817,
+                "adr_pct": 0.108,
+                "float": "149.1",
+                "eps": "3",
+                "sales": "-20",
+                "inst": "+0.8",
+                "short": 23.9,
+                "highlight": "short",
+                "ticker_color": "green",
+                "rank": 1
+              }
+            ],
+            "l1": "Biotech",
+            "l2": "Drug Discovery Platform",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "Cybersecurity",
+        "best_rank": 2,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Cybersecurity / Generalist",
+            "tickers": [
+              {
+                "ticker": "BB",
+                "lead": 62,
+                "gap": -0.05,
+                "off_high": -37.5,
+                "days": 7,
+                "vars": 0.38,
+                "vars_20ema": -0.25,
+                "rs": 61.5,
+                "price": 8.5,
+                "dollar_vol": 109048567,
+                "adr_pct": 0.0639,
+                "float": "585.3",
+                "eps": "146",
+                "sales": "26",
+                "inst": "-1.3",
+                "short": 5.7,
+                "highlight": "tight",
+                "rank": 2
+              }
+            ],
+            "l1": "Cybersecurity",
+            "l2": "Generalist",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "EV & Autonomous",
+        "best_rank": 2,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "EV & Autonomous / ADAS & LiDAR",
+            "tickers": [
+              {
+                "ticker": "BB",
+                "lead": 62,
+                "gap": -0.05,
+                "off_high": -37.5,
+                "days": 7,
+                "vars": 0.38,
+                "vars_20ema": -0.25,
+                "rs": 61.5,
+                "price": 8.5,
+                "dollar_vol": 109048567,
+                "adr_pct": 0.0639,
+                "float": "585.3",
+                "eps": "146",
+                "sales": "26",
+                "inst": "-1.3",
+                "short": 5.7,
+                "highlight": "tight",
+                "rank": 2
+              }
+            ],
+            "l1": "EV & Autonomous",
+            "l2": "ADAS & LiDAR",
+            "l3": null
+          }
+        ]
+      }
+    ],
+    "zone_map_short": {
+      "params": {
+        "min_avg_dollar_vol": 0,
+        "min_adr_pct": 0.04,
+        "top_leaves": 20,
+        "band_low": -0.5,
+        "band_high": 2.0,
+        "weekly_low": 0.0,
+        "weekly_high": 4.0,
+        "x_range": [
+          -2.0,
+          5.0
+        ],
+        "y_range": [
+          -4.0,
+          8.0
+        ]
+      },
+      "n_candidates": 2,
+      "n_floor_dropped": 0,
+      "n_no_weekly": 0,
+      "n_no_daily": 0,
+      "tickers": [
+        {
+          "ticker": "ABSI",
+          "d_daily": -0.0,
+          "d_weekly": 0.21,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 2.8,
+          "rs": 46.2,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "short",
+          "ticker_color": "green",
+          "leaves": [
+            "AI / Drug Discovery",
+            "Biotech / Drug Discovery Platform"
+          ]
+        },
+        {
+          "ticker": "BB",
+          "d_daily": -0.14,
+          "d_weekly": 0.3,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 0.38,
+          "rs": 61.5,
+          "tight": true,
+          "tight_len": 3,
+          "highlight": "tight",
+          "ticker_color": null,
+          "leaves": [
+            "Cybersecurity / Generalist",
+            "EV & Autonomous / ADAS & LiDAR"
+          ]
+        }
+      ]
+    },
+    "long": [
+      {
+        "name": "Fintech & Crypto",
+        "best_rank": 1,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Fintech & Crypto / Payments",
+            "tickers": [
+              {
+                "ticker": "GPN",
+                "theme_size": 6,
+                "rs20": 91,
+                "off_high": -6.7,
+                "days": 3,
+                "vars": 7.77,
+                "vars_20ema": 6.81,
+                "rs": 96.2,
+                "price": 96.03,
+                "dollar_vol": 432776149,
+                "adr_pct": 0.0601,
+                "float": "219.9",
+                "eps": "-89",
+                "sales": "65",
+                "inst": "-5.3",
+                "short": 5.7,
+                "highlight": "ma_up",
+                "rank": 1
+              }
+            ],
+            "l1": "Fintech & Crypto",
+            "l2": "Payments",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "Retail (Multi-Category)",
+        "best_rank": 2,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Retail (Multi-Category) / Specialty Apparel",
+            "tickers": [
+              {
+                "ticker": "GME",
+                "theme_size": 3,
+                "rs20": 91,
+                "off_high": -4.7,
+                "days": 13,
+                "vars": 9.05,
+                "vars_20ema": 6.38,
+                "rs": 88.5,
+                "price": 26.97,
+                "dollar_vol": 179937911,
+                "adr_pct": 0.0401,
+                "float": "421.4",
+                "eps": "63",
+                "sales": "-19",
+                "inst": "+5.8",
+                "short": 9.7,
+                "highlight": "tight",
+                "rank": 2
+              }
+            ],
+            "l1": "Retail (Multi-Category)",
+            "l2": "Specialty Apparel",
+            "l3": null
+          }
+        ]
+      }
+    ],
+    "zone_map_long": {
+      "params": {
+        "min_avg_dollar_vol": 0,
+        "min_adr_pct": 0.04,
+        "top_leaves": 20,
+        "band_low": -0.5,
+        "band_high": 2.0,
+        "weekly_low": 0.0,
+        "weekly_high": 4.0,
+        "x_range": [
+          -2.0,
+          5.0
+        ],
+        "y_range": [
+          -4.0,
+          8.0
+        ]
+      },
+      "n_candidates": 2,
+      "n_floor_dropped": 0,
+      "n_no_weekly": 0,
+      "n_no_daily": 0,
+      "tickers": [
+        {
+          "ticker": "GME",
+          "d_daily": 0.97,
+          "d_weekly": 2.95,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 9.05,
+          "rs": 88.5,
+          "tight": true,
+          "tight_len": 6,
+          "highlight": "tight",
+          "ticker_color": null,
+          "leaves": [
+            "Retail (Multi-Category) / Specialty Apparel"
+          ]
+        },
+        {
+          "ticker": "GPN",
+          "d_daily": 0.95,
+          "d_weekly": 1.74,
+          "zone_daily": "band",
+          "zone_weekly": "normal",
+          "state": "buy_area",
+          "vars": 7.77,
+          "rs": 96.2,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_up",
+          "ticker_color": null,
+          "leaves": [
+            "Fintech & Crypto / Payments"
+          ]
+        }
+      ]
+    }
+  },
+  {
     "report_date": "2026-11-24",
     "short": [
       {
@@ -27,7 +366,7 @@
                 "sales": "-20",
                 "inst": "+0.8",
                 "short": 23.9,
-                "highlight": "short",
+                "highlight": null,
                 "rank": 1
               }
             ],
@@ -90,7 +429,7 @@
                 "sales": "-20",
                 "inst": "+0.8",
                 "short": 23.9,
-                "highlight": "short",
+                "highlight": null,
                 "rank": 1
               }
             ],
@@ -113,11 +452,11 @@
                 "price": 7.06,
                 "dollar_vol": 16133277,
                 "adr_pct": 0.0675,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "rank": 2
               }
@@ -141,11 +480,11 @@
                 "price": 7.06,
                 "dollar_vol": 16133277,
                 "adr_pct": 0.0675,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "rank": 2
               }
@@ -297,7 +636,7 @@
           "rs": 50.0,
           "tight": false,
           "tight_len": null,
-          "highlight": "short",
+          "highlight": null,
           "ticker_color": null,
           "leaves": [
             "AI / Drug Discovery",
@@ -526,7 +865,7 @@
               },
               {
                 "ticker": "HPE",
-                "lead": 88,
+                "lead": 89,
                 "gap": 0.37,
                 "off_high": -34.7,
                 "days": 28,
@@ -546,7 +885,7 @@
               },
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.09,
                 "off_high": -63.5,
                 "days": 40,
@@ -821,7 +1160,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.09,
                 "off_high": -63.5,
                 "days": 40,
@@ -1218,7 +1557,7 @@
       {
         "name": "AI",
         "best_rank": 2,
-        "n": 1,
+        "n": 2,
         "leaves": [
           {
             "name": "AI / Data Center / Networking & Connectivity",
@@ -1247,6 +1586,34 @@
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Networking & Connectivity"
+          },
+          {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 0.59,
+                "off_high": -53.2,
+                "days": 29,
+                "vars": -5.22,
+                "vars_20ema": -9.96,
+                "rs": 69.2,
+                "price": 148.18,
+                "dollar_vol": 130326398,
+                "adr_pct": 0.0675,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 3
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
           }
         ]
       }
@@ -1269,7 +1636,7 @@
           8.0
         ]
       },
-      "n_candidates": 2,
+      "n_candidates": 3,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -1307,6 +1674,23 @@
           "leaves": [
             "AI / Data Center / Networking & Connectivity"
           ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.34,
+          "d_weekly": -2.67,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -5.22,
+          "rs": 69.2,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
+          ]
         }
       ]
     },
@@ -1342,7 +1726,7 @@
       {
         "name": "AI",
         "best_rank": 1,
-        "n": 8,
+        "n": 9,
         "leaves": [
           {
             "name": "AI / Data Center / Memory",
@@ -1453,7 +1837,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 65,
+                "lead": 64,
                 "gap": -0.15,
                 "off_high": -58.9,
                 "days": 28,
@@ -1473,7 +1857,7 @@
               },
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.24,
                 "off_high": -60.4,
                 "days": 38,
@@ -1525,6 +1909,35 @@
             "l3": "Chips & Processors"
           },
           {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 1.06,
+                "off_high": -49.9,
+                "days": 28,
+                "vars": -6.97,
+                "vars_20ema": -10.45,
+                "rs": 100.0,
+                "price": 158.75,
+                "dollar_vol": 127332115,
+                "adr_pct": 0.0669,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "ticker_color": "green",
+                "rank": 13
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
+          },
+          {
             "name": "AI / Data Center / Optics",
             "tickers": [
               {
@@ -1545,7 +1958,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 13
+                "rank": 14
               }
             ],
             "l1": "AI",
@@ -1724,7 +2137,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.24,
                 "off_high": -60.4,
                 "days": 38,
@@ -1873,7 +2286,7 @@
           8.0
         ]
       },
-      "n_candidates": 13,
+      "n_candidates": 14,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -1980,6 +2393,23 @@
           "leaves": [
             "Fintech & Crypto / Crypto / Mining",
             "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": 0.49,
+          "d_weekly": -1.94,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -6.97,
+          "rs": 100.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": "green",
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -2388,7 +2818,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.19,
                 "off_high": -59.4,
                 "days": 37,
@@ -2416,14 +2846,14 @@
       {
         "name": "AI",
         "best_rank": 2,
-        "n": 1,
+        "n": 2,
         "leaves": [
           {
             "name": "AI / Data Center / Cloud & Hyperscalers",
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.19,
                 "off_high": -59.4,
                 "days": 37,
@@ -2445,6 +2875,34 @@
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Cloud & Hyperscalers"
+          },
+          {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 0.55,
+                "off_high": -51.1,
+                "days": 27,
+                "vars": -8.51,
+                "vars_20ema": -10.82,
+                "rs": 61.5,
+                "price": 154.95,
+                "dollar_vol": 129860362,
+                "adr_pct": 0.0684,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 6
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
           }
         ]
       },
@@ -2574,7 +3032,7 @@
           8.0
         ]
       },
-      "n_candidates": 5,
+      "n_candidates": 6,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -2630,6 +3088,23 @@
           "leaves": [
             "Fintech & Crypto / Crypto / Mining",
             "AI / Data Center / Cloud & Hyperscalers"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": 0.22,
+          "d_weekly": -2.17,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -8.51,
+          "rs": 61.5,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -3028,6 +3503,42 @@
             "l3": null
           }
         ]
+      },
+      {
+        "name": "AI",
+        "best_rank": 5,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 0.32,
+                "off_high": -52.4,
+                "days": 26,
+                "vars": -9.91,
+                "vars_20ema": -11.06,
+                "rs": 50.0,
+                "price": 150.77,
+                "dollar_vol": 125309238,
+                "adr_pct": 0.0668,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "ticker_color": "green",
+                "rank": 5
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
+          }
+        ]
       }
     ],
     "zone_map_short": {
@@ -3048,7 +3559,7 @@
           8.0
         ]
       },
-      "n_candidates": 4,
+      "n_candidates": 5,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -3086,6 +3597,23 @@
           "ticker_color": null,
           "leaves": [
             "Real Estate / Tech-Enabled Brokerage"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.1,
+          "d_weekly": -2.5,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -9.91,
+          "rs": 50.0,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": "green",
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -3554,6 +4082,41 @@
             "l3": null
           }
         ]
+      },
+      {
+        "name": "AI",
+        "best_rank": 3,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 0.31,
+                "off_high": -52.3,
+                "days": 25,
+                "vars": -11.26,
+                "vars_20ema": -11.19,
+                "rs": 38.5,
+                "price": 151.11,
+                "dollar_vol": 121474140,
+                "adr_pct": 0.0662,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 3
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
+          }
+        ]
       }
     ],
     "zone_map_short": {
@@ -3574,7 +4137,7 @@
           8.0
         ]
       },
-      "n_candidates": 2,
+      "n_candidates": 3,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -3595,6 +4158,23 @@
           "leaves": [
             "Cybersecurity / Generalist",
             "EV & Autonomous / ADAS & LiDAR"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.08,
+          "d_weekly": -2.52,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -11.26,
+          "rs": 38.5,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -4151,55 +4731,6 @@
             "l3": null
           },
           {
-            "name": "AI / Data Center / Cloud & Hyperscalers",
-            "tickers": [
-              {
-                "ticker": "DOCN",
-                "lead": 65,
-                "gap": -0.12,
-                "off_high": -54.0,
-                "days": 24,
-                "vars": -7.0,
-                "vars_20ema": -6.97,
-                "rs": 19.2,
-                "price": 86.32,
-                "dollar_vol": 343164954,
-                "adr_pct": 0.0901,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "ticker_color": "green",
-                "rank": 2
-              },
-              {
-                "ticker": "HUT",
-                "lead": 59,
-                "gap": -0.19,
-                "off_high": -59.1,
-                "days": 34,
-                "vars": -7.79,
-                "vars_20ema": -6.89,
-                "rs": 23.1,
-                "price": 57.57,
-                "dollar_vol": 372542284,
-                "adr_pct": 0.1082,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "rank": 5
-              }
-            ],
-            "l1": "AI",
-            "l2": "Data Center",
-            "l3": "Cloud & Hyperscalers"
-          },
-          {
             "name": "AI / Data Center / Components",
             "tickers": [
               {
@@ -4221,7 +4752,7 @@
                 "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 3
+                "rank": 2
               }
             ],
             "l1": "AI",
@@ -4250,7 +4781,7 @@
                 "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 3
+                "rank": 2
               },
               {
                 "ticker": "SITM",
@@ -4276,6 +4807,55 @@
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Chips & Processors"
+          },
+          {
+            "name": "AI / Data Center / Cloud & Hyperscalers",
+            "tickers": [
+              {
+                "ticker": "DOCN",
+                "lead": 64,
+                "gap": -0.12,
+                "off_high": -54.0,
+                "days": 24,
+                "vars": -7.0,
+                "vars_20ema": -6.97,
+                "rs": 19.2,
+                "price": 86.32,
+                "dollar_vol": 343164954,
+                "adr_pct": 0.0901,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "ticker_color": "green",
+                "rank": 3
+              },
+              {
+                "ticker": "HUT",
+                "lead": 58,
+                "gap": -0.19,
+                "off_high": -59.1,
+                "days": 34,
+                "vars": -7.79,
+                "vars_20ema": -6.89,
+                "rs": 23.1,
+                "price": 57.57,
+                "dollar_vol": 372542284,
+                "adr_pct": 0.1082,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 5
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Cloud & Hyperscalers"
           },
           {
             "name": "AI / Data Center / Optics",
@@ -4352,7 +4932,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.19,
                 "off_high": -59.1,
                 "days": 34,
@@ -5181,54 +5761,6 @@
             "l3": null
           },
           {
-            "name": "AI / Data Center / Cloud & Hyperscalers",
-            "tickers": [
-              {
-                "ticker": "DOCN",
-                "lead": 65,
-                "gap": -0.08,
-                "off_high": -52.0,
-                "days": 23,
-                "vars": -7.31,
-                "vars_20ema": -6.97,
-                "rs": 26.9,
-                "price": 90.07,
-                "dollar_vol": 353347468,
-                "adr_pct": 0.0921,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "rank": 3
-              },
-              {
-                "ticker": "HUT",
-                "lead": 59,
-                "gap": 0.0,
-                "off_high": -56.0,
-                "days": 33,
-                "vars": -7.76,
-                "vars_20ema": -6.79,
-                "rs": 34.6,
-                "price": 61.97,
-                "dollar_vol": 380122181,
-                "adr_pct": 0.1082,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "rank": 6
-              }
-            ],
-            "l1": "AI",
-            "l2": "Data Center",
-            "l3": "Cloud & Hyperscalers"
-          },
-          {
             "name": "AI / Data Center / Components",
             "tickers": [
               {
@@ -5249,7 +5781,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 4
+                "rank": 3
               }
             ],
             "l1": "AI",
@@ -5277,7 +5809,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 4
+                "rank": 3
               },
               {
                 "ticker": "SITM",
@@ -5303,6 +5835,54 @@
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Chips & Processors"
+          },
+          {
+            "name": "AI / Data Center / Cloud & Hyperscalers",
+            "tickers": [
+              {
+                "ticker": "DOCN",
+                "lead": 64,
+                "gap": -0.08,
+                "off_high": -52.0,
+                "days": 23,
+                "vars": -7.31,
+                "vars_20ema": -6.97,
+                "rs": 26.9,
+                "price": 90.07,
+                "dollar_vol": 353347468,
+                "adr_pct": 0.0921,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 4
+              },
+              {
+                "ticker": "HUT",
+                "lead": 58,
+                "gap": 0.0,
+                "off_high": -56.0,
+                "days": 33,
+                "vars": -7.76,
+                "vars_20ema": -6.79,
+                "rs": 34.6,
+                "price": 61.97,
+                "dollar_vol": 380122181,
+                "adr_pct": 0.1082,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 6
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Cloud & Hyperscalers"
           },
           {
             "name": "AI / Data Center / Optics",
@@ -5414,7 +5994,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.0,
                 "off_high": -56.0,
                 "days": 33,
@@ -5986,7 +6566,7 @@
               },
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.13,
                 "off_high": -56.6,
                 "days": 32,
@@ -6234,7 +6814,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.13,
                 "off_high": -56.6,
                 "days": 32,
@@ -7956,7 +8536,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.16,
                 "off_high": -55.7,
                 "days": 22,
@@ -8425,11 +9005,11 @@
                 "price": 6.98,
                 "dollar_vol": 17223009,
                 "adr_pct": 0.0742,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 2
               }
@@ -8453,11 +9033,11 @@
                 "price": 6.98,
                 "dollar_vol": 17223009,
                 "adr_pct": 0.0742,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 2
               }
@@ -9655,11 +10235,11 @@
                 "price": 15.22,
                 "dollar_vol": 26724010,
                 "adr_pct": 0.0553,
-                "float": "104.5",
-                "eps": "-88",
-                "sales": "7",
-                "inst": "-0.5",
-                "short": 11.9,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 3
               }
@@ -9756,7 +10336,7 @@
       {
         "name": "AI",
         "best_rank": 1,
-        "n": 2,
+        "n": 3,
         "leaves": [
           {
             "name": "AI / Semiconductor Equipment",
@@ -9813,6 +10393,34 @@
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Cloud & Hyperscalers"
+          },
+          {
+            "name": "AI / Data Center / Power & Cooling",
+            "tickers": [
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": -0.12,
+                "off_high": -50.2,
+                "days": 16,
+                "vars": -10.27,
+                "vars_20ema": -10.28,
+                "rs": 34.6,
+                "price": 163.24,
+                "dollar_vol": 119032878,
+                "adr_pct": 0.0563,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 5
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Power & Cooling"
           }
         ]
       },
@@ -9970,7 +10578,7 @@
           8.0
         ]
       },
-      "n_candidates": 4,
+      "n_candidates": 5,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -10025,6 +10633,23 @@
           "leaves": [
             "Biotech / Drug Delivery",
             "Biotech / Respiratory"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.41,
+          "d_weekly": -2.69,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -10.27,
+          "rs": 34.6,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -11259,7 +11884,7 @@
       {
         "name": "AI",
         "best_rank": 1,
-        "n": 8,
+        "n": 9,
         "leaves": [
           {
             "name": "AI / Data Center / Memory",
@@ -11432,35 +12057,6 @@
             "l3": "Chips & Processors"
           },
           {
-            "name": "AI / Data Center / Optics",
-            "tickers": [
-              {
-                "ticker": "AXTI",
-                "lead": 55,
-                "gap": 0.2,
-                "off_high": -57.5,
-                "days": 15,
-                "vars": -4.57,
-                "vars_20ema": -4.57,
-                "rs": 34.6,
-                "price": 60.88,
-                "dollar_vol": 594696064,
-                "adr_pct": 0.0881,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "ticker_color": "green",
-                "rank": 11
-              }
-            ],
-            "l1": "AI",
-            "l2": "Data Center",
-            "l3": "Optics"
-          },
-          {
             "name": "AI / Data Center / Power & Cooling",
             "tickers": [
               {
@@ -11481,12 +12077,61 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 12
+                "rank": 11
+              },
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": -0.06,
+                "off_high": -48.6,
+                "days": 13,
+                "vars": -11.61,
+                "vars_20ema": -10.16,
+                "rs": 30.8,
+                "price": 168.38,
+                "dollar_vol": 123593876,
+                "adr_pct": 0.0543,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "rank": 16
               }
             ],
             "l1": "AI",
             "l2": "Data Center",
             "l3": "Power & Cooling"
+          },
+          {
+            "name": "AI / Data Center / Optics",
+            "tickers": [
+              {
+                "ticker": "AXTI",
+                "lead": 54,
+                "gap": 0.2,
+                "off_high": -57.5,
+                "days": 15,
+                "vars": -4.57,
+                "vars_20ema": -4.57,
+                "rs": 34.6,
+                "price": 60.88,
+                "dollar_vol": 594696064,
+                "adr_pct": 0.0881,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "ticker_color": "green",
+                "rank": 12
+              }
+            ],
+            "l1": "AI",
+            "l2": "Data Center",
+            "l3": "Optics"
           },
           {
             "name": "AI / Data Center / Cloud & Hyperscalers",
@@ -11883,7 +12528,7 @@
           8.0
         ]
       },
-      "n_candidates": 15,
+      "n_candidates": 16,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -12059,6 +12704,23 @@
           "ticker_color": null,
           "leaves": [
             "Biotech / Cell & Gene Therapy"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.25,
+          "d_weekly": -2.68,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -11.61,
+          "rs": 30.8,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -12533,7 +13195,7 @@
       {
         "name": "AI",
         "best_rank": 1,
-        "n": 10,
+        "n": 11,
         "leaves": [
           {
             "name": "AI / Data Center / Components",
@@ -12651,7 +13313,7 @@
               },
               {
                 "ticker": "AXTI",
-                "lead": 55,
+                "lead": 54,
                 "gap": 0.44,
                 "off_high": -55.0,
                 "days": 14,
@@ -12667,7 +13329,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 9
+                "rank": 10
               }
             ],
             "l1": "AI",
@@ -12773,7 +13435,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "tight",
-                "rank": 10
+                "rank": 9
               },
               {
                 "ticker": "VICR",
@@ -12795,6 +13457,27 @@
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 11
+              },
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": -0.11,
+                "off_high": -48.7,
+                "days": 12,
+                "vars": -11.79,
+                "vars_20ema": -10.0,
+                "rs": 26.9,
+                "price": 167.91,
+                "dollar_vol": 123772759,
+                "adr_pct": 0.0539,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": null,
+                "ticker_color": "green",
+                "rank": 16
               }
             ],
             "l1": "AI",
@@ -13047,7 +13730,7 @@
           8.0
         ]
       },
-      "n_candidates": 15,
+      "n_candidates": 16,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -13205,6 +13888,23 @@
           "leaves": [
             "AI / Data Center / Components",
             "AI / Data Center / Chips & Processors"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.33,
+          "d_weekly": -2.74,
+          "zone_daily": "band",
+          "zone_weekly": "below",
+          "state": "weekly_broken",
+          "vars": -11.79,
+          "rs": 26.9,
+          "tight": false,
+          "tight_len": null,
+          "highlight": null,
+          "ticker_color": "green",
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -14649,11 +15349,11 @@
                 "price": 8.26,
                 "dollar_vol": 19923069,
                 "adr_pct": 0.0704,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_split",
                 "rank": 6
               }
@@ -14677,11 +15377,11 @@
                 "price": 8.26,
                 "dollar_vol": 19923069,
                 "adr_pct": 0.0704,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_split",
                 "rank": 6
               }
@@ -19639,7 +20339,7 @@
               {
                 "ticker": "CRL",
                 "theme_size": 3,
-                "rs20": 89,
+                "rs20": 90,
                 "off_high": -9.4,
                 "days": 19,
                 "vars": 12.73,
@@ -20038,7 +20738,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 65,
+                "lead": 64,
                 "gap": 0.27,
                 "off_high": -31.6,
                 "days": 1,
@@ -20813,11 +21513,11 @@
                 "price": 7.06,
                 "dollar_vol": 19632724,
                 "adr_pct": 0.0597,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 5
               }
@@ -20841,11 +21541,11 @@
                 "price": 7.06,
                 "dollar_vol": 19632724,
                 "adr_pct": 0.0597,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 5
               }
@@ -20957,7 +21657,7 @@
       {
         "name": "AI",
         "best_rank": 4,
-        "n": 8,
+        "n": 9,
         "leaves": [
           {
             "name": "AI / Data Center / Components",
@@ -21076,7 +21776,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "ma_up",
-                "rank": 18
+                "rank": 19
               }
             ],
             "l1": "AI",
@@ -21088,7 +21788,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 65,
+                "lead": 64,
                 "gap": 0.36,
                 "off_high": -29.9,
                 "days": 0,
@@ -21175,6 +21875,26 @@
                 "short": null,
                 "highlight": "ma_up",
                 "rank": 12
+              },
+              {
+                "ticker": "POWL",
+                "lead": 40,
+                "gap": 0.26,
+                "off_high": -43.4,
+                "days": 0,
+                "vars": -10.26,
+                "vars_20ema": -9.91,
+                "rs": 30.8,
+                "price": 185.27,
+                "dollar_vol": 101524863,
+                "adr_pct": 0.0422,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": "ma_split",
+                "rank": 18
               }
             ],
             "l1": "AI",
@@ -21399,7 +22119,7 @@
           8.0
         ]
       },
-      "n_candidates": 18,
+      "n_candidates": 19,
       "n_floor_dropped": 0,
       "n_no_weekly": 0,
       "n_no_daily": 0,
@@ -21541,6 +22261,23 @@
           "ticker_color": null,
           "leaves": [
             "Automotive (Legacy) / Semiconductors"
+          ]
+        },
+        {
+          "ticker": "POWL",
+          "d_daily": -0.6,
+          "d_weekly": -2.49,
+          "zone_daily": "under",
+          "zone_weekly": "below",
+          "state": "under_both",
+          "vars": -10.26,
+          "rs": 30.8,
+          "tight": false,
+          "tight_len": null,
+          "highlight": "ma_split",
+          "ticker_color": null,
+          "leaves": [
+            "AI / Data Center / Power & Cooling"
           ]
         },
         {
@@ -22264,7 +23001,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 69,
+                "lead": 68,
                 "gap": 0.39,
                 "off_high": -28.1,
                 "days": 3,
@@ -22377,7 +23114,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "ma_up",
-                "rank": 12
+                "rank": 13
               }
             ],
             "l1": "AI",
@@ -22389,7 +23126,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 56,
+                "lead": 57,
                 "gap": 0.37,
                 "off_high": -30.5,
                 "days": 1,
@@ -22406,11 +23143,11 @@
                 "short": null,
                 "highlight": "ma_up",
                 "ticker_color": "green",
-                "rank": 13
+                "rank": 12
               },
               {
                 "ticker": "POWL",
-                "lead": 41,
+                "lead": 42,
                 "gap": 0.56,
                 "off_high": -41.4,
                 "days": 1,
@@ -22439,7 +23176,7 @@
             "tickers": [
               {
                 "ticker": "AXTI",
-                "lead": 55,
+                "lead": 54,
                 "gap": 0.06,
                 "off_high": -52.2,
                 "days": 1,
@@ -23737,7 +24474,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "ma_up",
-                "rank": 8
+                "rank": 9
               }
             ],
             "l1": "AI",
@@ -23777,7 +24514,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 56,
+                "lead": 57,
                 "gap": 0.61,
                 "off_high": -31.4,
                 "days": 0,
@@ -23793,11 +24530,11 @@
                 "inst": null,
                 "short": null,
                 "highlight": "ma_up",
-                "rank": 9
+                "rank": 8
               },
               {
                 "ticker": "POWL",
-                "lead": 41,
+                "lead": 42,
                 "gap": 0.81,
                 "off_high": -42.3,
                 "days": 0,
@@ -23825,7 +24562,7 @@
             "tickers": [
               {
                 "ticker": "AXTI",
-                "lead": 55,
+                "lead": 54,
                 "gap": 0.21,
                 "off_high": -49.9,
                 "days": 0,
@@ -24092,7 +24829,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.05,
                 "off_high": -46.4,
                 "days": 1,
@@ -25038,7 +25775,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 69,
+                "lead": 68,
                 "gap": -0.19,
                 "off_high": -32.1,
                 "days": 1,
@@ -25390,7 +26127,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.09,
                 "off_high": -43.9,
                 "days": 0,
@@ -26249,7 +26986,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 69,
+                "lead": 68,
                 "gap": 1.11,
                 "off_high": -30.1,
                 "days": 0,
@@ -26269,7 +27006,7 @@
               },
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.2,
                 "off_high": -34.5,
                 "days": 6,
@@ -26396,7 +27133,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.2,
                 "off_high": -34.5,
                 "days": 6,
@@ -28076,7 +28813,7 @@
               {
                 "ticker": "CERT",
                 "theme_size": 4,
-                "rs20": 95,
+                "rs20": 96,
                 "off_high": 0.0,
                 "days": 15,
                 "vars": 9.28,
@@ -28111,7 +28848,7 @@
               {
                 "ticker": "CERT",
                 "theme_size": 4,
-                "rs20": 95,
+                "rs20": 96,
                 "off_high": 0.0,
                 "days": 15,
                 "vars": 9.28,
@@ -28635,7 +29372,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.03,
                 "off_high": -36.3,
                 "days": 4,
@@ -28727,7 +29464,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.03,
                 "off_high": -36.3,
                 "days": 4,
@@ -29166,7 +29903,7 @@
               {
                 "ticker": "ADPT",
                 "theme_size": 5,
-                "rs20": 90,
+                "rs20": 91,
                 "off_high": -5.4,
                 "days": 14,
                 "vars": 10.61,
@@ -29335,7 +30072,7 @@
               {
                 "ticker": "ADPT",
                 "theme_size": 5,
-                "rs20": 90,
+                "rs20": 91,
                 "off_high": -5.4,
                 "days": 14,
                 "vars": 10.61,
@@ -29609,7 +30346,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.61,
                 "off_high": -54.1,
                 "days": 28,
@@ -30292,7 +31029,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.09,
                 "off_high": -57.5,
                 "days": 27,
@@ -30341,7 +31078,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.01,
                 "off_high": -38.8,
                 "days": 2,
@@ -30460,7 +31197,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": -0.01,
                 "off_high": -38.8,
                 "days": 2,
@@ -30965,7 +31702,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": -0.05,
                 "off_high": -56.9,
                 "days": 26,
@@ -31014,7 +31751,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.28,
                 "off_high": -34.0,
                 "days": 1,
@@ -31098,7 +31835,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.28,
                 "off_high": -34.0,
                 "days": 1,
@@ -31718,7 +32455,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.4,
                 "off_high": -34.2,
                 "days": 0,
@@ -31864,7 +32601,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 59,
+                "lead": 58,
                 "gap": 0.4,
                 "off_high": -34.2,
                 "days": 0,
@@ -32251,7 +32988,7 @@
               {
                 "ticker": "SUNB",
                 "theme_size": 3,
-                "rs20": 77,
+                "rs20": 78,
                 "off_high": -12.3,
                 "days": 7,
                 "vars": -3.53,
@@ -32492,7 +33229,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": -0.04,
                 "off_high": -56.6,
                 "days": 24,
@@ -34013,7 +34750,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.17,
                 "off_high": -56.8,
                 "days": 22,
@@ -34798,7 +35535,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.61,
                 "off_high": -54.2,
                 "days": 21,
@@ -35531,7 +36268,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": 0.67,
                 "off_high": -42.8,
                 "days": 59,
@@ -35579,7 +36316,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.46,
                 "off_high": -53.5,
                 "days": 20,
@@ -36134,7 +36871,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": 0.15,
                 "off_high": -43.9,
                 "days": 58,
@@ -36225,7 +36962,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": -0.17,
                 "off_high": -55.0,
                 "days": 19,
@@ -36496,11 +37233,11 @@
                 "price": 6.97,
                 "dollar_vol": 30120850,
                 "adr_pct": 0.0547,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "rank": 11
               }
@@ -36524,11 +37261,11 @@
                 "price": 6.97,
                 "dollar_vol": 30120850,
                 "adr_pct": 0.0547,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "rank": 11
               }
@@ -36656,7 +37393,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.75,
                 "off_high": -46.9,
                 "days": 18,
@@ -37247,7 +37984,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 60,
+                "lead": 59,
                 "gap": 1.16,
                 "off_high": -35.4,
                 "days": 2,
@@ -37263,7 +38000,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "tight",
-                "rank": 5
+                "rank": 6
               },
               {
                 "ticker": "STRL",
@@ -37357,43 +38094,8 @@
         ]
       },
       {
-        "name": "Fintech & Crypto",
-        "best_rank": 5,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Fintech & Crypto / Crypto / Mining",
-            "tickers": [
-              {
-                "ticker": "HUT",
-                "lead": 60,
-                "gap": 1.16,
-                "off_high": -35.4,
-                "days": 2,
-                "vars": -1.49,
-                "vars_20ema": -2.64,
-                "rs": 76.9,
-                "price": 90.99,
-                "dollar_vol": 417630455,
-                "adr_pct": 0.0844,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 5
-              }
-            ],
-            "l1": "Fintech & Crypto",
-            "l2": "Crypto",
-            "l3": "Mining"
-          }
-        ]
-      },
-      {
         "name": "Cybersecurity",
-        "best_rank": 6,
+        "best_rank": 5,
         "n": 1,
         "leaves": [
           {
@@ -37417,7 +38119,7 @@
                 "inst": "-1.3",
                 "short": 5.7,
                 "highlight": "tight",
-                "rank": 6
+                "rank": 5
               }
             ],
             "l1": "Cybersecurity",
@@ -37428,7 +38130,7 @@
       },
       {
         "name": "EV & Autonomous",
-        "best_rank": 6,
+        "best_rank": 5,
         "n": 1,
         "leaves": [
           {
@@ -37452,12 +38154,47 @@
                 "inst": "-1.3",
                 "short": 5.7,
                 "highlight": "tight",
-                "rank": 6
+                "rank": 5
               }
             ],
             "l1": "EV & Autonomous",
             "l2": "ADAS & LiDAR",
             "l3": null
+          }
+        ]
+      },
+      {
+        "name": "Fintech & Crypto",
+        "best_rank": 6,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Fintech & Crypto / Crypto / Mining",
+            "tickers": [
+              {
+                "ticker": "HUT",
+                "lead": 59,
+                "gap": 1.16,
+                "off_high": -35.4,
+                "days": 2,
+                "vars": -1.49,
+                "vars_20ema": -2.64,
+                "rs": 76.9,
+                "price": 90.99,
+                "dollar_vol": 417630455,
+                "adr_pct": 0.0844,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
+                "highlight": "tight",
+                "rank": 6
+              }
+            ],
+            "l1": "Fintech & Crypto",
+            "l2": "Crypto",
+            "l3": "Mining"
           }
         ]
       },
@@ -37640,7 +38377,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.67,
                 "off_high": -45.2,
                 "days": 17,
@@ -38272,7 +39009,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 60,
+                "lead": 59,
                 "gap": 0.61,
                 "off_high": -36.2,
                 "days": 1,
@@ -38289,7 +39026,7 @@
                 "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 4
+                "rank": 5
               },
               {
                 "ticker": "RIOT",
@@ -38355,8 +39092,78 @@
         ]
       },
       {
-        "name": "Fintech & Crypto",
+        "name": "Cybersecurity",
         "best_rank": 4,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "Cybersecurity / Generalist",
+            "tickers": [
+              {
+                "ticker": "BB",
+                "lead": 59,
+                "gap": -0.05,
+                "off_high": -43.8,
+                "days": 43,
+                "vars": 1.24,
+                "vars_20ema": 3.11,
+                "rs": 23.1,
+                "price": 7.64,
+                "dollar_vol": 70434660,
+                "adr_pct": 0.0415,
+                "float": "585.3",
+                "eps": "146",
+                "sales": "26",
+                "inst": "-1.3",
+                "short": 5.7,
+                "highlight": "tight",
+                "rank": 4
+              }
+            ],
+            "l1": "Cybersecurity",
+            "l2": "Generalist",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "EV & Autonomous",
+        "best_rank": 4,
+        "n": 1,
+        "leaves": [
+          {
+            "name": "EV & Autonomous / ADAS & LiDAR",
+            "tickers": [
+              {
+                "ticker": "BB",
+                "lead": 59,
+                "gap": -0.05,
+                "off_high": -43.8,
+                "days": 43,
+                "vars": 1.24,
+                "vars_20ema": 3.11,
+                "rs": 23.1,
+                "price": 7.64,
+                "dollar_vol": 70434660,
+                "adr_pct": 0.0415,
+                "float": "585.3",
+                "eps": "146",
+                "sales": "26",
+                "inst": "-1.3",
+                "short": 5.7,
+                "highlight": "tight",
+                "rank": 4
+              }
+            ],
+            "l1": "EV & Autonomous",
+            "l2": "ADAS & LiDAR",
+            "l3": null
+          }
+        ]
+      },
+      {
+        "name": "Fintech & Crypto",
+        "best_rank": 5,
         "n": 2,
         "leaves": [
           {
@@ -38364,7 +39171,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 60,
+                "lead": 59,
                 "gap": 0.61,
                 "off_high": -36.2,
                 "days": 1,
@@ -38381,7 +39188,7 @@
                 "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 4
+                "rank": 5
               },
               {
                 "ticker": "RIOT",
@@ -38412,76 +39219,6 @@
         ]
       },
       {
-        "name": "Cybersecurity",
-        "best_rank": 5,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Cybersecurity / Generalist",
-            "tickers": [
-              {
-                "ticker": "BB",
-                "lead": 59,
-                "gap": -0.05,
-                "off_high": -43.8,
-                "days": 43,
-                "vars": 1.24,
-                "vars_20ema": 3.11,
-                "rs": 23.1,
-                "price": 7.64,
-                "dollar_vol": 70434660,
-                "adr_pct": 0.0415,
-                "float": "585.3",
-                "eps": "146",
-                "sales": "26",
-                "inst": "-1.3",
-                "short": 5.7,
-                "highlight": "tight",
-                "rank": 5
-              }
-            ],
-            "l1": "Cybersecurity",
-            "l2": "Generalist",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "EV & Autonomous",
-        "best_rank": 5,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "EV & Autonomous / ADAS & LiDAR",
-            "tickers": [
-              {
-                "ticker": "BB",
-                "lead": 59,
-                "gap": -0.05,
-                "off_high": -43.8,
-                "days": 43,
-                "vars": 1.24,
-                "vars_20ema": 3.11,
-                "rs": 23.1,
-                "price": 7.64,
-                "dollar_vol": 70434660,
-                "adr_pct": 0.0415,
-                "float": "585.3",
-                "eps": "146",
-                "sales": "26",
-                "inst": "-1.3",
-                "short": 5.7,
-                "highlight": "tight",
-                "rank": 5
-              }
-            ],
-            "l1": "EV & Autonomous",
-            "l2": "ADAS & LiDAR",
-            "l3": null
-          }
-        ]
-      },
-      {
         "name": "Biotech",
         "best_rank": 6,
         "n": 1,
@@ -38501,11 +39238,11 @@
                 "price": 6.84,
                 "dollar_vol": 38905153,
                 "adr_pct": 0.0619,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 6
@@ -38530,11 +39267,11 @@
                 "price": 6.84,
                 "dollar_vol": 38905153,
                 "adr_pct": 0.0619,
-                "float": "111.5",
-                "eps": "47",
-                "sales": "10",
-                "inst": "+1.9",
-                "short": 13.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 6
@@ -38978,7 +39715,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 60,
+                "lead": 59,
                 "gap": 0.18,
                 "off_high": -38.1,
                 "days": 0,
@@ -39033,7 +39770,7 @@
             "tickers": [
               {
                 "ticker": "HUT",
-                "lead": 60,
+                "lead": 59,
                 "gap": 0.18,
                 "off_high": -38.1,
                 "days": 0,
@@ -40714,7 +41451,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.05,
                 "off_high": -53.8,
                 "days": 12,
@@ -41301,7 +42038,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": -0.18,
                 "off_high": -48.2,
                 "days": 11,
@@ -41931,7 +42668,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.33,
                 "off_high": -52.3,
                 "days": 11,
@@ -42579,7 +43316,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 1.44,
                 "off_high": -45.1,
                 "days": 10,
@@ -43497,7 +44234,7 @@
                 "vars_20ema": -8.62,
                 "rs": 57.7,
                 "price": 153.94,
-                "dollar_vol": 1337942314,
+                "dollar_vol": 1337942315,
                 "adr_pct": 0.0447,
                 "float": null,
                 "eps": null,
@@ -46937,7 +47674,7 @@
                 "vars_20ema": -8.08,
                 "rs": 69.2,
                 "price": 35.79,
-                "dollar_vol": 99753111,
+                "dollar_vol": 99753110,
                 "adr_pct": 0.042,
                 "float": null,
                 "eps": null,
@@ -48122,11 +48859,11 @@
                 "price": 20.45,
                 "dollar_vol": 120390355,
                 "adr_pct": 0.04,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "565.4",
+                "eps": "116",
+                "sales": "22",
+                "inst": "+6.3",
+                "short": 1.6,
                 "highlight": "ma_up",
                 "ticker_color": "green",
                 "rank": 2
@@ -49136,7 +49873,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 90,
+                "lead": 89,
                 "gap": 0.17,
                 "off_high": -40.7,
                 "days": 8,
@@ -49683,7 +50420,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.01,
                 "off_high": -46.8,
                 "days": 4,
@@ -50669,7 +51406,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 90,
+                "lead": 89,
                 "gap": 0.25,
                 "off_high": -35.1,
                 "days": 7,
@@ -50787,7 +51524,7 @@
             "tickers": [
               {
                 "ticker": "AXTI",
-                "lead": 82,
+                "lead": 81,
                 "gap": 0.07,
                 "off_high": -53.3,
                 "days": 4,
@@ -50807,7 +51544,7 @@
               },
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": -0.23,
                 "off_high": -51.5,
                 "days": 4,
@@ -50875,7 +51612,7 @@
                 "vars_20ema": -7.59,
                 "rs": 34.6,
                 "price": 152.16,
-                "dollar_vol": 1559718526,
+                "dollar_vol": 1559718531,
                 "adr_pct": 0.0565,
                 "float": null,
                 "eps": null,
@@ -51499,7 +52236,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.28,
                 "off_high": -42.3,
                 "days": 3,
@@ -53007,7 +53744,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": -0.08,
                 "off_high": -45.6,
                 "days": 2,
@@ -53906,7 +54643,7 @@
             "tickers": [
               {
                 "ticker": "AXTI",
-                "lead": 82,
+                "lead": 81,
                 "gap": 0.02,
                 "off_high": -52.9,
                 "days": 2,
@@ -54186,7 +54923,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": 0.92,
                 "off_high": -31.1,
                 "days": 28,
@@ -54292,7 +55029,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.1,
                 "off_high": -42.9,
                 "days": 1,
@@ -55480,7 +56217,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": 0.32,
                 "off_high": -33.1,
                 "days": 27,
@@ -55585,7 +56322,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.39,
                 "off_high": -44.2,
                 "days": 0,
@@ -55938,11 +56675,11 @@
                 "price": 94.25,
                 "dollar_vol": 139781863,
                 "adr_pct": 0.0623,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 3
               },
@@ -56455,7 +57192,7 @@
             "tickers": [
               {
                 "ticker": "AXTI",
-                "lead": 82,
+                "lead": 81,
                 "gap": 0.35,
                 "off_high": -50.6,
                 "days": 0,
@@ -56475,7 +57212,7 @@
               },
               {
                 "ticker": "AAOI",
-                "lead": 80,
+                "lead": 79,
                 "gap": 0.39,
                 "off_high": -46.6,
                 "days": 0,
@@ -57385,11 +58122,11 @@
                 "price": 90.73,
                 "dollar_vol": 145593825,
                 "adr_pct": 0.0633,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 5
@@ -57885,7 +58622,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 82,
+                "lead": 81,
                 "gap": 0.18,
                 "off_high": -44.8,
                 "days": 1,
@@ -58237,7 +58974,7 @@
             "tickers": [
               {
                 "ticker": "IONQ",
-                "lead": 40,
+                "lead": 41,
                 "gap": 0.44,
                 "off_high": -43.6,
                 "days": 0,
@@ -58592,11 +59329,11 @@
                 "price": 91.3,
                 "dollar_vol": 153917261,
                 "adr_pct": 0.0631,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 3
@@ -58953,7 +59690,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 90,
+                "lead": 89,
                 "gap": -0.14,
                 "off_high": -37.8,
                 "days": 1,
@@ -59022,7 +59759,7 @@
             "tickers": [
               {
                 "ticker": "AAOI",
-                "lead": 82,
+                "lead": 81,
                 "gap": 0.64,
                 "off_high": -47.7,
                 "days": 0,
@@ -59091,7 +59828,7 @@
                 "vars_20ema": -6.06,
                 "rs": 23.1,
                 "price": 151.82,
-                "dollar_vol": 2007962844,
+                "dollar_vol": 2007962854,
                 "adr_pct": 0.0665,
                 "float": null,
                 "eps": null,
@@ -59710,11 +60447,11 @@
                 "price": 88.44,
                 "dollar_vol": 419385381,
                 "adr_pct": 0.0437,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 19
               }
@@ -59738,11 +60475,11 @@
                 "price": 88.44,
                 "dollar_vol": 419385381,
                 "adr_pct": 0.0437,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 19
               }
@@ -60311,11 +61048,11 @@
                 "price": 127.2,
                 "dollar_vol": 2730423130,
                 "adr_pct": 0.0554,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               },
@@ -60331,11 +61068,11 @@
                 "price": 91.01,
                 "dollar_vol": 156253858,
                 "adr_pct": 0.0651,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 7
               },
@@ -60398,7 +61135,7 @@
                 "vars_20ema": -14.13,
                 "rs": 100.0,
                 "price": 60.61,
-                "dollar_vol": 528463117,
+                "dollar_vol": 528463122,
                 "adr_pct": 0.0479,
                 "float": "444.9",
                 "eps": "148",
@@ -60504,11 +61241,11 @@
                 "price": 127.2,
                 "dollar_vol": 2730423130,
                 "adr_pct": 0.0554,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               }
@@ -60539,11 +61276,11 @@
                 "price": 6.43,
                 "dollar_vol": 16458705,
                 "adr_pct": 0.063,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 3
               }
@@ -60873,7 +61610,7 @@
             "tickers": [
               {
                 "ticker": "DOCN",
-                "lead": 90,
+                "lead": 89,
                 "gap": 0.62,
                 "off_high": -33.2,
                 "days": 0,
@@ -61017,7 +61754,7 @@
                 "vars_20ema": -5.72,
                 "rs": 61.5,
                 "price": 159.23,
-                "dollar_vol": 2003898794,
+                "dollar_vol": 2003898812,
                 "adr_pct": 0.0655,
                 "float": null,
                 "eps": null,
@@ -61425,11 +62162,11 @@
                 "price": 90.0,
                 "dollar_vol": 431060793,
                 "adr_pct": 0.0437,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 13
@@ -61454,11 +62191,11 @@
                 "price": 90.0,
                 "dollar_vol": 431060793,
                 "adr_pct": 0.0437,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 13
@@ -62184,11 +62921,11 @@
                 "price": 119.49,
                 "dollar_vol": 2795406059,
                 "adr_pct": 0.0541,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 2
@@ -62220,11 +62957,11 @@
                 "price": 119.49,
                 "dollar_vol": 2795406059,
                 "adr_pct": 0.0541,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 2
@@ -62241,11 +62978,11 @@
                 "price": 88.04,
                 "dollar_vol": 160637641,
                 "adr_pct": 0.0657,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 8
               }
@@ -62287,7 +63024,7 @@
                 "vars_20ema": -14.22,
                 "rs": 88.5,
                 "price": 57.48,
-                "dollar_vol": 518903698,
+                "dollar_vol": 518903701,
                 "adr_pct": 0.0468,
                 "float": "444.9",
                 "eps": "148",
@@ -62712,7 +63449,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": 0.13,
                 "off_high": -33.3,
                 "days": 35,
@@ -62720,7 +63457,7 @@
                 "vars_20ema": -5.24,
                 "rs": 50.0,
                 "price": 218.5,
-                "dollar_vol": 155307540,
+                "dollar_vol": 155307542,
                 "adr_pct": 0.0634,
                 "float": null,
                 "eps": null,
@@ -62797,7 +63534,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 8
+                "rank": 9
               }
             ],
             "l1": "AI",
@@ -62977,7 +63714,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": 0.01,
                 "off_high": -31.4,
                 "days": 22,
@@ -62994,7 +63731,7 @@
                 "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 9
+                "rank": 8
               },
               {
                 "ticker": "GFS",
@@ -63170,11 +63907,11 @@
                 "price": 92.51,
                 "dollar_vol": 444174319,
                 "adr_pct": 0.045,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 7
@@ -63199,11 +63936,11 @@
                 "price": 92.51,
                 "dollar_vol": 444174319,
                 "adr_pct": 0.045,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 7
@@ -63454,7 +64191,7 @@
                 "vars_20ema": -5.33,
                 "rs": 38.5,
                 "price": 588.08,
-                "dollar_vol": 162409638,
+                "dollar_vol": 162409637,
                 "adr_pct": 0.0644,
                 "float": null,
                 "eps": null,
@@ -64320,7 +65057,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": -0.17,
                 "off_high": -34.9,
                 "days": 34,
@@ -64328,7 +65065,7 @@
                 "vars_20ema": -4.86,
                 "rs": 38.5,
                 "price": 213.26,
-                "dollar_vol": 155198602,
+                "dollar_vol": 155198604,
                 "adr_pct": 0.0651,
                 "float": null,
                 "eps": null,
@@ -64340,7 +65077,7 @@
               },
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.62,
                 "off_high": -38.7,
                 "days": 30,
@@ -64772,11 +65509,11 @@
                 "price": 91.89,
                 "dollar_vol": 454111473,
                 "adr_pct": 0.0451,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 10
@@ -64801,11 +65538,11 @@
                 "price": 91.89,
                 "dollar_vol": 454111473,
                 "adr_pct": 0.0451,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 10
@@ -65080,7 +65817,7 @@
                 "vars_20ema": -5.09,
                 "rs": 26.9,
                 "price": 577.05,
-                "dollar_vol": 167952961,
+                "dollar_vol": 167952960,
                 "adr_pct": 0.0672,
                 "float": null,
                 "eps": null,
@@ -65473,11 +66210,11 @@
                 "price": 124.0,
                 "dollar_vol": 2778227444,
                 "adr_pct": 0.0552,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 1
@@ -65520,7 +66257,7 @@
                 "vars_20ema": -14.37,
                 "rs": 88.5,
                 "price": 58.14,
-                "dollar_vol": 524745091,
+                "dollar_vol": 524745095,
                 "adr_pct": 0.0467,
                 "float": "444.9",
                 "eps": "148",
@@ -65577,11 +66314,11 @@
                 "price": 124.0,
                 "dollar_vol": 2778227444,
                 "adr_pct": 0.0552,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 1
@@ -65832,7 +66569,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.47,
                 "off_high": -40.8,
                 "days": 29,
@@ -66098,7 +66835,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.06,
                 "off_high": -37.6,
                 "days": 54,
@@ -66199,7 +66936,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": -0.1,
                 "off_high": -31.9,
                 "days": 20,
@@ -66401,11 +67138,11 @@
                 "price": 91.68,
                 "dollar_vol": 471413118,
                 "adr_pct": 0.0464,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 11
@@ -66430,11 +67167,11 @@
                 "price": 91.68,
                 "dollar_vol": 471413118,
                 "adr_pct": 0.0464,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 11
@@ -66636,7 +67373,7 @@
                 "vars_20ema": -4.71,
                 "rs": 7.7,
                 "price": 557.76,
-                "dollar_vol": 180871385,
+                "dollar_vol": 180871384,
                 "adr_pct": 0.0687,
                 "float": null,
                 "eps": null,
@@ -67109,11 +67846,11 @@
                 "price": 127.25,
                 "dollar_vol": 2768698564,
                 "adr_pct": 0.0541,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               },
@@ -67165,11 +67902,11 @@
                 "price": 127.25,
                 "dollar_vol": 2768698564,
                 "adr_pct": 0.0541,
-                "float": "1030.0",
-                "eps": "-45",
-                "sales": "21",
-                "inst": "-1.0",
-                "short": 2.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               },
@@ -67185,11 +67922,11 @@
                 "price": 94.29,
                 "dollar_vol": 164252799,
                 "adr_pct": 0.0653,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 4
               }
@@ -67457,7 +68194,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": 0.01,
                 "off_high": -36.6,
                 "days": 32,
@@ -67465,7 +68202,7 @@
                 "vars_20ema": -3.91,
                 "rs": 7.7,
                 "price": 207.76,
-                "dollar_vol": 175158715,
+                "dollar_vol": 175158718,
                 "adr_pct": 0.0674,
                 "float": null,
                 "eps": null,
@@ -67473,11 +68210,11 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 6
+                "rank": 5
               },
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.1,
                 "off_high": -40.9,
                 "days": 28,
@@ -67563,7 +68300,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 16
+                "rank": 17
               },
               {
                 "ticker": "PENG",
@@ -67863,7 +68600,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.22,
                 "off_high": -37.4,
                 "days": 53,
@@ -67891,7 +68628,7 @@
       },
       {
         "name": "Biotech",
-        "best_rank": 5,
+        "best_rank": 6,
         "n": 1,
         "leaves": [
           {
@@ -67916,7 +68653,7 @@
                 "short": 28.3,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 5
+                "rank": 6
               }
             ],
             "l1": "Biotech",
@@ -67999,7 +68736,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": -0.17,
                 "off_high": -32.1,
                 "days": 19,
@@ -68015,7 +68752,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "tight",
-                "rank": 17
+                "rank": 16
               }
             ],
             "l1": "Semiconductors",
@@ -68197,11 +68934,11 @@
                 "price": 92.5,
                 "dollar_vol": 484189128,
                 "adr_pct": 0.0482,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 14
               }
@@ -68225,11 +68962,11 @@
                 "price": 92.5,
                 "dollar_vol": 484189128,
                 "adr_pct": 0.0482,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 14
               }
@@ -68385,7 +69122,7 @@
                 "vars_20ema": -4.11,
                 "rs": 15.4,
                 "price": 570.94,
-                "dollar_vol": 184298278,
+                "dollar_vol": 184298277,
                 "adr_pct": 0.0721,
                 "float": null,
                 "eps": null,
@@ -69396,7 +70133,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.01,
                 "off_high": -37.0,
                 "days": 52,
@@ -69555,7 +70292,7 @@
                 "vars_20ema": -11.3,
                 "rs": 73.1,
                 "price": 224.53,
-                "dollar_vol": 374788137,
+                "dollar_vol": 374788136,
                 "adr_pct": 0.0669,
                 "float": null,
                 "eps": null,
@@ -69664,11 +70401,11 @@
                 "price": 87.98,
                 "dollar_vol": 480417570,
                 "adr_pct": 0.0477,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 12
               }
@@ -69692,11 +70429,11 @@
                 "price": 87.98,
                 "dollar_vol": 480417570,
                 "adr_pct": 0.0477,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 12
               }
@@ -70257,11 +70994,11 @@
                 "price": 6.68,
                 "dollar_vol": 16273311,
                 "adr_pct": 0.0661,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 1
               }
@@ -70541,7 +71278,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": -0.07,
                 "off_high": -45.4,
                 "days": 26,
@@ -70654,7 +71391,7 @@
                 "vars_20ema": -3.92,
                 "rs": 42.3,
                 "price": 364.73,
-                "dollar_vol": 1331881583,
+                "dollar_vol": 1331881576,
                 "adr_pct": 0.0754,
                 "float": null,
                 "eps": null,
@@ -70741,7 +71478,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": -0.01,
                 "off_high": -37.2,
                 "days": 51,
@@ -70955,7 +71692,7 @@
                 "vars_20ema": -11.14,
                 "rs": 23.1,
                 "price": 213.98,
-                "dollar_vol": 373986982,
+                "dollar_vol": 373986981,
                 "adr_pct": 0.0671,
                 "float": null,
                 "eps": null,
@@ -71098,11 +71835,11 @@
                 "price": 89.15,
                 "dollar_vol": 502804733,
                 "adr_pct": 0.0475,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 14
               }
@@ -71126,11 +71863,11 @@
                 "price": 89.15,
                 "dollar_vol": 502804733,
                 "adr_pct": 0.0475,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 14
               }
@@ -71229,7 +71966,7 @@
                 "vars_20ema": -3.92,
                 "rs": 42.3,
                 "price": 364.73,
-                "dollar_vol": 1331881583,
+                "dollar_vol": 1331881576,
                 "adr_pct": 0.0754,
                 "float": null,
                 "eps": null,
@@ -71334,7 +72071,7 @@
                 "vars_20ema": -3.17,
                 "rs": 19.2,
                 "price": 580.08,
-                "dollar_vol": 182736660,
+                "dollar_vol": 182736659,
                 "adr_pct": 0.0717,
                 "float": null,
                 "eps": null,
@@ -71845,11 +72582,11 @@
                 "price": 6.37,
                 "dollar_vol": 15822133,
                 "adr_pct": 0.0675,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 1
               }
@@ -72102,7 +72839,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": -0.25,
                 "off_high": -35.5,
                 "days": 29,
@@ -72110,7 +72847,7 @@
                 "vars_20ema": -2.71,
                 "rs": 15.4,
                 "price": 211.34,
-                "dollar_vol": 192322943,
+                "dollar_vol": 192322945,
                 "adr_pct": 0.067,
                 "float": null,
                 "eps": null,
@@ -72123,7 +72860,7 @@
               },
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.01,
                 "off_high": -42.2,
                 "days": 25,
@@ -72422,7 +73159,7 @@
                 "vars_20ema": -10.98,
                 "rs": 26.9,
                 "price": 215.22,
-                "dollar_vol": 376129485,
+                "dollar_vol": 376129483,
                 "adr_pct": 0.069,
                 "float": null,
                 "eps": null,
@@ -72516,7 +73253,7 @@
                 "gap": 0.66,
                 "off_high": -33.9,
                 "days": 16,
-                "vars": 8.05,
+                "vars": 8.06,
                 "vars_20ema": 9.8,
                 "rs": 38.5,
                 "price": 8.98,
@@ -72552,7 +73289,7 @@
                 "gap": 0.66,
                 "off_high": -33.9,
                 "days": 16,
-                "vars": 8.05,
+                "vars": 8.06,
                 "vars_20ema": 9.8,
                 "rs": 38.5,
                 "price": 8.98,
@@ -72594,11 +73331,11 @@
                 "price": 90.04,
                 "dollar_vol": 501098027,
                 "adr_pct": 0.0471,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 10
               }
@@ -72622,11 +73359,11 @@
                 "price": 90.04,
                 "dollar_vol": 501098027,
                 "adr_pct": 0.0471,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 10
               }
@@ -72897,7 +73634,7 @@
           "zone_daily": "band",
           "zone_weekly": "normal",
           "state": "buy_area",
-          "vars": 8.05,
+          "vars": 8.06,
           "rs": 38.5,
           "tight": false,
           "tight_len": null,
@@ -73461,7 +74198,7 @@
               },
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.56,
                 "off_high": -42.2,
                 "days": 24,
@@ -73469,7 +74206,7 @@
                 "vars_20ema": -3.49,
                 "rs": 30.8,
                 "price": 156.52,
-                "dollar_vol": 2092902939,
+                "dollar_vol": 2092902965,
                 "adr_pct": 0.0699,
                 "float": null,
                 "eps": null,
@@ -73585,7 +74322,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": -0.03,
                 "off_high": -42.8,
                 "days": 24,
@@ -74000,7 +74737,7 @@
                 "vars_20ema": -10.79,
                 "rs": 46.2,
                 "price": 220.18,
-                "dollar_vol": 373715111,
+                "dollar_vol": 373715109,
                 "adr_pct": 0.069,
                 "float": null,
                 "eps": null,
@@ -74108,11 +74845,11 @@
                 "price": 87.03,
                 "dollar_vol": 495966491,
                 "adr_pct": 0.0463,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 13
@@ -74137,11 +74874,11 @@
                 "price": 87.03,
                 "dollar_vol": 495966491,
                 "adr_pct": 0.0463,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 13
@@ -75040,7 +75777,7 @@
               },
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.42,
                 "off_high": -42.3,
                 "days": 23,
@@ -75048,7 +75785,7 @@
                 "vars_20ema": -3.15,
                 "rs": 26.9,
                 "price": 156.04,
-                "dollar_vol": 2091800710,
+                "dollar_vol": 2091800736,
                 "adr_pct": 0.0686,
                 "float": null,
                 "eps": null,
@@ -75139,7 +75876,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.07,
                 "off_high": -42.7,
                 "days": 23,
@@ -76052,7 +76789,7 @@
                 "vars_20ema": -1.82,
                 "rs": 26.9,
                 "price": 600.6,
-                "dollar_vol": 191738697,
+                "dollar_vol": 191738696,
                 "adr_pct": 0.0731,
                 "float": null,
                 "eps": null,
@@ -76844,7 +77581,7 @@
               },
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.38,
                 "off_high": -41.2,
                 "days": 22,
@@ -76852,7 +77589,7 @@
                 "vars_20ema": -2.79,
                 "rs": 34.6,
                 "price": 159.22,
-                "dollar_vol": 2099240152,
+                "dollar_vol": 2099240184,
                 "adr_pct": 0.0687,
                 "float": null,
                 "eps": null,
@@ -76981,7 +77718,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": -0.03,
                 "off_high": -40.8,
                 "days": 22,
@@ -77541,7 +78278,7 @@
                 "vars_20ema": -10.52,
                 "rs": 42.3,
                 "price": 220.91,
-                "dollar_vol": 375213766,
+                "dollar_vol": 375213765,
                 "adr_pct": 0.0713,
                 "float": null,
                 "eps": null,
@@ -77596,7 +78333,7 @@
             "tickers": [
               {
                 "ticker": "UMC",
-                "lead": 57,
+                "lead": 58,
                 "gap": 0.15,
                 "off_high": -27.5,
                 "days": 13,
@@ -77612,7 +78349,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 22
+                "rank": 20
               }
             ],
             "l1": "Semiconductors",
@@ -77705,11 +78442,11 @@
                 "price": 91.6,
                 "dollar_vol": 495215332,
                 "adr_pct": 0.0451,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 18
               }
@@ -77733,11 +78470,11 @@
                 "price": 91.6,
                 "dollar_vol": 495215332,
                 "adr_pct": 0.0451,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "132.7",
+                "eps": "118",
+                "sales": "-69",
+                "inst": "-5.5",
+                "short": 18.8,
                 "highlight": null,
                 "rank": 18
               }
@@ -77751,7 +78488,7 @@
             "tickers": [
               {
                 "ticker": "NOK",
-                "lead": 58,
+                "lead": 57,
                 "gap": -0.16,
                 "off_high": -43.2,
                 "days": 40,
@@ -77767,7 +78504,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 20
+                "rank": 22
               }
             ],
             "l1": "Telecom",
@@ -78662,11 +79399,11 @@
                 "price": 93.8,
                 "dollar_vol": 122988240,
                 "adr_pct": 0.0614,
-                "float": "32.2",
-                "eps": "228",
-                "sales": "19",
-                "inst": "-0.4",
-                "short": 14.2,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 1
               }
@@ -78698,8 +79435,8 @@
                 "dollar_vol": 385545779,
                 "adr_pct": 0.0447,
                 "float": "899.4",
-                "eps": "-11",
-                "sales": "11",
+                "eps": "0",
+                "sales": "9",
                 "inst": "-2.1",
                 "short": 9.3,
                 "highlight": "ma_up",
@@ -78911,7 +79648,7 @@
                 "vars_20ema": -2.57,
                 "rs": 53.8,
                 "price": 365.43,
-                "dollar_vol": 1335895309,
+                "dollar_vol": 1335895289,
                 "adr_pct": 0.0748,
                 "float": null,
                 "eps": null,
@@ -79279,7 +80016,7 @@
                 "vars_20ema": -2.57,
                 "rs": 53.8,
                 "price": 365.43,
-                "dollar_vol": 1335895309,
+                "dollar_vol": 1335895289,
                 "adr_pct": 0.0748,
                 "float": null,
                 "eps": null,
@@ -79349,7 +80086,7 @@
                 "vars_20ema": -10.3,
                 "rs": 57.7,
                 "price": 224.09,
-                "dollar_vol": 375047664,
+                "dollar_vol": 375047663,
                 "adr_pct": 0.0707,
                 "float": null,
                 "eps": null,
@@ -79957,7 +80694,7 @@
               {
                 "ticker": "ANET",
                 "theme_size": 30,
-                "rs20": 76,
+                "rs20": 75,
                 "off_high": -2.6,
                 "days": 2,
                 "vars": -2.78,
@@ -79985,7 +80722,7 @@
               {
                 "ticker": "ANET",
                 "theme_size": 30,
-                "rs20": 76,
+                "rs20": 75,
                 "off_high": -2.6,
                 "days": 2,
                 "vars": -2.78,
@@ -80314,7 +81051,7 @@
               },
               {
                 "ticker": "HPE",
-                "lead": 50,
+                "lead": 51,
                 "gap": 1.15,
                 "off_high": -25.2,
                 "days": 3,
@@ -81250,7 +81987,7 @@
                 "vars_20ema": -2.3,
                 "rs": 53.8,
                 "price": 365.12,
-                "dollar_vol": 1392029612,
+                "dollar_vol": 1392029592,
                 "adr_pct": 0.08,
                 "float": null,
                 "eps": null,
@@ -81331,7 +82068,7 @@
               },
               {
                 "ticker": "HPE",
-                "lead": 50,
+                "lead": 51,
                 "gap": 0.3,
                 "off_high": -26.4,
                 "days": 2,
@@ -81437,7 +82174,7 @@
                 "vars_20ema": -2.3,
                 "rs": 53.8,
                 "price": 365.12,
-                "dollar_vol": 1392029612,
+                "dollar_vol": 1392029592,
                 "adr_pct": 0.08,
                 "float": null,
                 "eps": null,
@@ -81824,7 +82561,7 @@
                 "vars_20ema": -2.35,
                 "rs": 11.5,
                 "price": 319.08,
-                "dollar_vol": 1375264313,
+                "dollar_vol": 1375264292,
                 "adr_pct": 0.081,
                 "float": null,
                 "eps": null,
@@ -81844,7 +82581,7 @@
             "tickers": [
               {
                 "ticker": "HPE",
-                "lead": 50,
+                "lead": 51,
                 "gap": 0.12,
                 "off_high": -30.6,
                 "days": 1,
@@ -81887,7 +82624,7 @@
                 "vars_20ema": -2.35,
                 "rs": 11.5,
                 "price": 319.08,
-                "dollar_vol": 1375264313,
+                "dollar_vol": 1375264292,
                 "adr_pct": 0.081,
                 "float": null,
                 "eps": null,
@@ -82379,7 +83116,7 @@
             "tickers": [
               {
                 "ticker": "HPE",
-                "lead": 50,
+                "lead": 51,
                 "gap": -0.0,
                 "off_high": -28.8,
                 "days": 0,
@@ -82617,7 +83354,7 @@
                 "vars_20ema": 7.8,
                 "rs": 15.4,
                 "price": 900.06,
-                "dollar_vol": 43351132066,
+                "dollar_vol": 43351132379,
                 "adr_pct": 0.0688,
                 "float": null,
                 "eps": null,
@@ -82863,7 +83600,7 @@
                 "vars_20ema": -9.85,
                 "rs": 26.9,
                 "price": 213.14,
-                "dollar_vol": 285299726,
+                "dollar_vol": 285299722,
                 "adr_pct": 0.0656,
                 "float": null,
                 "eps": null,
@@ -83437,7 +84174,7 @@
                 "vars_20ema": 7.75,
                 "rs": 15.4,
                 "price": 920.81,
-                "dollar_vol": 46099832690,
+                "dollar_vol": 46099833530,
                 "adr_pct": 0.0676,
                 "float": null,
                 "eps": null,
@@ -83465,7 +84202,7 @@
                 "vars_20ema": -2.1,
                 "rs": 30.8,
                 "price": 349.56,
-                "dollar_vol": 1555768077,
+                "dollar_vol": 1555768057,
                 "adr_pct": 0.0767,
                 "float": null,
                 "eps": null,
@@ -83756,7 +84493,7 @@
                 "vars_20ema": -2.1,
                 "rs": 30.8,
                 "price": 349.56,
-                "dollar_vol": 1555768077,
+                "dollar_vol": 1555768057,
                 "adr_pct": 0.0767,
                 "float": null,
                 "eps": null,
@@ -84278,11 +85015,11 @@
                 "price": 55.04,
                 "dollar_vol": 194489820,
                 "adr_pct": 0.042,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 1
               },
@@ -84632,7 +85369,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": -0.07,
                 "off_high": -26.1,
                 "days": 18,
@@ -84640,7 +85377,7 @@
                 "vars_20ema": 0.57,
                 "rs": 46.2,
                 "price": 242.22,
-                "dollar_vol": 226526703,
+                "dollar_vol": 226526706,
                 "adr_pct": 0.0547,
                 "float": null,
                 "eps": null,
@@ -84784,7 +85521,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.8,
                 "off_high": -33.5,
                 "days": 39,
@@ -84961,7 +85698,7 @@
                 "vars_20ema": -9.74,
                 "rs": 30.8,
                 "price": 215.79,
-                "dollar_vol": 306195671,
+                "dollar_vol": 306195666,
                 "adr_pct": 0.0664,
                 "float": null,
                 "eps": null,
@@ -85489,11 +86226,11 @@
                 "price": 52.63,
                 "dollar_vol": 192663561,
                 "adr_pct": 0.042,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 2
               }
@@ -85815,7 +86552,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": -0.25,
                 "off_high": -26.6,
                 "days": 17,
@@ -85823,7 +86560,7 @@
                 "vars_20ema": 0.51,
                 "rs": 34.6,
                 "price": 240.43,
-                "dollar_vol": 225328954,
+                "dollar_vol": 225328957,
                 "adr_pct": 0.0553,
                 "float": null,
                 "eps": null,
@@ -86003,7 +86740,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.41,
                 "off_high": -26.5,
                 "days": 38,
@@ -86200,7 +86937,7 @@
                 "vars_20ema": -9.64,
                 "rs": 30.8,
                 "price": 221.44,
-                "dollar_vol": 306190305,
+                "dollar_vol": 306190301,
                 "adr_pct": 0.0675,
                 "float": null,
                 "eps": null,
@@ -86761,11 +87498,11 @@
                 "price": 53.36,
                 "dollar_vol": 193020318,
                 "adr_pct": 0.042,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 2
@@ -87048,7 +87785,7 @@
             "tickers": [
               {
                 "ticker": "POWL",
-                "lead": 85,
+                "lead": 86,
                 "gap": -0.25,
                 "off_high": -25.5,
                 "days": 16,
@@ -87056,7 +87793,7 @@
                 "vars_20ema": 0.57,
                 "rs": 34.6,
                 "price": 244.14,
-                "dollar_vol": 236178903,
+                "dollar_vol": 236178906,
                 "adr_pct": 0.0573,
                 "float": null,
                 "eps": null,
@@ -87207,7 +87944,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": -0.21,
                 "off_high": -28.5,
                 "days": 37,
@@ -87853,11 +88590,11 @@
                 "price": 54.19,
                 "dollar_vol": 194301643,
                 "adr_pct": 0.0421,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               }
@@ -88879,11 +89616,11 @@
                 "price": 55.11,
                 "dollar_vol": 198193882,
                 "adr_pct": 0.0423,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 11
               }
@@ -89609,11 +90346,11 @@
                 "price": 55.08,
                 "dollar_vol": 205341704,
                 "adr_pct": 0.0432,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 13
@@ -90996,11 +91733,11 @@
                 "price": 55.85,
                 "dollar_vol": 209554082,
                 "adr_pct": 0.0436,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 7
               }
@@ -91070,7 +91807,7 @@
               {
                 "ticker": "ACRS",
                 "theme_size": 4,
-                "rs20": 93,
+                "rs20": 94,
                 "off_high": -8.4,
                 "days": 19,
                 "vars": 1.11,
@@ -91085,7 +91822,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "tight",
-                "rank": 11
+                "rank": 10
               }
             ],
             "l1": "Biotech",
@@ -91098,7 +91835,7 @@
               {
                 "ticker": "BBIO",
                 "theme_size": 3,
-                "rs20": 91,
+                "rs20": 92,
                 "off_high": -14.0,
                 "days": 19,
                 "vars": -1.46,
@@ -91126,7 +91863,7 @@
               {
                 "ticker": "BBIO",
                 "theme_size": 3,
-                "rs20": 91,
+                "rs20": 92,
                 "off_high": -14.0,
                 "days": 19,
                 "vars": -1.46,
@@ -91198,7 +91935,7 @@
                 "short": 3.2,
                 "highlight": "tight",
                 "ticker_color": "green",
-                "rank": 10
+                "rank": 11
               }
             ],
             "l1": "Cybersecurity",
@@ -91641,7 +92378,7 @@
                 "vars_20ema": 8.08,
                 "rs": 0.0,
                 "price": 827.64,
-                "dollar_vol": 4898484579,
+                "dollar_vol": 4898484537,
                 "adr_pct": 0.0797,
                 "float": null,
                 "eps": null,
@@ -91661,7 +92398,7 @@
                 "vars_20ema": 8.27,
                 "rs": 3.8,
                 "price": 904.14,
-                "dollar_vol": 55380046801,
+                "dollar_vol": 55380047992,
                 "adr_pct": 0.071,
                 "float": null,
                 "eps": null,
@@ -91861,7 +92598,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.57,
                 "off_high": -27.4,
                 "days": 33,
@@ -92529,7 +93266,7 @@
               {
                 "ticker": "FIVN",
                 "theme_size": 10,
-                "rs20": 91,
+                "rs20": 92,
                 "off_high": -7.7,
                 "days": 12,
                 "vars": -0.2,
@@ -92566,11 +93303,11 @@
                 "price": 54.59,
                 "dollar_vol": 208951241,
                 "adr_pct": 0.0437,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 8
@@ -92840,11 +93577,11 @@
                 "price": 99.91,
                 "dollar_vol": 131451741,
                 "adr_pct": 0.0579,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 15
@@ -93256,7 +93993,7 @@
               },
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": -0.16,
                 "off_high": -31.0,
                 "days": 7,
@@ -93264,7 +94001,7 @@
                 "vars_20ema": 2.75,
                 "rs": 42.3,
                 "price": 186.85,
-                "dollar_vol": 3527214924,
+                "dollar_vol": 3527214923,
                 "adr_pct": 0.0796,
                 "float": null,
                 "eps": null,
@@ -93272,7 +94009,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 6
+                "rank": 7
               },
               {
                 "ticker": "MXL",
@@ -93415,7 +94152,7 @@
               },
               {
                 "ticker": "PUMP",
-                "lead": 69,
+                "lead": 70,
                 "gap": 0.1,
                 "off_high": -25.7,
                 "days": 32,
@@ -93431,7 +94168,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 7
+                "rank": 6
               }
             ],
             "l1": "Oil & Gas",
@@ -93870,7 +94607,7 @@
               {
                 "ticker": "PAYC",
                 "theme_size": 16,
-                "rs20": 72,
+                "rs20": 73,
                 "off_high": -9.3,
                 "days": 8,
                 "vars": -3.5,
@@ -94259,11 +94996,11 @@
                 "price": 101.28,
                 "dollar_vol": 130540348,
                 "adr_pct": 0.0581,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 22
               }
@@ -94413,11 +95150,11 @@
                 "price": 55.47,
                 "dollar_vol": 209389499,
                 "adr_pct": 0.0428,
-                "float": "262.3",
-                "eps": "3149",
-                "sales": "16",
-                "inst": "-3.0",
-                "short": 4.1,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 6
               }
@@ -95945,11 +96682,11 @@
                 "price": 98.64,
                 "dollar_vol": 130153051,
                 "adr_pct": 0.0599,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 20
               }
@@ -96089,7 +96826,7 @@
               {
                 "ticker": "GTLB",
                 "theme_size": 11,
-                "rs20": 89,
+                "rs20": 90,
                 "off_high": -13.4,
                 "days": 12,
                 "vars": -2.73,
@@ -96124,7 +96861,7 @@
               {
                 "ticker": "GTLB",
                 "theme_size": 11,
-                "rs20": 89,
+                "rs20": 90,
                 "off_high": -13.4,
                 "days": 12,
                 "vars": -2.73,
@@ -97472,11 +98209,11 @@
                 "price": 6.34,
                 "dollar_vol": 25572398,
                 "adr_pct": 0.0674,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 10
               }
@@ -97705,11 +98442,11 @@
                 "price": 97.6,
                 "dollar_vol": 132988721,
                 "adr_pct": 0.0611,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 21
               }
@@ -97917,11 +98654,11 @@
                 "price": 308.37,
                 "dollar_vol": 3006229806,
                 "adr_pct": 0.0419,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "910.9",
+                "eps": "76",
+                "sales": "28",
+                "inst": "+0.2",
+                "short": 2.7,
                 "highlight": "tight",
                 "rank": 5
               }
@@ -97952,11 +98689,11 @@
                 "price": 308.37,
                 "dollar_vol": 3006229806,
                 "adr_pct": 0.0419,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "910.9",
+                "eps": "76",
+                "sales": "28",
+                "inst": "+0.2",
+                "short": 2.7,
                 "highlight": "tight",
                 "rank": 5
               }
@@ -98575,7 +99312,7 @@
               },
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.17,
                 "off_high": -29.2,
                 "days": 4,
@@ -98583,7 +99320,7 @@
                 "vars_20ema": 4.1,
                 "rs": 46.2,
                 "price": 191.57,
-                "dollar_vol": 3600425236,
+                "dollar_vol": 3600425228,
                 "adr_pct": 0.0812,
                 "float": null,
                 "eps": null,
@@ -98804,7 +99541,7 @@
             "tickers": [
               {
                 "ticker": "NOK",
-                "lead": 58,
+                "lead": 57,
                 "gap": -0.12,
                 "off_high": -26.1,
                 "days": 22,
@@ -99232,11 +99969,11 @@
                 "price": 6.57,
                 "dollar_vol": 25257701,
                 "adr_pct": 0.0658,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 9
@@ -99336,7 +100073,7 @@
               {
                 "ticker": "TRVI",
                 "theme_size": 3,
-                "rs20": 95,
+                "rs20": 96,
                 "off_high": -8.7,
                 "days": 17,
                 "vars": 2.38,
@@ -100265,11 +101002,11 @@
                 "price": 6.49,
                 "dollar_vol": 25681306,
                 "adr_pct": 0.0682,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 10
@@ -100370,11 +101107,11 @@
                 "price": 98.07,
                 "dollar_vol": 138911058,
                 "adr_pct": 0.0665,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 12
               }
@@ -100549,7 +101286,7 @@
                 "vars_20ema": -6.54,
                 "rs": 76.9,
                 "price": 72.8,
-                "dollar_vol": 277531533,
+                "dollar_vol": 277531532,
                 "adr_pct": 0.0415,
                 "float": "219.9",
                 "eps": "-89",
@@ -101171,11 +101908,11 @@
                 "price": 6.5,
                 "dollar_vol": 25772580,
                 "adr_pct": 0.0687,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 3
               }
@@ -101323,11 +102060,11 @@
                 "price": 95.76,
                 "dollar_vol": 137486355,
                 "adr_pct": 0.0662,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 6
               }
@@ -101651,7 +102388,7 @@
             "tickers": [
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.08,
                 "off_high": -28.3,
                 "days": 1,
@@ -101659,7 +102396,7 @@
                 "vars_20ema": 5.56,
                 "rs": 50.0,
                 "price": 193.98,
-                "dollar_vol": 3699252653,
+                "dollar_vol": 3699252657,
                 "adr_pct": 0.0862,
                 "float": null,
                 "eps": null,
@@ -101943,7 +102680,7 @@
                 "vars_20ema": -5.73,
                 "rs": 15.4,
                 "price": 240.4,
-                "dollar_vol": 270796083,
+                "dollar_vol": 270796079,
                 "adr_pct": 0.0654,
                 "float": null,
                 "eps": null,
@@ -102395,11 +103132,11 @@
                 "price": 93.34,
                 "dollar_vol": 136927026,
                 "adr_pct": 0.0677,
-                "float": "46.8",
-                "eps": "16",
-                "sales": "206",
-                "inst": "+2.9",
-                "short": 19.4,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 6
@@ -102728,7 +103465,7 @@
                 "vars_20ema": 10.09,
                 "rs": 0.0,
                 "price": 819.5,
-                "dollar_vol": 4651792900,
+                "dollar_vol": 4651792851,
                 "adr_pct": 0.0823,
                 "float": null,
                 "eps": null,
@@ -102748,7 +103485,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 80,
+                "lead": 81,
                 "gap": 0.8,
                 "off_high": -26.1,
                 "days": 0,
@@ -102804,7 +103541,7 @@
                 "vars_20ema": 14.06,
                 "rs": 19.2,
                 "price": 245.18,
-                "dollar_vol": 18410776872,
+                "dollar_vol": 18410776992,
                 "adr_pct": 0.1026,
                 "float": null,
                 "eps": null,
@@ -102824,7 +103561,7 @@
             "tickers": [
               {
                 "ticker": "GLW",
-                "lead": 70,
+                "lead": 69,
                 "gap": 0.82,
                 "off_high": -27.6,
                 "days": 0,
@@ -102832,7 +103569,7 @@
                 "vars_20ema": 6.09,
                 "rs": 61.5,
                 "price": 195.96,
-                "dollar_vol": 3695915009,
+                "dollar_vol": 3695915005,
                 "adr_pct": 0.087,
                 "float": null,
                 "eps": null,
@@ -102840,7 +103577,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": "ma_up",
-                "rank": 9
+                "rank": 10
               },
               {
                 "ticker": "MXL",
@@ -102908,7 +103645,7 @@
                 "vars_20ema": 14.06,
                 "rs": 19.2,
                 "price": 245.18,
-                "dollar_vol": 18410776872,
+                "dollar_vol": 18410776992,
                 "adr_pct": 0.1026,
                 "float": null,
                 "eps": null,
@@ -103105,7 +103842,7 @@
                 "inst": null,
                 "short": null,
                 "highlight": null,
-                "rank": 10
+                "rank": 9
               }
             ],
             "l1": "Metals & Mining",
@@ -103672,11 +104409,11 @@
                 "price": 6.53,
                 "dollar_vol": 25159919,
                 "adr_pct": 0.071,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 4
               }
@@ -104659,11 +105396,11 @@
                 "price": 6.65,
                 "dollar_vol": 24859979,
                 "adr_pct": 0.0701,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 3
               }
@@ -105359,7 +106096,7 @@
                 "vars_20ema": 5.65,
                 "rs": 88.5,
                 "price": 1979.22,
-                "dollar_vol": 1024739047,
+                "dollar_vol": 1024739052,
                 "adr_pct": 0.0536,
                 "float": null,
                 "eps": null,
@@ -105458,7 +106195,7 @@
                 "vars_20ema": 5.65,
                 "rs": 88.5,
                 "price": 1979.22,
-                "dollar_vol": 1024739047,
+                "dollar_vol": 1024739052,
                 "adr_pct": 0.0536,
                 "float": null,
                 "eps": null,
@@ -105929,7 +106666,7 @@
                 "vars_20ema": 6.93,
                 "rs": 100.0,
                 "price": 254.61,
-                "dollar_vol": 3353933253,
+                "dollar_vol": 3353933249,
                 "adr_pct": 0.079,
                 "float": null,
                 "eps": null,
@@ -106108,7 +106845,7 @@
                 "vars_20ema": 3.15,
                 "rs": 96.2,
                 "price": 1101.87,
-                "dollar_vol": 3247156605,
+                "dollar_vol": 3247156613,
                 "adr_pct": 0.043,
                 "float": null,
                 "eps": null,
@@ -106165,11 +106902,11 @@
                 "price": 6.73,
                 "dollar_vol": 22481083,
                 "adr_pct": 0.0713,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_up",
                 "rank": 5
               }
@@ -106226,7 +106963,7 @@
                 "vars_20ema": 3.15,
                 "rs": 96.2,
                 "price": 1101.87,
-                "dollar_vol": 3247156605,
+                "dollar_vol": 3247156613,
                 "adr_pct": 0.043,
                 "float": null,
                 "eps": null,
@@ -107287,7 +108024,7 @@
               {
                 "ticker": "AEIS",
                 "theme_size": 9,
-                "rs20": 84,
+                "rs20": 85,
                 "off_high": -5.6,
                 "days": 9,
                 "vars": 0.84,
@@ -107322,7 +108059,7 @@
               {
                 "ticker": "AEIS",
                 "theme_size": 9,
-                "rs20": 84,
+                "rs20": 85,
                 "off_high": -5.6,
                 "days": 9,
                 "vars": 0.84,
@@ -107369,7 +108106,7 @@
                 "vars_20ema": 5.98,
                 "rs": 96.2,
                 "price": 2014.79,
-                "dollar_vol": 953221670,
+                "dollar_vol": 953221678,
                 "adr_pct": 0.0517,
                 "float": null,
                 "eps": null,
@@ -107390,7 +108127,7 @@
               {
                 "ticker": "AEIS",
                 "theme_size": 9,
-                "rs20": 84,
+                "rs20": 85,
                 "off_high": -5.6,
                 "days": 9,
                 "vars": 0.84,
@@ -107508,7 +108245,7 @@
                 "vars_20ema": 5.98,
                 "rs": 96.2,
                 "price": 2014.79,
-                "dollar_vol": 953221670,
+                "dollar_vol": 953221678,
                 "adr_pct": 0.0517,
                 "float": null,
                 "eps": null,
@@ -107545,11 +108282,11 @@
                 "price": 6.21,
                 "dollar_vol": 18436596,
                 "adr_pct": 0.0701,
-                "float": "274.6",
-                "eps": "-4",
+                "float": null,
+                "eps": null,
                 "sales": null,
-                "inst": "+4.9",
-                "short": 20.1,
+                "inst": null,
+                "short": null,
                 "highlight": "ma_split",
                 "rank": 4
               }
@@ -107677,7 +108414,7 @@
                 "vars_20ema": 8.28,
                 "rs": 73.1,
                 "price": 36.04,
-                "dollar_vol": 124628102,
+                "dollar_vol": 124628103,
                 "adr_pct": 0.0453,
                 "float": "143.2",
                 "eps": "1491",
@@ -108750,11 +109487,11 @@
                 "price": 18.96,
                 "dollar_vol": 37481448,
                 "adr_pct": 0.0475,
-                "float": "111.7",
-                "eps": "35",
-                "sales": "26",
-                "inst": "+1.0",
-                "short": 5.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 6
               }
@@ -109442,11 +110179,11 @@
                 "price": 18.62,
                 "dollar_vol": 36910829,
                 "adr_pct": 0.0473,
-                "float": "111.7",
-                "eps": "35",
-                "sales": "26",
-                "inst": "+1.0",
-                "short": 5.3,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 3
               }
@@ -109649,7 +110386,7 @@
                 "vars_20ema": -4.97,
                 "rs": 15.4,
                 "price": 159.81,
-                "dollar_vol": 380982124,
+                "dollar_vol": 380982123,
                 "adr_pct": 0.0451,
                 "float": null,
                 "eps": null,
@@ -109712,7 +110449,7 @@
                 "vars_20ema": -4.97,
                 "rs": 15.4,
                 "price": 159.81,
-                "dollar_vol": 380982124,
+                "dollar_vol": 380982123,
                 "adr_pct": 0.0451,
                 "float": null,
                 "eps": null,
@@ -110544,11 +111281,11 @@
                 "price": 9.73,
                 "dollar_vol": 55127771,
                 "adr_pct": 0.0455,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "rank": 9
               }
@@ -110628,11 +111365,11 @@
                 "price": 9.73,
                 "dollar_vol": 55127771,
                 "adr_pct": 0.0455,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "rank": 9
               }
@@ -111289,7 +112026,7 @@
                 "vars_20ema": -3.19,
                 "rs": 84.6,
                 "price": 23.69,
-                "dollar_vol": 171032180,
+                "dollar_vol": 171032178,
                 "adr_pct": 0.0473,
                 "float": "260.2",
                 "eps": "97",
@@ -111630,11 +112367,11 @@
                 "price": 10.31,
                 "dollar_vol": 54446915,
                 "adr_pct": 0.0438,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 9
@@ -111716,11 +112453,11 @@
                 "price": 10.31,
                 "dollar_vol": 54446915,
                 "adr_pct": 0.0438,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "ticker_color": "green",
                 "rank": 9
@@ -112533,11 +113270,11 @@
                 "price": 10.28,
                 "dollar_vol": 55263858,
                 "adr_pct": 0.0444,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "rank": 9
               }
@@ -112559,7 +113296,7 @@
                 "vars_20ema": -4.91,
                 "rs": 23.1,
                 "price": 18.87,
-                "dollar_vol": 226314508,
+                "dollar_vol": 226314509,
                 "adr_pct": 0.0606,
                 "float": null,
                 "eps": null,
@@ -112638,11 +113375,11 @@
                 "price": 10.28,
                 "dollar_vol": 55263858,
                 "adr_pct": 0.0444,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": null,
                 "rank": 9
               }
@@ -114807,7 +115544,7 @@
                 "vars_20ema": -4.42,
                 "rs": 96.2,
                 "price": 76.0,
-                "dollar_vol": 1530680656,
+                "dollar_vol": 1530680688,
                 "adr_pct": 0.0428,
                 "float": null,
                 "eps": null,
@@ -114842,7 +115579,7 @@
                 "vars_20ema": -4.42,
                 "rs": 96.2,
                 "price": 76.0,
-                "dollar_vol": 1530680656,
+                "dollar_vol": 1530680688,
                 "adr_pct": 0.0428,
                 "float": null,
                 "eps": null,
@@ -115743,7 +116480,7 @@
                 "vars_20ema": -4.92,
                 "rs": 100.0,
                 "price": 22.79,
-                "dollar_vol": 155644629,
+                "dollar_vol": 155644627,
                 "adr_pct": 0.045,
                 "float": "260.2",
                 "eps": "97",
@@ -116821,7 +117558,7 @@
                 "vars_20ema": -4.49,
                 "rs": 100.0,
                 "price": 76.8,
-                "dollar_vol": 1522395062,
+                "dollar_vol": 1522395081,
                 "adr_pct": 0.0418,
                 "float": null,
                 "eps": null,
@@ -116884,7 +117621,7 @@
                 "vars_20ema": -4.49,
                 "rs": 100.0,
                 "price": 76.8,
-                "dollar_vol": 1522395062,
+                "dollar_vol": 1522395081,
                 "adr_pct": 0.0418,
                 "float": null,
                 "eps": null,
@@ -117052,7 +117789,7 @@
                 "vars_20ema": -5.5,
                 "rs": 92.3,
                 "price": 21.82,
-                "dollar_vol": 151538912,
+                "dollar_vol": 151538910,
                 "adr_pct": 0.0428,
                 "float": "260.2",
                 "eps": "97",
@@ -117393,7 +118130,7 @@
             "tickers": [
               {
                 "ticker": "SOC",
-                "lead": 54,
+                "lead": 55,
                 "gap": 0.07,
                 "off_high": -31.8,
                 "days": 9,
@@ -117430,7 +118167,7 @@
                 "vars_20ema": 3.48,
                 "rs": 46.2,
                 "price": 12.79,
-                "dollar_vol": 226601744,
+                "dollar_vol": 226601741,
                 "adr_pct": 0.0564,
                 "float": "536.0",
                 "eps": "449",
@@ -117714,7 +118451,7 @@
                 "vars_20ema": -4.63,
                 "rs": 73.1,
                 "price": 71.58,
-                "dollar_vol": 1555006766,
+                "dollar_vol": 1555006794,
                 "adr_pct": 0.0413,
                 "float": null,
                 "eps": null,
@@ -117814,7 +118551,7 @@
                 "vars_20ema": -4.63,
                 "rs": 73.1,
                 "price": 71.58,
-                "dollar_vol": 1555006766,
+                "dollar_vol": 1555006794,
                 "adr_pct": 0.0413,
                 "float": null,
                 "eps": null,
@@ -117850,7 +118587,7 @@
                 "vars_20ema": -5.91,
                 "rs": 96.2,
                 "price": 21.9,
-                "dollar_vol": 151127407,
+                "dollar_vol": 151127406,
                 "adr_pct": 0.0432,
                 "float": "260.2",
                 "eps": "97",
@@ -118200,7 +118937,7 @@
             "tickers": [
               {
                 "ticker": "VICR",
-                "lead": 62,
+                "lead": 63,
                 "gap": -0.04,
                 "off_high": -25.1,
                 "days": 0,
@@ -118424,7 +119161,7 @@
             "tickers": [
               {
                 "ticker": "SOC",
-                "lead": 54,
+                "lead": 55,
                 "gap": -0.05,
                 "off_high": -36.4,
                 "days": 8,
@@ -118460,7 +119197,7 @@
                 "vars_20ema": 3.49,
                 "rs": 42.3,
                 "price": 12.75,
-                "dollar_vol": 230705471,
+                "dollar_vol": 230705469,
                 "adr_pct": 0.0565,
                 "float": "536.0",
                 "eps": "449",
@@ -119220,7 +119957,7 @@
                 "vars_20ema": -2.45,
                 "rs": 7.7,
                 "price": 19.73,
-                "dollar_vol": 286203197,
+                "dollar_vol": 286203195,
                 "adr_pct": 0.0574,
                 "float": null,
                 "eps": null,
@@ -119284,7 +120021,7 @@
             "tickers": [
               {
                 "ticker": "SOC",
-                "lead": 54,
+                "lead": 55,
                 "gap": -0.09,
                 "off_high": -29.7,
                 "days": 7,
@@ -119320,7 +120057,7 @@
                 "vars_20ema": 3.35,
                 "rs": 46.2,
                 "price": 13.11,
-                "dollar_vol": 235143849,
+                "dollar_vol": 235143846,
                 "adr_pct": 0.0577,
                 "float": "536.0",
                 "eps": "449",
@@ -119718,7 +120455,7 @@
               {
                 "ticker": "BIRK",
                 "theme_size": 3,
-                "rs20": 74,
+                "rs20": 73,
                 "off_high": -10.7,
                 "days": 9,
                 "vars": -8.57,
@@ -120218,7 +120955,7 @@
                 "vars_20ema": 3.41,
                 "rs": 26.9,
                 "price": 12.47,
-                "dollar_vol": 239123524,
+                "dollar_vol": 239123521,
                 "adr_pct": 0.058,
                 "float": "536.0",
                 "eps": "449",
@@ -120577,11 +121314,11 @@
                 "price": 11.35,
                 "dollar_vol": 57616941,
                 "adr_pct": 0.0426,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 7
@@ -120656,11 +121393,11 @@
                 "price": 11.35,
                 "dollar_vol": 57616941,
                 "adr_pct": 0.0426,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 7
@@ -120796,7 +121533,7 @@
                 "vars_20ema": 3.7,
                 "rs": 15.4,
                 "price": 12.32,
-                "dollar_vol": 241772024,
+                "dollar_vol": 241772023,
                 "adr_pct": 0.0577,
                 "float": "536.0",
                 "eps": "449",
@@ -121012,7 +121749,7 @@
                 "vars_20ema": -9.09,
                 "rs": 34.6,
                 "price": 7.15,
-                "dollar_vol": 104993981,
+                "dollar_vol": 104993980,
                 "adr_pct": 0.052,
                 "float": "173.7",
                 "eps": "-66",
@@ -121049,11 +121786,11 @@
                 "price": 72.33,
                 "dollar_vol": 541038292,
                 "adr_pct": 0.1085,
-                "float": "128.3",
-                "eps": "-66",
-                "sales": "-29",
-                "inst": "-3.9",
-                "short": 21.8,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 2
               }
@@ -121082,7 +121819,7 @@
                 "vars_20ema": 6.28,
                 "rs": 80.8,
                 "price": 392.22,
-                "dollar_vol": 1333213294,
+                "dollar_vol": 1333213276,
                 "adr_pct": 0.0564,
                 "float": null,
                 "eps": null,
@@ -121117,7 +121854,7 @@
                 "vars_20ema": 6.28,
                 "rs": 80.8,
                 "price": 392.22,
-                "dollar_vol": 1333213294,
+                "dollar_vol": 1333213276,
                 "adr_pct": 0.0564,
                 "float": null,
                 "eps": null,
@@ -121494,7 +122231,7 @@
             "tickers": [
               {
                 "ticker": "SOC",
-                "lead": 54,
+                "lead": 55,
                 "gap": 1.54,
                 "off_high": -32.4,
                 "days": 4,
@@ -121530,7 +122267,7 @@
                 "vars_20ema": 3.94,
                 "rs": 30.8,
                 "price": 12.63,
-                "dollar_vol": 253320096,
+                "dollar_vol": 253320095,
                 "adr_pct": 0.0599,
                 "float": "536.0",
                 "eps": "449",
@@ -121796,11 +122533,11 @@
                 "price": 63.74,
                 "dollar_vol": 519791538,
                 "adr_pct": 0.104,
-                "float": "128.3",
-                "eps": "-66",
-                "sales": "-29",
-                "inst": "-3.9",
-                "short": 21.8,
+                "float": null,
+                "eps": null,
+                "sales": null,
+                "inst": null,
+                "short": null,
                 "highlight": "tight",
                 "rank": 3
               }
@@ -121829,7 +122566,7 @@
                 "vars_20ema": -8.9,
                 "rs": 76.9,
                 "price": 7.78,
-                "dollar_vol": 103922317,
+                "dollar_vol": 103922316,
                 "adr_pct": 0.05,
                 "float": "173.7",
                 "eps": "-66",
@@ -122039,11 +122776,11 @@
                 "price": 11.44,
                 "dollar_vol": 55589736,
                 "adr_pct": 0.041,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 7
@@ -122087,7 +122824,7 @@
                 "vars_20ema": -1.26,
                 "rs": 57.7,
                 "price": 21.04,
-                "dollar_vol": 291361021,
+                "dollar_vol": 291361020,
                 "adr_pct": 0.0565,
                 "float": null,
                 "eps": null,
@@ -122117,11 +122854,11 @@
                 "price": 11.44,
                 "dollar_vol": 55589736,
                 "adr_pct": 0.041,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
+                "float": "707.6",
+                "eps": "588",
+                "sales": "84",
+                "inst": "-3.3",
+                "short": 1.2,
                 "highlight": "tight",
                 "ticker_color": "green",
                 "rank": 7
@@ -122620,940 +123357,6 @@
           "ticker_color": null,
           "leaves": [
             "Consumer / Restaurants / QSR"
-          ]
-        }
-      ]
-    }
-  },
-  {
-    "report_date": "2026-05-28",
-    "short": [
-      {
-        "name": "AI",
-        "best_rank": 1,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "AI / Data Center / Optics",
-            "tickers": [
-              {
-                "ticker": "AAOI",
-                "lead": 83,
-                "gap": 0.41,
-                "off_high": -27.7,
-                "days": 0,
-                "vars": 5.63,
-                "vars_20ema": 10.25,
-                "rs": 34.6,
-                "price": 169.02,
-                "dollar_vol": 2152464794,
-                "adr_pct": 0.1388,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 1
-              }
-            ],
-            "l1": "AI",
-            "l2": "Data Center",
-            "l3": "Optics"
-          }
-        ]
-      },
-      {
-        "name": "Metals & Mining",
-        "best_rank": 2,
-        "n": 6,
-        "leaves": [
-          {
-            "name": "Metals & Mining / Diversified",
-            "tickers": [
-              {
-                "ticker": "USAS",
-                "lead": 76,
-                "gap": 0.14,
-                "off_high": -42.3,
-                "days": 8,
-                "vars": -3.35,
-                "vars_20ema": -1.01,
-                "rs": 42.3,
-                "price": 6.06,
-                "dollar_vol": 35702276,
-                "adr_pct": 0.0758,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 2
-              },
-              {
-                "ticker": "AG",
-                "lead": 74,
-                "gap": 0.23,
-                "off_high": -35.7,
-                "days": 8,
-                "vars": -3.54,
-                "vars_20ema": -1.02,
-                "rs": 38.5,
-                "price": 20.54,
-                "dollar_vol": 290078152,
-                "adr_pct": 0.0562,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 3
-              },
-              {
-                "ticker": "IAG",
-                "lead": 65,
-                "gap": 0.41,
-                "off_high": -30.2,
-                "days": 8,
-                "vars": -6.9,
-                "vars_20ema": -4.12,
-                "rs": 38.5,
-                "price": 17.36,
-                "dollar_vol": 104563990,
-                "adr_pct": 0.0432,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 4
-              },
-              {
-                "ticker": "ASM",
-                "lead": 41,
-                "gap": 0.55,
-                "off_high": -40.3,
-                "days": 7,
-                "vars": -3.36,
-                "vars_20ema": -1.68,
-                "rs": 65.4,
-                "price": 7.16,
-                "dollar_vol": 32126411,
-                "adr_pct": 0.0636,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 11
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Diversified",
-            "l3": null
-          },
-          {
-            "name": "Metals & Mining / Platinum Group",
-            "tickers": [
-              {
-                "ticker": "SBSW",
-                "lead": 49,
-                "gap": 0.12,
-                "off_high": -41.2,
-                "days": 8,
-                "vars": -8.83,
-                "vars_20ema": -4.96,
-                "rs": 19.2,
-                "price": 11.66,
-                "dollar_vol": 54303995,
-                "adr_pct": 0.0409,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 9
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Platinum Group",
-            "l3": null
-          },
-          {
-            "name": "Metals & Mining / Lithium / Hard Rock",
-            "tickers": [
-              {
-                "ticker": "SBSW",
-                "lead": 49,
-                "gap": 0.12,
-                "off_high": -41.2,
-                "days": 8,
-                "vars": -8.83,
-                "vars_20ema": -4.96,
-                "rs": 19.2,
-                "price": 11.66,
-                "dollar_vol": 54303995,
-                "adr_pct": 0.0409,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "rank": 9
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Lithium",
-            "l3": "Hard Rock"
-          },
-          {
-            "name": "Metals & Mining / Rare Earth & Strategic",
-            "tickers": [
-              {
-                "ticker": "UAMY",
-                "lead": 43,
-                "gap": -0.18,
-                "off_high": -28.0,
-                "days": 13,
-                "vars": -2.96,
-                "vars_20ema": -0.04,
-                "rs": 26.9,
-                "price": 9.1,
-                "dollar_vol": 139574199,
-                "adr_pct": 0.1072,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "tight",
-                "ticker_color": "green",
-                "rank": 10
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Rare Earth & Strategic",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "Biotech",
-        "best_rank": 5,
-        "n": 2,
-        "leaves": [
-          {
-            "name": "Biotech / Oncology / Immuno-Oncology",
-            "tickers": [
-              {
-                "ticker": "IBRX",
-                "lead": 65,
-                "gap": 0.45,
-                "off_high": -37.9,
-                "days": 0,
-                "vars": 13.42,
-                "vars_20ema": 15.51,
-                "rs": 23.1,
-                "price": 7.72,
-                "dollar_vol": 113203615,
-                "adr_pct": 0.0755,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 5
-              }
-            ],
-            "l1": "Biotech",
-            "l2": "Oncology",
-            "l3": "Immuno-Oncology"
-          },
-          {
-            "name": "Biotech / Complement System",
-            "tickers": [
-              {
-                "ticker": "ANNX",
-                "lead": 64,
-                "gap": 0.14,
-                "off_high": -25.2,
-                "days": 20,
-                "vars": -7.23,
-                "vars_20ema": -4.83,
-                "rs": 15.4,
-                "price": 5.37,
-                "dollar_vol": 12099980,
-                "adr_pct": 0.0537,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": null,
-                "ticker_color": "green",
-                "rank": 6
-              }
-            ],
-            "l1": "Biotech",
-            "l2": "Complement System",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "Consumer",
-        "best_rank": 7,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Consumer / Apparel & Footwear / Athletic",
-            "tickers": [
-              {
-                "ticker": "FIGS",
-                "lead": 55,
-                "gap": -0.16,
-                "off_high": -29.9,
-                "days": 21,
-                "vars": -4.77,
-                "vars_20ema": -1.86,
-                "rs": 26.9,
-                "price": 12.26,
-                "dollar_vol": 52882248,
-                "adr_pct": 0.0574,
-                "float": "150.3",
-                "eps": "107",
-                "sales": "26",
-                "inst": "-0.1",
-                "short": 13.6,
-                "highlight": null,
-                "rank": 7
-              }
-            ],
-            "l1": "Consumer",
-            "l2": "Apparel & Footwear",
-            "l3": "Athletic"
-          }
-        ]
-      },
-      {
-        "name": "Retail (Multi-Category)",
-        "best_rank": 8,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Retail (Multi-Category) / Luxury Resale",
-            "tickers": [
-              {
-                "ticker": "REAL",
-                "lead": 50,
-                "gap": -0.12,
-                "off_high": -43.6,
-                "days": 13,
-                "vars": -13.98,
-                "vars_20ema": -10.51,
-                "rs": 42.3,
-                "price": 9.81,
-                "dollar_vol": 45271472,
-                "adr_pct": 0.0654,
-                "float": "113.4",
-                "eps": "92",
-                "sales": "19",
-                "inst": "-1.6",
-                "short": 17.4,
-                "highlight": null,
-                "rank": 8
-              }
-            ],
-            "l1": "Retail (Multi-Category)",
-            "l2": "Luxury Resale",
-            "l3": null
-          }
-        ]
-      }
-    ],
-    "zone_map_short": {
-      "params": {
-        "min_avg_dollar_vol": 0,
-        "min_adr_pct": 0.04,
-        "top_leaves": 20,
-        "band_low": -0.5,
-        "band_high": 2.0,
-        "weekly_low": 0.0,
-        "weekly_high": 4.0,
-        "x_range": [
-          -2.0,
-          5.0
-        ],
-        "y_range": [
-          -4.0,
-          8.0
-        ]
-      },
-      "n_candidates": 11,
-      "n_floor_dropped": 0,
-      "n_no_weekly": 0,
-      "n_no_daily": 0,
-      "tickers": [
-        {
-          "ticker": "AAOI",
-          "d_daily": -0.16,
-          "d_weekly": 1.88,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": 5.63,
-          "rs": 34.6,
-          "tight": false,
-          "tight_len": null,
-          "highlight": "ma_up",
-          "ticker_color": null,
-          "leaves": [
-            "AI / Data Center / Optics"
-          ]
-        },
-        {
-          "ticker": "AG",
-          "d_daily": 0.0,
-          "d_weekly": 0.09,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": -3.54,
-          "rs": 38.5,
-          "tight": true,
-          "tight_len": 6,
-          "highlight": "tight",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Diversified"
-          ]
-        },
-        {
-          "ticker": "ANNX",
-          "d_daily": -0.27,
-          "d_weekly": 0.1,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": -7.23,
-          "rs": 15.4,
-          "tight": false,
-          "tight_len": null,
-          "highlight": null,
-          "ticker_color": "green",
-          "leaves": [
-            "Biotech / Complement System"
-          ]
-        },
-        {
-          "ticker": "ASM",
-          "d_daily": 0.46,
-          "d_weekly": 0.37,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": -3.36,
-          "rs": 65.4,
-          "tight": true,
-          "tight_len": 9,
-          "highlight": "tight",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Diversified"
-          ]
-        },
-        {
-          "ticker": "FIGS",
-          "d_daily": -0.71,
-          "d_weekly": -0.8,
-          "zone_daily": "under",
-          "zone_weekly": "below",
-          "state": "under_both",
-          "vars": -4.77,
-          "rs": 26.9,
-          "tight": false,
-          "tight_len": null,
-          "highlight": null,
-          "ticker_color": null,
-          "leaves": [
-            "Consumer / Apparel & Footwear / Athletic"
-          ]
-        },
-        {
-          "ticker": "IAG",
-          "d_daily": -0.01,
-          "d_weekly": -0.47,
-          "zone_daily": "band",
-          "zone_weekly": "below",
-          "state": "weekly_broken",
-          "vars": -6.9,
-          "rs": 38.5,
-          "tight": true,
-          "tight_len": 9,
-          "highlight": "tight",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Diversified"
-          ]
-        },
-        {
-          "ticker": "IBRX",
-          "d_daily": -0.13,
-          "d_weekly": 1.25,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": 13.42,
-          "rs": 23.1,
-          "tight": false,
-          "tight_len": null,
-          "highlight": "ma_up",
-          "ticker_color": null,
-          "leaves": [
-            "Biotech / Oncology / Immuno-Oncology"
-          ]
-        },
-        {
-          "ticker": "REAL",
-          "d_daily": -0.29,
-          "d_weekly": -1.4,
-          "zone_daily": "band",
-          "zone_weekly": "below",
-          "state": "weekly_broken",
-          "vars": -13.98,
-          "rs": 42.3,
-          "tight": false,
-          "tight_len": null,
-          "highlight": null,
-          "ticker_color": null,
-          "leaves": [
-            "Retail (Multi-Category) / Luxury Resale"
-          ]
-        },
-        {
-          "ticker": "SBSW",
-          "d_daily": -0.2,
-          "d_weekly": -1.16,
-          "zone_daily": "band",
-          "zone_weekly": "below",
-          "state": "weekly_broken",
-          "vars": -8.83,
-          "rs": 19.2,
-          "tight": true,
-          "tight_len": 9,
-          "highlight": "tight",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Platinum Group",
-            "Metals & Mining / Lithium / Hard Rock"
-          ]
-        },
-        {
-          "ticker": "UAMY",
-          "d_daily": -0.32,
-          "d_weekly": 0.26,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": -2.96,
-          "rs": 26.9,
-          "tight": true,
-          "tight_len": 3,
-          "highlight": "tight",
-          "ticker_color": "green",
-          "leaves": [
-            "Metals & Mining / Rare Earth & Strategic"
-          ]
-        },
-        {
-          "ticker": "USAS",
-          "d_daily": -0.06,
-          "d_weekly": -0.19,
-          "zone_daily": "band",
-          "zone_weekly": "below",
-          "state": "weekly_broken",
-          "vars": -3.35,
-          "rs": 42.3,
-          "tight": true,
-          "tight_len": 9,
-          "highlight": "tight",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Diversified"
-          ]
-        }
-      ]
-    },
-    "long": [
-      {
-        "name": "Biotech",
-        "best_rank": 1,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Biotech / Genomics & Diagnostics Platforms",
-            "tickers": [
-              {
-                "ticker": "RVTY",
-                "theme_size": 11,
-                "rs20": 81,
-                "off_high": -14.4,
-                "days": 16,
-                "vars": -6.31,
-                "vars_20ema": -5.09,
-                "rs": 84.6,
-                "price": 101.11,
-                "dollar_vol": 158322314,
-                "adr_pct": 0.0409,
-                "float": "111.1",
-                "eps": "37",
-                "sales": "4",
-                "inst": "+0.2",
-                "short": 4.8,
-                "highlight": "ma_up",
-                "rank": 1
-              }
-            ],
-            "l1": "Biotech",
-            "l2": "Genomics & Diagnostics Platforms",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "MedTech",
-        "best_rank": 1,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "MedTech / Diagnostics",
-            "tickers": [
-              {
-                "ticker": "RVTY",
-                "theme_size": 11,
-                "rs20": 81,
-                "off_high": -14.4,
-                "days": 16,
-                "vars": -6.31,
-                "vars_20ema": -5.09,
-                "rs": 84.6,
-                "price": 101.11,
-                "dollar_vol": 158322314,
-                "adr_pct": 0.0409,
-                "float": "111.1",
-                "eps": "37",
-                "sales": "4",
-                "inst": "+0.2",
-                "short": 4.8,
-                "highlight": "ma_up",
-                "rank": 1
-              }
-            ],
-            "l1": "MedTech",
-            "l2": "Diagnostics",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "AI",
-        "best_rank": 2,
-        "n": 2,
-        "leaves": [
-          {
-            "name": "AI / Data Center / Cloud & Hyperscalers",
-            "tickers": [
-              {
-                "ticker": "AKAM",
-                "theme_size": 10,
-                "rs20": 90,
-                "off_high": -13.5,
-                "days": 19,
-                "vars": 5.6,
-                "vars_20ema": 5.46,
-                "rs": 50.0,
-                "price": 143.13,
-                "dollar_vol": 1041960734,
-                "adr_pct": 0.0529,
-                "float": "141.0",
-                "eps": "-20",
-                "sales": "6",
-                "inst": "-3.5",
-                "short": 15.7,
-                "highlight": "tight",
-                "ticker_color": "green",
-                "rank": 2
-              }
-            ],
-            "l1": "AI",
-            "l2": "Data Center",
-            "l3": "Cloud & Hyperscalers"
-          },
-          {
-            "name": "AI / Semiconductor Equipment",
-            "tickers": [
-              {
-                "ticker": "TER",
-                "theme_size": 3,
-                "rs20": 82,
-                "off_high": -9.3,
-                "days": 4,
-                "vars": 4.54,
-                "vars_20ema": 7.51,
-                "rs": 69.2,
-                "price": 382.26,
-                "dollar_vol": 1378744033,
-                "adr_pct": 0.0564,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 4
-              }
-            ],
-            "l1": "AI",
-            "l2": "Semiconductor Equipment",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "Cybersecurity",
-        "best_rank": 2,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Cybersecurity / Generalist",
-            "tickers": [
-              {
-                "ticker": "AKAM",
-                "theme_size": 10,
-                "rs20": 90,
-                "off_high": -13.5,
-                "days": 19,
-                "vars": 5.6,
-                "vars_20ema": 5.46,
-                "rs": 50.0,
-                "price": 143.13,
-                "dollar_vol": 1041960734,
-                "adr_pct": 0.0529,
-                "float": "141.0",
-                "eps": "-20",
-                "sales": "6",
-                "inst": "-3.5",
-                "short": 15.7,
-                "highlight": "tight",
-                "ticker_color": "green",
-                "rank": 2
-              }
-            ],
-            "l1": "Cybersecurity",
-            "l2": "Generalist",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "Metals & Mining",
-        "best_rank": 3,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Metals & Mining / Copper",
-            "tickers": [
-              {
-                "ticker": "HBM",
-                "theme_size": 4,
-                "rs20": 83,
-                "off_high": -1.7,
-                "days": 15,
-                "vars": 0.36,
-                "vars_20ema": 2.55,
-                "rs": 100.0,
-                "price": 28.22,
-                "dollar_vol": 148300886,
-                "adr_pct": 0.0505,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 3
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Copper",
-            "l3": null
-          },
-          {
-            "name": "Metals & Mining / Gold",
-            "tickers": [
-              {
-                "ticker": "HBM",
-                "theme_size": 4,
-                "rs20": 83,
-                "off_high": -1.7,
-                "days": 15,
-                "vars": 0.36,
-                "vars_20ema": 2.55,
-                "rs": 100.0,
-                "price": 28.22,
-                "dollar_vol": 148300886,
-                "adr_pct": 0.0505,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 3
-              }
-            ],
-            "l1": "Metals & Mining",
-            "l2": "Gold",
-            "l3": null
-          }
-        ]
-      },
-      {
-        "name": "Robotics",
-        "best_rank": 4,
-        "n": 1,
-        "leaves": [
-          {
-            "name": "Robotics / Industrial Automation",
-            "tickers": [
-              {
-                "ticker": "TER",
-                "theme_size": 3,
-                "rs20": 82,
-                "off_high": -9.3,
-                "days": 4,
-                "vars": 4.54,
-                "vars_20ema": 7.51,
-                "rs": 69.2,
-                "price": 382.26,
-                "dollar_vol": 1378744033,
-                "adr_pct": 0.0564,
-                "float": null,
-                "eps": null,
-                "sales": null,
-                "inst": null,
-                "short": null,
-                "highlight": "ma_up",
-                "rank": 4
-              }
-            ],
-            "l1": "Robotics",
-            "l2": "Industrial Automation",
-            "l3": null
-          }
-        ]
-      }
-    ],
-    "zone_map_long": {
-      "params": {
-        "min_avg_dollar_vol": 0,
-        "min_adr_pct": 0.04,
-        "top_leaves": 20,
-        "band_low": -0.5,
-        "band_high": 2.0,
-        "weekly_low": 0.0,
-        "weekly_high": 4.0,
-        "x_range": [
-          -2.0,
-          5.0
-        ],
-        "y_range": [
-          -4.0,
-          8.0
-        ]
-      },
-      "n_candidates": 4,
-      "n_floor_dropped": 0,
-      "n_no_weekly": 0,
-      "n_no_daily": 0,
-      "tickers": [
-        {
-          "ticker": "AKAM",
-          "d_daily": 0.64,
-          "d_weekly": 3.14,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": 5.6,
-          "rs": 50.0,
-          "tight": true,
-          "tight_len": 9,
-          "highlight": "tight",
-          "ticker_color": "green",
-          "leaves": [
-            "AI / Data Center / Cloud & Hyperscalers",
-            "Cybersecurity / Generalist"
-          ]
-        },
-        {
-          "ticker": "HBM",
-          "d_daily": 1.93,
-          "d_weekly": 3.24,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": 0.36,
-          "rs": 100.0,
-          "tight": false,
-          "tight_len": null,
-          "highlight": "ma_up",
-          "ticker_color": null,
-          "leaves": [
-            "Metals & Mining / Copper",
-            "Metals & Mining / Gold"
-          ]
-        },
-        {
-          "ticker": "RVTY",
-          "d_daily": 1.6,
-          "d_weekly": 1.8,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": -6.31,
-          "rs": 84.6,
-          "tight": false,
-          "tight_len": null,
-          "highlight": "ma_up",
-          "ticker_color": null,
-          "leaves": [
-            "Biotech / Genomics & Diagnostics Platforms",
-            "MedTech / Diagnostics"
-          ]
-        },
-        {
-          "ticker": "TER",
-          "d_daily": 1.15,
-          "d_weekly": 3.23,
-          "zone_daily": "band",
-          "zone_weekly": "normal",
-          "state": "buy_area",
-          "vars": 4.54,
-          "rs": 69.2,
-          "tight": false,
-          "tight_len": null,
-          "highlight": "ma_up",
-          "ticker_color": null,
-          "leaves": [
-            "AI / Semiconductor Equipment",
-            "Robotics / Industrial Automation"
           ]
         }
       ]

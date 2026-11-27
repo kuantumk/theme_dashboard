@@ -1,149 +1,6 @@
 {
-  "report_date": "2026-11-25",
-  "short": [
-    {
-      "name": "AI",
-      "best_rank": 1,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "AI / Drug Discovery",
-          "tickers": [
-            {
-              "ticker": "ABSI",
-              "lead": 85,
-              "gap": 0.23,
-              "off_high": -28.3,
-              "days": 9,
-              "vars": 2.8,
-              "vars_20ema": 2.55,
-              "rs": 46.2,
-              "price": 9.0,
-              "dollar_vol": 44217042,
-              "adr_pct": 0.1081,
-              "float": "149.1",
-              "eps": "3",
-              "sales": "-20",
-              "inst": "+0.8",
-              "short": 23.9,
-              "highlight": "short",
-              "ticker_color": "green",
-              "rank": 1
-            }
-          ],
-          "l1": "AI",
-          "l2": "Drug Discovery",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Biotech",
-      "best_rank": 1,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Biotech / Drug Discovery Platform",
-          "tickers": [
-            {
-              "ticker": "ABSI",
-              "lead": 85,
-              "gap": 0.23,
-              "off_high": -28.3,
-              "days": 9,
-              "vars": 2.8,
-              "vars_20ema": 2.55,
-              "rs": 46.2,
-              "price": 9.0,
-              "dollar_vol": 44217042,
-              "adr_pct": 0.1081,
-              "float": "149.1",
-              "eps": "3",
-              "sales": "-20",
-              "inst": "+0.8",
-              "short": 23.9,
-              "highlight": "short",
-              "ticker_color": "green",
-              "rank": 1
-            }
-          ],
-          "l1": "Biotech",
-          "l2": "Drug Discovery Platform",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "Cybersecurity",
-      "best_rank": 2,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "Cybersecurity / Generalist",
-          "tickers": [
-            {
-              "ticker": "BB",
-              "lead": 62,
-              "gap": -0.05,
-              "off_high": -37.5,
-              "days": 7,
-              "vars": 0.38,
-              "vars_20ema": -0.25,
-              "rs": 61.5,
-              "price": 8.5,
-              "dollar_vol": 109154522,
-              "adr_pct": 0.0639,
-              "float": "585.3",
-              "eps": "146",
-              "sales": "26",
-              "inst": "-1.3",
-              "short": 5.7,
-              "highlight": "tight",
-              "rank": 2
-            }
-          ],
-          "l1": "Cybersecurity",
-          "l2": "Generalist",
-          "l3": null
-        }
-      ]
-    },
-    {
-      "name": "EV & Autonomous",
-      "best_rank": 2,
-      "n": 1,
-      "leaves": [
-        {
-          "name": "EV & Autonomous / ADAS & LiDAR",
-          "tickers": [
-            {
-              "ticker": "BB",
-              "lead": 62,
-              "gap": -0.05,
-              "off_high": -37.5,
-              "days": 7,
-              "vars": 0.38,
-              "vars_20ema": -0.25,
-              "rs": 61.5,
-              "price": 8.5,
-              "dollar_vol": 109154522,
-              "adr_pct": 0.0639,
-              "float": "585.3",
-              "eps": "146",
-              "sales": "26",
-              "inst": "-1.3",
-              "short": 5.7,
-              "highlight": "tight",
-              "rank": 2
-            }
-          ],
-          "l1": "EV & Autonomous",
-          "l2": "ADAS & LiDAR",
-          "l3": null
-        }
-      ]
-    }
-  ],
+  "report_date": "2026-11-27",
+  "short": [],
   "zone_map_short": {
     "params": {
       "min_avg_dollar_vol": 0,
@@ -162,82 +19,45 @@
         8.0
       ]
     },
-    "n_candidates": 2,
+    "n_candidates": 0,
     "n_floor_dropped": 0,
     "n_no_weekly": 0,
     "n_no_daily": 0,
-    "tickers": [
-      {
-        "ticker": "ABSI",
-        "d_daily": -0.0,
-        "d_weekly": 0.21,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 2.8,
-        "rs": 46.2,
-        "tight": false,
-        "tight_len": null,
-        "highlight": "short",
-        "ticker_color": "green",
-        "leaves": [
-          "AI / Drug Discovery",
-          "Biotech / Drug Discovery Platform"
-        ]
-      },
-      {
-        "ticker": "BB",
-        "d_daily": -0.14,
-        "d_weekly": 0.3,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 0.38,
-        "rs": 61.5,
-        "tight": true,
-        "tight_len": 3,
-        "highlight": "tight",
-        "ticker_color": null,
-        "leaves": [
-          "Cybersecurity / Generalist",
-          "EV & Autonomous / ADAS & LiDAR"
-        ]
-      }
-    ]
+    "tickers": []
   },
   "long": [
     {
-      "name": "Fintech & Crypto",
+      "name": "Biotech",
       "best_rank": 1,
       "n": 1,
       "leaves": [
         {
-          "name": "Fintech & Crypto / Payments",
+          "name": "Biotech / Oncology / Immuno-Oncology",
           "tickers": [
             {
-              "ticker": "GPN",
-              "theme_size": 6,
-              "rs20": 91,
-              "off_high": -6.7,
-              "days": 3,
-              "vars": 7.77,
-              "vars_20ema": 6.81,
-              "rs": 96.2,
-              "price": 96.03,
-              "dollar_vol": 432776096,
-              "adr_pct": 0.0601,
-              "float": "219.9",
-              "eps": "-89",
-              "sales": "65",
-              "inst": "-5.3",
-              "short": 5.7,
+              "ticker": "CGON",
+              "theme_size": 8,
+              "rs20": 98,
+              "off_high": -5.0,
+              "days": 17,
+              "vars": 5.11,
+              "vars_20ema": 2.94,
+              "rs": 100.0,
+              "price": 89.24,
+              "dollar_vol": 171424722,
+              "adr_pct": 0.0834,
+              "float": "59.5",
+              "eps": "-12",
+              "sales": "-4",
+              "inst": "-0.2",
+              "short": 15.7,
               "highlight": "ma_up",
               "rank": 1
             }
           ],
-          "l1": "Fintech & Crypto",
-          "l2": "Payments",
-          "l3": null
+          "l1": "Biotech",
+          "l2": "Oncology",
+          "l3": "Immuno-Oncology"
         }
       ]
     },
@@ -252,15 +72,15 @@
             {
               "ticker": "GME",
               "theme_size": 3,
-              "rs20": 91,
-              "off_high": -4.7,
-              "days": 13,
-              "vars": 9.05,
-              "vars_20ema": 6.38,
-              "rs": 88.5,
-              "price": 26.97,
-              "dollar_vol": 179981291,
-              "adr_pct": 0.0401,
+              "rs20": 85,
+              "off_high": -6.9,
+              "days": 14,
+              "vars": 8.33,
+              "vars_20ema": 6.56,
+              "rs": 76.9,
+              "price": 26.34,
+              "dollar_vol": 178014697,
+              "adr_pct": 0.0404,
               "float": "421.4",
               "eps": "63",
               "sales": "-19",
@@ -301,37 +121,37 @@
     "n_no_daily": 0,
     "tickers": [
       {
-        "ticker": "GME",
-        "d_daily": 0.97,
-        "d_weekly": 2.95,
+        "ticker": "CGON",
+        "d_daily": 1.77,
+        "d_weekly": 2.68,
         "zone_daily": "band",
         "zone_weekly": "normal",
         "state": "buy_area",
-        "vars": 9.05,
-        "rs": 88.5,
-        "tight": true,
-        "tight_len": 6,
-        "highlight": "tight",
-        "ticker_color": null,
-        "leaves": [
-          "Retail (Multi-Category) / Specialty Apparel"
-        ]
-      },
-      {
-        "ticker": "GPN",
-        "d_daily": 0.95,
-        "d_weekly": 1.74,
-        "zone_daily": "band",
-        "zone_weekly": "normal",
-        "state": "buy_area",
-        "vars": 7.77,
-        "rs": 96.2,
+        "vars": 5.11,
+        "rs": 100.0,
         "tight": false,
         "tight_len": null,
         "highlight": "ma_up",
         "ticker_color": null,
         "leaves": [
-          "Fintech & Crypto / Payments"
+          "Biotech / Oncology / Immuno-Oncology"
+        ]
+      },
+      {
+        "ticker": "GME",
+        "d_daily": 0.33,
+        "d_weekly": 2.46,
+        "zone_daily": "band",
+        "zone_weekly": "normal",
+        "state": "buy_area",
+        "vars": 8.33,
+        "rs": 76.9,
+        "tight": true,
+        "tight_len": 7,
+        "highlight": "tight",
+        "ticker_color": null,
+        "leaves": [
+          "Retail (Multi-Category) / Specialty Apparel"
         ]
       }
     ]
